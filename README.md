@@ -12,7 +12,7 @@ Monorepo for the Duvex eLearning platform: Student / Faculty / Admin experiences
 
 ## Local development
 
-Requires Docker Desktop (not yet installed in this environment — install before running the steps below).
+Requires Docker Desktop (not yet installed in this environment — install before running the steps below), or any reachable PostgreSQL instance (e.g. a free Neon/Supabase database) with `DATABASE_URL` updated in `apps/api/.env` accordingly.
 
 ```bash
 # 1. start infra
