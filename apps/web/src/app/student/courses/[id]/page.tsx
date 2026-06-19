@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { coursesApi, ApiError, type CourseTree, type Lesson } from "@/lib/api";
 
 function LessonViewer({ lesson }: { lesson: Lesson }) {
@@ -47,6 +48,8 @@ export default function StudentCoursePlayerPage() {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notEnrolled, setNotEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
     coursesApi
@@ -55,11 +58,69 @@ export default function StudentCoursePlayerPage() {
         setCourse(c);
         setSelectedLessonId(c.chapters[0]?.lessons[0]?.id ?? null);
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load course"))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 403) {
+          setNotEnrolled(true);
+        } else {
+          setError(err instanceof ApiError ? err.message : "Failed to load course");
+        }
+      })
       .finally(() => setLoading(false));
   }, [courseId]);
 
+  async function onEnroll() {
+    setEnrolling(true);
+    try {
+      await coursesApi.enroll(courseId);
+      setNotEnrolled(false);
+      setLoading(true);
+      const c = await coursesApi.get(courseId);
+      setCourse(c);
+      setSelectedLessonId(c.chapters[0]?.lessons[0]?.id ?? null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to enroll");
+    } finally {
+      setEnrolling(false);
+      setLoading(false);
+    }
+  }
+
   if (loading) return <main style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></main>;
+
+  if (notEnrolled) {
+    return (
+      <main style={{ padding: 40, maxWidth: 480 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800 }}>You&apos;re not enrolled in this course yet</h1>
+        <p style={{ color: "var(--ink2)", marginTop: 8, marginBottom: 20 }}>
+          Enroll to unlock the lessons.
+        </p>
+        <button
+          onClick={onEnroll}
+          disabled={enrolling}
+          style={{
+            padding: "12px 22px",
+            background: "var(--ink)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 700,
+            fontFamily: "inherit",
+            cursor: enrolling ? "default" : "pointer",
+            opacity: enrolling ? 0.7 : 1,
+          }}
+        >
+          {enrolling ? "Enrolling…" : "Enroll now"}
+        </button>
+        <p style={{ marginTop: 18 }}>
+          <Link href="/student/courses" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 14 }}>
+            ← Back to courses
+          </Link>
+        </p>
+      </main>
+    );
+  }
+
   if (error || !course) return <main style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Course not found"}</p></main>;
 
   const selectedLesson = course.chapters.flatMap((c) => c.lessons).find((l) => l.id === selectedLessonId) ?? null;

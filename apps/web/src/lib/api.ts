@@ -82,10 +82,19 @@ export interface Course {
   facultyId: string;
   createdAt: string;
   updatedAt: string;
+  _count?: { enrollments: number };
 }
 
 export interface CourseTree extends Course {
   chapters: Chapter[];
+}
+
+export interface Enrollment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  enrolledAt: string;
+  course: Course;
 }
 
 export const coursesApi = {
@@ -96,6 +105,7 @@ export const coursesApi = {
   update: (id: string, data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl'>>) =>
     request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
+  enroll: (id: string) => request<{ id: string }>(`/courses/${id}/enroll`, { method: 'POST' }),
 
   createChapter: (courseId: string, data: { title: string; order?: number }) =>
     request<Chapter>(`/courses/${courseId}/chapters`, { method: 'POST', body: JSON.stringify(data) }),
@@ -110,6 +120,10 @@ export const coursesApi = {
   updateLesson: (id: string, data: Partial<Pick<Lesson, 'title' | 'type' | 'order' | 'contentUrl' | 'liveAt'>>) =>
     request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeLesson: (id: string) => request<{ success: boolean }>(`/lessons/${id}`, { method: 'DELETE' }),
+};
+
+export const enrollmentsApi = {
+  mine: () => request<Enrollment[]>('/enrollments/me'),
 };
 
 export const uploadsApi = {

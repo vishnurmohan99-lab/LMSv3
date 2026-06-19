@@ -26,11 +26,35 @@ export class CoursesService {
       return this.prisma.course.findMany({ where: { published: true }, orderBy: { createdAt: 'desc' } });
     }
     if (user.role === 'ADMIN') {
-      return this.prisma.course.findMany({ orderBy: { createdAt: 'desc' } });
+      return this.prisma.course.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { enrollments: true } } },
+      });
     }
     return this.prisma.course.findMany({
       where: { OR: [{ published: true }, { facultyId: user.sub }] },
       orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { enrollments: true } } },
+    });
+  }
+
+  async enroll(courseId: string, user: JwtPayload) {
+    const course = await this.requireCourse(courseId);
+    if (!course.published) {
+      throw new ForbiddenException('This course is not open for enrollment');
+    }
+    return this.prisma.enrollment.upsert({
+      where: { studentId_courseId: { studentId: user.sub, courseId } },
+      create: { studentId: user.sub, courseId },
+      update: {},
+    });
+  }
+
+  listMyEnrollments(user: JwtPayload) {
+    return this.prisma.enrollment.findMany({
+      where: { studentId: user.sub },
+      include: { course: true },
+      orderBy: { enrolledAt: 'desc' },
     });
   }
 
@@ -41,7 +65,7 @@ export class CoursesService {
     });
     if (!course) throw new NotFoundException('Course not found');
 
-    const canView = course.published || isOwnerOrAdmin(user, course.facultyId);
+    const canView = await this.canViewCourseContent(course, user);
     if (!canView) throw new ForbiddenException('You do not have access to this course');
 
     const chapters = await Promise.all(
@@ -129,6 +153,16 @@ export class CoursesService {
     this.assertOwnership(user, lesson.chapter.course.facultyId);
     await this.prisma.lesson.delete({ where: { id } });
     return { success: true };
+  }
+
+  private async canViewCourseContent(course: { id: string; published: boolean; facultyId: string }, user: JwtPayload) {
+    if (isOwnerOrAdmin(user, course.facultyId)) return true;
+    if (!course.published) return false;
+    if (user.role !== 'STUDENT') return true;
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { studentId_courseId: { studentId: user.sub, courseId: course.id } },
+    });
+    return !!enrollment;
   }
 
   private assertOwnership(user: JwtPayload, facultyId: string) {

@@ -43,4 +43,11 @@ export class CoursesController {
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.coursesService.deleteCourse(id, user);
   }
+
+  @UseGuards(RolesGuard)
+  @Roles('STUDENT')
+  @Post(':id/enroll')
+  enroll(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.enroll(id, user);
+  }
 }
