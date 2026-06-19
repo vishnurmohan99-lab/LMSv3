@@ -59,3 +59,82 @@ export const usersApi = {
   updateRole: (id: string, role: Profile['role']) =>
     request<Profile>(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
 };
+
+export type LessonType = 'VIDEO' | 'PDF' | 'LIVE' | 'FLASHCARD';
+
+export interface Lesson {
+  id: string;
+  title: string;
+  order: number;
+  type: LessonType;
+  contentUrl: string | null;
+  liveAt: string | null;
+}
+
+export interface Chapter {
+  id: string;
+  title: string;
+  order: number;
+  lessons: Lesson[];
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string | null;
+  published: boolean;
+  facultyId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseTree extends Course {
+  chapters: Chapter[];
+}
+
+export const coursesApi = {
+  list: () => request<Course[]>('/courses'),
+  get: (id: string) => request<CourseTree>(`/courses/${id}`),
+  create: (data: { title: string; description?: string }) =>
+    request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl'>>) =>
+    request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
+
+  createChapter: (courseId: string, data: { title: string; order?: number }) =>
+    request<Chapter>(`/courses/${courseId}/chapters`, { method: 'POST', body: JSON.stringify(data) }),
+  updateChapter: (id: string, data: { title?: string; order?: number }) =>
+    request<Chapter>(`/chapters/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeChapter: (id: string) => request<{ success: boolean }>(`/chapters/${id}`, { method: 'DELETE' }),
+
+  createLesson: (
+    chapterId: string,
+    data: { title: string; type: LessonType; order?: number; contentUrl?: string; liveAt?: string },
+  ) => request<Lesson>(`/chapters/${chapterId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
+  updateLesson: (id: string, data: Partial<Pick<Lesson, 'title' | 'type' | 'order' | 'contentUrl' | 'liveAt'>>) =>
+    request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeLesson: (id: string) => request<{ success: boolean }>(`/lessons/${id}`, { method: 'DELETE' }),
+};
+
+export const uploadsApi = {
+  async presign(fileName: string, contentType: string) {
+    return request<{ uploadUrl: string; key: string }>('/uploads/presign', {
+      method: 'POST',
+      body: JSON.stringify({ fileName, contentType }),
+    });
+  },
+
+  async uploadFile(file: File): Promise<string> {
+    const { uploadUrl, key } = await this.presign(file.name, file.type);
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, 'Upload to storage failed');
+    }
+    return key;
+  },
+};

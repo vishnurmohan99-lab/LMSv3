@@ -27,4 +27,66 @@ model User {
   role         Role     @default(STUDENT)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  courses     Course[]     @relation("FacultyCourses")
+  enrollments Enrollment[]
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  title        String
+  description  String   @default("")
+  thumbnailUrl String?
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  facultyId String
+  faculty   User   @relation("FacultyCourses", fields: [facultyId], references: [id])
+
+  chapters    Chapter[]
+  enrollments Enrollment[]
+}
+
+model Chapter {
+  id    String @id @default(uuid())
+  title String
+  order Int    @default(0)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  lessons Lesson[]
+}
+
+enum LessonType {
+  VIDEO
+  PDF
+  LIVE
+  FLASHCARD
+}
+
+model Lesson {
+  id         String     @id @default(uuid())
+  title      String
+  order      Int        @default(0)
+  type       LessonType
+  contentUrl String?
+  liveAt     DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  chapterId String
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id])
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime @default(now())
+
+  @@unique([studentId, courseId])
 }
