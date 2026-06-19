@@ -4,8 +4,8 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install --include=dev && npx prisma generate --schema=apps/api/prisma/schema.prisma && npm run build --workspace=apps/api
-    startCommand: npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma && npm run start:prod --workspace=apps/api
+    buildCommand: npm install --include=dev && npx prisma generate --config=apps/api/prisma.config.ts && npm run build --workspace=apps/api
+    startCommand: npx prisma migrate deploy --config=apps/api/prisma.config.ts && npm run start:prod --workspace=apps/api
     envVars:
       - key: DATABASE_URL
         sync: false
