@@ -55,16 +55,19 @@ export class AuthController {
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
     const isProd = process.env.NODE_ENV === 'production';
+    // Frontends and API live on different registrable domains (e.g. vercel.app vs onrender.com)
+    // in production, so SameSite=Lax would block the cookie on cross-site requests entirely.
+    const sameSite = isProd ? 'none' : 'lax';
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: 'lax',
+      sameSite,
       maxAge: ACCESS_COOKIE_MAX_AGE_MS,
     });
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: 'lax',
+      sameSite,
       maxAge: REFRESH_COOKIE_MAX_AGE_MS,
     });
   }
