@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { authApi, ApiError } from "@/lib/api";
-
-const ROLE_HOME: Record<string, string> = {
-  STUDENT: "/student/dashboard",
-  FACULTY: "/faculty/dashboard",
-};
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -35,7 +29,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { user } = await authApi.login({ email, password });
-      router.push(ROLE_HOME[user.role] ?? "/login");
+      if (user.role !== "ADMIN") {
+        await authApi.logout();
+        setError("This account does not have admin access.");
+        return;
+      }
+      router.push("/admin/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {
@@ -45,9 +44,9 @@ export default function LoginPage() {
 
   return (
     <form onSubmit={onSubmit}>
-      <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -0.6 }}>Welcome back</div>
+      <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -0.6 }}>Admin sign in</div>
       <p style={{ color: "var(--ink3)", fontSize: 14, margin: "8px 0 28px" }}>
-        Sign in to continue your prep.
+        Restricted to platform administrators.
       </p>
 
       <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>Email</label>
@@ -94,13 +93,6 @@ export default function LoginPage() {
       >
         {loading ? "Signing in…" : "Sign in"}
       </button>
-
-      <p style={{ textAlign: "center", fontSize: 14, color: "var(--ink2)", marginTop: 22 }}>
-        New here?{" "}
-        <Link href="/register" style={{ color: "var(--orange)", fontWeight: 700 }}>
-          Create account
-        </Link>
-      </p>
     </form>
   );
 }

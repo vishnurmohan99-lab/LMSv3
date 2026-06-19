@@ -53,6 +53,11 @@ export const usersApi = {
   me: () => request<Profile>('/users/me'),
   updateMe: (data: { fullName: string }) =>
     request<Profile>('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  list: () => request<Profile[]>('/users'),
+  create: (data: { fullName: string; email: string; password: string; role: Profile['role'] }) =>
+    request<Profile>('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateRole: (id: string, role: Profile['role']) =>
+    request<Profile>(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
 };
 
 export type LessonType = 'VIDEO' | 'PDF' | 'LIVE' | 'FLASHCARD';
