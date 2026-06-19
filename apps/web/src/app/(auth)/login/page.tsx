@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { authApi, ApiError } from "@/lib/api";
+import { authApi, usersApi, ApiError } from "@/lib/api";
 
 const ROLE_HOME: Record<string, string> = {
   STUDENT: "/student/dashboard",
@@ -28,6 +28,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    usersApi
+      .me()
+      .then((profile) => {
+        const home = ROLE_HOME[profile.role];
+        if (home) router.replace(home);
+      })
+      .catch(() => {});
+  }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

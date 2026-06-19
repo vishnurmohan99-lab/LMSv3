@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authApi, ApiError } from "@/lib/api";
+import { authApi, usersApi, ApiError } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -22,6 +22,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    usersApi
+      .me()
+      .then((profile) => {
+        if (profile.role === "ADMIN") router.replace("/admin/dashboard");
+      })
+      .catch(() => {});
+  }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
