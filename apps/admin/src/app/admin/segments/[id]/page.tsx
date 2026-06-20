@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
+import Modal from "@/components/Modal";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -154,6 +155,7 @@ export default function SegmentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [showAddSub, setShowAddSub] = useState(false);
   const [newSubName, setNewSubName] = useState("");
   const [addingSub, setAddingSub] = useState(false);
   const [expandedSub, setExpandedSub] = useState<string | null>(null);
@@ -177,6 +179,7 @@ export default function SegmentDetailPage() {
     try {
       await segmentsApi.createSubsegment(segmentId, { name: newSubName });
       setNewSubName("");
+      setShowAddSub(false);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to add sub-segment");
@@ -229,20 +232,30 @@ export default function SegmentDetailPage() {
           marginBottom: 18,
         }}
       >
-        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Sub-segments</div>
-
-        <form onSubmit={onAddSubsegment} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <input
-            required
-            placeholder="New sub-segment name"
-            value={newSubName}
-            onChange={(e) => setNewSubName(e.target.value)}
-            style={{ ...inputStyle, flex: 1 }}
-          />
-          <button type="submit" disabled={addingSub} style={{ ...smallBtn, opacity: addingSub ? 0.7 : 1 }}>
-            {addingSub ? "Adding…" : "Add sub-segment"}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ fontSize: 16, fontWeight: 700 }}>Sub-segments</div>
+          <button onClick={() => setShowAddSub(true)} style={smallBtn}>
+            + Add sub-segment
           </button>
-        </form>
+        </div>
+
+        {showAddSub && (
+          <Modal title="Add sub-segment" onClose={() => setShowAddSub(false)}>
+            <form onSubmit={onAddSubsegment}>
+              <input
+                required
+                autoFocus
+                placeholder="Sub-segment name"
+                value={newSubName}
+                onChange={(e) => setNewSubName(e.target.value)}
+                style={{ ...inputStyle, width: "100%", marginBottom: 14 }}
+              />
+              <button type="submit" disabled={addingSub} style={{ ...smallBtn, width: "100%", padding: "11px 18px", fontSize: 14, opacity: addingSub ? 0.7 : 1 }}>
+                {addingSub ? "Adding…" : "Add sub-segment"}
+              </button>
+            </form>
+          </Modal>
+        )}
 
         {segment.subsegments.length === 0 ? (
           <p style={{ color: "var(--ink2)", fontSize: 13.5 }}>No sub-segments yet.</p>

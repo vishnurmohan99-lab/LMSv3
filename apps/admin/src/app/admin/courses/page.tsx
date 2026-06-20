@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
+import Modal from "@/components/Modal";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -48,7 +49,7 @@ export default function AdminCoursesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT">("ALL");
 
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -89,7 +90,7 @@ export default function AdminCoursesPage() {
     try {
       await coursesApi.create({ title });
       setTitle("");
-      setShowAddForm(false);
+      setShowAddModal(false);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create course");
@@ -103,7 +104,7 @@ export default function AdminCoursesPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Courses</div>
         <button
-          onClick={() => setShowAddForm((v) => !v)}
+          onClick={() => setShowAddModal(true)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -124,52 +125,42 @@ export default function AdminCoursesPage() {
         </button>
       </div>
 
-      {showAddForm && (
-        <form
-          onSubmit={onCreate}
-          style={{
-            display: "flex",
-            gap: 10,
-            marginBottom: 18,
-            background: "var(--card)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--rm)",
-            padding: 16,
-          }}
-        >
-          <input
-            required
-            autoFocus
-            placeholder="Course name"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{ ...inputStyle, flex: 1 }}
-          />
-          <button
-            type="submit"
-            disabled={creating}
-            style={{
-              padding: "10px 18px",
-              background: "var(--ink)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: creating ? "default" : "pointer",
-              opacity: creating ? 0.7 : 1,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {creating ? "Creating…" : "Create"}
-          </button>
-        </form>
+      {showAddModal && (
+        <Modal title="Add course" onClose={() => setShowAddModal(false)}>
+          <form onSubmit={onCreate}>
+            <input
+              required
+              autoFocus
+              placeholder="Course name"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={{ ...inputStyle, width: "100%", marginBottom: 8 }}
+            />
+            <p style={{ color: "var(--ink3)", fontSize: 12, marginBottom: 16 }}>
+              Courses start uncategorized — assign them to a segment or sub-segment from the Segments page.
+            </p>
+            <button
+              type="submit"
+              disabled={creating}
+              style={{
+                width: "100%",
+                padding: "11px 18px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: creating ? "default" : "pointer",
+                opacity: creating ? 0.7 : 1,
+              }}
+            >
+              {creating ? "Creating…" : "Create course"}
+            </button>
+          </form>
+        </Modal>
       )}
-
-      <p style={{ color: "var(--ink3)", fontSize: 12.5, marginBottom: 18 }}>
-        Courses are created uncategorized — assign them to a segment or sub-segment from the Segments page.
-      </p>
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 

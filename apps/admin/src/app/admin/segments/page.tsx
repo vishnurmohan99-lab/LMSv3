@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { segmentsApi, ApiError, type Segment } from "@/lib/api";
+import Modal from "@/components/Modal";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -55,7 +56,7 @@ export default function AdminSegmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [name, setName] = useState("");
   const [needsSubsegments, setNeedsSubsegments] = useState<boolean | null>(null);
   const [creating, setCreating] = useState(false);
@@ -88,7 +89,7 @@ export default function AdminSegmentsPage() {
       const segment = await segmentsApi.create({ name });
       setName("");
       setNeedsSubsegments(null);
-      setShowAddForm(false);
+      setShowAddModal(false);
       if (needsSubsegments) {
         router.push(`/admin/segments/${segment.id}`);
       } else {
@@ -125,7 +126,7 @@ export default function AdminSegmentsPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Segments</div>
         <button
-          onClick={() => setShowAddForm((v) => !v)}
+          onClick={() => setShowAddModal(true)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -146,90 +147,82 @@ export default function AdminSegmentsPage() {
         </button>
       </div>
 
-      {showAddForm && (
-        <form
-          onSubmit={onCreate}
-          style={{
-            display: "grid",
-            gap: 14,
-            marginBottom: 18,
-            background: "var(--card)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--rl)",
-            padding: 20,
-          }}
-        >
-          <input
-            required
-            autoFocus
-            placeholder="Segment name (e.g. Competitive Exams)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={inputStyle}
-          />
+      {showAddModal && (
+        <Modal title="Add segment" onClose={() => setShowAddModal(false)}>
+          <form onSubmit={onCreate} style={{ display: "grid", gap: 14 }}>
+            <input
+              required
+              autoFocus
+              placeholder="Segment name (e.g. Competitive Exams)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={inputStyle}
+            />
 
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
-              Does this segment need sub-segments?
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
+                Does this segment need sub-segments?
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setNeedsSubsegments(true)}
+                  style={{
+                    flex: 1,
+                    padding: "9px 14px",
+                    borderRadius: 10,
+                    border: needsSubsegments === true ? "1px solid var(--ink)" : "1px solid var(--line)",
+                    background: needsSubsegments === true ? "var(--ink)" : "var(--bg)",
+                    color: needsSubsegments === true ? "#fff" : "var(--ink2)",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  Yes, add sub-segments
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNeedsSubsegments(false)}
+                  style={{
+                    flex: 1,
+                    padding: "9px 14px",
+                    borderRadius: 10,
+                    border: needsSubsegments === false ? "1px solid var(--ink)" : "1px solid var(--line)",
+                    background: needsSubsegments === false ? "var(--ink)" : "var(--bg)",
+                    color: needsSubsegments === false ? "#fff" : "var(--ink2)",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  No, add courses directly
+                </button>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                type="button"
-                onClick={() => setNeedsSubsegments(true)}
-                style={{
-                  padding: "9px 18px",
-                  borderRadius: 10,
-                  border: needsSubsegments === true ? "1px solid var(--ink)" : "1px solid var(--line)",
-                  background: needsSubsegments === true ? "var(--ink)" : "var(--bg)",
-                  color: needsSubsegments === true ? "#fff" : "var(--ink2)",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  fontFamily: "inherit",
-                  cursor: "pointer",
-                }}
-              >
-                Yes, add sub-segments
-              </button>
-              <button
-                type="button"
-                onClick={() => setNeedsSubsegments(false)}
-                style={{
-                  padding: "9px 18px",
-                  borderRadius: 10,
-                  border: needsSubsegments === false ? "1px solid var(--ink)" : "1px solid var(--line)",
-                  background: needsSubsegments === false ? "var(--ink)" : "var(--bg)",
-                  color: needsSubsegments === false ? "#fff" : "var(--ink2)",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  fontFamily: "inherit",
-                  cursor: "pointer",
-                }}
-              >
-                No, add courses directly
-              </button>
-            </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={creating || needsSubsegments === null}
-            style={{
-              justifySelf: "start",
-              padding: "10px 20px",
-              background: "var(--ink)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: creating || needsSubsegments === null ? "default" : "pointer",
-              opacity: creating || needsSubsegments === null ? 0.6 : 1,
-            }}
-          >
-            {creating ? "Creating…" : "Create segment"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={creating || needsSubsegments === null}
+              style={{
+                padding: "11px 20px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: creating || needsSubsegments === null ? "default" : "pointer",
+                opacity: creating || needsSubsegments === null ? 0.6 : 1,
+              }}
+            >
+              {creating ? "Creating…" : "Create segment"}
+            </button>
+          </form>
+        </Modal>
       )}
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
