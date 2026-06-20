@@ -109,6 +109,7 @@ model Lesson {
   type       LessonType
   contentUrl String?
   liveAt     DateTime?
+  flashcardsEnabled Boolean @default(false)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 

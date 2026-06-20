@@ -80,7 +80,7 @@ function LessonViewer({ lesson }: { lesson: Lesson }) {
     );
   }
 
-  return <FlashcardReview lessonId={lesson.id} />;
+  return null;
 }
 
 export default function StudentCoursePlayerPage() {
@@ -241,6 +241,11 @@ export default function StudentCoursePlayerPage() {
             <div style={{ flex: 1, overflowY: "auto", padding: 26 }}>
               <div style={{ maxWidth: 1000, margin: "0 auto" }}>
                 <LessonViewer lesson={selectedLesson} />
+                {selectedLesson.flashcardsEnabled && (
+                  <div style={{ marginTop: 24 }}>
+                    <FlashcardReview lessonId={selectedLesson.id} />
+                  </div>
+                )}
               </div>
             </div>
           </>

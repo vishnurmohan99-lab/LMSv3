@@ -32,6 +32,7 @@ function NewLessonForm({ chapterId, onAdded }: { chapterId: string; onAdded: () 
   const [type, setType] = useState<LessonType>("VIDEO");
   const [liveAt, setLiveAt] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [flashcardsEnabled, setFlashcardsEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,9 +50,11 @@ function NewLessonForm({ chapterId, onAdded }: { chapterId: string; onAdded: () 
         type,
         contentUrl,
         liveAt: type === "LIVE" && liveAt ? new Date(liveAt).toISOString() : undefined,
+        flashcardsEnabled,
       });
       setTitle("");
       setFile(null);
+      setFlashcardsEnabled(false);
       onAdded();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to add lesson");
@@ -67,7 +70,6 @@ function NewLessonForm({ chapterId, onAdded }: { chapterId: string; onAdded: () 
         <option value="VIDEO">Video</option>
         <option value="PDF">PDF</option>
         <option value="LIVE">Live class</option>
-        <option value="FLASHCARD">Flashcard</option>
       </select>
       {(type === "VIDEO" || type === "PDF") && (
         <input
@@ -80,6 +82,10 @@ function NewLessonForm({ chapterId, onAdded }: { chapterId: string; onAdded: () 
       {type === "LIVE" && (
         <input type="datetime-local" value={liveAt} onChange={(e) => setLiveAt(e.target.value)} style={inputStyle} />
       )}
+      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink2)" }}>
+        <input type="checkbox" checked={flashcardsEnabled} onChange={(e) => setFlashcardsEnabled(e.target.checked)} />
+        Enable Flashcards
+      </label>
       <button type="submit" disabled={busy} style={{ ...btnStyle, opacity: busy ? 0.7 : 1 }}>
         {busy ? "Adding…" : "Add lesson"}
       </button>
@@ -184,7 +190,7 @@ export default function CourseAuthoringPage() {
                     <b>{lesson.title}</b> <span style={{ color: "var(--ink3)" }}>· {lesson.type}</span>
                   </span>
                   <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    {lesson.type === "FLASHCARD" && (
+                    {lesson.flashcardsEnabled && (
                       <Link
                         href={`/faculty/courses/${courseId}/lessons/${lesson.id}/flashcards`}
                         style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}

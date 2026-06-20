@@ -82,6 +82,7 @@ export interface Lesson {
   type: LessonType;
   contentUrl: string | null;
   liveAt: string | null;
+  flashcardsEnabled: boolean;
 }
 
 export interface Chapter {
@@ -164,9 +165,9 @@ export const coursesApi = {
 
   createLesson: (
     chapterId: string,
-    data: { title: string; type: LessonType; order?: number; contentUrl?: string; liveAt?: string },
+    data: { title: string; type: LessonType; order?: number; contentUrl?: string; liveAt?: string; flashcardsEnabled?: boolean },
   ) => request<Lesson>(`/chapters/${chapterId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
-  updateLesson: (id: string, data: Partial<Pick<Lesson, 'title' | 'type' | 'order' | 'contentUrl' | 'liveAt'>>) =>
+  updateLesson: (id: string, data: Partial<Pick<Lesson, 'title' | 'type' | 'order' | 'contentUrl' | 'liveAt' | 'flashcardsEnabled'>>) =>
     request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeLesson: (id: string) => request<{ success: boolean }>(`/lessons/${id}`, { method: 'DELETE' }),
 };

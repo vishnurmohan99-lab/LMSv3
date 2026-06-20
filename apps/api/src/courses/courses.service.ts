@@ -169,6 +169,7 @@ export class CoursesService {
         order: dto.order ?? 0,
         contentUrl: dto.contentUrl,
         liveAt: dto.liveAt ? new Date(dto.liveAt) : undefined,
+        flashcardsEnabled: dto.flashcardsEnabled ?? false,
         chapterId,
       },
     });

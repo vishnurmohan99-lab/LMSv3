@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 import { LessonType } from '../../../generated/prisma/client';
 
 export class UpdateLessonDto {
@@ -22,4 +22,8 @@ export class UpdateLessonDto {
   @IsOptional()
   @IsDateString()
   liveAt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  flashcardsEnabled?: boolean;
 }
