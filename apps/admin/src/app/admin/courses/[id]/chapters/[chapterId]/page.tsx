@@ -62,16 +62,24 @@ function SparkleIcon() {
   );
 }
 
-const AVAILABLE_FEATURES = [{ key: "flashcards" as const, label: "Flashcards" }];
+type FeatureKey = "flashcardsEnabled" | "aiNotesEnabled" | "askMeEnabled";
+
+const AVAILABLE_FEATURES: { key: FeatureKey; label: string }[] = [
+  { key: "flashcardsEnabled", label: "AI Deck" },
+  { key: "aiNotesEnabled", label: "AI Notes" },
+  { key: "askMeEnabled", label: "Ask Me" },
+];
 
 function FeaturePicker({
-  flashcardsEnabled,
-  onToggleFlashcards,
+  features,
+  onToggle,
 }: {
-  flashcardsEnabled: boolean;
-  onToggleFlashcards: (next: boolean) => void;
+  features: Record<FeatureKey, boolean>;
+  onToggle: (key: FeatureKey, next: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const anyEnabled = AVAILABLE_FEATURES.some((f) => features[f.key]);
+  const enabledLabels = AVAILABLE_FEATURES.filter((f) => features[f.key]).map((f) => f.label);
 
   return (
     <div style={{ position: "relative" }}>
@@ -83,9 +91,9 @@ function FeaturePicker({
           alignItems: "center",
           gap: 6,
           padding: "5px 10px",
-          background: flashcardsEnabled ? "var(--orange-soft)" : "var(--bg)",
-          color: flashcardsEnabled ? "var(--orange)" : "var(--ink2)",
-          border: "1px solid " + (flashcardsEnabled ? "var(--orange-soft)" : "var(--line)"),
+          background: anyEnabled ? "var(--orange-soft)" : "var(--bg)",
+          color: anyEnabled ? "var(--orange)" : "var(--ink2)",
+          border: "1px solid " + (anyEnabled ? "var(--orange-soft)" : "var(--line)"),
           borderRadius: 8,
           fontSize: 12,
           fontWeight: 700,
@@ -94,7 +102,7 @@ function FeaturePicker({
         }}
       >
         <SparkleIcon />
-        {flashcardsEnabled ? "Flashcards" : "Add feature"}
+        {anyEnabled ? enabledLabels.join(", ") : "Add feature"}
       </button>
       {open && (
         <div
@@ -117,8 +125,7 @@ function FeaturePicker({
               key={f.key}
               type="button"
               onClick={() => {
-                onToggleFlashcards(!flashcardsEnabled);
-                setOpen(false);
+                onToggle(f.key, !features[f.key]);
               }}
               style={{
                 display: "flex",
@@ -138,10 +145,9 @@ function FeaturePicker({
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
               {f.label}
-              {flashcardsEnabled && <span style={{ color: "var(--orange)", fontWeight: 700 }}>✓</span>}
+              {features[f.key] && <span style={{ color: "var(--orange)", fontWeight: 700 }}>✓</span>}
             </button>
           ))}
-          <div style={{ padding: "6px 10px", fontSize: 11, color: "var(--ink3)" }}>More AI features coming soon</div>
         </div>
       )}
     </div>
@@ -153,9 +159,16 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
   const [type, setType] = useState<LessonType>("VIDEO");
   const [liveAt, setLiveAt] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [flashcardsEnabled, setFlashcardsEnabled] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [features, setFeatures] = useState<Record<FeatureKey, boolean>>({
+    flashcardsEnabled: false,
+    aiNotesEnabled: false,
+    askMeEnabled: false,
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const anyAiFeatureOn = features.aiNotesEnabled || features.askMeEnabled;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -171,7 +184,8 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
         type,
         contentUrl,
         liveAt: type === "LIVE" && liveAt ? new Date(liveAt).toISOString() : undefined,
-        flashcardsEnabled,
+        transcript: type === "VIDEO" && transcript ? transcript : undefined,
+        ...features,
       });
       onDone();
     } catch (err) {
@@ -202,8 +216,17 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
       )}
       <div>
         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>AI features</div>
-        <FeaturePicker flashcardsEnabled={flashcardsEnabled} onToggleFlashcards={setFlashcardsEnabled} />
+        <FeaturePicker features={features} onToggle={(key, next) => setFeatures((f) => ({ ...f, [key]: next }))} />
       </div>
+      {type === "VIDEO" && anyAiFeatureOn && (
+        <textarea
+          placeholder="Paste the video transcript so AI Notes / Ask Me can use it"
+          value={transcript}
+          onChange={(e) => setTranscript(e.target.value)}
+          rows={5}
+          style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
+        />
+      )}
       <button
         type="submit"
         disabled={busy}
@@ -219,6 +242,58 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
 
 function LessonTypeBadge({ type }: { type: LessonType }) {
   return <span style={{ color: "var(--ink3)", fontSize: 12 }}>{type}</span>;
+}
+
+function TranscriptEditor({ lesson, onSave }: { lesson: Lesson; onSave: (transcript: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(lesson.transcript ?? "");
+  const [saving, setSaving] = useState(false);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{ marginTop: 10, background: "none", border: "none", color: "var(--ink3)", fontSize: 12, cursor: "pointer", padding: 0 }}
+      >
+        {lesson.transcript ? "Edit transcript" : "+ Add transcript"}
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+      <textarea
+        autoFocus
+        placeholder="Paste the video transcript so AI Notes / Ask Me can use it"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        rows={5}
+        style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
+      />
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          type="button"
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onSave(value);
+              setOpen(false);
+            } finally {
+              setSaving(false);
+            }
+          }}
+          style={{ ...btnStyle, opacity: saving ? 0.7 : 1 }}
+        >
+          {saving ? "Saving…" : "Save transcript"}
+        </button>
+        <button type="button" onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 13, cursor: "pointer" }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function ChapterDetailPage() {
@@ -260,8 +335,13 @@ export default function ChapterDetailPage() {
     load();
   }
 
-  async function onToggleLessonFlashcards(lesson: Lesson, next: boolean) {
-    await coursesApi.updateLesson(lesson.id, { flashcardsEnabled: next });
+  async function onToggleLessonFeature(lesson: Lesson, key: FeatureKey, next: boolean) {
+    await coursesApi.updateLesson(lesson.id, { [key]: next });
+    load();
+  }
+
+  async function onSaveTranscript(lessonId: string, transcript: string) {
+    await coursesApi.updateLesson(lessonId, { transcript });
     load();
   }
 
@@ -418,20 +498,32 @@ export default function ChapterDetailPage() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, flexWrap: "wrap", gap: 8 }}>
                 <FeaturePicker
-                  flashcardsEnabled={lesson.flashcardsEnabled}
-                  onToggleFlashcards={(next) => onToggleLessonFlashcards(lesson, next)}
+                  features={{
+                    flashcardsEnabled: lesson.flashcardsEnabled,
+                    aiNotesEnabled: lesson.aiNotesEnabled,
+                    askMeEnabled: lesson.askMeEnabled,
+                  }}
+                  onToggle={(key, next) => onToggleLessonFeature(lesson, key, next)}
                 />
-                {lesson.flashcardsEnabled && (
-                  <Link
-                    href={`/admin/courses/${courseId}/lessons/${lesson.id}/flashcards`}
-                    style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
-                  >
-                    Manage
-                  </Link>
-                )}
+                <span style={{ display: "flex", gap: 10 }}>
+                  {lesson.flashcardsEnabled && (
+                    <Link href={`/admin/courses/${courseId}/lessons/${lesson.id}/flashcards`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}>
+                      Deck
+                    </Link>
+                  )}
+                  {lesson.aiNotesEnabled && (
+                    <Link href={`/admin/courses/${courseId}/lessons/${lesson.id}/notes`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}>
+                      Notes
+                    </Link>
+                  )}
+                </span>
               </div>
+
+              {lesson.type === "VIDEO" && (lesson.aiNotesEnabled || lesson.askMeEnabled) && (
+                <TranscriptEditor lesson={lesson} onSave={(t) => onSaveTranscript(lesson.id, t)} />
+              )}
             </div>
           ))}
         </div>

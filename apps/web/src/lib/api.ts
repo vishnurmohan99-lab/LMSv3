@@ -65,6 +65,9 @@ export interface Lesson {
   contentUrl: string | null;
   liveAt: string | null;
   flashcardsEnabled: boolean;
+  aiNotesEnabled: boolean;
+  askMeEnabled: boolean;
+  transcript: string | null;
 }
 
 export interface Chapter {
@@ -158,10 +161,27 @@ export const coursesApi = {
 
   createLesson: (
     chapterId: string,
-    data: { title: string; type: LessonType; order?: number; contentUrl?: string; liveAt?: string; flashcardsEnabled?: boolean },
+    data: {
+      title: string;
+      type: LessonType;
+      order?: number;
+      contentUrl?: string;
+      liveAt?: string;
+      flashcardsEnabled?: boolean;
+      aiNotesEnabled?: boolean;
+      askMeEnabled?: boolean;
+      transcript?: string;
+    },
   ) => request<Lesson>(`/chapters/${chapterId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
-  updateLesson: (id: string, data: Partial<Pick<Lesson, 'title' | 'type' | 'order' | 'contentUrl' | 'liveAt' | 'flashcardsEnabled'>>) =>
-    request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  updateLesson: (
+    id: string,
+    data: Partial<
+      Pick<
+        Lesson,
+        'title' | 'type' | 'order' | 'contentUrl' | 'liveAt' | 'flashcardsEnabled' | 'aiNotesEnabled' | 'askMeEnabled' | 'transcript'
+      >
+    >,
+  ) => request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeLesson: (id: string) => request<{ success: boolean }>(`/lessons/${id}`, { method: 'DELETE' }),
 };
 
@@ -189,6 +209,36 @@ export const flashcardsApi = {
     request<{ id: string }>(`/flashcards/${id}/progress`, { method: 'POST', body: JSON.stringify({ status }) }),
   generate: (lessonId: string, count?: number) =>
     request<Flashcard[]>(`/lessons/${lessonId}/flashcards/generate`, { method: 'POST', body: JSON.stringify({ count }) }),
+};
+
+export interface LessonNote {
+  id: string;
+  summary: string;
+  keyPoints: string[];
+  lessonId: string;
+  updatedAt: string;
+}
+
+export const notesApi = {
+  get: (lessonId: string) => request<LessonNote | null>(`/lessons/${lessonId}/notes`),
+  generate: (lessonId: string) => request<LessonNote>(`/lessons/${lessonId}/notes/generate`, { method: 'POST' }),
+};
+
+export type ChatRole = 'USER' | 'ASSISTANT';
+
+export interface ChatMessage {
+  id: string;
+  role: ChatRole;
+  content: string;
+  lessonId: string;
+  createdAt: string;
+}
+
+export const chatApi = {
+  history: (lessonId: string) => request<ChatMessage[]>(`/lessons/${lessonId}/chat`),
+  send: (lessonId: string, message: string) =>
+    request<ChatMessage>(`/lessons/${lessonId}/chat`, { method: 'POST', body: JSON.stringify({ message }) }),
+  reset: (lessonId: string) => request<{ success: boolean }>(`/lessons/${lessonId}/chat`, { method: 'DELETE' }),
 };
 
 export const uploadsApi = {

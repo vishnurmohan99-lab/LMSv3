@@ -28,11 +28,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  courses            Course[]            @relation("FacultyCourses")
-  questionBanks      QuestionBank[]      @relation("FacultyQuestionBanks")
-  tests              Test[]              @relation("FacultyTests")
-  enrollments        Enrollment[]
-  flashcardProgress  FlashcardProgress[]
+  courses           Course[]            @relation("FacultyCourses")
+  questionBanks     QuestionBank[]      @relation("FacultyQuestionBanks")
+  tests             Test[]              @relation("FacultyTests")
+  enrollments       Enrollment[]
+  flashcardProgress FlashcardProgress[]
+  chatMessages      ChatMessage[]
 }
 
 model Course {
@@ -108,20 +109,55 @@ enum LessonType {
 }
 
 model Lesson {
-  id         String     @id @default(uuid())
-  title      String
-  order      Int        @default(0)
-  type       LessonType
-  contentUrl String?
-  liveAt     DateTime?
-  flashcardsEnabled Boolean @default(false)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id                String     @id @default(uuid())
+  title             String
+  order             Int        @default(0)
+  type              LessonType
+  contentUrl        String?
+  liveAt            DateTime?
+  flashcardsEnabled Boolean    @default(false)
+  aiNotesEnabled    Boolean    @default(false)
+  askMeEnabled      Boolean    @default(false)
+  transcript        String?    @db.Text
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   chapterId String
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
-  flashcards Flashcard[]
+  flashcards   Flashcard[]
+  note         LessonNote?
+  chatMessages ChatMessage[]
+}
+
+model LessonNote {
+  id        String   @id @default(uuid())
+  summary   String   @db.Text
+  keyPoints String[] @default([])
+  updatedAt DateTime @updatedAt
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  role      ChatRole
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId, studentId, createdAt])
 }
 
 enum FlashcardStatus {

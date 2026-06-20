@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, ApiError, type Chapter, type CourseTree, type Lesson } from "@/lib/api";
 import FlashcardReview from "@/components/FlashcardReview";
+import LessonNotes from "@/components/LessonNotes";
+import AskMeChat from "@/components/AskMeChat";
 
 function LessonIcon({ type, active }: { type: Lesson["type"]; active: boolean }) {
   const color = active ? "var(--orange)" : "var(--ink3)";
@@ -244,6 +246,16 @@ export default function StudentCoursePlayerPage() {
                 {selectedLesson.flashcardsEnabled && (
                   <div style={{ marginTop: 24 }}>
                     <FlashcardReview lessonId={selectedLesson.id} />
+                  </div>
+                )}
+                {selectedLesson.aiNotesEnabled && (
+                  <div style={{ marginTop: 24 }}>
+                    <LessonNotes lessonId={selectedLesson.id} />
+                  </div>
+                )}
+                {selectedLesson.askMeEnabled && (
+                  <div style={{ marginTop: 24 }}>
+                    <AskMeChat lessonId={selectedLesson.id} />
                   </div>
                 )}
               </div>

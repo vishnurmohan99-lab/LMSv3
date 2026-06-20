@@ -10,6 +10,7 @@ import { AdminModule } from './admin/admin.module';
 import { SegmentsModule } from './segments/segments.module';
 import { QuestionBanksModule } from './question-banks/question-banks.module';
 import { TestsModule } from './tests/tests.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TestsModule } from './tests/tests.module';
     SegmentsModule,
     QuestionBanksModule,
     TestsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

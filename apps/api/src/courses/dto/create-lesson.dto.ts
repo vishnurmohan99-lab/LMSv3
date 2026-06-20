@@ -24,4 +24,16 @@ export class CreateLessonDto {
   @IsOptional()
   @IsBoolean()
   flashcardsEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  aiNotesEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  askMeEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  transcript?: string;
 }
