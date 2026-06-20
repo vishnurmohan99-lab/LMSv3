@@ -38,6 +38,17 @@ function CoursesIcon({ active }: { active: boolean }) {
   );
 }
 
+function QuestionBankIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.4" />
+      <circle cx="12" cy="17" r=".6" fill={c} stroke="none" />
+    </svg>
+  );
+}
+
 function UsersIcon({ active }: { active: boolean }) {
   const c = active ? "#fff" : "var(--ink2)";
   return (
@@ -71,6 +82,7 @@ const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", Icon: DashboardIcon },
   { href: "/admin/segments", label: "Segments", Icon: SegmentsIcon },
   { href: "/admin/courses", label: "Courses", Icon: CoursesIcon },
+  { href: "/admin/question-banks", label: "Question Banks", Icon: QuestionBankIcon },
   { href: "/admin/users", label: "Users", Icon: UsersIcon },
 ];
 

@@ -29,6 +29,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   courses            Course[]            @relation("FacultyCourses")
+  questionBanks      QuestionBank[]      @relation("FacultyQuestionBanks")
   enrollments        Enrollment[]
   flashcardProgress  FlashcardProgress[]
 }
@@ -161,4 +162,42 @@ model Enrollment {
   enrolledAt DateTime @default(now())
 
   @@unique([studentId, courseId])
+}
+
+model QuestionBank {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @default("")
+  bannerUrl   String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  facultyId String
+  faculty   User   @relation("FacultyQuestionBanks", fields: [facultyId], references: [id])
+
+  questions Question[]
+}
+
+enum QuestionType {
+  MCQ
+  FILL_BLANK
+  ESSAY
+  TRUE_FALSE
+}
+
+model Question {
+  id     String       @id @default(uuid())
+  type   QuestionType
+  prompt String
+  order  Int          @default(0)
+
+  options       String[] @default([])
+  correctOption String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questionBankId String
+  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
 }

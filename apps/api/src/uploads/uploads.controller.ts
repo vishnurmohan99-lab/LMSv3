@@ -15,4 +15,9 @@ export class UploadsController {
   presign(@Body() dto: PresignUploadDto) {
     return this.uploadsService.presignUpload(dto.fileName, dto.contentType);
   }
+
+  @Post('question-image-presign')
+  presignQuestionImage(@Body() dto: PresignUploadDto) {
+    return this.uploadsService.presignPublicImageUpload(dto.fileName, dto.contentType);
+  }
 }

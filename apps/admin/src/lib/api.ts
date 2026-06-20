@@ -214,4 +214,66 @@ export const uploadsApi = {
     }
     return key;
   },
+
+  async uploadQuestionImage(file: File): Promise<string> {
+    const { uploadUrl, publicUrl } = await request<{ uploadUrl: string; publicUrl: string }>('/uploads/question-image-presign', {
+      method: 'POST',
+      body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+    });
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, 'Image upload failed');
+    }
+    return publicUrl;
+  },
+};
+
+export type QuestionType = 'MCQ' | 'FILL_BLANK' | 'ESSAY' | 'TRUE_FALSE';
+
+export interface Question {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  order: number;
+  options: string[];
+  correctOption: string | null;
+  questionBankId: string;
+}
+
+export interface QuestionBank {
+  id: string;
+  title: string;
+  description: string;
+  bannerUrl: string | null;
+  published: boolean;
+  facultyId: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { questions: number };
+}
+
+export interface QuestionBankTree extends QuestionBank {
+  questions: Question[];
+}
+
+export const questionBanksApi = {
+  list: () => request<QuestionBank[]>('/question-banks'),
+  get: (id: string) => request<QuestionBankTree>(`/question-banks/${id}`),
+  create: (data: { title: string; description?: string; bannerUrl?: string }) =>
+    request<QuestionBank>('/question-banks', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Pick<QuestionBank, 'title' | 'description' | 'bannerUrl' | 'published'>>) =>
+    request<QuestionBank>(`/question-banks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/question-banks/${id}`, { method: 'DELETE' }),
+
+  createQuestion: (
+    bankId: string,
+    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string },
+  ) => request<Question>(`/question-banks/${bankId}/questions`, { method: 'POST', body: JSON.stringify(data) }),
+  updateQuestion: (id: string, data: Partial<Pick<Question, 'type' | 'prompt' | 'order' | 'options' | 'correctOption'>>) =>
+    request<Question>(`/questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeQuestion: (id: string) => request<{ success: boolean }>(`/questions/${id}`, { method: 'DELETE' }),
 };

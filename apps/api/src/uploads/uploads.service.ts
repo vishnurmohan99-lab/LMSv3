@@ -32,6 +32,20 @@ export class UploadsService {
     return { uploadUrl, key };
   }
 
+  async presignPublicImageUpload(fileName: string, contentType: string) {
+    const safeName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const key = `question-images/${randomUUID()}-${safeName}`;
+
+    const uploadUrl = await getSignedUrl(
+      this.client,
+      new PutObjectCommand({ Bucket: this.bucket, Key: key, ContentType: contentType }),
+      { expiresIn: UPLOAD_URL_TTL_SECONDS },
+    );
+
+    const publicUrl = `${process.env.R2_PUBLIC_BASE_URL}/${key}`;
+    return { uploadUrl, publicUrl };
+  }
+
   async presignDownload(key: string) {
     return getSignedUrl(this.client, new GetObjectCommand({ Bucket: this.bucket, Key: key }), {
       expiresIn: DOWNLOAD_URL_TTL_SECONDS,
