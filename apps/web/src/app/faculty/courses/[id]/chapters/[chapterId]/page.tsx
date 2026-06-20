@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, uploadsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
+import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -208,6 +208,9 @@ export default function FacultyChapterDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddLesson, setShowAddLesson] = useState(false);
+  const [showAddTest, setShowAddTest] = useState(false);
+  const [newTestTitle, setNewTestTitle] = useState("");
+  const [addingTest, setAddingTest] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editBanner, setEditBanner] = useState<File | null>(null);
@@ -318,11 +321,42 @@ export default function FacultyChapterDetailPage() {
           <button onClick={onDeleteChapter} style={{ ...btnStyle, background: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
             <TrashIcon /> Delete chapter
           </button>
+          <button onClick={() => setShowAddTest((s) => !s)} style={{ ...btnStyle, background: "var(--bg)", color: "var(--ink2)" }}>
+            {showAddTest ? "Close" : "+ Add test"}
+          </button>
           <button onClick={() => setShowAddLesson((s) => !s)} style={btnStyle}>
             {showAddLesson ? "Close" : "+ Add lesson"}
           </button>
         </span>
       </div>
+
+      {showAddTest && (
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setAddingTest(true);
+            try {
+              const test = await testsApi.create({ title: newTestTitle, chapterId });
+              router.push(`/faculty/tests/${test.id}`);
+            } finally {
+              setAddingTest(false);
+            }
+          }}
+          style={{ display: "flex", gap: 8, marginTop: 10, marginBottom: 16 }}
+        >
+          <input
+            required
+            autoFocus
+            placeholder="Test title"
+            value={newTestTitle}
+            onChange={(e) => setNewTestTitle(e.target.value)}
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button type="submit" disabled={addingTest} style={{ ...btnStyle, opacity: addingTest ? 0.7 : 1 }}>
+            {addingTest ? "Creating…" : "Create test"}
+          </button>
+        </form>
+      )}
 
       {showAddLesson && (
         <NewLessonForm

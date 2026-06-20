@@ -201,6 +201,24 @@ export default function FacultyDashboardPage() {
               Manage all →
             </Link>
           </div>
+
+          <div
+            style={{
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--rl)",
+              padding: 22,
+              marginTop: 18,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Tests</div>
+            <Link href="/faculty/tests" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
+              Manage all →
+            </Link>
+          </div>
         </>
       )}
     </main>

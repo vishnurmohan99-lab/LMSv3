@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, uploadsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
+import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 
@@ -231,6 +231,9 @@ export default function ChapterDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showAddLesson, setShowAddLesson] = useState(false);
+  const [showAddTest, setShowAddTest] = useState(false);
+  const [newTestTitle, setNewTestTitle] = useState("");
+  const [addingTest, setAddingTest] = useState(false);
   const [showEditChapter, setShowEditChapter] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editBanner, setEditBanner] = useState<File | null>(null);
@@ -326,6 +329,9 @@ export default function ChapterDetailPage() {
           <button onClick={onDeleteChapter} style={{ ...btnStyle, background: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
             <TrashIcon /> Delete chapter
           </button>
+          <button onClick={() => setShowAddTest(true)} style={{ ...btnStyle, background: "var(--bg)", color: "var(--ink2)", display: "flex", alignItems: "center", gap: 7 }}>
+            <PlusIcon /> Add test
+          </button>
           <button onClick={() => setShowAddLesson(true)} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 7 }}>
             <PlusIcon /> Add lesson
           </button>
@@ -341,6 +347,34 @@ export default function ChapterDetailPage() {
               load();
             }}
           />
+        </Modal>
+      )}
+
+      {showAddTest && (
+        <Modal title="Add test" onClose={() => setShowAddTest(false)}>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setAddingTest(true);
+              try {
+                const test = await testsApi.create({ title: newTestTitle, chapterId });
+                router.push(`/admin/tests/${test.id}`);
+              } finally {
+                setAddingTest(false);
+              }
+            }}
+            style={{ display: "grid", gap: 14 }}
+          >
+            <input required autoFocus placeholder="Test title" value={newTestTitle} onChange={(e) => setNewTestTitle(e.target.value)} style={inputStyle} />
+            <button
+              type="submit"
+              disabled={addingTest}
+              style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: addingTest ? 0.7 : 1 }}
+            >
+              {addingTest && <Spinner />}
+              {addingTest ? "Creating…" : "Create test"}
+            </button>
+          </form>
         </Modal>
       )}
 

@@ -30,6 +30,7 @@ model User {
 
   courses            Course[]            @relation("FacultyCourses")
   questionBanks      QuestionBank[]      @relation("FacultyQuestionBanks")
+  tests              Test[]              @relation("FacultyTests")
   enrollments        Enrollment[]
   flashcardProgress  FlashcardProgress[]
 }
@@ -96,6 +97,7 @@ model Chapter {
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   lessons Lesson[]
+  tests   Test[]
 }
 
 enum LessonType {
@@ -200,4 +202,47 @@ model Question {
 
   questionBankId String
   questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+}
+
+enum TestPublishMode {
+  MANUAL
+  TIMED
+}
+
+model Test {
+  id              String          @id @default(uuid())
+  title           String
+  description     String          @default("")
+  bannerUrl       String?
+  published       Boolean         @default(false)
+  publishMode     TestPublishMode @default(MANUAL)
+  availableFrom   DateTime?
+  availableUntil  DateTime?
+  durationMinutes Int?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  facultyId String
+  faculty   User   @relation("FacultyTests", fields: [facultyId], references: [id])
+
+  chapterId String?
+  chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+
+  testQuestions TestQuestion[]
+}
+
+model TestQuestion {
+  id     String       @id @default(uuid())
+  type   QuestionType
+  prompt String
+  order  Int          @default(0)
+
+  options       String[] @default([])
+  correctOption String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
 }

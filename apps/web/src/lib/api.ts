@@ -274,3 +274,72 @@ export const questionBanksApi = {
     request<Question>(`/questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeQuestion: (id: string) => request<{ success: boolean }>(`/questions/${id}`, { method: 'DELETE' }),
 };
+
+export type TestPublishMode = 'MANUAL' | 'TIMED';
+
+export interface TestQuestion {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  order: number;
+  options: string[];
+  correctOption: string | null;
+  testId: string;
+}
+
+export interface Test {
+  id: string;
+  title: string;
+  description: string;
+  bannerUrl: string | null;
+  published: boolean;
+  publishMode: TestPublishMode;
+  availableFrom: string | null;
+  availableUntil: string | null;
+  durationMinutes: number | null;
+  facultyId: string;
+  chapterId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { testQuestions: number };
+}
+
+export interface TestTree extends Test {
+  testQuestions: TestQuestion[];
+}
+
+export const testsApi = {
+  list: () => request<Test[]>('/tests'),
+  get: (id: string) => request<TestTree>(`/tests/${id}`),
+  create: (data: { title: string; description?: string; bannerUrl?: string; chapterId?: string }) =>
+    request<Test>('/tests', { method: 'POST', body: JSON.stringify(data) }),
+  update: (
+    id: string,
+    data: Partial<
+      Pick<
+        Test,
+        | 'title'
+        | 'description'
+        | 'bannerUrl'
+        | 'published'
+        | 'publishMode'
+        | 'availableFrom'
+        | 'availableUntil'
+        | 'durationMinutes'
+        | 'chapterId'
+      >
+    >,
+  ) => request<Test>(`/tests/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/tests/${id}`, { method: 'DELETE' }),
+
+  createQuestion: (
+    testId: string,
+    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string },
+  ) => request<TestQuestion>(`/tests/${testId}/questions`, { method: 'POST', body: JSON.stringify(data) }),
+  updateQuestion: (id: string, data: Partial<Pick<TestQuestion, 'type' | 'prompt' | 'order' | 'options' | 'correctOption'>>) =>
+    request<TestQuestion>(`/test-questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeQuestion: (id: string) => request<{ success: boolean }>(`/test-questions/${id}`, { method: 'DELETE' }),
+
+  importQuestions: (testId: string, data: { questionBankId: string; questionIds?: string[] }) =>
+    request<TestQuestion[]>(`/tests/${testId}/import-questions`, { method: 'POST', body: JSON.stringify(data) }),
+};

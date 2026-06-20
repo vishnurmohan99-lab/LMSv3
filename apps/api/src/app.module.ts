@@ -9,9 +9,20 @@ import { CoursesModule } from './courses/courses.module';
 import { AdminModule } from './admin/admin.module';
 import { SegmentsModule } from './segments/segments.module';
 import { QuestionBanksModule } from './question-banks/question-banks.module';
+import { TestsModule } from './tests/tests.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, UploadsModule, CoursesModule, AdminModule, SegmentsModule, QuestionBanksModule],
+  imports: [
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    UploadsModule,
+    CoursesModule,
+    AdminModule,
+    SegmentsModule,
+    QuestionBanksModule,
+    TestsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
