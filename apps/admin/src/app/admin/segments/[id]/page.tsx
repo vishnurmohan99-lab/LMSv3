@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
+import Spinner from "@/components/Spinner";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -79,9 +80,10 @@ function CourseRow({ course, onRemove }: { course: Course; onRemove: () => void 
   );
 }
 
-function AddCoursePicker({ allCourses, onPick }: { allCourses: Course[]; onPick: (courseId: string) => void }) {
+function AddCoursePicker({ allCourses, onPick }: { allCourses: Course[]; onPick: (courseId: string) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [assigningId, setAssigningId] = useState<string | null>(null);
 
   const matches = useMemo(
     () => allCourses.filter((c) => c.title.toLowerCase().includes(search.toLowerCase())).slice(0, 8),
@@ -94,6 +96,17 @@ function AddCoursePicker({ allCourses, onPick }: { allCourses: Course[]; onPick:
         + Add existing course
       </button>
     );
+  }
+
+  async function handlePick(courseId: string) {
+    setAssigningId(courseId);
+    try {
+      await onPick(courseId);
+      setOpen(false);
+      setSearch("");
+    } finally {
+      setAssigningId(null);
+    }
   }
 
   return (
@@ -112,26 +125,29 @@ function AddCoursePicker({ allCourses, onPick }: { allCourses: Course[]; onPick:
           {matches.map((c) => (
             <button
               key={c.id}
-              onClick={() => {
-                onPick(c.id);
-                setOpen(false);
-                setSearch("");
-              }}
+              disabled={assigningId !== null}
+              onClick={() => handlePick(c.id)}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
+                alignItems: "center",
                 padding: "8px 10px",
                 background: "var(--bg)",
                 border: "none",
                 borderRadius: 7,
                 fontSize: 13,
                 fontFamily: "inherit",
-                cursor: "pointer",
+                cursor: assigningId !== null ? "default" : "pointer",
                 textAlign: "left",
+                opacity: assigningId !== null && assigningId !== c.id ? 0.5 : 1,
               }}
             >
               <span>{c.title}</span>
-              <span style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}>Add</span>
+              {assigningId === c.id ? (
+                <Spinner size={13} color="var(--orange)" />
+              ) : (
+                <span style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}>Add</span>
+              )}
             </button>
           ))}
         </div>
@@ -195,12 +211,12 @@ export default function SegmentDetailPage() {
 
   async function onAssignToSegment(courseId: string) {
     await coursesApi.update(courseId, { segmentId, subsegmentId: undefined });
-    load();
+    await load();
   }
 
   async function onAssignToSubsegment(courseId: string, subsegmentId: string) {
     await coursesApi.update(courseId, { segmentId, subsegmentId });
-    load();
+    await load();
   }
 
   async function onRemoveFromCategory(courseId: string) {
@@ -250,7 +266,22 @@ export default function SegmentDetailPage() {
                 onChange={(e) => setNewSubName(e.target.value)}
                 style={{ ...inputStyle, width: "100%", marginBottom: 14 }}
               />
-              <button type="submit" disabled={addingSub} style={{ ...smallBtn, width: "100%", padding: "11px 18px", fontSize: 14, opacity: addingSub ? 0.7 : 1 }}>
+              <button
+                type="submit"
+                disabled={addingSub}
+                style={{
+                  ...smallBtn,
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "11px 18px",
+                  fontSize: 14,
+                  opacity: addingSub ? 0.7 : 1,
+                }}
+              >
+                {addingSub && <Spinner />}
                 {addingSub ? "Adding…" : "Add sub-segment"}
               </button>
             </form>

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, segmentsApi, uploadsApi, ApiError, type CourseTree, type LessonType, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
+import Spinner from "@/components/Spinner";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -87,8 +88,13 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
       {type === "LIVE" && (
         <input type="datetime-local" value={liveAt} onChange={(e) => setLiveAt(e.target.value)} style={inputStyle} />
       )}
-      <button type="submit" disabled={busy} style={{ ...btnStyle, opacity: busy ? 0.7 : 1 }}>
-        {busy ? "Adding…" : "Add lesson"}
+      <button
+        type="submit"
+        disabled={busy}
+        style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: busy ? 0.7 : 1 }}
+      >
+        {busy && <Spinner />}
+        {busy ? (type === "VIDEO" || type === "PDF" ? "Uploading…" : "Adding…") : "Add lesson"}
       </button>
       {error && <span style={{ color: "var(--red)", fontSize: 12 }}>{error}</span>}
     </form>
@@ -106,6 +112,7 @@ export default function AdminCourseAuthoringPage() {
 
   const [showAddChapter, setShowAddChapter] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState("");
+  const [addingChapter, setAddingChapter] = useState(false);
 
   const [addLessonChapterId, setAddLessonChapterId] = useState<string | null>(null);
 
@@ -131,10 +138,15 @@ export default function AdminCourseAuthoringPage() {
   async function onAddChapter(e: React.FormEvent) {
     e.preventDefault();
     if (!newChapterTitle.trim()) return;
-    await coursesApi.createChapter(courseId, { title: newChapterTitle });
-    setNewChapterTitle("");
-    setShowAddChapter(false);
-    load();
+    setAddingChapter(true);
+    try {
+      await coursesApi.createChapter(courseId, { title: newChapterTitle });
+      setNewChapterTitle("");
+      setShowAddChapter(false);
+      load();
+    } finally {
+      setAddingChapter(false);
+    }
   }
 
   async function onDeleteChapter(id: string) {
@@ -225,8 +237,21 @@ export default function AdminCourseAuthoringPage() {
               onChange={(e) => setNewChapterTitle(e.target.value)}
               style={{ ...inputStyle, width: "100%", marginBottom: 14 }}
             />
-            <button type="submit" style={{ ...btnStyle, width: "100%" }}>
-              Add chapter
+            <button
+              type="submit"
+              disabled={addingChapter}
+              style={{
+                ...btnStyle,
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                opacity: addingChapter ? 0.7 : 1,
+              }}
+            >
+              {addingChapter && <Spinner />}
+              {addingChapter ? "Adding…" : "Add chapter"}
             </button>
           </form>
         </Modal>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
+import Spinner from "@/components/Spinner";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -144,6 +145,10 @@ export default function AdminCoursesPage() {
               disabled={creating}
               style={{
                 width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
                 padding: "11px 18px",
                 background: "var(--ink)",
                 color: "#fff",
@@ -156,6 +161,7 @@ export default function AdminCoursesPage() {
                 opacity: creating ? 0.7 : 1,
               }}
             >
+              {creating && <Spinner />}
               {creating ? "Creating…" : "Create course"}
             </button>
           </form>

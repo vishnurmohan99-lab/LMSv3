@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { segmentsApi, ApiError, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
+import Spinner from "@/components/Spinner";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -207,6 +208,10 @@ export default function AdminSegmentsPage() {
               type="submit"
               disabled={creating || needsSubsegments === null}
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
                 padding: "11px 20px",
                 background: "var(--ink)",
                 color: "#fff",
@@ -219,6 +224,7 @@ export default function AdminSegmentsPage() {
                 opacity: creating || needsSubsegments === null ? 0.6 : 1,
               }}
             >
+              {creating && <Spinner />}
               {creating ? "Creating…" : "Create segment"}
             </button>
           </form>
