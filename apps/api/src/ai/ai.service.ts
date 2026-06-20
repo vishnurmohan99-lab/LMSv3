@@ -1,5 +1,49 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+/**
+ * Extracts the first balanced JSON array/object from raw AI text, ignoring brackets that
+ * appear inside string literals and any commentary before/after. A naive greedy regex
+ * (`/\[[\s\S]*\]/`) matches from the first opening bracket to the *last* closing bracket in
+ * the whole response, so trailing prose containing brackets corrupts the match — this scans
+ * with bracket-depth tracking instead, stopping at the first value that actually balances.
+ */
+export function extractFirstJsonValue(raw: string, open: '[' | '{', close: ']' | '}'): string | null {
+  const start = raw.indexOf(open);
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === open) {
+      depth++;
+    } else if (ch === close) {
+      depth--;
+      if (depth === 0) {
+        return raw.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
 @Injectable()
 export class AiService {
   async complete(prompt: string, opts?: { model?: string }): Promise<string> {

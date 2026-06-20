@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
-import { AiService } from '../ai/ai.service';
+import { AiService, extractFirstJsonValue } from '../ai/ai.service';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { LessonType } from '../../generated/prisma/client';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -267,19 +267,30 @@ export class CoursesService {
     throw new BadRequestException('AI features currently require a PDF lesson with an uploaded file, or a video lesson with a transcript');
   }
 
-  private async callAiForFlashcards(content: string, count: number): Promise<{ front: string; back: string }[]> {
-    const raw = await this.ai.complete(
-      `Generate exactly ${count} study flashcards from the following lesson content. Respond with ONLY a JSON array, no markdown, no commentary, in this exact shape: [{"front": "question", "back": "answer"}]. Keep each side concise.\n\nLesson content:\n${content}`,
-    );
-
-    const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new BadRequestException('AI response did not contain a valid flashcard list');
+  /**
+   * Calls the AI and extracts a balanced JSON value, retrying once if the model's first
+   * response doesn't contain one (the free OpenRouter model occasionally returns a plain-text
+   * refusal/chitchat reply instead of the requested JSON).
+   */
+  private async completeJsonText(prompt: string, open: '[' | '{', close: ']' | '}'): Promise<string> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const raw = await this.ai.complete(prompt);
+      const jsonText = extractFirstJsonValue(raw, open, close);
+      if (jsonText) return jsonText;
     }
+    throw new BadRequestException('AI did not return a valid response after retrying');
+  }
+
+  private async callAiForFlashcards(content: string, count: number): Promise<{ front: string; back: string }[]> {
+    const jsonText = await this.completeJsonText(
+      `Generate exactly ${count} study flashcards from the following lesson content. Respond with ONLY a JSON array, no markdown, no commentary, in this exact shape: [{"front": "question", "back": "answer"}]. Keep each side concise.\n\nLesson content:\n${content}`,
+      '[',
+      ']',
+    );
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(jsonMatch[0]);
+      parsed = JSON.parse(jsonText);
     } catch {
       throw new BadRequestException('AI response was not valid JSON');
     }
@@ -331,18 +342,15 @@ export class CoursesService {
   }
 
   private async callAiForNotes(content: string): Promise<{ summary: string; keyPoints: string[] }> {
-    const raw = await this.ai.complete(
+    const jsonText = await this.completeJsonText(
       `Write concise study notes for the following lesson content. Respond with ONLY a JSON object, no markdown, no commentary, in this exact shape: {"summary": "a short paragraph summarizing the lesson", "keyPoints": ["key point 1", "key point 2"]}.\n\nLesson content:\n${content}`,
+      '{',
+      '}',
     );
-
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new BadRequestException('AI response did not contain valid notes');
-    }
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(jsonMatch[0]);
+      parsed = JSON.parse(jsonText);
     } catch {
       throw new BadRequestException('AI response was not valid JSON');
     }
