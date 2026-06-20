@@ -60,6 +60,19 @@ export const usersApi = {
     request<Profile>(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
 };
 
+export interface AdminStats {
+  totalUsers: number;
+  usersByRole: { STUDENT: number; FACULTY: number; ADMIN: number };
+  totalCourses: number;
+  publishedCourses: number;
+  totalEnrollments: number;
+  recentUsers: Profile[];
+}
+
+export const adminApi = {
+  stats: () => request<AdminStats>('/admin/stats'),
+};
+
 export type LessonType = 'VIDEO' | 'PDF' | 'LIVE' | 'FLASHCARD';
 
 export interface Lesson {
