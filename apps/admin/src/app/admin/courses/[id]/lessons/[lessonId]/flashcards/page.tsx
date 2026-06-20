@@ -60,7 +60,7 @@ export default function ManageFlashcardsPage() {
   }
 
   return (
-    <main style={{ padding: 40, maxWidth: 700 }}>
+    <div style={{ padding: 40, maxWidth: 700 }}>
       <Link href={`/admin/courses/${courseId}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
         ← Back to course
       </Link>
@@ -139,6 +139,6 @@ export default function ManageFlashcardsPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

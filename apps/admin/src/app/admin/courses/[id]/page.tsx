@@ -147,13 +147,13 @@ export default function AdminCourseAuthoringPage() {
     load();
   }
 
-  if (loading) return <main style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></main>;
-  if (error || !course) return <main style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Course not found"}</p></main>;
+  if (loading) return <div style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></div>;
+  if (error || !course) return <div style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Course not found"}</p></div>;
 
   const selectedSegment = segments.find((s) => s.id === course.segmentId);
 
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--orange)", textTransform: "uppercase", marginBottom: 4 }}>
@@ -256,6 +256,6 @@ export default function AdminCourseAuthoringPage() {
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

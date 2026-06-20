@@ -85,7 +85,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>User Management</div>
 
       <section
@@ -238,6 +238,6 @@ export default function AdminUsersPage() {
           </table>
         )}
       </section>
-    </main>
+    </div>
   );
 }

@@ -118,7 +118,7 @@ export default function AdminSegmentsPage() {
   }
 
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>Segments</div>
 
       <section
@@ -243,6 +243,6 @@ export default function AdminSegmentsPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

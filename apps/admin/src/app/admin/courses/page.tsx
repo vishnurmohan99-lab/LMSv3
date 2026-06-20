@@ -65,7 +65,7 @@ export default function AdminCoursesPage() {
   }
 
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>Courses</div>
 
       {contextSegment && (
@@ -206,6 +206,6 @@ export default function AdminCoursesPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }
