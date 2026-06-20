@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
 import Modal from "@/components/Modal";
@@ -65,10 +66,12 @@ function SparkleIcon() {
 type FeatureKey = "flashcardsEnabled" | "aiNotesEnabled" | "askMeEnabled";
 
 const AVAILABLE_FEATURES: { key: FeatureKey; label: string }[] = [
-  { key: "flashcardsEnabled", label: "AI Deck" },
+  { key: "flashcardsEnabled", label: "Flashcards" },
   { key: "aiNotesEnabled", label: "AI Notes" },
   { key: "askMeEnabled", label: "Ask Me" },
 ];
+
+const MENU_WIDTH = 180;
 
 function FeaturePicker({
   features,
@@ -78,14 +81,37 @@ function FeaturePicker({
   onToggle: (key: FeatureKey, next: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const anyEnabled = AVAILABLE_FEATURES.some((f) => features[f.key]);
   const enabledLabels = AVAILABLE_FEATURES.filter((f) => features[f.key]).map((f) => f.label);
 
+  function openMenu() {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) {
+      const left = Math.min(Math.max(8, rect.right - MENU_WIDTH), window.innerWidth - MENU_WIDTH - 8);
+      setPos({ top: rect.bottom + 6, left });
+    }
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [open]);
+
   return (
-    <div style={{ position: "relative" }}>
+    <>
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? setOpen(false) : openMenu())}
         style={{
           display: "flex",
           alignItems: "center",
@@ -104,54 +130,91 @@ function FeaturePicker({
         <SparkleIcon />
         {anyEnabled ? enabledLabels.join(", ") : "Add feature"}
       </button>
-      {open && (
-        <div
-          className="modal-panel"
-          style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 20,
-            background: "var(--card)",
-            border: "1px solid var(--line)",
-            borderRadius: 10,
-            boxShadow: "0 12px 32px rgba(0,0,0,.12)",
-            padding: 8,
-            minWidth: 160,
-          }}
-        >
-          {AVAILABLE_FEATURES.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => {
-                onToggle(f.key, !features[f.key]);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-                padding: "8px 10px",
-                background: "none",
-                border: "none",
-                borderRadius: 7,
-                fontSize: 13,
-                fontFamily: "inherit",
-                cursor: "pointer",
-                color: "var(--ink)",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-            >
-              {f.label}
-              {features[f.key] && <span style={{ color: "var(--orange)", fontWeight: 700 }}>✓</span>}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      {open &&
+        pos &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="modal-panel"
+            style={{
+              position: "fixed",
+              top: pos.top,
+              left: pos.left,
+              zIndex: 300,
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: 10,
+              boxShadow: "0 12px 32px rgba(0,0,0,.18)",
+              padding: 8,
+              minWidth: MENU_WIDTH,
+            }}
+          >
+            {AVAILABLE_FEATURES.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => {
+                  onToggle(f.key, !features[f.key]);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  padding: "8px 10px",
+                  background: "none",
+                  border: "none",
+                  borderRadius: 7,
+                  fontSize: 13,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  color: "var(--ink)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+              >
+                {f.label}
+                {features[f.key] && <span style={{ color: "var(--orange)", fontWeight: 700 }}>✓</span>}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
+    </>
   );
+}
+
+function FeatureBadge({ label, href }: { label: string; href?: string }) {
+  const content = (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "4px 9px",
+        background: "var(--orange-soft)",
+        color: "var(--orange)",
+        borderRadius: 7,
+        fontSize: 11,
+        fontWeight: 700,
+      }}
+    >
+      {label}
+    </span>
+  );
+  return href ? <Link href={href}>{content}</Link> : content;
+}
+
+function lessonContentStatus(lesson: Lesson): string {
+  if (lesson.type === "VIDEO") return lesson.contentUrl ? "Video uploaded" : "No video uploaded yet";
+  if (lesson.type === "PDF") return lesson.contentUrl ? "PDF uploaded" : "No PDF uploaded yet";
+  if (lesson.type === "LIVE") return lesson.liveAt ? new Date(lesson.liveAt).toLocaleString() : "Not scheduled yet";
+  return "";
+}
+
+function lessonContentReady(lesson: Lesson): boolean {
+  if (lesson.type === "VIDEO" || lesson.type === "PDF") return !!lesson.contentUrl;
+  if (lesson.type === "LIVE") return !!lesson.liveAt;
+  return true;
 }
 
 function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () => void }) {
@@ -423,7 +486,7 @@ export default function ChapterDetailPage() {
       </div>
 
       {showAddLesson && (
-        <Modal title="Add lesson" onClose={() => setShowAddLesson(false)}>
+        <Modal title="Add lesson" onClose={() => setShowAddLesson(false)} maxWidth={560}>
           <NewLessonForm
             chapterId={chapterId}
             onDone={() => {
@@ -485,12 +548,12 @@ export default function ChapterDetailPage() {
       {chapter.lessons.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No lessons yet — add the first one above.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
           {chapter.lessons.map((lesson) => (
-            <div key={lesson.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+            <div key={lesson.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>{lesson.title}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{lesson.title}</div>
                   <LessonTypeBadge type={lesson.type} />
                 </div>
                 <button onClick={() => onDeleteLesson(lesson.id)} title="Remove" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
@@ -498,28 +561,30 @@ export default function ChapterDetailPage() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, flexWrap: "wrap", gap: 8 }}>
-                <FeaturePicker
-                  features={{
-                    flashcardsEnabled: lesson.flashcardsEnabled,
-                    aiNotesEnabled: lesson.aiNotesEnabled,
-                    askMeEnabled: lesson.askMeEnabled,
-                  }}
-                  onToggle={(key, next) => onToggleLessonFeature(lesson, key, next)}
-                />
-                <span style={{ display: "flex", gap: 10 }}>
+              <div style={{ fontSize: 12, color: lessonContentReady(lesson) ? "var(--ink2)" : "var(--amber)" }}>
+                {lessonContentStatus(lesson)}
+              </div>
+
+              {(lesson.flashcardsEnabled || lesson.aiNotesEnabled || lesson.askMeEnabled) && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {lesson.flashcardsEnabled && (
-                    <Link href={`/admin/courses/${courseId}/lessons/${lesson.id}/flashcards`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}>
-                      Deck
-                    </Link>
+                    <FeatureBadge label="Flashcards" href={`/admin/courses/${courseId}/lessons/${lesson.id}/flashcards`} />
                   )}
                   {lesson.aiNotesEnabled && (
-                    <Link href={`/admin/courses/${courseId}/lessons/${lesson.id}/notes`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}>
-                      Notes
-                    </Link>
+                    <FeatureBadge label="AI Notes" href={`/admin/courses/${courseId}/lessons/${lesson.id}/notes`} />
                   )}
-                </span>
-              </div>
+                  {lesson.askMeEnabled && <FeatureBadge label="Ask Me" />}
+                </div>
+              )}
+
+              <FeaturePicker
+                features={{
+                  flashcardsEnabled: lesson.flashcardsEnabled,
+                  aiNotesEnabled: lesson.aiNotesEnabled,
+                  askMeEnabled: lesson.askMeEnabled,
+                }}
+                onToggle={(key, next) => onToggleLessonFeature(lesson, key, next)}
+              />
 
               {lesson.type === "VIDEO" && (lesson.aiNotesEnabled || lesson.askMeEnabled) && (
                 <TranscriptEditor lesson={lesson} onSave={(t) => onSaveTranscript(lesson.id, t)} />
