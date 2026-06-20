@@ -15,6 +15,7 @@ import {
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import RichTextEditor from "@/components/RichTextEditor";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -366,6 +367,7 @@ export default function AdminTestDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const testId = params.id;
+  const confirm = useConfirm();
 
   const [test, setTest] = useState<TestTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -403,6 +405,7 @@ export default function AdminTestDetailPage() {
   }
 
   async function onDeleteTest() {
+    if (!(await confirm({ message: "Delete this test and all its questions? This cannot be undone." }))) return;
     await testsApi.remove(testId);
     router.push("/admin/tests");
   }
@@ -426,6 +429,7 @@ export default function AdminTestDetailPage() {
   }
 
   async function onDeleteQuestion(id: string) {
+    if (!(await confirm({ message: "Delete this question? This cannot be undone." }))) return;
     await testsApi.removeQuestion(id);
     load();
   }

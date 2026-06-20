@@ -6,6 +6,7 @@ import Link from "next/link";
 import { coursesApi, segmentsApi, uploadsApi, ApiError, type CourseTree, type LessonType, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -112,6 +113,7 @@ function ChapterBanner({ url, name }: { url: string | null; name: string }) {
 export default function AdminCourseAuthoringPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
+  const confirm = useConfirm();
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -164,6 +166,7 @@ export default function AdminCourseAuthoringPage() {
   }
 
   async function onDeleteChapter(id: string) {
+    if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(id);
     load();
   }

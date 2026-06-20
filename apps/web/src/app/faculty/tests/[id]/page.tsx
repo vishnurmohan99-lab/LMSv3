@@ -13,6 +13,7 @@ import {
   type Question,
 } from "@/lib/api";
 import RichTextEditor from "@/components/RichTextEditor";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -331,6 +332,7 @@ export default function FacultyTestDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const testId = params.id;
+  const confirm = useConfirm();
 
   const [test, setTest] = useState<TestTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -368,6 +370,7 @@ export default function FacultyTestDetailPage() {
   }
 
   async function onDeleteTest() {
+    if (!(await confirm({ message: "Delete this test and all its questions? This cannot be undone." }))) return;
     await testsApi.remove(testId);
     router.push("/faculty/tests");
   }
@@ -391,6 +394,7 @@ export default function FacultyTestDetailPage() {
   }
 
   async function onDeleteQuestion(id: string) {
+    if (!(await confirm({ message: "Delete this question? This cannot be undone." }))) return;
     await testsApi.removeQuestion(id);
     load();
   }

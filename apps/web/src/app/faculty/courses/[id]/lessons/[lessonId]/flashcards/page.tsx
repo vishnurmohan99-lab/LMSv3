@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { flashcardsApi, ApiError, type Flashcard } from "@/lib/api";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -19,6 +20,7 @@ const inputStyle: React.CSSProperties = {
 export default function ManageFlashcardsPage() {
   const params = useParams<{ id: string; lessonId: string }>();
   const { id: courseId, lessonId } = params;
+  const confirm = useConfirm();
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +58,7 @@ export default function ManageFlashcardsPage() {
   }
 
   async function onDelete(id: string) {
+    if (!(await confirm({ message: "Delete this flashcard? This cannot be undone." }))) return;
     await flashcardsApi.remove(id);
     load();
   }

@@ -6,6 +6,7 @@ import { questionBanksApi, ApiError, type QuestionBankTree, type Question, type 
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import RichTextEditor from "@/components/RichTextEditor";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -249,6 +250,7 @@ export default function AdminQuestionBankDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const bankId = params.id;
+  const confirm = useConfirm();
 
   const [bank, setBank] = useState<QuestionBankTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -284,6 +286,7 @@ export default function AdminQuestionBankDetailPage() {
   }
 
   async function onDeleteBank() {
+    if (!(await confirm({ message: "Delete this question bank and all its questions? This cannot be undone." }))) return;
     await questionBanksApi.remove(bankId);
     router.push("/admin/question-banks");
   }
@@ -307,6 +310,7 @@ export default function AdminQuestionBankDetailPage() {
   }
 
   async function onDeleteQuestion(id: string) {
+    if (!(await confirm({ message: "Delete this question? This cannot be undone." }))) return;
     await questionBanksApi.removeQuestion(id);
     load();
   }

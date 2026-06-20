@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { questionBanksApi, ApiError, type QuestionBankTree, type Question, type QuestionType } from "@/lib/api";
 import RichTextEditor from "@/components/RichTextEditor";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -215,6 +216,7 @@ export default function FacultyQuestionBankDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const bankId = params.id;
+  const confirm = useConfirm();
 
   const [bank, setBank] = useState<QuestionBankTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -250,6 +252,7 @@ export default function FacultyQuestionBankDetailPage() {
   }
 
   async function onDeleteBank() {
+    if (!(await confirm({ message: "Delete this question bank and all its questions? This cannot be undone." }))) return;
     await questionBanksApi.remove(bankId);
     router.push("/faculty/question-banks");
   }
@@ -273,6 +276,7 @@ export default function FacultyQuestionBankDetailPage() {
   }
 
   async function onDeleteQuestion(id: string) {
+    if (!(await confirm({ message: "Delete this question? This cannot be undone." }))) return;
     await questionBanksApi.removeQuestion(id);
     load();
   }

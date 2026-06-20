@@ -5,6 +5,7 @@ import Link from "next/link";
 import { questionBanksApi, uploadsApi, ApiError, type QuestionBank } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const BANNER_HEIGHT = 110;
 
@@ -116,6 +117,7 @@ function StatusBadge({ published }: { published: boolean }) {
 }
 
 export default function AdminQuestionBanksPage() {
+  const confirm = useConfirm();
   const [banks, setBanks] = useState<QuestionBank[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,6 +176,7 @@ export default function AdminQuestionBanksPage() {
   }
 
   async function onDelete(id: string) {
+    if (!(await confirm({ message: "Delete this question bank and all its questions? This cannot be undone." }))) return;
     try {
       await questionBanksApi.remove(id);
       load();

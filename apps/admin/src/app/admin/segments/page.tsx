@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { segmentsApi, uploadsApi, ApiError, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const BANNER_HEIGHT = 110;
 
@@ -101,6 +102,7 @@ function TrashIcon() {
 
 export default function AdminSegmentsPage() {
   const router = useRouter();
+  const confirm = useConfirm();
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,7 +167,8 @@ export default function AdminSegmentsPage() {
     }
   }
 
-  async function onDeleteSegment(id: string) {
+  async function onDeleteSegment(id: string, name: string) {
+    if (!(await confirm({ message: `Delete the segment "${name}"? This cannot be undone.` }))) return;
     try {
       await segmentsApi.remove(id);
       load();
@@ -358,7 +361,7 @@ export default function AdminSegmentsPage() {
                       <EditIcon />
                     </button>
                     <button
-                      onClick={() => onDeleteSegment(segment.id)}
+                      onClick={() => onDeleteSegment(segment.id, segment.name)}
                       title="Delete"
                       style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >

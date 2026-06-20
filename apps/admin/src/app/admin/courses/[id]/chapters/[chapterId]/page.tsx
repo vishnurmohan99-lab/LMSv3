@@ -6,6 +6,7 @@ import Link from "next/link";
 import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -225,6 +226,7 @@ export default function ChapterDetailPage() {
   const router = useRouter();
   const courseId = params.id;
   const chapterId = params.chapterId;
+  const confirm = useConfirm();
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -253,6 +255,7 @@ export default function ChapterDetailPage() {
   const chapter = course?.chapters.find((c) => c.id === chapterId);
 
   async function onDeleteLesson(id: string) {
+    if (!(await confirm({ message: "Delete this lesson? This cannot be undone." }))) return;
     await coursesApi.removeLesson(id);
     load();
   }
@@ -263,6 +266,7 @@ export default function ChapterDetailPage() {
   }
 
   async function onDeleteChapter() {
+    if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(chapterId);
     router.push(`/admin/courses/${courseId}`);
   }

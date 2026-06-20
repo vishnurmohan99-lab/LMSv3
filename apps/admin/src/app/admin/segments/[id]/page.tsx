@@ -6,6 +6,7 @@ import Link from "next/link";
 import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -175,6 +176,7 @@ function AddCoursePicker({ allCourses, onPick }: { allCourses: Course[]; onPick:
 export default function SegmentDetailPage() {
   const params = useParams<{ id: string }>();
   const segmentId = params.id;
+  const confirm = useConfirm();
 
   const [segment, setSegment] = useState<Segment | null>(null);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
@@ -215,6 +217,7 @@ export default function SegmentDetailPage() {
   }
 
   async function onDeleteSubsegment(id: string) {
+    if (!(await confirm({ message: "Delete this sub-segment? This cannot be undone." }))) return;
     await segmentsApi.removeSubsegment(id);
     load();
   }

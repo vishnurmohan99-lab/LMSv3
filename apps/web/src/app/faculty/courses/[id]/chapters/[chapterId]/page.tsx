@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -203,6 +204,7 @@ export default function FacultyChapterDetailPage() {
   const router = useRouter();
   const courseId = params.id;
   const chapterId = params.chapterId;
+  const confirm = useConfirm();
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -230,6 +232,7 @@ export default function FacultyChapterDetailPage() {
   const chapter = course?.chapters.find((c) => c.id === chapterId);
 
   async function onDeleteLesson(id: string) {
+    if (!(await confirm({ message: "Delete this lesson? This cannot be undone." }))) return;
     await coursesApi.removeLesson(id);
     load();
   }
@@ -240,6 +243,7 @@ export default function FacultyChapterDetailPage() {
   }
 
   async function onDeleteChapter() {
+    if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(chapterId);
     router.push(`/faculty/courses/${courseId}`);
   }

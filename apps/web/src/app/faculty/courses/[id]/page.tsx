@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, uploadsApi, ApiError, type CourseTree } from "@/lib/api";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -55,6 +56,7 @@ function TrashIcon() {
 export default function CourseAuthoringPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
+  const confirm = useConfirm();
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,6 +96,7 @@ export default function CourseAuthoringPage() {
   }
 
   async function onDeleteChapter(id: string) {
+    if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(id);
     load();
   }
