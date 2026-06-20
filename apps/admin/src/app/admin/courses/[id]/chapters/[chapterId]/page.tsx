@@ -31,6 +31,15 @@ const btnStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 function PlusIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6">
@@ -306,55 +315,111 @@ function LessonTypeBadge({ type }: { type: LessonType }) {
   return <span style={{ color: "var(--ink3)", fontSize: 12 }}>{type}</span>;
 }
 
-function TranscriptEditor({ lesson, onSave }: { lesson: Lesson; onSave: (transcript: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(lesson.transcript ?? "");
-  const [saving, setSaving] = useState(false);
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        style={{ marginTop: 10, background: "none", border: "none", color: "var(--ink3)", fontSize: 12, cursor: "pointer", padding: 0 }}
-      >
-        {lesson.transcript ? "Edit transcript" : "+ Add transcript"}
-      </button>
+function LessonPreview({ lesson }: { lesson: Lesson }) {
+  if (lesson.type === "VIDEO") {
+    return lesson.contentUrl ? (
+      <video controls src={lesson.contentUrl} style={{ width: "100%", borderRadius: 8, background: "#000" }} />
+    ) : (
+      <p style={{ fontSize: 13, color: "var(--ink3)" }}>No video uploaded yet.</p>
     );
+  }
+  if (lesson.type === "PDF") {
+    return lesson.contentUrl ? (
+      <iframe src={lesson.contentUrl} style={{ width: "100%", height: 400, border: "1px solid var(--line)", borderRadius: 8 }} />
+    ) : (
+      <p style={{ fontSize: 13, color: "var(--ink3)" }}>No PDF uploaded yet.</p>
+    );
+  }
+  if (lesson.type === "LIVE") {
+    return (
+      <p style={{ fontSize: 13, color: "var(--ink2)" }}>
+        {lesson.liveAt ? `Scheduled for ${new Date(lesson.liveAt).toLocaleString()}` : "Not scheduled yet."}
+      </p>
+    );
+  }
+  return null;
+}
+
+function toLocalDatetimeValue(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function EditLessonForm({
+  lesson,
+  onSave,
+}: {
+  lesson: Lesson;
+  onSave: (data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) => Promise<void>;
+}) {
+  const [title, setTitle] = useState(lesson.title);
+  const [file, setFile] = useState<File | null>(null);
+  const [liveAt, setLiveAt] = useState(lesson.liveAt ? toLocalDatetimeValue(lesson.liveAt) : "");
+  const [transcript, setTranscript] = useState(lesson.transcript ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    try {
+      let contentUrl: string | undefined;
+      if ((lesson.type === "VIDEO" || lesson.type === "PDF") && file) {
+        contentUrl = await uploadsApi.uploadFile(file);
+      }
+      await onSave({
+        title,
+        contentUrl,
+        liveAt: lesson.type === "LIVE" && liveAt ? new Date(liveAt).toISOString() : undefined,
+        transcript: lesson.type === "VIDEO" ? transcript : undefined,
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update lesson");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-      <textarea
-        autoFocus
-        placeholder="Paste the video transcript so AI Notes / Ask Me can use it"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        rows={5}
-        style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
-      />
-      <div style={{ display: "flex", gap: 8 }}>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={async () => {
-            setSaving(true);
-            try {
-              await onSave(value);
-              setOpen(false);
-            } finally {
-              setSaving(false);
-            }
-          }}
-          style={{ ...btnStyle, opacity: saving ? 0.7 : 1 }}
-        >
-          {saving ? "Saving…" : "Save transcript"}
-        </button>
-        <button type="button" onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 13, cursor: "pointer" }}>
-          Cancel
-        </button>
-      </div>
-    </div>
+    <form onSubmit={onSubmit} style={{ display: "grid", gap: 10 }}>
+      <input required autoFocus value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
+      {(lesson.type === "VIDEO" || lesson.type === "PDF") && (
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
+            {lesson.contentUrl ? "Replace file (optional)" : "Upload file"}
+          </div>
+          <input
+            type="file"
+            accept={lesson.type === "VIDEO" ? "video/mp4,video/webm,video/quicktime" : "application/pdf"}
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            style={{ fontSize: 13 }}
+          />
+        </div>
+      )}
+      {lesson.type === "LIVE" && (
+        <input type="datetime-local" value={liveAt} onChange={(e) => setLiveAt(e.target.value)} style={inputStyle} />
+      )}
+      {lesson.type === "VIDEO" && (
+        <textarea
+          placeholder="Paste the video transcript so AI Notes / Ask Me can use it"
+          value={transcript}
+          onChange={(e) => setTranscript(e.target.value)}
+          rows={5}
+          style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
+        />
+      )}
+      <button
+        type="submit"
+        disabled={saving}
+        style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: saving ? 0.7 : 1 }}
+      >
+        {saving && <Spinner />}
+        {saving ? "Saving…" : "Save changes"}
+      </button>
+      {error && <span style={{ color: "var(--red)", fontSize: 12 }}>{error}</span>}
+    </form>
   );
 }
 
@@ -377,6 +442,8 @@ export default function ChapterDetailPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editBanner, setEditBanner] = useState<File | null>(null);
   const [savingChapter, setSavingChapter] = useState(false);
+  const [viewingLesson, setViewingLesson] = useState<Lesson | null>(null);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
   function load() {
     setLoading(true);
@@ -402,8 +469,9 @@ export default function ChapterDetailPage() {
     load();
   }
 
-  async function onSaveTranscript(lessonId: string, transcript: string) {
-    await coursesApi.updateLesson(lessonId, { transcript });
+  async function onUpdateLesson(lessonId: string, data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) {
+    await coursesApi.updateLesson(lessonId, data);
+    setEditingLesson(null);
     load();
   }
 
@@ -544,6 +612,18 @@ export default function ChapterDetailPage() {
         </Modal>
       )}
 
+      {viewingLesson && (
+        <Modal title={viewingLesson.title} onClose={() => setViewingLesson(null)} maxWidth={680}>
+          <LessonPreview lesson={viewingLesson} />
+        </Modal>
+      )}
+
+      {editingLesson && (
+        <Modal title="Edit lesson" onClose={() => setEditingLesson(null)} maxWidth={560}>
+          <EditLessonForm lesson={editingLesson} onSave={(data) => onUpdateLesson(editingLesson.id, data)} />
+        </Modal>
+      )}
+
       {chapter.lessons.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No lessons yet — add the first one above.</p>
       ) : (
@@ -555,9 +635,25 @@ export default function ChapterDetailPage() {
                   <div style={{ fontWeight: 700, fontSize: 15 }}>{lesson.title}</div>
                   <LessonTypeBadge type={lesson.type} />
                 </div>
-                <button onClick={() => onDeleteLesson(lesson.id)} title="Remove" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                  <TrashIcon />
-                </button>
+                <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <button
+                    onClick={() => setViewingLesson(lesson)}
+                    title="View lesson"
+                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    <EyeIcon />
+                  </button>
+                  <button
+                    onClick={() => setEditingLesson(lesson)}
+                    title="Edit lesson"
+                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    <EditIcon />
+                  </button>
+                  <button onClick={() => onDeleteLesson(lesson.id)} title="Delete lesson" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    <TrashIcon />
+                  </button>
+                </span>
               </div>
 
               <div style={{ fontSize: 12, color: lessonContentReady(lesson) ? "var(--ink2)" : "var(--amber)" }}>
@@ -584,10 +680,6 @@ export default function ChapterDetailPage() {
                 }}
                 onToggle={(key, next) => onToggleLessonFeature(lesson, key, next)}
               />
-
-              {lesson.type === "VIDEO" && (lesson.aiNotesEnabled || lesson.askMeEnabled) && (
-                <TranscriptEditor lesson={lesson} onSave={(t) => onSaveTranscript(lesson.id, t)} />
-              )}
             </div>
           ))}
         </div>
