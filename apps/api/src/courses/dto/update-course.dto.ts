@@ -20,9 +20,9 @@ export class UpdateCourseDto {
 
   @IsOptional()
   @IsString()
-  segmentId?: string;
+  segmentId?: string | null;
 
   @IsOptional()
   @IsString()
-  subsegmentId?: string;
+  subsegmentId?: string | null;
 }

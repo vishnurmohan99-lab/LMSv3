@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
 
@@ -15,26 +14,47 @@ const inputStyle: React.CSSProperties = {
   background: "var(--bg)",
 };
 
-export default function AdminCoursesPage() {
-  const searchParams = useSearchParams();
-  const filterSegmentId = searchParams.get("segmentId") ?? "";
-  const filterSubsegmentId = searchParams.get("subsegmentId") ?? "";
+function PlusIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
 
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+
+export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState("");
-  const [segmentId, setSegmentId] = useState(filterSegmentId);
-  const [subsegmentId, setSubsegmentId] = useState(filterSubsegmentId);
-  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT">("ALL");
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [creating, setCreating] = useState(false);
 
   function load() {
     setLoading(true);
-    Promise.all([
-      coursesApi.list(filterSegmentId ? { segmentId: filterSegmentId, subsegmentId: filterSubsegmentId } : undefined),
-      segmentsApi.list(),
-    ])
+    Promise.all([coursesApi.list(), segmentsApi.list()])
       .then(([c, s]) => {
         setCourses(c);
         setSegments(s);
@@ -43,19 +63,33 @@ export default function AdminCoursesPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(load, [filterSegmentId, filterSubsegmentId]);
+  useEffect(load, []);
 
-  const selectedSegment = segments.find((s) => s.id === segmentId);
-  const contextSegment = segments.find((s) => s.id === filterSegmentId);
-  const contextSubsegment = contextSegment?.subsegments.find((s) => s.id === filterSubsegmentId);
+  function categoryLabel(course: Course): string {
+    if (!course.segmentId) return "Uncategorized";
+    const segment = segments.find((s) => s.id === course.segmentId);
+    if (!segment) return "Uncategorized";
+    const subsegment = segment.subsegments.find((sub) => sub.id === course.subsegmentId);
+    return subsegment ? `${segment.name} / ${subsegment.name}` : segment.name;
+  }
+
+  const filteredCourses = useMemo(() => {
+    return courses.filter((c) => {
+      if (statusFilter === "PUBLISHED" && !c.published) return false;
+      if (statusFilter === "DRAFT" && c.published) return false;
+      if (search && !c.title.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+  }, [courses, search, statusFilter]);
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCreating(true);
     try {
-      await coursesApi.create({ title, segmentId, subsegmentId: subsegmentId || undefined });
+      await coursesApi.create({ title });
       setTitle("");
+      setShowAddForm(false);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create course");
@@ -66,83 +100,14 @@ export default function AdminCoursesPage() {
 
   return (
     <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>Courses</div>
-
-      {contextSegment && (
-        <div
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Courses</div>
+        <button
+          onClick={() => setShowAddForm((v) => !v)}
           style={{
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
-            padding: "10px 16px",
-            background: "var(--orange-soft)",
-            borderRadius: "var(--rm)",
-            marginBottom: 18,
-            fontSize: 13,
-          }}
-        >
-          <span>
-            Showing courses in <b>{contextSegment.name}</b>
-            {contextSubsegment && <> / <b>{contextSubsegment.name}</b></>}
-          </span>
-          <Link href="/admin/courses" style={{ color: "var(--orange)", fontWeight: 700 }}>
-            Clear filter
-          </Link>
-        </div>
-      )}
-
-      <form
-        onSubmit={onCreate}
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          marginBottom: 22,
-          background: "var(--card)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--rm)",
-          padding: 16,
-        }}
-      >
-        <input
-          required
-          placeholder="New course title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ ...inputStyle, flex: "1 1 200px" }}
-        />
-        <select
-          required
-          value={segmentId}
-          onChange={(e) => {
-            setSegmentId(e.target.value);
-            setSubsegmentId("");
-          }}
-          style={inputStyle}
-        >
-          <option value="" disabled>
-            Select segment
-          </option>
-          {segments.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        {selectedSegment && selectedSegment.subsegments.length > 0 && (
-          <select value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={inputStyle}>
-            <option value="">No sub-segment</option>
-            {selectedSegment.subsegments.map((sub) => (
-              <option key={sub.id} value={sub.id}>
-                {sub.name}
-              </option>
-            ))}
-          </select>
-        )}
-        <button
-          type="submit"
-          disabled={creating}
-          style={{
+            gap: 8,
             padding: "10px 18px",
             background: "var(--ink)",
             color: "#fff",
@@ -151,61 +116,136 @@ export default function AdminCoursesPage() {
             fontSize: 14,
             fontWeight: 700,
             fontFamily: "inherit",
-            cursor: creating ? "default" : "pointer",
-            opacity: creating ? 0.7 : 1,
-            whiteSpace: "nowrap",
+            cursor: "pointer",
           }}
         >
-          {creating ? "Creating…" : "Create course"}
+          <PlusIcon />
+          Add course
         </button>
-      </form>
+      </div>
+
+      {showAddForm && (
+        <form
+          onSubmit={onCreate}
+          style={{
+            display: "flex",
+            gap: 10,
+            marginBottom: 18,
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--rm)",
+            padding: 16,
+          }}
+        >
+          <input
+            required
+            autoFocus
+            placeholder="Course name"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            type="submit"
+            disabled={creating}
+            style={{
+              padding: "10px 18px",
+              background: "var(--ink)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: creating ? "default" : "pointer",
+              opacity: creating ? 0.7 : 1,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {creating ? "Creating…" : "Create"}
+          </button>
+        </form>
+      )}
+
+      <p style={{ color: "var(--ink3)", fontSize: 12.5, marginBottom: 18 }}>
+        Courses are created uncategorized — assign them to a segment or sub-segment from the Segments page.
+      </p>
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
-      {!loading && segments.length === 0 && (
-        <p style={{ color: "var(--amber)", fontSize: 13, marginBottom: 16 }}>
-          No segments exist yet — create one on the Segments page before adding new courses.
-        </p>
-      )}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+        <input
+          placeholder="Search courses…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ ...inputStyle, flex: 1 }}
+        />
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} style={inputStyle}>
+          <option value="ALL">All statuses</option>
+          <option value="PUBLISHED">Published</option>
+          <option value="DRAFT">Draft</option>
+        </select>
+      </div>
 
-      {loading ? (
-        <p style={{ color: "var(--ink2)" }}>Loading…</p>
-      ) : courses.length === 0 ? (
-        <p style={{ color: "var(--ink2)" }}>No courses yet. Create the first one above.</p>
-      ) : (
-        <div style={{ display: "grid", gap: 12 }}>
-          {courses.map((c) => (
-            <Link
-              key={c.id}
-              href={`/admin/courses/${c.id}`}
-              style={{
-                display: "block",
-                padding: 18,
-                background: "var(--card)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--rm)",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 700 }}>{c.title}</span>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    padding: "4px 10px",
-                    borderRadius: 8,
-                    background: c.published ? "var(--green-soft)" : "var(--amber-soft)",
-                    color: c.published ? "var(--green)" : "var(--amber)",
-                  }}
-                >
-                  {c.published ? "Published" : "Draft"}
-                </span>
-              </div>
-              {c.description && <p style={{ color: "var(--ink2)", fontSize: 13, marginTop: 6 }}>{c.description}</p>}
-            </Link>
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rl)",
+          padding: 22,
+        }}
+      >
+        {loading ? (
+          <p style={{ color: "var(--ink2)" }}>Loading…</p>
+        ) : filteredCourses.length === 0 ? (
+          <p style={{ color: "var(--ink2)" }}>No courses match.</p>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+            <thead>
+              <tr style={{ textAlign: "left", color: "var(--ink2)", borderBottom: "1px solid var(--line)" }}>
+                <th style={{ padding: "8px 6px" }}>Title</th>
+                <th style={{ padding: "8px 6px" }}>Status</th>
+                <th style={{ padding: "8px 6px" }}>Category</th>
+                <th style={{ padding: "8px 6px", textAlign: "right" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCourses.map((c) => (
+                <tr key={c.id} style={{ borderBottom: "1px solid var(--line2)" }}>
+                  <td style={{ padding: "10px 6px", fontWeight: 700 }}>{c.title}</td>
+                  <td style={{ padding: "10px 6px" }}>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        padding: "4px 10px",
+                        borderRadius: 8,
+                        background: c.published ? "var(--green-soft)" : "var(--amber-soft)",
+                        color: c.published ? "var(--green)" : "var(--amber)",
+                      }}
+                    >
+                      {c.published ? "Published" : "Draft"}
+                    </span>
+                  </td>
+                  <td style={{ padding: "10px 6px", color: c.segmentId ? "var(--ink)" : "var(--ink3)" }}>
+                    {categoryLabel(c)}
+                  </td>
+                  <td style={{ padding: "10px 6px", textAlign: "right" }}>
+                    <span style={{ display: "inline-flex", gap: 10 }}>
+                      <Link href={`/admin/courses/${c.id}`} title="View" style={{ display: "flex" }}>
+                        <EyeIcon />
+                      </Link>
+                      <Link href={`/admin/courses/${c.id}`} title="Edit" style={{ display: "flex" }}>
+                        <EditIcon />
+                      </Link>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

@@ -117,18 +117,6 @@ export default function AdminCourseAuthoringPage() {
     setCourse({ ...course, published: updated.published });
   }
 
-  async function onChangeSegment(newSegmentId: string) {
-    if (!course) return;
-    const updated = await coursesApi.update(course.id, { segmentId: newSegmentId, subsegmentId: undefined });
-    setCourse({ ...course, segmentId: updated.segmentId, subsegmentId: updated.subsegmentId });
-  }
-
-  async function onChangeSubsegment(newSubsegmentId: string) {
-    if (!course) return;
-    const updated = await coursesApi.update(course.id, { subsegmentId: newSubsegmentId || undefined });
-    setCourse({ ...course, subsegmentId: updated.subsegmentId });
-  }
-
   async function onAddChapter(e: React.FormEvent) {
     e.preventDefault();
     if (!newChapterTitle.trim()) return;
@@ -150,7 +138,13 @@ export default function AdminCourseAuthoringPage() {
   if (loading) return <div style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></div>;
   if (error || !course) return <div style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Course not found"}</p></div>;
 
-  const selectedSegment = segments.find((s) => s.id === course.segmentId);
+  const courseSegment = segments.find((s) => s.id === course.segmentId);
+  const courseSubsegment = courseSegment?.subsegments.find((sub) => sub.id === course.subsegmentId);
+  const categoryLabel = courseSegment
+    ? courseSubsegment
+      ? `${courseSegment.name} / ${courseSubsegment.name}`
+      : courseSegment.name
+    : "Uncategorized";
 
   return (
     <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
@@ -179,34 +173,22 @@ export default function AdminCourseAuthoringPage() {
           display: "flex",
           gap: 10,
           marginTop: 20,
-          padding: 16,
+          padding: "12px 16px",
           background: "var(--card)",
           border: "1px solid var(--line)",
           borderRadius: "var(--rm)",
           alignItems: "center",
+          fontSize: 13,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>Category:</span>
-        <select value={course.segmentId ?? ""} onChange={(e) => onChangeSegment(e.target.value)} style={inputStyle}>
-          <option value="" disabled>
-            Select segment
-          </option>
-          {segments.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        {selectedSegment && selectedSegment.subsegments.length > 0 && (
-          <select value={course.subsegmentId ?? ""} onChange={(e) => onChangeSubsegment(e.target.value)} style={inputStyle}>
-            <option value="">No sub-segment</option>
-            {selectedSegment.subsegments.map((sub) => (
-              <option key={sub.id} value={sub.id}>
-                {sub.name}
-              </option>
-            ))}
-          </select>
-        )}
+        <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Category:</span>
+        <span style={{ color: courseSegment ? "var(--ink)" : "var(--ink3)" }}>{categoryLabel}</span>
+        <span style={{ color: "var(--ink3)", marginLeft: "auto" }}>
+          Assign this course to a segment from the{" "}
+          <Link href="/admin/segments" style={{ color: "var(--orange)", fontWeight: 700 }}>
+            Segments page
+          </Link>
+        </span>
       </div>
 
       <form onSubmit={onAddChapter} style={{ display: "flex", gap: 10, marginTop: 28, marginBottom: 20 }}>

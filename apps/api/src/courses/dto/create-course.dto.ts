@@ -9,8 +9,9 @@ export class CreateCourseDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
   @IsString()
-  segmentId: string;
+  segmentId?: string;
 
   @IsOptional()
   @IsString()

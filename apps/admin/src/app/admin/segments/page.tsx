@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { segmentsApi, ApiError, type Segment } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
@@ -14,64 +15,53 @@ const inputStyle: React.CSSProperties = {
   background: "var(--bg)",
 };
 
-function AddSubsegmentForm({ segmentId, onAdded }: { segmentId: string; onAdded: () => void }) {
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setBusy(true);
-    try {
-      await segmentsApi.createSubsegment(segmentId, { name });
-      setName("");
-      onAdded();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to add subsegment");
-    } finally {
-      setBusy(false);
-    }
-  }
-
+function PlusIcon() {
   return (
-    <form onSubmit={onSubmit} style={{ display: "flex", gap: 8, marginTop: 10 }}>
-      <input
-        required
-        placeholder="New subsegment name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        style={{ ...inputStyle, flex: 1 }}
-      />
-      <button
-        type="submit"
-        disabled={busy}
-        style={{
-          padding: "9px 16px",
-          background: "var(--ink)",
-          color: "#fff",
-          border: "none",
-          borderRadius: 9,
-          fontSize: 12.5,
-          fontWeight: 700,
-          fontFamily: "inherit",
-          cursor: busy ? "default" : "pointer",
-          opacity: busy ? 0.7 : 1,
-        }}
-      >
-        {busy ? "Adding…" : "Add subsegment"}
-      </button>
-      {error && <span style={{ color: "var(--red)", fontSize: 12, alignSelf: "center" }}>{error}</span>}
-    </form>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.8">
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+    </svg>
   );
 }
 
 export default function AdminSegmentsPage() {
+  const router = useRouter();
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
+  const [needsSubsegments, setNeedsSubsegments] = useState<boolean | null>(null);
   const [creating, setCreating] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   function load() {
     setLoading(true);
@@ -84,18 +74,40 @@ export default function AdminSegmentsPage() {
 
   useEffect(load, []);
 
+  const filteredSegments = useMemo(
+    () => segments.filter((s) => s.name.toLowerCase().includes(search.toLowerCase())),
+    [segments, search],
+  );
+
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (needsSubsegments === null) return;
     setError(null);
     setCreating(true);
     try {
-      await segmentsApi.create({ name });
+      const segment = await segmentsApi.create({ name });
       setName("");
-      load();
+      setNeedsSubsegments(null);
+      setShowAddForm(false);
+      if (needsSubsegments) {
+        router.push(`/admin/segments/${segment.id}`);
+      } else {
+        load();
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create segment");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function onSaveRename(id: string) {
+    try {
+      await segmentsApi.update(id, { name: editingName });
+      setEditingId(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to rename segment");
     }
   }
 
@@ -108,42 +120,102 @@ export default function AdminSegmentsPage() {
     }
   }
 
-  async function onDeleteSubsegment(id: string) {
-    try {
-      await segmentsApi.removeSubsegment(id);
-      load();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete subsegment");
-    }
-  }
-
   return (
     <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>Segments</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Segments</div>
+        <button
+          onClick={() => setShowAddForm((v) => !v)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 18px",
+            background: "var(--ink)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 700,
+            fontFamily: "inherit",
+            cursor: "pointer",
+          }}
+        >
+          <PlusIcon />
+          Add segment
+        </button>
+      </div>
 
-      <section
-        style={{
-          padding: 20,
-          background: "var(--card)",
-          borderRadius: "var(--rl)",
-          border: "1px solid var(--line)",
-          marginBottom: 18,
-        }}
-      >
-        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Create segment</div>
-        <form onSubmit={onCreate} style={{ display: "flex", gap: 10 }}>
+      {showAddForm && (
+        <form
+          onSubmit={onCreate}
+          style={{
+            display: "grid",
+            gap: 14,
+            marginBottom: 18,
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--rl)",
+            padding: 20,
+          }}
+        >
           <input
             required
+            autoFocus
             placeholder="Segment name (e.g. Competitive Exams)"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            style={{ ...inputStyle, flex: 1 }}
+            style={inputStyle}
           />
+
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
+              Does this segment need sub-segments?
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => setNeedsSubsegments(true)}
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: 10,
+                  border: needsSubsegments === true ? "1px solid var(--ink)" : "1px solid var(--line)",
+                  background: needsSubsegments === true ? "var(--ink)" : "var(--bg)",
+                  color: needsSubsegments === true ? "#fff" : "var(--ink2)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                }}
+              >
+                Yes, add sub-segments
+              </button>
+              <button
+                type="button"
+                onClick={() => setNeedsSubsegments(false)}
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: 10,
+                  border: needsSubsegments === false ? "1px solid var(--ink)" : "1px solid var(--line)",
+                  background: needsSubsegments === false ? "var(--ink)" : "var(--bg)",
+                  color: needsSubsegments === false ? "#fff" : "var(--ink2)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                }}
+              >
+                No, add courses directly
+              </button>
+            </div>
+          </div>
+
           <button
             type="submit"
-            disabled={creating}
+            disabled={creating || needsSubsegments === null}
             style={{
-              padding: "10px 18px",
+              justifySelf: "start",
+              padding: "10px 20px",
               background: "var(--ink)",
               color: "#fff",
               border: "none",
@@ -151,98 +223,103 @@ export default function AdminSegmentsPage() {
               fontSize: 14,
               fontWeight: 700,
               fontFamily: "inherit",
-              cursor: creating ? "default" : "pointer",
-              opacity: creating ? 0.7 : 1,
+              cursor: creating || needsSubsegments === null ? "default" : "pointer",
+              opacity: creating || needsSubsegments === null ? 0.6 : 1,
             }}
           >
-            {creating ? "Creating…" : "Create"}
+            {creating ? "Creating…" : "Create segment"}
           </button>
         </form>
-      </section>
+      )}
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
-      {loading ? (
-        <p style={{ color: "var(--ink2)" }}>Loading…</p>
-      ) : segments.length === 0 ? (
-        <p style={{ color: "var(--ink2)" }}>No segments yet — create one above.</p>
-      ) : (
-        <div style={{ display: "grid", gap: 16 }}>
-          {segments.map((segment) => (
-            <div
-              key={segment.id}
-              style={{
-                background: "var(--card)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--rm)",
-                padding: 18,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <span style={{ fontWeight: 700 }}>{segment.name}</span>
-                  <span style={{ fontSize: 12, color: "var(--ink2)", marginLeft: 10 }}>
-                    {segment._count?.courses ?? 0} courses
-                  </span>
-                </div>
-                <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                  <Link
-                    href={`/admin/courses?segmentId=${segment.id}`}
-                    style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
-                  >
-                    View / add courses
-                  </Link>
-                  <button
-                    onClick={() => onDeleteSegment(segment.id)}
-                    style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}
-                  >
-                    Delete segment
-                  </button>
-                </span>
-              </div>
+      <input
+        placeholder="Search segments…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ ...inputStyle, width: "100%", marginBottom: 16 }}
+      />
 
-              {segment.subsegments.length > 0 && (
-                <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
-                  {segment.subsegments.map((sub) => (
-                    <div
-                      key={sub.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "8px 10px",
-                        background: "var(--bg)",
-                        borderRadius: 8,
-                        fontSize: 13,
-                      }}
-                    >
-                      <span>
-                        {sub.name} <span style={{ color: "var(--ink3)" }}>· {sub._count?.courses ?? 0} courses</span>
-                      </span>
-                      <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        <Link
-                          href={`/admin/courses?segmentId=${segment.id}&subsegmentId=${sub.id}`}
-                          style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
-                        >
-                          View / add courses
+      <div
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rl)",
+          padding: 22,
+        }}
+      >
+        {loading ? (
+          <p style={{ color: "var(--ink2)" }}>Loading…</p>
+        ) : filteredSegments.length === 0 ? (
+          <p style={{ color: "var(--ink2)" }}>No segments match.</p>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+            <thead>
+              <tr style={{ textAlign: "left", color: "var(--ink2)", borderBottom: "1px solid var(--line)" }}>
+                <th style={{ padding: "8px 6px" }}>Name</th>
+                <th style={{ padding: "8px 6px" }}>Sub-segments</th>
+                <th style={{ padding: "8px 6px" }}>Courses</th>
+                <th style={{ padding: "8px 6px", textAlign: "right" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSegments.map((segment) => (
+                <tr key={segment.id} style={{ borderBottom: "1px solid var(--line2)" }}>
+                  <td style={{ padding: "10px 6px", fontWeight: 700 }}>
+                    {editingId === segment.id ? (
+                      <input
+                        autoFocus
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && onSaveRename(segment.id)}
+                        style={{ ...inputStyle, padding: "6px 10px" }}
+                      />
+                    ) : (
+                      segment.name
+                    )}
+                  </td>
+                  <td style={{ padding: "10px 6px", color: "var(--ink2)" }}>{segment.subsegments.length}</td>
+                  <td style={{ padding: "10px 6px", color: "var(--ink2)" }}>{segment._count?.courses ?? 0}</td>
+                  <td style={{ padding: "10px 6px", textAlign: "right" }}>
+                    {editingId === segment.id ? (
+                      <button
+                        onClick={() => onSaveRename(segment.id)}
+                        style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, background: "none", border: "none", cursor: "pointer" }}
+                      >
+                        Save
+                      </button>
+                    ) : (
+                      <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
+                        <Link href={`/admin/segments/${segment.id}`} title="View" style={{ display: "flex" }}>
+                          <EyeIcon />
                         </Link>
                         <button
-                          onClick={() => onDeleteSubsegment(sub.id)}
-                          style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}
+                          onClick={() => {
+                            setEditingId(segment.id);
+                            setEditingName(segment.name);
+                          }}
+                          title="Edit"
+                          style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                         >
-                          Remove
+                          <EditIcon />
+                        </button>
+                        <button
+                          onClick={() => onDeleteSegment(segment.id)}
+                          title="Delete"
+                          style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                        >
+                          <TrashIcon />
                         </button>
                       </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <AddSubsegmentForm segmentId={segment.id} onAdded={load} />
-            </div>
-          ))}
-        </div>
-      )}
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

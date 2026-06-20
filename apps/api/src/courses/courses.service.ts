@@ -99,7 +99,9 @@ export class CoursesService {
   }
 
   async createCourse(user: JwtPayload, dto: CreateCourseDto) {
-    await this.validateSegmentation(dto.segmentId, dto.subsegmentId);
+    if (dto.segmentId) {
+      await this.validateSegmentation(dto.segmentId, dto.subsegmentId);
+    }
     return this.prisma.course.create({
       data: {
         title: dto.title,
@@ -115,13 +117,17 @@ export class CoursesService {
     const course = await this.requireCourse(id);
     this.assertOwnership(user, course.facultyId);
 
+    if (dto.segmentId === null) {
+      // explicit clear: a course without a segment can't keep a subsegment either
+      return this.prisma.course.update({ where: { id }, data: { ...dto, segmentId: null, subsegmentId: null } });
+    }
+
     if (dto.segmentId !== undefined || dto.subsegmentId !== undefined) {
       const segmentId = dto.segmentId ?? course.segmentId;
       const subsegmentId = dto.subsegmentId !== undefined ? dto.subsegmentId : course.subsegmentId;
-      if (!segmentId) {
-        throw new BadRequestException('A course must belong to a segment');
+      if (segmentId) {
+        await this.validateSegmentation(segmentId, subsegmentId ?? undefined);
       }
-      await this.validateSegmentation(segmentId, subsegmentId ?? undefined);
     }
 
     return this.prisma.course.update({ where: { id }, data: dto });

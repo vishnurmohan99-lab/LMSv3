@@ -148,7 +148,7 @@ export const coursesApi = {
     return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string }) =>
+  create: (data: { title: string; description?: string }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
