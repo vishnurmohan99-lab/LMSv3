@@ -54,3 +54,21 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+.entity-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.entity-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, .1);
+}
+
+.banner-gradient-dark {
+  background: linear-gradient(135deg, #1c1c1c, #2c2620);
+}
+
+.banner-gradient-orange {
+  background: linear-gradient(135deg, #f7902b, #f24d1b);
+}

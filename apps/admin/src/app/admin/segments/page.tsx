@@ -7,19 +7,52 @@ import { segmentsApi, uploadsApi, ApiError, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 
-const BANNER_HEIGHT = 100;
+const BANNER_HEIGHT = 110;
 
-function CardBanner({ url }: { url: string | null }) {
+function initials(name: string) {
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+function CardBanner({ url, name }: { url: string | null; name: string }) {
+  if (url) {
+    return (
+      <div style={{ position: "relative", height: BANNER_HEIGHT, background: `url(${url}) center/cover` }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
+      </div>
+    );
+  }
   return (
-    <div
-      style={{
-        height: BANNER_HEIGHT,
-        borderRadius: "var(--rm) var(--rm) 0 0",
-        background: url ? `url(${url}) center/cover` : "var(--bg)",
-        border: "1px solid var(--line)",
-        borderBottom: "none",
-      }}
-    />
+    <div className="banner-gradient-dark" style={{ position: "relative", height: BANNER_HEIGHT, overflow: "hidden" }}>
+      <div
+        style={{
+          position: "absolute",
+          right: -30,
+          bottom: -30,
+          width: 120,
+          height: 120,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(242,106,27,.35), transparent 70%)",
+        }}
+      />
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          className="banner-gradient-orange"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 15,
+          }}
+        >
+          {initials(name)}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -275,14 +308,15 @@ export default function AdminSegmentsPage() {
           {filteredSegments.map((segment) => (
             <div
               key={segment.id}
+              className="entity-card"
               style={{
                 background: "var(--card)",
                 border: "1px solid var(--line)",
-                borderRadius: "var(--rm)",
+                borderRadius: "var(--rl)",
                 overflow: "hidden",
               }}
             >
-              <CardBanner url={segment.bannerUrl} />
+              <CardBanner url={segment.bannerUrl} name={segment.name} />
               <div style={{ padding: 16 }}>
                 {editingId === segment.id ? (
                   <input

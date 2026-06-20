@@ -157,21 +157,42 @@ export default function FacultyCoursesPage() {
             <Link
               key={c.id}
               href={`/faculty/courses/${c.id}`}
+              className="entity-card"
               style={{
                 display: "block",
                 background: "var(--card)",
                 border: "1px solid var(--line)",
-                borderRadius: "var(--rm)",
+                borderRadius: "var(--rl)",
                 overflow: "hidden",
               }}
             >
-              <div
-                style={{
-                  height: 100,
-                  background: c.thumbnailUrl ? `url(${c.thumbnailUrl}) center/cover` : "var(--bg)",
-                  borderBottom: "1px solid var(--line)",
-                }}
-              />
+              {c.thumbnailUrl ? (
+                <div style={{ position: "relative", height: 110, background: `url(${c.thumbnailUrl}) center/cover` }}>
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
+                </div>
+              ) : (
+                <div className="banner-gradient-dark" style={{ position: "relative", height: 110, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: -30,
+                      bottom: -30,
+                      width: 120,
+                      height: 120,
+                      borderRadius: "50%",
+                      background: "radial-gradient(circle, rgba(242,106,27,.35), transparent 70%)",
+                    }}
+                  />
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div
+                      className="banner-gradient-orange"
+                      style={{ width: 44, height: 44, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 15 }}
+                    >
+                      {c.title.trim().slice(0, 2).toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div style={{ padding: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: 700 }}>{c.title}</span>

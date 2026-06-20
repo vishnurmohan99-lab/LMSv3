@@ -62,17 +62,50 @@ function TrashIcon() {
   );
 }
 
-function ChapterBanner({ url }: { url: string | null }) {
-  if (!url) return null;
+function chapterInitials(name: string) {
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+function ChapterBanner({ url, name }: { url: string | null; name: string }) {
+  if (url) {
+    return (
+      <div style={{ position: "relative", height: 100, margin: "-20px -20px 16px", background: `url(${url}) center/cover` }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
+      </div>
+    );
+  }
   return (
-    <div
-      style={{
-        height: 100,
-        margin: "-20px -20px 16px",
-        borderRadius: "var(--rm) var(--rm) 0 0",
-        background: `url(${url}) center/cover`,
-      }}
-    />
+    <div className="banner-gradient-dark" style={{ position: "relative", height: 100, margin: "-20px -20px 16px", overflow: "hidden" }}>
+      <div
+        style={{
+          position: "absolute",
+          right: -30,
+          bottom: -30,
+          width: 120,
+          height: 120,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(242,106,27,.35), transparent 70%)",
+        }}
+      />
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          className="banner-gradient-orange"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 13,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 14,
+          }}
+        >
+          {chapterInitials(name)}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -391,8 +424,8 @@ export default function AdminCourseAuthoringPage() {
           {course.chapters.map((chapter) => {
             const expanded = expandedChapterId === chapter.id;
             return (
-              <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 20, overflow: "hidden" }}>
-                <ChapterBanner url={chapter.bannerUrl} />
+              <div key={chapter.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 20, overflow: "hidden" }}>
+                <ChapterBanner url={chapter.bannerUrl} name={chapter.title} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
                   <span style={{ display: "flex", gap: 14, alignItems: "center" }}>

@@ -54,16 +54,27 @@ function StatusBadge({ published }: { published: boolean }) {
   );
 }
 
+function courseInitials(name: string) {
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
 function CourseRow({ course, onRemove }: { course: Course; onRemove: () => void }) {
   return (
-    <div style={{ background: "var(--bg)", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden" }}>
-      <div
-        style={{
-          height: 80,
-          background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : "var(--card)",
-          borderBottom: "1px solid var(--line)",
-        }}
-      />
+    <div className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden" }}>
+      {course.thumbnailUrl ? (
+        <div style={{ position: "relative", height: 80, background: `url(${course.thumbnailUrl}) center/cover` }}>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
+        </div>
+      ) : (
+        <div className="banner-gradient-dark" style={{ position: "relative", height: 80, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div
+            className="banner-gradient-orange"
+            style={{ width: 34, height: 34, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13 }}
+          >
+            {courseInitials(course.title)}
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px", fontSize: 13 }}>
         <span style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
           <Link href={`/admin/courses/${course.id}`} style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
