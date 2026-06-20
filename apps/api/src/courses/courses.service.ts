@@ -199,6 +199,87 @@ export class CoursesService {
     });
   }
 
+  async generateFlashcards(lessonId: string, user: JwtPayload, count = 8) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    this.assertOwnership(user, lesson.chapter.course.facultyId);
+
+    if (lesson.type !== LessonType.PDF || !lesson.contentUrl) {
+      throw new BadRequestException('AI flashcard generation currently requires a PDF lesson with an uploaded file');
+    }
+
+    const { PDFParse } = require('pdf-parse');
+    const buffer = await this.uploads.getObjectBuffer(lesson.contentUrl);
+    const parser = new PDFParse({ data: buffer });
+    const { text } = await parser.getText();
+    const content = text.trim().slice(0, 15000);
+    if (!content) {
+      throw new BadRequestException('Could not extract any text from this PDF');
+    }
+
+    const cards = await this.callAiForFlashcards(content, count);
+
+    const existingMax = await this.prisma.flashcard.aggregate({
+      where: { lessonId },
+      _max: { order: true },
+    });
+    let order = (existingMax._max.order ?? -1) + 1;
+
+    return this.prisma.flashcard.createManyAndReturn({
+      data: cards.map((c) => ({ front: c.front, back: c.back, order: order++, lessonId })),
+    });
+  }
+
+  private async callAiForFlashcards(content: string, count: number): Promise<{ front: string; back: string }[]> {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      throw new BadRequestException('AI flashcard generation is not configured (missing OPENROUTER_API_KEY)');
+    }
+    const model = process.env.OPENROUTER_MODEL ?? 'openai/gpt-oss-20b:free';
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: `Generate exactly ${count} study flashcards from the following lesson content. Respond with ONLY a JSON array, no markdown, no commentary, in this exact shape: [{"front": "question", "back": "answer"}]. Keep each side concise.\n\nLesson content:\n${content}`,
+          },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      throw new BadRequestException(`AI flashcard generation failed (${res.status})`);
+    }
+
+    const data = await res.json();
+    const raw: string = data.choices?.[0]?.message?.content ?? '';
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new BadRequestException('AI response did not contain a valid flashcard list');
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch {
+      throw new BadRequestException('AI response was not valid JSON');
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new BadRequestException('AI response was not a list of flashcards');
+    }
+
+    return parsed
+      .filter((c): c is { front: string; back: string } => !!c && typeof c.front === 'string' && typeof c.back === 'string')
+      .slice(0, count);
+  }
+
   async updateFlashcard(id: string, user: JwtPayload, dto: UpdateFlashcardDto) {
     const flashcard = await this.requireFlashcardWithCourse(id);
     this.assertOwnership(user, flashcard.lesson.chapter.course.facultyId);

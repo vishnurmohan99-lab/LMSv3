@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { flashcardsApi, ApiError, type Flashcard } from "@/lib/api";
+import Spinner from "@/components/Spinner";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -26,6 +27,7 @@ export default function ManageFlashcardsPage() {
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [creating, setCreating] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   function load() {
     setLoading(true);
@@ -59,12 +61,49 @@ export default function ManageFlashcardsPage() {
     load();
   }
 
+  async function onGenerate() {
+    setError(null);
+    setGenerating(true);
+    try {
+      await flashcardsApi.generate(lessonId);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to generate flashcards");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <div style={{ padding: 40, maxWidth: 700 }}>
       <Link href={`/admin/courses/${courseId}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
         ← Back to course
       </Link>
-      <h1 style={{ fontSize: 24, fontWeight: 800, marginTop: 12, marginBottom: 22 }}>Manage flashcards</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, marginBottom: 22 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800 }}>Manage flashcards</h1>
+        <button
+          onClick={onGenerate}
+          disabled={generating}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "9px 16px",
+            background: "var(--orange)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: "inherit",
+            cursor: generating ? "default" : "pointer",
+            opacity: generating ? 0.7 : 1,
+          }}
+        >
+          {generating && <Spinner />}
+          {generating ? "Generating…" : "Generate with AI"}
+        </button>
+      </div>
 
       <form
         onSubmit={onCreate}

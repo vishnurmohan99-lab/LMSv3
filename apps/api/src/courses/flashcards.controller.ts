@@ -28,6 +28,13 @@ export class FlashcardsController {
 
   @UseGuards(RolesGuard)
   @Roles('FACULTY', 'ADMIN')
+  @Post('lessons/:lessonId/flashcards/generate')
+  generate(@Param('lessonId') lessonId: string, @Body() dto: { count?: number }, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.generateFlashcards(lessonId, user, dto.count);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('FACULTY', 'ADMIN')
   @Patch('flashcards/:id')
   update(@Param('id') id: string, @Body() dto: UpdateFlashcardDto, @CurrentUser() user: JwtPayload) {
     return this.coursesService.updateFlashcard(id, user, dto);

@@ -37,4 +37,13 @@ export class UploadsService {
       expiresIn: DOWNLOAD_URL_TTL_SECONDS,
     });
   }
+
+  async getObjectBuffer(key: string): Promise<Buffer> {
+    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    const chunks: Buffer[] = [];
+    for await (const chunk of result.Body as AsyncIterable<Buffer>) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
 }

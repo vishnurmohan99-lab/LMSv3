@@ -188,6 +188,8 @@ export const flashcardsApi = {
   create: (lessonId: string, data: { front: string; back: string; order?: number }) =>
     request<Flashcard>(`/lessons/${lessonId}/flashcards`, { method: 'POST', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/flashcards/${id}`, { method: 'DELETE' }),
+  generate: (lessonId: string, count?: number) =>
+    request<Flashcard[]>(`/lessons/${lessonId}/flashcards/generate`, { method: 'POST', body: JSON.stringify({ count }) }),
 };
 
 export const uploadsApi = {
