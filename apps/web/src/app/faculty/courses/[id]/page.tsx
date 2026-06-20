@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, uploadsApi, ApiError, type CourseTree, type LessonType } from "@/lib/api";
+import { coursesApi, uploadsApi, ApiError, type CourseTree } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -52,73 +52,6 @@ function TrashIcon() {
   );
 }
 
-function NewLessonForm({ chapterId, onAdded }: { chapterId: string; onAdded: () => void }) {
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<LessonType>("VIDEO");
-  const [liveAt, setLiveAt] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [flashcardsEnabled, setFlashcardsEnabled] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setBusy(true);
-    try {
-      let contentUrl: string | undefined;
-      if ((type === "VIDEO" || type === "PDF") && file) {
-        contentUrl = await uploadsApi.uploadFile(file);
-      }
-      await coursesApi.createLesson(chapterId, {
-        title,
-        type,
-        contentUrl,
-        liveAt: type === "LIVE" && liveAt ? new Date(liveAt).toISOString() : undefined,
-        flashcardsEnabled,
-      });
-      setTitle("");
-      setFile(null);
-      setFlashcardsEnabled(false);
-      onAdded();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to add lesson");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form onSubmit={onSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
-      <input required placeholder="Lesson title" value={title} onChange={(e) => setTitle(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
-      <select value={type} onChange={(e) => setType(e.target.value as LessonType)} style={inputStyle}>
-        <option value="VIDEO">Video</option>
-        <option value="PDF">PDF</option>
-        <option value="LIVE">Live class</option>
-      </select>
-      {(type === "VIDEO" || type === "PDF") && (
-        <input
-          type="file"
-          accept={type === "VIDEO" ? "video/mp4,video/webm,video/quicktime" : "application/pdf"}
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          style={{ fontSize: 13 }}
-        />
-      )}
-      {type === "LIVE" && (
-        <input type="datetime-local" value={liveAt} onChange={(e) => setLiveAt(e.target.value)} style={inputStyle} />
-      )}
-      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink2)" }}>
-        <input type="checkbox" checked={flashcardsEnabled} onChange={(e) => setFlashcardsEnabled(e.target.checked)} />
-        Enable Flashcards
-      </label>
-      <button type="submit" disabled={busy} style={{ ...btnStyle, opacity: busy ? 0.7 : 1 }}>
-        {busy ? "Adding…" : "Add lesson"}
-      </button>
-      {error && <span style={{ color: "var(--red)", fontSize: 12 }}>{error}</span>}
-    </form>
-  );
-}
-
 export default function CourseAuthoringPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
@@ -128,7 +61,6 @@ export default function CourseAuthoringPage() {
   const [error, setError] = useState<string | null>(null);
   const [newChapterTitle, setNewChapterTitle] = useState("");
   const [newChapterBanner, setNewChapterBanner] = useState<File | null>(null);
-  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [editChapterTitle, setEditChapterTitle] = useState("");
   const [editChapterBanner, setEditChapterBanner] = useState<File | null>(null);
@@ -186,16 +118,11 @@ export default function CourseAuthoringPage() {
     }
   }
 
-  async function onDeleteLesson(id: string) {
-    await coursesApi.removeLesson(id);
-    load();
-  }
-
   if (loading) return <main style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></main>;
   if (error || !course) return <main style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Course not found"}</p></main>;
 
   return (
-    <main style={{ padding: "30px 40px 60px" }}>
+    <main className="fade-in" style={{ padding: "30px 40px 60px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--orange)", textTransform: "uppercase", marginBottom: 4 }}>
@@ -235,7 +162,6 @@ export default function CourseAuthoringPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
         {course.chapters.map((chapter) => {
-          const expanded = expandedChapterId === chapter.id;
           const editing = editingChapterId === chapter.id;
           return (
             <div key={chapter.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 20, overflow: "hidden" }}>
@@ -295,13 +221,9 @@ export default function CourseAuthoringPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
                     <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                      <button
-                        onClick={() => setExpandedChapterId(expanded ? null : chapter.id)}
-                        title={expanded ? "Hide lessons" : "View lessons"}
-                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                      >
+                      <Link href={`/faculty/courses/${courseId}/chapters/${chapter.id}`} title="View chapter" style={{ display: "flex" }}>
                         <EyeIcon />
-                      </button>
+                      </Link>
                       <button
                         onClick={() => openEditChapter(chapter.id, chapter.title)}
                         title="Edit chapter"
@@ -325,34 +247,6 @@ export default function CourseAuthoringPage() {
                 </>
               )}
 
-              {expanded && !editing && (
-                <>
-                  <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
-                    {chapter.lessons.map((lesson) => (
-                      <div key={lesson.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "var(--bg)", borderRadius: 8, fontSize: 13 }}>
-                        <span>
-                          <b>{lesson.title}</b> <span style={{ color: "var(--ink3)" }}>· {lesson.type}</span>
-                        </span>
-                        <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                          {lesson.flashcardsEnabled && (
-                            <Link
-                              href={`/faculty/courses/${courseId}/lessons/${lesson.id}/flashcards`}
-                              style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
-                            >
-                              Manage flashcards
-                            </Link>
-                          )}
-                          <button onClick={() => onDeleteLesson(lesson.id)} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}>
-                            Remove
-                          </button>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <NewLessonForm chapterId={chapter.id} onAdded={load} />
-                </>
-              )}
             </div>
           );
         })}

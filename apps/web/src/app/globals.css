@@ -72,3 +72,20 @@ a {
 .banner-gradient-orange {
   background: linear-gradient(135deg, #f7902b, #f24d1b);
 }
+
+button, a {
+  transition: transform .12s ease, opacity .12s ease;
+}
+
+button:active, a:active {
+  transform: scale(.96);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn .28s ease both;
+}

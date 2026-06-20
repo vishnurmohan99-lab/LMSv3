@@ -60,7 +60,7 @@ export default function FacultyCoursesPage() {
   }
 
   return (
-    <main style={{ padding: "30px 40px 60px" }}>
+    <main className="fade-in" style={{ padding: "30px 40px 60px" }}>
       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>My Courses</div>
 
       <form

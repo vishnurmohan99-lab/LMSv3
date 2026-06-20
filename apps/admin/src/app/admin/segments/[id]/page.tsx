@@ -240,7 +240,7 @@ export default function SegmentDetailPage() {
   const directCourses = allCourses.filter((c) => c.segmentId === segmentId && !c.subsegmentId);
 
   return (
-    <div style={{ padding: "30px 40px 60px" }}>
+    <div className="fade-in" style={{ padding: "30px 40px 60px" }}>
       <Link href="/admin/segments" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
         ← Back to segments
       </Link>

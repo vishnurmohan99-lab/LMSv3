@@ -22,6 +22,7 @@ export default function Modal({
   return (
     <div
       onClick={onClose}
+      className="modal-backdrop"
       style={{
         position: "fixed",
         inset: 0,
@@ -35,6 +36,7 @@ export default function Modal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        className="modal-panel"
         style={{
           background: "var(--card)",
           borderRadius: "var(--rl)",
