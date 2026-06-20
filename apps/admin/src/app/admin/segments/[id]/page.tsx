@@ -56,26 +56,25 @@ function StatusBadge({ published }: { published: boolean }) {
 
 function CourseRow({ course, onRemove }: { course: Course; onRemove: () => void }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "9px 12px",
-        background: "var(--bg)",
-        borderRadius: 8,
-        fontSize: 13,
-      }}
-    >
-      <span style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <Link href={`/admin/courses/${course.id}`} style={{ fontWeight: 700 }}>
-          {course.title}
-        </Link>
-        <StatusBadge published={course.published} />
-      </span>
-      <button onClick={onRemove} title="Remove from this category" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-        <TrashIcon />
-      </button>
+    <div style={{ background: "var(--bg)", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden" }}>
+      <div
+        style={{
+          height: 48,
+          background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : "var(--card)",
+          borderBottom: "1px solid var(--line)",
+        }}
+      />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px", fontSize: 13 }}>
+        <span style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+          <Link href={`/admin/courses/${course.id}`} style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {course.title}
+          </Link>
+          <StatusBadge published={course.published} />
+        </span>
+        <button onClick={onRemove} title="Remove from this category" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0, flex: "none" }}>
+          <TrashIcon />
+        </button>
+      </div>
     </div>
   );
 }
@@ -317,7 +316,7 @@ export default function SegmentDetailPage() {
                   {expanded && (
                     <div style={{ marginTop: 12 }}>
                       {subCourses.length > 0 && (
-                        <div style={{ display: "grid", gap: 6, marginBottom: 4 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 10 }}>
                           {subCourses.map((c) => (
                             <CourseRow key={c.id} course={c} onRemove={() => onRemoveFromCategory(c.id)} />
                           ))}
@@ -349,7 +348,7 @@ export default function SegmentDetailPage() {
         {directCourses.length === 0 ? (
           <p style={{ color: "var(--ink2)", fontSize: 13.5, marginBottom: 4 }}>No courses assigned directly yet.</p>
         ) : (
-          <div style={{ display: "grid", gap: 6, marginBottom: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 10 }}>
             {directCourses.map((c) => (
               <CourseRow key={c.id} course={c} onRemove={() => onRemoveFromCategory(c.id)} />
             ))}

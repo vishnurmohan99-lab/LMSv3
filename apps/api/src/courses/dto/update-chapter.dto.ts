@@ -9,4 +9,8 @@ export class UpdateChapterDto {
   @IsOptional()
   @IsInt()
   order?: number;
+
+  @IsOptional()
+  @IsString()
+  bannerUrl?: string;
 }

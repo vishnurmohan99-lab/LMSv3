@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
+import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -21,6 +21,7 @@ export default function FacultyCoursesPage() {
   const [title, setTitle] = useState("");
   const [segmentId, setSegmentId] = useState("");
   const [subsegmentId, setSubsegmentId] = useState("");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,10 +45,12 @@ export default function FacultyCoursesPage() {
     setError(null);
     setCreating(true);
     try {
-      await coursesApi.create({ title, segmentId, subsegmentId: subsegmentId || undefined });
+      const thumbnailUrl = bannerFile ? await uploadsApi.uploadFile(bannerFile) : undefined;
+      await coursesApi.create({ title, segmentId, subsegmentId: subsegmentId || undefined, thumbnailUrl });
       setTitle("");
       setSegmentId("");
       setSubsegmentId("");
+      setBannerFile(null);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create course");
@@ -108,6 +111,13 @@ export default function FacultyCoursesPage() {
             ))}
           </select>
         )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)}
+          style={{ fontSize: 13, alignSelf: "center" }}
+          title="Banner image (optional)"
+        />
         <button
           type="submit"
           disabled={creating}
@@ -142,35 +152,44 @@ export default function FacultyCoursesPage() {
       ) : courses.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No courses yet. Create your first one above.</p>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
           {courses.map((c) => (
             <Link
               key={c.id}
               href={`/faculty/courses/${c.id}`}
               style={{
                 display: "block",
-                padding: 18,
                 background: "var(--card)",
                 border: "1px solid var(--line)",
                 borderRadius: "var(--rm)",
+                overflow: "hidden",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 700 }}>{c.title}</span>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    padding: "4px 10px",
-                    borderRadius: 8,
-                    background: c.published ? "var(--green-soft)" : "var(--amber-soft)",
-                    color: c.published ? "var(--green)" : "var(--amber)",
-                  }}
-                >
-                  {c.published ? "Published" : "Draft"}
-                </span>
+              <div
+                style={{
+                  height: 64,
+                  background: c.thumbnailUrl ? `url(${c.thumbnailUrl}) center/cover` : "var(--bg)",
+                  borderBottom: "1px solid var(--line)",
+                }}
+              />
+              <div style={{ padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: 700 }}>{c.title}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      padding: "4px 10px",
+                      borderRadius: 8,
+                      background: c.published ? "var(--green-soft)" : "var(--amber-soft)",
+                      color: c.published ? "var(--green)" : "var(--amber)",
+                    }}
+                  >
+                    {c.published ? "Published" : "Draft"}
+                  </span>
+                </div>
+                {c.description && <p style={{ color: "var(--ink2)", fontSize: 13, marginTop: 6 }}>{c.description}</p>}
               </div>
-              {c.description && <p style={{ color: "var(--ink2)", fontSize: 13, marginTop: 6 }}>{c.description}</p>}
             </Link>
           ))}
         </div>

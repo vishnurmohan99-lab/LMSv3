@@ -37,6 +37,20 @@ function PlusIcon() {
   );
 }
 
+function ChapterBanner({ url }: { url: string | null }) {
+  if (!url) return null;
+  return (
+    <div
+      style={{
+        height: 64,
+        margin: "-18px -18px 14px",
+        borderRadius: "var(--rm) var(--rm) 0 0",
+        background: `url(${url}) center/cover`,
+      }}
+    />
+  );
+}
+
 function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () => void }) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<LessonType>("VIDEO");
@@ -117,6 +131,7 @@ export default function AdminCourseAuthoringPage() {
 
   const [showAddChapter, setShowAddChapter] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState("");
+  const [newChapterBanner, setNewChapterBanner] = useState<File | null>(null);
   const [addingChapter, setAddingChapter] = useState(false);
 
   const [addLessonChapterId, setAddLessonChapterId] = useState<string | null>(null);
@@ -145,8 +160,10 @@ export default function AdminCourseAuthoringPage() {
     if (!newChapterTitle.trim()) return;
     setAddingChapter(true);
     try {
-      await coursesApi.createChapter(courseId, { title: newChapterTitle });
+      const bannerUrl = newChapterBanner ? await uploadsApi.uploadFile(newChapterBanner) : undefined;
+      await coursesApi.createChapter(courseId, { title: newChapterTitle, bannerUrl });
       setNewChapterTitle("");
+      setNewChapterBanner(null);
       setShowAddChapter(false);
       load();
     } finally {
@@ -240,8 +257,14 @@ export default function AdminCourseAuthoringPage() {
               placeholder="Chapter title"
               value={newChapterTitle}
               onChange={(e) => setNewChapterTitle(e.target.value)}
-              style={{ ...inputStyle, width: "100%", marginBottom: 14 }}
+              style={{ ...inputStyle, width: "100%", marginBottom: 8 }}
             />
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
+                Banner image (optional)
+              </div>
+              <input type="file" accept="image/*" onChange={(e) => setNewChapterBanner(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+            </div>
             <button
               type="submit"
               disabled={addingChapter}
@@ -279,7 +302,8 @@ export default function AdminCourseAuthoringPage() {
       ) : (
         <div style={{ display: "grid", gap: 16 }}>
           {course.chapters.map((chapter) => (
-            <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18 }}>
+            <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18, overflow: "hidden" }}>
+              <ChapterBanner url={chapter.bannerUrl} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
                 <button onClick={() => onDeleteChapter(chapter.id)} style={{ ...btnStyle, background: "var(--red)", padding: "6px 12px", fontSize: 12 }}>

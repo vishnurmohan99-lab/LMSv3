@@ -9,4 +9,8 @@ export class UpdateSegmentDto {
   @IsOptional()
   @IsInt()
   order?: number;
+
+  @IsOptional()
+  @IsString()
+  bannerUrl?: string;
 }

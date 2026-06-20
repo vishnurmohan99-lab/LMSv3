@@ -102,6 +102,7 @@ export default function CourseAuthoringPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newChapterTitle, setNewChapterTitle] = useState("");
+  const [newChapterBanner, setNewChapterBanner] = useState<File | null>(null);
 
   function load() {
     setLoading(true);
@@ -123,8 +124,10 @@ export default function CourseAuthoringPage() {
   async function onAddChapter(e: React.FormEvent) {
     e.preventDefault();
     if (!newChapterTitle.trim()) return;
-    await coursesApi.createChapter(courseId, { title: newChapterTitle });
+    const bannerUrl = newChapterBanner ? await uploadsApi.uploadFile(newChapterBanner) : undefined;
+    await coursesApi.createChapter(courseId, { title: newChapterTitle, bannerUrl });
     setNewChapterTitle("");
+    setNewChapterBanner(null);
     load();
   }
 
@@ -170,12 +173,29 @@ export default function CourseAuthoringPage() {
           onChange={(e) => setNewChapterTitle(e.target.value)}
           style={{ ...inputStyle, flex: 1 }}
         />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setNewChapterBanner(e.target.files?.[0] ?? null)}
+          style={{ fontSize: 13, alignSelf: "center" }}
+          title="Banner image (optional)"
+        />
         <button type="submit" style={btnStyle}>Add chapter</button>
       </form>
 
       <div style={{ display: "grid", gap: 16 }}>
         {course.chapters.map((chapter) => (
-          <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18 }}>
+          <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18, overflow: "hidden" }}>
+            {chapter.bannerUrl && (
+              <div
+                style={{
+                  height: 64,
+                  margin: "-18px -18px 14px",
+                  borderRadius: "var(--rm) var(--rm) 0 0",
+                  background: `url(${chapter.bannerUrl}) center/cover`,
+                }}
+              />
+            )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
               <button onClick={() => onDeleteChapter(chapter.id)} style={{ ...btnStyle, background: "var(--red)", padding: "6px 12px", fontSize: 12 }}>

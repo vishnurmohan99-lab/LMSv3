@@ -62,6 +62,7 @@ model Segment {
   id        String   @id @default(uuid())
   name      String   @unique
   order     Int      @default(0)
+  bannerUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -85,9 +86,10 @@ model Subsegment {
 }
 
 model Chapter {
-  id    String @id @default(uuid())
-  title String
-  order Int    @default(0)
+  id        String  @id @default(uuid())
+  title     String
+  order     Int     @default(0)
+  bannerUrl String?
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)

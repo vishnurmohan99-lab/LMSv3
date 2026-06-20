@@ -71,6 +71,7 @@ export interface Chapter {
   id: string;
   title: string;
   order: number;
+  bannerUrl: string | null;
   lessons: Lesson[];
 }
 
@@ -112,6 +113,7 @@ export interface Segment {
   id: string;
   name: string;
   order: number;
+  bannerUrl: string | null;
   subsegments: Subsegment[];
   _count?: { courses: number };
 }
@@ -119,9 +121,9 @@ export interface Segment {
 export const segmentsApi = {
   list: () => request<Segment[]>('/segments'),
   get: (id: string) => request<Segment>(`/segments/${id}`),
-  create: (data: { name: string; order?: number }) =>
+  create: (data: { name: string; order?: number; bannerUrl?: string }) =>
     request<Segment>('/segments', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { name?: string; order?: number }) =>
+  update: (id: string, data: { name?: string; order?: number; bannerUrl?: string }) =>
     request<Segment>(`/segments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/segments/${id}`, { method: 'DELETE' }),
   createSubsegment: (segmentId: string, data: { name: string; order?: number }) =>
@@ -139,7 +141,7 @@ export const coursesApi = {
     return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string }) =>
+  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string; thumbnailUrl?: string }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
@@ -148,9 +150,9 @@ export const coursesApi = {
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
   enroll: (id: string) => request<{ id: string }>(`/courses/${id}/enroll`, { method: 'POST' }),
 
-  createChapter: (courseId: string, data: { title: string; order?: number }) =>
+  createChapter: (courseId: string, data: { title: string; order?: number; bannerUrl?: string }) =>
     request<Chapter>(`/courses/${courseId}/chapters`, { method: 'POST', body: JSON.stringify(data) }),
-  updateChapter: (id: string, data: { title?: string; order?: number }) =>
+  updateChapter: (id: string, data: { title?: string; order?: number; bannerUrl?: string }) =>
     request<Chapter>(`/chapters/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeChapter: (id: string) => request<{ success: boolean }>(`/chapters/${id}`, { method: 'DELETE' }),
 

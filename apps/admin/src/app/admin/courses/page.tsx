@@ -2,9 +2,25 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
+import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
+
+const BANNER_HEIGHT = 64;
+
+function CardBanner({ url }: { url: string | null }) {
+  return (
+    <div
+      style={{
+        height: BANNER_HEIGHT,
+        borderRadius: "var(--rm) var(--rm) 0 0",
+        background: url ? `url(${url}) center/cover` : "var(--bg)",
+        border: "1px solid var(--line)",
+        borderBottom: "none",
+      }}
+    />
+  );
+}
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -52,6 +68,7 @@ export default function AdminCoursesPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState("");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
 
   function load() {
@@ -89,8 +106,10 @@ export default function AdminCoursesPage() {
     setError(null);
     setCreating(true);
     try {
-      await coursesApi.create({ title });
+      const thumbnailUrl = bannerFile ? await uploadsApi.uploadFile(bannerFile) : undefined;
+      await coursesApi.create({ title, thumbnailUrl });
       setTitle("");
+      setBannerFile(null);
       setShowAddModal(false);
       load();
     } catch (err) {
@@ -137,6 +156,12 @@ export default function AdminCoursesPage() {
               onChange={(e) => setTitle(e.target.value)}
               style={{ ...inputStyle, width: "100%", marginBottom: 8 }}
             />
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
+                Banner image (optional)
+              </div>
+              <input type="file" accept="image/*" onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+            </div>
             <p style={{ color: "var(--ink3)", fontSize: 12, marginBottom: 16 }}>
               Courses start uncategorized — assign them to a segment or sub-segment from the Segments page.
             </p>
@@ -184,65 +209,55 @@ export default function AdminCoursesPage() {
         </select>
       </div>
 
-      <div
-        style={{
-          background: "var(--card)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--rl)",
-          padding: 22,
-        }}
-      >
-        {loading ? (
-          <p style={{ color: "var(--ink2)" }}>Loading…</p>
-        ) : filteredCourses.length === 0 ? (
-          <p style={{ color: "var(--ink2)" }}>No courses match.</p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: "var(--ink2)", borderBottom: "1px solid var(--line)" }}>
-                <th style={{ padding: "8px 6px" }}>Title</th>
-                <th style={{ padding: "8px 6px" }}>Status</th>
-                <th style={{ padding: "8px 6px" }}>Category</th>
-                <th style={{ padding: "8px 6px", textAlign: "right" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCourses.map((c) => (
-                <tr key={c.id} style={{ borderBottom: "1px solid var(--line2)" }}>
-                  <td style={{ padding: "10px 6px", fontWeight: 700 }}>{c.title}</td>
-                  <td style={{ padding: "10px 6px" }}>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        padding: "4px 10px",
-                        borderRadius: 8,
-                        background: c.published ? "var(--green-soft)" : "var(--amber-soft)",
-                        color: c.published ? "var(--green)" : "var(--amber)",
-                      }}
-                    >
-                      {c.published ? "Published" : "Draft"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px 6px", color: c.segmentId ? "var(--ink)" : "var(--ink3)" }}>
-                    {categoryLabel(c)}
-                  </td>
-                  <td style={{ padding: "10px 6px", textAlign: "right" }}>
-                    <span style={{ display: "inline-flex", gap: 10 }}>
-                      <Link href={`/admin/courses/${c.id}`} title="View" style={{ display: "flex" }}>
-                        <EyeIcon />
-                      </Link>
-                      <Link href={`/admin/courses/${c.id}`} title="Edit" style={{ display: "flex" }}>
-                        <EditIcon />
-                      </Link>
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {loading ? (
+        <p style={{ color: "var(--ink2)" }}>Loading…</p>
+      ) : filteredCourses.length === 0 ? (
+        <p style={{ color: "var(--ink2)" }}>No courses match.</p>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+          {filteredCourses.map((c) => (
+            <div
+              key={c.id}
+              style={{
+                background: "var(--card)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--rm)",
+                overflow: "hidden",
+              }}
+            >
+              <CardBanner url={c.thumbnailUrl} />
+              <div style={{ padding: 16 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{c.title}</div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "4px 10px",
+                    borderRadius: 8,
+                    marginBottom: 8,
+                    background: c.published ? "var(--green-soft)" : "var(--amber-soft)",
+                    color: c.published ? "var(--green)" : "var(--amber)",
+                  }}
+                >
+                  {c.published ? "Published" : "Draft"}
+                </span>
+                <div style={{ fontSize: 12, color: c.segmentId ? "var(--ink2)" : "var(--ink3)", marginBottom: 12 }}>
+                  {categoryLabel(c)}
+                </div>
+                <div style={{ display: "flex", gap: 14 }}>
+                  <Link href={`/admin/courses/${c.id}`} title="View" style={{ display: "flex" }}>
+                    <EyeIcon />
+                  </Link>
+                  <Link href={`/admin/courses/${c.id}`} title="Edit" style={{ display: "flex" }}>
+                    <EditIcon />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,10 @@ const ALLOWED_CONTENT_TYPES = [
   'video/mp4',
   'video/webm',
   'video/quicktime',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
 ];
 
 export class PresignUploadDto {

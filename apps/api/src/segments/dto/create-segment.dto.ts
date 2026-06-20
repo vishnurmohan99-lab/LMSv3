@@ -8,4 +8,8 @@ export class CreateSegmentDto {
   @IsOptional()
   @IsInt()
   order?: number;
+
+  @IsOptional()
+  @IsString()
+  bannerUrl?: string;
 }

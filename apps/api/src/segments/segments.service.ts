@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadsService } from '../uploads/uploads.service';
 import { CreateSegmentDto } from './dto/create-segment.dto';
 import { UpdateSegmentDto } from './dto/update-segment.dto';
 import { CreateSubsegmentDto } from './dto/create-subsegment.dto';
@@ -7,10 +8,13 @@ import { UpdateSubsegmentDto } from './dto/update-subsegment.dto';
 
 @Injectable()
 export class SegmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploads: UploadsService,
+  ) {}
 
-  listSegments() {
-    return this.prisma.segment.findMany({
+  async listSegments() {
+    const segments = await this.prisma.segment.findMany({
       orderBy: { order: 'asc' },
       include: {
         subsegments: {
@@ -20,6 +24,12 @@ export class SegmentsService {
         _count: { select: { courses: true } },
       },
     });
+    return Promise.all(
+      segments.map(async (segment) => ({
+        ...segment,
+        bannerUrl: segment.bannerUrl ? await this.uploads.presignDownload(segment.bannerUrl) : null,
+      })),
+    );
   }
 
   async getSegment(id: string) {
@@ -34,11 +44,14 @@ export class SegmentsService {
       },
     });
     if (!segment) throw new NotFoundException('Segment not found');
-    return segment;
+    return {
+      ...segment,
+      bannerUrl: segment.bannerUrl ? await this.uploads.presignDownload(segment.bannerUrl) : null,
+    };
   }
 
   createSegment(dto: CreateSegmentDto) {
-    return this.prisma.segment.create({ data: { name: dto.name, order: dto.order ?? 0 } });
+    return this.prisma.segment.create({ data: { name: dto.name, order: dto.order ?? 0, bannerUrl: dto.bannerUrl } });
   }
 
   async updateSegment(id: string, dto: UpdateSegmentDto) {

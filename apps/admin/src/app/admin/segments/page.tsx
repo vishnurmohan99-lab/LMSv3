@@ -3,9 +3,25 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { segmentsApi, ApiError, type Segment } from "@/lib/api";
+import { segmentsApi, uploadsApi, ApiError, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
+
+const BANNER_HEIGHT = 64;
+
+function CardBanner({ url }: { url: string | null }) {
+  return (
+    <div
+      style={{
+        height: BANNER_HEIGHT,
+        borderRadius: "var(--rm) var(--rm) 0 0",
+        background: url ? `url(${url}) center/cover` : "var(--bg)",
+        border: "1px solid var(--line)",
+        borderBottom: "none",
+      }}
+    />
+  );
+}
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -59,6 +75,7 @@ export default function AdminSegmentsPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [name, setName] = useState("");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [needsSubsegments, setNeedsSubsegments] = useState<boolean | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -87,8 +104,10 @@ export default function AdminSegmentsPage() {
     setError(null);
     setCreating(true);
     try {
-      const segment = await segmentsApi.create({ name });
+      const bannerUrl = bannerFile ? await uploadsApi.uploadFile(bannerFile) : undefined;
+      const segment = await segmentsApi.create({ name, bannerUrl });
       setName("");
+      setBannerFile(null);
       setNeedsSubsegments(null);
       setShowAddModal(false);
       if (needsSubsegments) {
@@ -159,6 +178,13 @@ export default function AdminSegmentsPage() {
               onChange={(e) => setName(e.target.value)}
               style={inputStyle}
             />
+
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
+                Banner image (optional)
+              </div>
+              <input type="file" accept="image/*" onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+            </div>
 
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
@@ -240,85 +266,77 @@ export default function AdminSegmentsPage() {
         style={{ ...inputStyle, width: "100%", marginBottom: 16 }}
       />
 
-      <div
-        style={{
-          background: "var(--card)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--rl)",
-          padding: 22,
-        }}
-      >
-        {loading ? (
-          <p style={{ color: "var(--ink2)" }}>Loading…</p>
-        ) : filteredSegments.length === 0 ? (
-          <p style={{ color: "var(--ink2)" }}>No segments match.</p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: "var(--ink2)", borderBottom: "1px solid var(--line)" }}>
-                <th style={{ padding: "8px 6px" }}>Name</th>
-                <th style={{ padding: "8px 6px" }}>Sub-segments</th>
-                <th style={{ padding: "8px 6px" }}>Courses</th>
-                <th style={{ padding: "8px 6px", textAlign: "right" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSegments.map((segment) => (
-                <tr key={segment.id} style={{ borderBottom: "1px solid var(--line2)" }}>
-                  <td style={{ padding: "10px 6px", fontWeight: 700 }}>
-                    {editingId === segment.id ? (
-                      <input
-                        autoFocus
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && onSaveRename(segment.id)}
-                        style={{ ...inputStyle, padding: "6px 10px" }}
-                      />
-                    ) : (
-                      segment.name
-                    )}
-                  </td>
-                  <td style={{ padding: "10px 6px", color: "var(--ink2)" }}>{segment.subsegments.length}</td>
-                  <td style={{ padding: "10px 6px", color: "var(--ink2)" }}>{segment._count?.courses ?? 0}</td>
-                  <td style={{ padding: "10px 6px", textAlign: "right" }}>
-                    {editingId === segment.id ? (
-                      <button
-                        onClick={() => onSaveRename(segment.id)}
-                        style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, background: "none", border: "none", cursor: "pointer" }}
-                      >
-                        Save
-                      </button>
-                    ) : (
-                      <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
-                        <Link href={`/admin/segments/${segment.id}`} title="View" style={{ display: "flex" }}>
-                          <EyeIcon />
-                        </Link>
-                        <button
-                          onClick={() => {
-                            setEditingId(segment.id);
-                            setEditingName(segment.name);
-                          }}
-                          title="Edit"
-                          style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          onClick={() => onDeleteSegment(segment.id)}
-                          title="Delete"
-                          style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                        >
-                          <TrashIcon />
-                        </button>
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {loading ? (
+        <p style={{ color: "var(--ink2)" }}>Loading…</p>
+      ) : filteredSegments.length === 0 ? (
+        <p style={{ color: "var(--ink2)" }}>No segments match.</p>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+          {filteredSegments.map((segment) => (
+            <div
+              key={segment.id}
+              style={{
+                background: "var(--card)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--rm)",
+                overflow: "hidden",
+              }}
+            >
+              <CardBanner url={segment.bannerUrl} />
+              <div style={{ padding: 16 }}>
+                {editingId === segment.id ? (
+                  <input
+                    autoFocus
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && onSaveRename(segment.id)}
+                    style={{ ...inputStyle, padding: "6px 10px", marginBottom: 8 }}
+                  />
+                ) : (
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{segment.name}</div>
+                )}
+                <div style={{ fontSize: 12, color: "var(--ink2)", marginBottom: 12 }}>
+                  {segment.subsegments.length} sub-segment{segment.subsegments.length === 1 ? "" : "s"} ·{" "}
+                  {segment._count?.courses ?? 0} course{segment._count?.courses === 1 ? "" : "s"}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  {editingId === segment.id ? (
+                    <button
+                      onClick={() => onSaveRename(segment.id)}
+                      style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, background: "none", border: "none", cursor: "pointer" }}
+                    >
+                      Save
+                    </button>
+                  ) : (
+                    <Link href={`/admin/segments/${segment.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                      <EyeIcon /> View
+                    </Link>
+                  )}
+                  <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
+                    <button
+                      onClick={() => {
+                        setEditingId(segment.id);
+                        setEditingName(segment.name);
+                      }}
+                      title="Edit"
+                      style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      onClick={() => onDeleteSegment(segment.id)}
+                      title="Delete"
+                      style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

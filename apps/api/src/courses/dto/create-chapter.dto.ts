@@ -8,4 +8,8 @@ export class CreateChapterDto {
   @IsOptional()
   @IsInt()
   order?: number;
+
+  @IsOptional()
+  @IsString()
+  bannerUrl?: string;
 }

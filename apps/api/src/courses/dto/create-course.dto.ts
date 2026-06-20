@@ -16,4 +16,8 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   subsegmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  thumbnailUrl?: string;
 }

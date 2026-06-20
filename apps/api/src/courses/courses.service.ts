@@ -30,24 +30,32 @@ export class CoursesService {
       ...(filters?.subsegmentId ? { subsegmentId: filters.subsegmentId } : {}),
     };
 
+    let courses;
     if (user.role === 'STUDENT') {
-      return this.prisma.course.findMany({
+      courses = await this.prisma.course.findMany({
         where: { published: true, ...categoryFilter },
         orderBy: { createdAt: 'desc' },
       });
-    }
-    if (user.role === 'ADMIN') {
-      return this.prisma.course.findMany({
+    } else if (user.role === 'ADMIN') {
+      courses = await this.prisma.course.findMany({
         where: categoryFilter,
         orderBy: { createdAt: 'desc' },
         include: { _count: { select: { enrollments: true } } },
       });
+    } else {
+      courses = await this.prisma.course.findMany({
+        where: { OR: [{ published: true }, { facultyId: user.sub }], ...categoryFilter },
+        orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { enrollments: true } } },
+      });
     }
-    return this.prisma.course.findMany({
-      where: { OR: [{ published: true }, { facultyId: user.sub }], ...categoryFilter },
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { enrollments: true } } },
-    });
+
+    return Promise.all(
+      courses.map(async (course) => ({
+        ...course,
+        thumbnailUrl: course.thumbnailUrl ? await this.uploads.presignDownload(course.thumbnailUrl) : null,
+      })),
+    );
   }
 
   async enroll(courseId: string, user: JwtPayload) {
@@ -83,6 +91,7 @@ export class CoursesService {
     const chapters = await Promise.all(
       course.chapters.map(async (chapter) => ({
         ...chapter,
+        bannerUrl: chapter.bannerUrl ? await this.uploads.presignDownload(chapter.bannerUrl) : null,
         lessons: await Promise.all(
           chapter.lessons.map(async (lesson) => ({
             ...lesson,
@@ -95,7 +104,11 @@ export class CoursesService {
       })),
     );
 
-    return { ...course, chapters };
+    return {
+      ...course,
+      thumbnailUrl: course.thumbnailUrl ? await this.uploads.presignDownload(course.thumbnailUrl) : null,
+      chapters,
+    };
   }
 
   async createCourse(user: JwtPayload, dto: CreateCourseDto) {
@@ -106,6 +119,7 @@ export class CoursesService {
       data: {
         title: dto.title,
         description: dto.description ?? '',
+        thumbnailUrl: dto.thumbnailUrl,
         facultyId: user.sub,
         segmentId: dto.segmentId,
         subsegmentId: dto.subsegmentId,
@@ -143,7 +157,7 @@ export class CoursesService {
   async createChapter(courseId: string, user: JwtPayload, dto: CreateChapterDto) {
     const course = await this.requireCourse(courseId);
     this.assertOwnership(user, course.facultyId);
-    return this.prisma.chapter.create({ data: { title: dto.title, order: dto.order ?? 0, courseId } });
+    return this.prisma.chapter.create({ data: { title: dto.title, order: dto.order ?? 0, bannerUrl: dto.bannerUrl, courseId } });
   }
 
   async updateChapter(id: string, user: JwtPayload, dto: UpdateChapterDto) {
