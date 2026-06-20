@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -14,8 +14,12 @@ export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @Get()
-  list(@CurrentUser() user: JwtPayload) {
-    return this.coursesService.listCourses(user);
+  list(
+    @CurrentUser() user: JwtPayload,
+    @Query('segmentId') segmentId?: string,
+    @Query('subsegmentId') subsegmentId?: string,
+  ) {
+    return this.coursesService.listCourses(user, { segmentId, subsegmentId });
   }
 
   @Get(':id')

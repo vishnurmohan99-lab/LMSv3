@@ -82,6 +82,8 @@ export interface Course {
   facultyId: string;
   createdAt: string;
   updatedAt: string;
+  segmentId: string | null;
+  subsegmentId: string | null;
   _count?: { enrollments: number };
 }
 
@@ -97,13 +99,51 @@ export interface Enrollment {
   course: Course;
 }
 
+export interface Subsegment {
+  id: string;
+  name: string;
+  order: number;
+  segmentId: string;
+  _count?: { courses: number };
+}
+
+export interface Segment {
+  id: string;
+  name: string;
+  order: number;
+  subsegments: Subsegment[];
+  _count?: { courses: number };
+}
+
+export const segmentsApi = {
+  list: () => request<Segment[]>('/segments'),
+  get: (id: string) => request<Segment>(`/segments/${id}`),
+  create: (data: { name: string; order?: number }) =>
+    request<Segment>('/segments', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { name?: string; order?: number }) =>
+    request<Segment>(`/segments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/segments/${id}`, { method: 'DELETE' }),
+  createSubsegment: (segmentId: string, data: { name: string; order?: number }) =>
+    request<Subsegment>(`/segments/${segmentId}/subsegments`, { method: 'POST', body: JSON.stringify(data) }),
+  updateSubsegment: (id: string, data: { name?: string; order?: number }) =>
+    request<Subsegment>(`/subsegments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeSubsegment: (id: string) => request<{ success: boolean }>(`/subsegments/${id}`, { method: 'DELETE' }),
+};
+
 export const coursesApi = {
-  list: () => request<Course[]>('/courses'),
+  list: (params?: { segmentId?: string; subsegmentId?: string }) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>,
+    ).toString();
+    return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
+  },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string }) =>
+  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl'>>) =>
-    request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  update: (
+    id: string,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId'>>,
+  ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
   enroll: (id: string) => request<{ id: string }>(`/courses/${id}/enroll`, { method: 'POST' }),
 

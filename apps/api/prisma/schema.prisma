@@ -45,8 +45,43 @@ model Course {
   facultyId String
   faculty   User   @relation("FacultyCourses", fields: [facultyId], references: [id])
 
+  segmentId String?
+  segment   Segment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+
+  subsegmentId String?
+  subsegment   Subsegment? @relation(fields: [subsegmentId], references: [id], onDelete: SetNull)
+
   chapters    Chapter[]
   enrollments Enrollment[]
+
+  @@index([segmentId])
+  @@index([subsegmentId])
+}
+
+model Segment {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subsegments Subsegment[]
+  courses     Course[]
+}
+
+model Subsegment {
+  id        String   @id @default(uuid())
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  segmentId String
+  segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  courses Course[]
+
+  @@unique([segmentId, name])
 }
 
 model Chapter {

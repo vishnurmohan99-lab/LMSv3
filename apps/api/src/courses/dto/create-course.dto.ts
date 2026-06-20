@@ -8,4 +8,11 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsString()
+  segmentId: string;
+
+  @IsOptional()
+  @IsString()
+  subsegmentId?: string;
 }

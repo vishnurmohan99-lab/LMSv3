@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { JwtPayload } from '../auth/jwt-payload.interface';
@@ -24,18 +24,27 @@ export class CoursesService {
     private readonly uploads: UploadsService,
   ) {}
 
-  async listCourses(user: JwtPayload) {
+  async listCourses(user: JwtPayload, filters?: { segmentId?: string; subsegmentId?: string }) {
+    const categoryFilter = {
+      ...(filters?.segmentId ? { segmentId: filters.segmentId } : {}),
+      ...(filters?.subsegmentId ? { subsegmentId: filters.subsegmentId } : {}),
+    };
+
     if (user.role === 'STUDENT') {
-      return this.prisma.course.findMany({ where: { published: true }, orderBy: { createdAt: 'desc' } });
+      return this.prisma.course.findMany({
+        where: { published: true, ...categoryFilter },
+        orderBy: { createdAt: 'desc' },
+      });
     }
     if (user.role === 'ADMIN') {
       return this.prisma.course.findMany({
+        where: categoryFilter,
         orderBy: { createdAt: 'desc' },
         include: { _count: { select: { enrollments: true } } },
       });
     }
     return this.prisma.course.findMany({
-      where: { OR: [{ published: true }, { facultyId: user.sub }] },
+      where: { OR: [{ published: true }, { facultyId: user.sub }], ...categoryFilter },
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { enrollments: true } } },
     });
@@ -89,15 +98,32 @@ export class CoursesService {
     return { ...course, chapters };
   }
 
-  createCourse(user: JwtPayload, dto: CreateCourseDto) {
+  async createCourse(user: JwtPayload, dto: CreateCourseDto) {
+    await this.validateSegmentation(dto.segmentId, dto.subsegmentId);
     return this.prisma.course.create({
-      data: { title: dto.title, description: dto.description ?? '', facultyId: user.sub },
+      data: {
+        title: dto.title,
+        description: dto.description ?? '',
+        facultyId: user.sub,
+        segmentId: dto.segmentId,
+        subsegmentId: dto.subsegmentId,
+      },
     });
   }
 
   async updateCourse(id: string, user: JwtPayload, dto: UpdateCourseDto) {
     const course = await this.requireCourse(id);
     this.assertOwnership(user, course.facultyId);
+
+    if (dto.segmentId !== undefined || dto.subsegmentId !== undefined) {
+      const segmentId = dto.segmentId ?? course.segmentId;
+      const subsegmentId = dto.subsegmentId !== undefined ? dto.subsegmentId : course.subsegmentId;
+      if (!segmentId) {
+        throw new BadRequestException('A course must belong to a segment');
+      }
+      await this.validateSegmentation(segmentId, subsegmentId ?? undefined);
+    }
+
     return this.prisma.course.update({ where: { id }, data: dto });
   }
 
@@ -220,6 +246,19 @@ export class CoursesService {
     });
     if (!flashcard) throw new NotFoundException('Flashcard not found');
     return flashcard;
+  }
+
+  private async validateSegmentation(segmentId: string, subsegmentId?: string) {
+    const segment = await this.prisma.segment.findUnique({ where: { id: segmentId } });
+    if (!segment) throw new BadRequestException('Segment not found');
+
+    if (subsegmentId) {
+      const subsegment = await this.prisma.subsegment.findUnique({ where: { id: subsegmentId } });
+      if (!subsegment) throw new BadRequestException('Subsegment not found');
+      if (subsegment.segmentId !== segmentId) {
+        throw new BadRequestException('Subsegment does not belong to the selected segment');
+      }
+    }
   }
 
   private async canViewCourseContent(course: { id: string; published: boolean; facultyId: string }, user: JwtPayload) {

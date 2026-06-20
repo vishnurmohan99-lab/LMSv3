@@ -11,10 +11,10 @@ const inputStyle: React.CSSProperties = {
   fontSize: 14,
   fontFamily: "inherit",
   outline: "none",
-  background: "var(--card)",
+  background: "var(--bg)",
 };
 
-export default function FacultyCoursesPage() {
+export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function FacultyCoursesPage() {
 
   return (
     <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>My Courses</div>
+      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>Courses</div>
 
       <form
         onSubmit={onCreate}
@@ -133,20 +133,20 @@ export default function FacultyCoursesPage() {
 
       {!loading && segments.length === 0 && (
         <p style={{ color: "var(--amber)", fontSize: 13, marginBottom: 16 }}>
-          No segments exist yet — ask an admin to create one before you can add new courses.
+          No segments exist yet — create one on the Segments page before adding new courses.
         </p>
       )}
 
       {loading ? (
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
       ) : courses.length === 0 ? (
-        <p style={{ color: "var(--ink2)" }}>No courses yet. Create your first one above.</p>
+        <p style={{ color: "var(--ink2)" }}>No courses yet. Create the first one above.</p>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           {courses.map((c) => (
             <Link
               key={c.id}
-              href={`/faculty/courses/${c.id}`}
+              href={`/admin/courses/${c.id}`}
               style={{
                 display: "block",
                 padding: 18,

@@ -7,9 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { CoursesModule } from './courses/courses.module';
 import { AdminModule } from './admin/admin.module';
+import { SegmentsModule } from './segments/segments.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, UploadsModule, CoursesModule, AdminModule],
+  imports: [PrismaModule, UsersModule, AuthModule, UploadsModule, CoursesModule, AdminModule, SegmentsModule],
   controllers: [AppController],
   providers: [AppService],
 })

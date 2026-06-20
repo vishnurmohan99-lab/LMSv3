@@ -17,4 +17,12 @@ export class UpdateCourseDto {
   @IsOptional()
   @IsBoolean()
   published?: boolean;
+
+  @IsOptional()
+  @IsString()
+  segmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  subsegmentId?: string;
 }

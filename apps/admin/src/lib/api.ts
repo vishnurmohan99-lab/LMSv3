@@ -100,19 +100,60 @@ export interface Course {
   facultyId: string;
   createdAt: string;
   updatedAt: string;
+  segmentId: string | null;
+  subsegmentId: string | null;
+  _count?: { enrollments: number };
 }
 
 export interface CourseTree extends Course {
   chapters: Chapter[];
 }
 
+export interface Subsegment {
+  id: string;
+  name: string;
+  order: number;
+  segmentId: string;
+  _count?: { courses: number };
+}
+
+export interface Segment {
+  id: string;
+  name: string;
+  order: number;
+  subsegments: Subsegment[];
+  _count?: { courses: number };
+}
+
+export const segmentsApi = {
+  list: () => request<Segment[]>('/segments'),
+  get: (id: string) => request<Segment>(`/segments/${id}`),
+  create: (data: { name: string; order?: number }) =>
+    request<Segment>('/segments', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { name?: string; order?: number }) =>
+    request<Segment>(`/segments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/segments/${id}`, { method: 'DELETE' }),
+  createSubsegment: (segmentId: string, data: { name: string; order?: number }) =>
+    request<Subsegment>(`/segments/${segmentId}/subsegments`, { method: 'POST', body: JSON.stringify(data) }),
+  updateSubsegment: (id: string, data: { name?: string; order?: number }) =>
+    request<Subsegment>(`/subsegments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeSubsegment: (id: string) => request<{ success: boolean }>(`/subsegments/${id}`, { method: 'DELETE' }),
+};
+
 export const coursesApi = {
-  list: () => request<Course[]>('/courses'),
+  list: (params?: { segmentId?: string; subsegmentId?: string }) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>,
+    ).toString();
+    return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
+  },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string }) =>
+  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl'>>) =>
-    request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  update: (
+    id: string,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId'>>,
+  ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
 
   createChapter: (courseId: string, data: { title: string; order?: number }) =>
@@ -128,6 +169,24 @@ export const coursesApi = {
   updateLesson: (id: string, data: Partial<Pick<Lesson, 'title' | 'type' | 'order' | 'contentUrl' | 'liveAt'>>) =>
     request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeLesson: (id: string) => request<{ success: boolean }>(`/lessons/${id}`, { method: 'DELETE' }),
+};
+
+export type FlashcardStatus = 'NEW' | 'LEARNING' | 'KNOWN';
+
+export interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  order: number;
+  lessonId: string;
+  status?: FlashcardStatus;
+}
+
+export const flashcardsApi = {
+  list: (lessonId: string) => request<Flashcard[]>(`/lessons/${lessonId}/flashcards`),
+  create: (lessonId: string, data: { front: string; back: string; order?: number }) =>
+    request<Flashcard>(`/lessons/${lessonId}/flashcards`, { method: 'POST', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/flashcards/${id}`, { method: 'DELETE' }),
 };
 
 export const uploadsApi = {
