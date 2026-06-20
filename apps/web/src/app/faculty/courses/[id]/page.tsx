@@ -27,6 +27,31 @@ const btnStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="1.8">
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+    </svg>
+  );
+}
+
 function NewLessonForm({ chapterId, onAdded }: { chapterId: string; onAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<LessonType>("VIDEO");
@@ -103,6 +128,11 @@ export default function CourseAuthoringPage() {
   const [error, setError] = useState<string | null>(null);
   const [newChapterTitle, setNewChapterTitle] = useState("");
   const [newChapterBanner, setNewChapterBanner] = useState<File | null>(null);
+  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+  const [editChapterTitle, setEditChapterTitle] = useState("");
+  const [editChapterBanner, setEditChapterBanner] = useState<File | null>(null);
+  const [savingChapter, setSavingChapter] = useState(false);
 
   function load() {
     setLoading(true);
@@ -136,6 +166,26 @@ export default function CourseAuthoringPage() {
     load();
   }
 
+  function openEditChapter(id: string, title: string) {
+    setEditingChapterId(id);
+    setEditChapterTitle(title);
+    setEditChapterBanner(null);
+  }
+
+  async function onSaveChapterEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingChapterId) return;
+    setSavingChapter(true);
+    try {
+      const bannerUrl = editChapterBanner ? await uploadsApi.uploadFile(editChapterBanner) : undefined;
+      await coursesApi.updateChapter(editingChapterId, { title: editChapterTitle, bannerUrl });
+      setEditingChapterId(null);
+      load();
+    } finally {
+      setSavingChapter(false);
+    }
+  }
+
   async function onDeleteLesson(id: string) {
     await coursesApi.removeLesson(id);
     load();
@@ -145,7 +195,7 @@ export default function CourseAuthoringPage() {
   if (error || !course) return <main style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Course not found"}</p></main>;
 
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <main style={{ padding: "30px 40px 60px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--orange)", textTransform: "uppercase", marginBottom: 4 }}>
@@ -183,52 +233,112 @@ export default function CourseAuthoringPage() {
         <button type="submit" style={btnStyle}>Add chapter</button>
       </form>
 
-      <div style={{ display: "grid", gap: 16 }}>
-        {course.chapters.map((chapter) => (
-          <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18, overflow: "hidden" }}>
-            {chapter.bannerUrl && (
-              <div
-                style={{
-                  height: 64,
-                  margin: "-18px -18px 14px",
-                  borderRadius: "var(--rm) var(--rm) 0 0",
-                  background: `url(${chapter.bannerUrl}) center/cover`,
-                }}
-              />
-            )}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
-              <button onClick={() => onDeleteChapter(chapter.id)} style={{ ...btnStyle, background: "var(--red)", padding: "6px 12px", fontSize: 12 }}>
-                Delete chapter
-              </button>
-            </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
+        {course.chapters.map((chapter) => {
+          const expanded = expandedChapterId === chapter.id;
+          const editing = editingChapterId === chapter.id;
+          return (
+            <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 20, overflow: "hidden" }}>
+              {chapter.bannerUrl && (
+                <div
+                  style={{
+                    height: 100,
+                    margin: "-20px -20px 16px",
+                    borderRadius: "var(--rm) var(--rm) 0 0",
+                    background: `url(${chapter.bannerUrl}) center/cover`,
+                  }}
+                />
+              )}
 
-            <div style={{ marginTop: 10, display: "grid", gap: 6 }}>
-              {chapter.lessons.map((lesson) => (
-                <div key={lesson.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "var(--bg)", borderRadius: 8, fontSize: 13 }}>
-                  <span>
-                    <b>{lesson.title}</b> <span style={{ color: "var(--ink3)" }}>· {lesson.type}</span>
-                  </span>
-                  <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    {lesson.flashcardsEnabled && (
-                      <Link
-                        href={`/faculty/courses/${courseId}/lessons/${lesson.id}/flashcards`}
-                        style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
-                      >
-                        Manage flashcards
-                      </Link>
-                    )}
-                    <button onClick={() => onDeleteLesson(lesson.id)} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}>
-                      Remove
+              {editing ? (
+                <form onSubmit={onSaveChapterEdit} style={{ display: "grid", gap: 10 }}>
+                  <input
+                    required
+                    autoFocus
+                    value={editChapterTitle}
+                    onChange={(e) => setEditChapterTitle(e.target.value)}
+                    style={inputStyle}
+                  />
+                  <input type="file" accept="image/*" onChange={(e) => setEditChapterBanner(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button type="submit" disabled={savingChapter} style={{ ...btnStyle, opacity: savingChapter ? 0.7 : 1 }}>
+                      {savingChapter ? "Saving…" : "Save"}
                     </button>
-                  </span>
-                </div>
-              ))}
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditingChapterId(null)}
+                      style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 13, cursor: "pointer" }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
+                    <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                      <button
+                        onClick={() => setExpandedChapterId(expanded ? null : chapter.id)}
+                        title={expanded ? "Hide lessons" : "View lessons"}
+                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        <EyeIcon />
+                      </button>
+                      <button
+                        onClick={() => openEditChapter(chapter.id, chapter.title)}
+                        title="Edit chapter"
+                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        onClick={() => onDeleteChapter(chapter.id)}
+                        title="Delete chapter"
+                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </span>
+                  </div>
 
-            <NewLessonForm chapterId={chapter.id} onAdded={load} />
-          </div>
-        ))}
+                  <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 4 }}>
+                    {chapter.lessons.length} lesson{chapter.lessons.length === 1 ? "" : "s"}
+                  </div>
+                </>
+              )}
+
+              {expanded && !editing && (
+                <>
+                  <div style={{ marginTop: 12, display: "grid", gap: 6 }}>
+                    {chapter.lessons.map((lesson) => (
+                      <div key={lesson.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "var(--bg)", borderRadius: 8, fontSize: 13 }}>
+                        <span>
+                          <b>{lesson.title}</b> <span style={{ color: "var(--ink3)" }}>· {lesson.type}</span>
+                        </span>
+                        <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                          {lesson.flashcardsEnabled && (
+                            <Link
+                              href={`/faculty/courses/${courseId}/lessons/${lesson.id}/flashcards`}
+                              style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
+                            >
+                              Manage flashcards
+                            </Link>
+                          )}
+                          <button onClick={() => onDeleteLesson(lesson.id)} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}>
+                            Remove
+                          </button>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <NewLessonForm chapterId={chapter.id} onAdded={load} />
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </main>
   );

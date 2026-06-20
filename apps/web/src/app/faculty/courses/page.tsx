@@ -60,7 +60,7 @@ export default function FacultyCoursesPage() {
   }
 
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <main style={{ padding: "30px 40px 60px" }}>
       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>My Courses</div>
 
       <form
@@ -152,7 +152,7 @@ export default function FacultyCoursesPage() {
       ) : courses.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No courses yet. Create your first one above.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
           {courses.map((c) => (
             <Link
               key={c.id}
@@ -167,7 +167,7 @@ export default function FacultyCoursesPage() {
             >
               <div
                 style={{
-                  height: 64,
+                  height: 100,
                   background: c.thumbnailUrl ? `url(${c.thumbnailUrl}) center/cover` : "var(--bg)",
                   borderBottom: "1px solid var(--line)",
                 }}

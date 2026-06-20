@@ -6,7 +6,7 @@ import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segmen
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 
-const BANNER_HEIGHT = 64;
+const BANNER_HEIGHT = 100;
 
 function CardBanner({ url }: { url: string | null }) {
   return (
@@ -120,7 +120,7 @@ export default function AdminCoursesPage() {
   }
 
   return (
-    <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div style={{ padding: "30px 40px 60px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Courses</div>
         <button
@@ -214,7 +214,7 @@ export default function AdminCoursesPage() {
       ) : filteredCourses.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No courses match.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
           {filteredCourses.map((c) => (
             <div
               key={c.id}

@@ -59,7 +59,7 @@ function CourseRow({ course, onRemove }: { course: Course; onRemove: () => void 
     <div style={{ background: "var(--bg)", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden" }}>
       <div
         style={{
-          height: 48,
+          height: 80,
           background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : "var(--card)",
           borderBottom: "1px solid var(--line)",
         }}
@@ -229,7 +229,7 @@ export default function SegmentDetailPage() {
   const directCourses = allCourses.filter((c) => c.segmentId === segmentId && !c.subsegmentId);
 
   return (
-    <div style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div style={{ padding: "30px 40px 60px" }}>
       <Link href="/admin/segments" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
         ← Back to segments
       </Link>
@@ -316,7 +316,7 @@ export default function SegmentDetailPage() {
                   {expanded && (
                     <div style={{ marginTop: 12 }}>
                       {subCourses.length > 0 && (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 10 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginBottom: 12 }}>
                           {subCourses.map((c) => (
                             <CourseRow key={c.id} course={c} onRemove={() => onRemoveFromCategory(c.id)} />
                           ))}
@@ -348,7 +348,7 @@ export default function SegmentDetailPage() {
         {directCourses.length === 0 ? (
           <p style={{ color: "var(--ink2)", fontSize: 13.5, marginBottom: 4 }}>No courses assigned directly yet.</p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginBottom: 12 }}>
             {directCourses.map((c) => (
               <CourseRow key={c.id} course={c} onRemove={() => onRemoveFromCategory(c.id)} />
             ))}
