@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { segmentsApi, ApiError, type Segment } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
@@ -184,12 +185,20 @@ export default function AdminSegmentsPage() {
                     {segment._count?.courses ?? 0} courses
                   </span>
                 </div>
-                <button
-                  onClick={() => onDeleteSegment(segment.id)}
-                  style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}
-                >
-                  Delete segment
-                </button>
+                <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                  <Link
+                    href={`/admin/courses?segmentId=${segment.id}`}
+                    style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
+                  >
+                    View / add courses
+                  </Link>
+                  <button
+                    onClick={() => onDeleteSegment(segment.id)}
+                    style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}
+                  >
+                    Delete segment
+                  </button>
+                </span>
               </div>
 
               {segment.subsegments.length > 0 && (
@@ -210,12 +219,20 @@ export default function AdminSegmentsPage() {
                       <span>
                         {sub.name} <span style={{ color: "var(--ink3)" }}>· {sub._count?.courses ?? 0} courses</span>
                       </span>
-                      <button
-                        onClick={() => onDeleteSubsegment(sub.id)}
-                        style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}
-                      >
-                        Remove
-                      </button>
+                      <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <Link
+                          href={`/admin/courses?segmentId=${segment.id}&subsegmentId=${sub.id}`}
+                          style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
+                        >
+                          View / add courses
+                        </Link>
+                        <button
+                          onClick={() => onDeleteSubsegment(sub.id)}
+                          style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}
+                        >
+                          Remove
+                        </button>
+                      </span>
                     </div>
                   ))}
                 </div>

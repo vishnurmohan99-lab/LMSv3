@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
 
@@ -15,18 +16,25 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function AdminCoursesPage() {
+  const searchParams = useSearchParams();
+  const filterSegmentId = searchParams.get("segmentId") ?? "";
+  const filterSubsegmentId = searchParams.get("subsegmentId") ?? "";
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
-  const [segmentId, setSegmentId] = useState("");
-  const [subsegmentId, setSubsegmentId] = useState("");
+  const [segmentId, setSegmentId] = useState(filterSegmentId);
+  const [subsegmentId, setSubsegmentId] = useState(filterSubsegmentId);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function load() {
     setLoading(true);
-    Promise.all([coursesApi.list(), segmentsApi.list()])
+    Promise.all([
+      coursesApi.list(filterSegmentId ? { segmentId: filterSegmentId, subsegmentId: filterSubsegmentId } : undefined),
+      segmentsApi.list(),
+    ])
       .then(([c, s]) => {
         setCourses(c);
         setSegments(s);
@@ -35,9 +43,11 @@ export default function AdminCoursesPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(load, []);
+  useEffect(load, [filterSegmentId, filterSubsegmentId]);
 
   const selectedSegment = segments.find((s) => s.id === segmentId);
+  const contextSegment = segments.find((s) => s.id === filterSegmentId);
+  const contextSubsegment = contextSegment?.subsegments.find((s) => s.id === filterSubsegmentId);
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -46,8 +56,6 @@ export default function AdminCoursesPage() {
     try {
       await coursesApi.create({ title, segmentId, subsegmentId: subsegmentId || undefined });
       setTitle("");
-      setSegmentId("");
-      setSubsegmentId("");
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create course");
@@ -59,6 +67,29 @@ export default function AdminCoursesPage() {
   return (
     <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>Courses</div>
+
+      {contextSegment && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "10px 16px",
+            background: "var(--orange-soft)",
+            borderRadius: "var(--rm)",
+            marginBottom: 18,
+            fontSize: 13,
+          }}
+        >
+          <span>
+            Showing courses in <b>{contextSegment.name}</b>
+            {contextSubsegment && <> / <b>{contextSubsegment.name}</b></>}
+          </span>
+          <Link href="/admin/courses" style={{ color: "var(--orange)", fontWeight: 700 }}>
+            Clear filter
+          </Link>
+        </div>
+      )}
 
       <form
         onSubmit={onCreate}
