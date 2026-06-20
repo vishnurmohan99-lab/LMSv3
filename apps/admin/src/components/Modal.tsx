@@ -6,10 +6,12 @@ export default function Modal({
   title,
   onClose,
   children,
+  maxWidth = 460,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  maxWidth?: number;
 }) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -42,7 +44,9 @@ export default function Modal({
           borderRadius: "var(--rl)",
           padding: 24,
           width: "100%",
-          maxWidth: 460,
+          maxWidth,
+          maxHeight: "88vh",
+          overflowY: "auto",
           boxShadow: "0 20px 60px rgba(0,0,0,.25)",
         }}
       >

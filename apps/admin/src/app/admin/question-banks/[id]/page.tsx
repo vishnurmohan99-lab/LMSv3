@@ -376,13 +376,13 @@ export default function AdminQuestionBankDetailPage() {
       </div>
 
       {showAddModal && (
-        <Modal title="Add question" onClose={() => setShowAddModal(false)}>
+        <Modal title="Add question" onClose={() => setShowAddModal(false)} maxWidth={680}>
           <QuestionForm onSubmit={onAddQuestion} onCancel={() => setShowAddModal(false)} />
         </Modal>
       )}
 
       {editingQuestion && (
-        <Modal title="Edit question" onClose={() => setEditingQuestion(null)}>
+        <Modal title="Edit question" onClose={() => setEditingQuestion(null)} maxWidth={680}>
           <QuestionForm initial={editingQuestion} onSubmit={onEditQuestion} onCancel={() => setEditingQuestion(null)} />
         </Modal>
       )}

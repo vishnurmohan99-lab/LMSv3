@@ -30,6 +30,38 @@ const FontSize = Extension.create({
   },
 });
 
+function BulletListIcon({ color }: { color: string }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+      <circle cx="4" cy="6" r="1.4" fill={color} stroke="none" />
+      <circle cx="4" cy="12" r="1.4" fill={color} stroke="none" />
+      <circle cx="4" cy="18" r="1.4" fill={color} stroke="none" />
+      <path d="M9 6h12M9 12h12M9 18h12" />
+    </svg>
+  );
+}
+
+function OrderedListIcon({ color }: { color: string }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+      <path d="M9 6h12M9 12h12M9 18h12" />
+      <text x="1" y="8" fontSize="7" fill={color} stroke="none" fontFamily="inherit">1</text>
+      <text x="1" y="14" fontSize="7" fill={color} stroke="none" fontFamily="inherit">2</text>
+      <text x="1" y="20" fontSize="7" fill={color} stroke="none" fontFamily="inherit">3</text>
+    </svg>
+  );
+}
+
+function ImageIcon({ color }: { color: string }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8">
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <circle cx="8.5" cy="9.5" r="1.6" />
+      <path d="m4 17 5-5 3 3 4-5 4 5" />
+    </svg>
+  );
+}
+
 const btnStyle = (active: boolean): React.CSSProperties => ({
   width: 30,
   height: 30,
@@ -108,17 +140,17 @@ export default function RichTextEditor({ value, onChange }: { value: string; onC
           <option value="28px">Huge</option>
         </select>
         <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} style={btnStyle(editor.isActive("bulletList"))}>
-          •—
+          <BulletListIcon color={editor.isActive("bulletList") ? "var(--orange)" : "var(--ink2)"} />
         </button>
         <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} style={btnStyle(editor.isActive("orderedList"))}>
-          1.
+          <OrderedListIcon color={editor.isActive("orderedList") ? "var(--orange)" : "var(--ink2)"} />
         </button>
-        <button type="button" onClick={() => fileInputRef.current?.click()} style={btnStyle(false)}>
-          🖼
+        <button type="button" onClick={() => fileInputRef.current?.click()} style={btnStyle(false)} title="Insert image">
+          <ImageIcon color="var(--ink2)" />
         </button>
         <input ref={fileInputRef} type="file" accept="image/*" onChange={onPickImage} style={{ display: "none" }} />
       </div>
-      <div style={{ padding: 12, minHeight: 120 }}>
+      <div className="rte-content" style={{ padding: 12, minHeight: 160, maxHeight: 360, overflowY: "auto" }}>
         <EditorContent editor={editor} />
       </div>
     </div>

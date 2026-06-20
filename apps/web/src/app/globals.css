@@ -89,3 +89,21 @@ button:active, a:active {
 .fade-in {
   animation: fadeIn .28s ease both;
 }
+
+.rte-content .ProseMirror {
+  outline: none;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rte-content img {
+  max-width: 100%;
+  border-radius: 8px;
+  display: block;
+  margin: 8px 0;
+}
+
+.rte-content ul, .rte-content ol {
+  padding-left: 22px;
+}
