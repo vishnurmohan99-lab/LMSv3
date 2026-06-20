@@ -126,6 +126,26 @@ export const enrollmentsApi = {
   mine: () => request<Enrollment[]>('/enrollments/me'),
 };
 
+export type FlashcardStatus = 'NEW' | 'LEARNING' | 'KNOWN';
+
+export interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  order: number;
+  lessonId: string;
+  status?: FlashcardStatus;
+}
+
+export const flashcardsApi = {
+  list: (lessonId: string) => request<Flashcard[]>(`/lessons/${lessonId}/flashcards`),
+  create: (lessonId: string, data: { front: string; back: string; order?: number }) =>
+    request<Flashcard>(`/lessons/${lessonId}/flashcards`, { method: 'POST', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/flashcards/${id}`, { method: 'DELETE' }),
+  setProgress: (id: string, status: FlashcardStatus) =>
+    request<{ id: string }>(`/flashcards/${id}/progress`, { method: 'POST', body: JSON.stringify({ status }) }),
+};
+
 export const uploadsApi = {
   async presign(fileName: string, contentType: string) {
     return request<{ uploadUrl: string; key: string }>('/uploads/presign', {

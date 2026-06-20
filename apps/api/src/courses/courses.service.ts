@@ -9,6 +9,9 @@ import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
+import { CreateFlashcardDto } from './dto/create-flashcard.dto';
+import { UpdateFlashcardDto } from './dto/update-flashcard.dto';
+import { FlashcardStatus } from '../../generated/prisma/client';
 
 function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
   return user.role === 'ADMIN' || user.sub === facultyId;
@@ -153,6 +156,70 @@ export class CoursesService {
     this.assertOwnership(user, lesson.chapter.course.facultyId);
     await this.prisma.lesson.delete({ where: { id } });
     return { success: true };
+  }
+
+  async createFlashcard(lessonId: string, user: JwtPayload, dto: CreateFlashcardDto) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    this.assertOwnership(user, lesson.chapter.course.facultyId);
+    return this.prisma.flashcard.create({
+      data: { front: dto.front, back: dto.back, order: dto.order ?? 0, lessonId },
+    });
+  }
+
+  async updateFlashcard(id: string, user: JwtPayload, dto: UpdateFlashcardDto) {
+    const flashcard = await this.requireFlashcardWithCourse(id);
+    this.assertOwnership(user, flashcard.lesson.chapter.course.facultyId);
+    return this.prisma.flashcard.update({ where: { id }, data: dto });
+  }
+
+  async deleteFlashcard(id: string, user: JwtPayload) {
+    const flashcard = await this.requireFlashcardWithCourse(id);
+    this.assertOwnership(user, flashcard.lesson.chapter.course.facultyId);
+    await this.prisma.flashcard.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async listFlashcards(lessonId: string, user: JwtPayload) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    const canView = await this.canViewCourseContent(lesson.chapter.course, user);
+    if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+
+    const flashcards = await this.prisma.flashcard.findMany({
+      where: { lessonId },
+      orderBy: { order: 'asc' },
+      include:
+        user.role === 'STUDENT'
+          ? { progress: { where: { studentId: user.sub } } }
+          : undefined,
+    });
+
+    if (user.role !== 'STUDENT') return flashcards;
+
+    return flashcards.map((f) => {
+      const { progress, ...rest } = f as typeof f & { progress: { status: FlashcardStatus }[] };
+      return { ...rest, status: progress[0]?.status ?? FlashcardStatus.NEW };
+    });
+  }
+
+  async setFlashcardProgress(flashcardId: string, user: JwtPayload, status: FlashcardStatus) {
+    const flashcard = await this.requireFlashcardWithCourse(flashcardId);
+    const canView = await this.canViewCourseContent(flashcard.lesson.chapter.course, user);
+    if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+
+    return this.prisma.flashcardProgress.upsert({
+      where: { studentId_flashcardId: { studentId: user.sub, flashcardId } },
+      create: { studentId: user.sub, flashcardId, status, lastReviewedAt: new Date() },
+      update: { status, lastReviewedAt: new Date() },
+    });
+  }
+
+  private async requireFlashcardWithCourse(id: string) {
+    const flashcard = await this.prisma.flashcard.findUnique({
+      where: { id },
+      include: { lesson: { include: { chapter: { include: { course: true } } } } },
+    });
+    if (!flashcard) throw new NotFoundException('Flashcard not found');
+    return flashcard;
   }
 
   private async canViewCourseContent(course: { id: string; published: boolean; facultyId: string }, user: JwtPayload) {

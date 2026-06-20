@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, ApiError, type CourseTree, type Lesson } from "@/lib/api";
+import FlashcardReview from "@/components/FlashcardReview";
 
 function LessonViewer({ lesson }: { lesson: Lesson }) {
   if (lesson.type === "VIDEO") {
@@ -33,11 +34,7 @@ function LessonViewer({ lesson }: { lesson: Lesson }) {
     );
   }
 
-  return (
-    <div style={{ padding: 24, background: "var(--amber-soft)", borderRadius: 14, color: "var(--amber)" }}>
-      Flashcards for this lesson are coming in a later step.
-    </div>
-  );
+  return <FlashcardReview lessonId={lesson.id} />;
 }
 
 export default function StudentCoursePlayerPage() {

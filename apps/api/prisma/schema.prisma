@@ -28,8 +28,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  courses     Course[]     @relation("FacultyCourses")
-  enrollments Enrollment[]
+  courses            Course[]            @relation("FacultyCourses")
+  enrollments        Enrollment[]
+  flashcardProgress  FlashcardProgress[]
 }
 
 model Course {
@@ -78,6 +79,39 @@ model Lesson {
 
   chapterId String
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  flashcards Flashcard[]
+}
+
+enum FlashcardStatus {
+  NEW
+  LEARNING
+  KNOWN
+}
+
+model Flashcard {
+  id    String @id @default(uuid())
+  front String
+  back  String
+  order Int    @default(0)
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  progress FlashcardProgress[]
+}
+
+model FlashcardProgress {
+  id             String          @id @default(uuid())
+  status         FlashcardStatus @default(NEW)
+  lastReviewedAt DateTime?
+
+  studentId   String
+  student     User      @relation(fields: [studentId], references: [id])
+  flashcardId String
+  flashcard   Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, flashcardId])
 }
 
 model Enrollment {

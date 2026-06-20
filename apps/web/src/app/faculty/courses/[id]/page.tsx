@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { coursesApi, uploadsApi, ApiError, type CourseTree, type LessonType } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
@@ -179,9 +180,19 @@ export default function CourseAuthoringPage() {
                   <span>
                     <b>{lesson.title}</b> <span style={{ color: "var(--ink3)" }}>· {lesson.type}</span>
                   </span>
-                  <button onClick={() => onDeleteLesson(lesson.id)} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}>
-                    Remove
-                  </button>
+                  <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    {lesson.type === "FLASHCARD" && (
+                      <Link
+                        href={`/faculty/courses/${courseId}/lessons/${lesson.id}/flashcards`}
+                        style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}
+                      >
+                        Manage flashcards
+                      </Link>
+                    )}
+                    <button onClick={() => onDeleteLesson(lesson.id)} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}>
+                      Remove
+                    </button>
+                  </span>
                 </div>
               ))}
             </div>
