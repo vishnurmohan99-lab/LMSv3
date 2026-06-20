@@ -75,7 +75,6 @@ function FeaturePicker({
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const anyEnabled = AVAILABLE_FEATURES.some((f) => features[f.key]);
-  const enabledLabels = AVAILABLE_FEATURES.filter((f) => features[f.key]).map((f) => f.label);
 
   function openMenu() {
     const rect = btnRef.current?.getBoundingClientRect();
@@ -118,7 +117,7 @@ function FeaturePicker({
         }}
       >
         <SparkleIcon />
-        {anyEnabled ? enabledLabels.join(", ") : "Add feature"}
+        {anyEnabled ? "Edit features" : "Add feature"}
       </button>
       {open &&
         pos &&
