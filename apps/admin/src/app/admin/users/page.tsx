@@ -15,6 +15,13 @@ const inputStyle: React.CSSProperties = {
 
 const ROLES: Profile["role"][] = ["STUDENT", "FACULTY", "ADMIN"];
 
+function generatePassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+  let pwd = "";
+  for (let i = 0; i < 12; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+  return pwd;
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,8 +30,11 @@ export default function AdminUsersPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<Profile["role"]>("FACULTY");
   const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState<{ email: string; password: string; role: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   function loadUsers() {
     setLoading(true);
@@ -40,9 +50,11 @@ export default function AdminUsersPage() {
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setCreated(null);
     setCreating(true);
     try {
       await usersApi.create({ fullName, email, password, role });
+      setCreated({ email, password, role });
       setFullName("");
       setEmail("");
       setPassword("");
@@ -65,16 +77,59 @@ export default function AdminUsersPage() {
     }
   }
 
-  return (
-    <main style={{ padding: 40, maxWidth: 900 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800 }}>User Management</h1>
+  async function onCopyCredentials() {
+    if (!created) return;
+    await navigator.clipboard.writeText(`Email: ${created.email}\nPassword: ${created.password}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
-      <section style={{ marginTop: 28, padding: 20, background: "var(--card)", borderRadius: 16, border: "1px solid var(--line)" }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Create faculty or admin account</h2>
+  return (
+    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>User Management</div>
+
+      <section
+        style={{
+          padding: 20,
+          background: "var(--card)",
+          borderRadius: "var(--rl)",
+          border: "1px solid var(--line)",
+          marginBottom: 18,
+        }}
+      >
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Create faculty or admin account</div>
         <form onSubmit={onCreate} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <input required placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} style={inputStyle} />
           <input required type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
-          <input required type="password" minLength={8} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              required
+              type={showPassword ? "text" : "password"}
+              minLength={8}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={inputStyle}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              style={{ ...inputStyle, cursor: "pointer", fontSize: 12, color: "var(--ink2)" }}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPassword(generatePassword());
+                setShowPassword(true);
+              }}
+              style={{ ...inputStyle, cursor: "pointer", fontSize: 12, color: "var(--orange)" }}
+            >
+              Generate
+            </button>
+          </div>
           <select value={role} onChange={(e) => setRole(e.target.value as Profile["role"])} style={inputStyle}>
             <option value="FACULTY">Faculty</option>
             <option value="ADMIN">Admin</option>
@@ -98,12 +153,60 @@ export default function AdminUsersPage() {
             {creating ? "Creating…" : "Create"}
           </button>
         </form>
+
+        {created && (
+          <div
+            style={{
+              marginTop: 16,
+              padding: 16,
+              background: "var(--green-soft)",
+              borderRadius: "var(--rm)",
+              color: "var(--green)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 14,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ fontSize: 13 }}>
+              <b>{created.role} account created.</b> Share these credentials with them now — the password won&apos;t be shown again.
+              <div style={{ marginTop: 4, fontFamily: "monospace" }}>
+                {created.email} / {created.password}
+              </div>
+            </div>
+            <button
+              onClick={onCopyCredentials}
+              style={{
+                padding: "8px 16px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 9,
+                fontSize: 12.5,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: "pointer",
+                flex: "none",
+              }}
+            >
+              {copied ? "Copied!" : "Copy credentials"}
+            </button>
+          </div>
+        )}
       </section>
 
-      {error && <p style={{ color: "var(--red)", fontSize: 13, marginTop: 16 }}>{error}</p>}
+      {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
-      <section style={{ marginTop: 28 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>All users</h2>
+      <section
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rl)",
+          padding: 22,
+        }}
+      >
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>All users</div>
         {loading ? (
           <p style={{ color: "var(--ink2)" }}>Loading…</p>
         ) : (

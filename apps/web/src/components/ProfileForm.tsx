@@ -8,11 +8,11 @@ const inputStyle: React.CSSProperties = {
   margin: "8px 0 16px",
   padding: "12px 14px",
   border: "1px solid var(--line)",
-  borderRadius: 12,
+  borderRadius: "var(--rm)",
   fontSize: 14,
   fontFamily: "inherit",
   outline: "none",
-  background: "var(--card)",
+  background: "var(--bg)",
 };
 
 export default function ProfileForm() {
@@ -54,9 +54,17 @@ export default function ProfileForm() {
   if (!profile) return <p style={{ color: "var(--red)" }}>{error ?? "Could not load profile"}</p>;
 
   return (
-    <div style={{ maxWidth: 420 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800 }}>Profile</h1>
-      <p style={{ color: "var(--ink2)", marginTop: 6, marginBottom: 24 }}>
+    <div
+      style={{
+        maxWidth: 420,
+        background: "var(--card)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--rl)",
+        padding: 24,
+      }}
+    >
+      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Profile</div>
+      <p style={{ color: "var(--ink2)", marginTop: 6, marginBottom: 20, fontSize: 13.5 }}>
         {profile.email} ·{" "}
         <span style={{ color: "var(--orange)", fontWeight: 700 }}>{profile.role}</span>
       </p>
@@ -72,11 +80,11 @@ export default function ProfileForm() {
           type="submit"
           disabled={saving}
           style={{
-            padding: "12px 22px",
+            padding: "11px 20px",
             background: "var(--ink)",
             color: "#fff",
             border: "none",
-            borderRadius: 12,
+            borderRadius: 10,
             fontSize: 14,
             fontWeight: 700,
             fontFamily: "inherit",

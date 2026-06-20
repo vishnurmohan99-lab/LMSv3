@@ -48,10 +48,21 @@ export default function FacultyCoursesPage() {
   }
 
   return (
-    <main style={{ padding: 40, maxWidth: 800 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800 }}>My Courses</h1>
+    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>My Courses</div>
 
-      <form onSubmit={onCreate} style={{ display: "flex", gap: 10, marginTop: 24, marginBottom: 24 }}>
+      <form
+        onSubmit={onCreate}
+        style={{
+          display: "flex",
+          gap: 10,
+          marginBottom: 22,
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rm)",
+          padding: 16,
+        }}
+      >
         <input
           required
           placeholder="New course title"
@@ -73,6 +84,7 @@ export default function FacultyCoursesPage() {
             fontFamily: "inherit",
             cursor: creating ? "default" : "pointer",
             opacity: creating ? 0.7 : 1,
+            whiteSpace: "nowrap",
           }}
         >
           {creating ? "Creating…" : "Create course"}
@@ -96,7 +108,7 @@ export default function FacultyCoursesPage() {
                 padding: 18,
                 background: "var(--card)",
                 border: "1px solid var(--line)",
-                borderRadius: 14,
+                borderRadius: "var(--rm)",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

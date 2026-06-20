@@ -136,10 +136,13 @@ export default function CourseAuthoringPage() {
   if (error || !course) return <main style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Course not found"}</p></main>;
 
   return (
-    <main style={{ padding: 40, maxWidth: 800 }}>
+    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800 }}>{course.title}</h1>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--orange)", textTransform: "uppercase", marginBottom: 4 }}>
+            Course
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 800 }}>{course.title}</h1>
           {course.description && <p style={{ color: "var(--ink2)", marginTop: 6 }}>{course.description}</p>}
         </div>
         <button
@@ -166,7 +169,7 @@ export default function CourseAuthoringPage() {
 
       <div style={{ display: "grid", gap: 16 }}>
         {course.chapters.map((chapter) => (
-          <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, padding: 18 }}>
+          <div key={chapter.id} style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
               <button onClick={() => onDeleteChapter(chapter.id)} style={{ ...btnStyle, background: "var(--red)", padding: "6px 12px", fontSize: 12 }}>
