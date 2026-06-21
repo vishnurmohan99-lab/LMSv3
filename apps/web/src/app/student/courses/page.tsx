@@ -208,7 +208,7 @@ export default function StudentCoursesPage() {
   }
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 1180, margin: "0 auto" }}>
+    <main className="fade-in" style={{ padding: "30px 30px 60px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, marginBottom: 24, flexWrap: "wrap" }}>
         <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>My Courses</div>
         <div style={{ position: "relative", flex: "1 1 320px", maxWidth: 420 }}>

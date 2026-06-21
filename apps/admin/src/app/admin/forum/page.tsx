@@ -70,7 +70,7 @@ export default function AdminForumPage() {
   }
 
   return (
-    <div style={{ display: "flex", margin: "-30px", height: "calc(100vh - 70px)" }}>
+    <div style={{ display: "flex", minHeight: "100%" }}>
       <aside style={{ width: 240, flex: "none", borderRight: "1px solid var(--line)", background: "var(--card)", padding: "18px 12px", overflowY: "auto" }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink3)", textTransform: "uppercase", letterSpacing: 1, padding: "0 6px 10px" }}>Categories</div>
         <div style={{ display: "grid", gap: 3 }}>
