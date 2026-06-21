@@ -140,7 +140,7 @@ const navItems = [
   { href: "/student/courses", label: "Course", Icon: CourseIcon, enabled: true },
   { href: "/student/calendar", label: "Calendar", Icon: CalendarIcon, enabled: false },
   { href: "/student/messages", label: "Messages", Icon: MessagesIcon, enabled: true },
-  { href: "/student/forum", label: "Forum", Icon: ForumIcon, enabled: false },
+  { href: "/student/forum", label: "Forum", Icon: ForumIcon, enabled: true },
   { href: "/student/feedback", label: "Feedback", Icon: FeedbackIcon, enabled: true },
   { href: "/student/workout", label: "Workout", Icon: WorkoutIcon, enabled: true },
   { href: "/student/mock-test", label: "Mock Test", Icon: MockTestIcon, enabled: true },

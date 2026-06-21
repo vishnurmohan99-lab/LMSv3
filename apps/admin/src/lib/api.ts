@@ -778,3 +778,58 @@ export const feedbackApi = {
   submit: (id: string, answers: (string | number)[]) =>
     request<FeedbackResponse>(`/feedback-forms/${id}/responses`, { method: 'POST', body: JSON.stringify({ answers }) }),
 };
+
+export interface ForumCategory {
+  id: string;
+  name: string;
+  count: number;
+}
+
+export interface ForumAuthor {
+  id: string;
+  fullName: string;
+  role: 'STUDENT' | 'FACULTY' | 'ADMIN';
+}
+
+export interface ForumThread {
+  id: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  locked: boolean;
+  createdAt: string;
+  courseId: string | null;
+  authorId: string;
+  author: ForumAuthor;
+  _count: { posts: number; likes: number };
+}
+
+export interface ForumPost {
+  id: string;
+  body: string;
+  createdAt: string;
+  threadId: string;
+  authorId: string;
+  author: ForumAuthor;
+}
+
+export interface ForumThreadDetail extends ForumThread {
+  posts: ForumPost[];
+  likedByMe: boolean;
+}
+
+export const forumApi = {
+  listCategories: () => request<ForumCategory[]>('/forum/categories'),
+  listThreads: (params?: { categoryId?: string; search?: string }) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>).toString();
+    return request<ForumThread[]>(`/forum/threads${qs ? `?${qs}` : ""}`);
+  },
+  getThread: (id: string) => request<ForumThreadDetail>(`/forum/threads/${id}`),
+  createThread: (data: { title: string; body: string; courseId?: string }) =>
+    request<ForumThread>('/forum/threads', { method: 'POST', body: JSON.stringify(data) }),
+  addPost: (threadId: string, body: string) =>
+    request<ForumPost>(`/forum/threads/${threadId}/posts`, { method: 'POST', body: JSON.stringify({ body }) }),
+  toggleLike: (threadId: string) => request<{ liked: boolean }>(`/forum/threads/${threadId}/like`, { method: 'POST' }),
+  updateThread: (threadId: string, data: { pinned?: boolean; locked?: boolean }) =>
+    request<ForumThread>(`/forum/threads/${threadId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+};

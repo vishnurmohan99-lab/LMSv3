@@ -21,6 +21,7 @@ import { TestAttemptsModule } from './test-attempts/test-attempts.module';
 import { WorkoutModule } from './workout/workout.module';
 import { MentorModule } from './mentor/mentor.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { ForumModule } from './forum/forum.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     WorkoutModule,
     MentorModule,
     FeedbackModule,
+    ForumModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -55,6 +55,10 @@ model User {
   feedbackFormsAsTarget FeedbackForm[]     @relation("FeedbackFormTargetFaculty")
   feedbackRecipient     FeedbackRecipient[]
   feedbackResponses     FeedbackResponse[]
+
+  forumThreads    ForumThread[]
+  forumPosts      ForumPost[]
+  forumThreadLikes ForumThreadLike[]
 }
 
 model Course {
@@ -81,6 +85,7 @@ model Course {
   conversations Conversation[]
   mockTests     Test[]
   feedbackForms FeedbackForm[]
+  forumThreads  ForumThread[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -630,4 +635,50 @@ model FeedbackResponse {
   student   User   @relation(fields: [studentId], references: [id])
 
   @@unique([formId, studentId])
+}
+
+model ForumThread {
+  id        String   @id @default(uuid())
+  title     String
+  body      String
+  pinned    Boolean  @default(false)
+  locked    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  posts ForumPost[]
+  likes ForumThreadLike[]
+
+  @@index([courseId])
+}
+
+model ForumPost {
+  id        String   @id @default(uuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  threadId String
+  thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@index([threadId])
+}
+
+model ForumThreadLike {
+  id String @id @default(uuid())
+
+  threadId String
+  thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([threadId, userId])
 }
