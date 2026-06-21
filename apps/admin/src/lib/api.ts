@@ -380,12 +380,31 @@ export const testsApi = {
     request<TestQuestion[]>(`/tests/${testId}/import-questions`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
-export type BatchStatus = 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'ON_HOLD' | 'CANCELLED';
+export interface BatchStatusType {
+  id: string;
+  name: string;
+  color: string | null;
+  order: number;
+  isDefault: boolean;
+  isCompletionTarget: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const batchStatusTypesApi = {
+  list: () => request<BatchStatusType[]>('/batch-status-types'),
+  create: (data: { name: string; color?: string; order?: number; isDefault?: boolean; isCompletionTarget?: boolean }) =>
+    request<BatchStatusType>('/batch-status-types', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Pick<BatchStatusType, 'name' | 'color' | 'order' | 'isDefault' | 'isCompletionTarget'>>) =>
+    request<BatchStatusType>(`/batch-status-types/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/batch-status-types/${id}`, { method: 'DELETE' }),
+};
 
 export interface Batch {
   id: string;
   name: string;
-  status: BatchStatus;
+  statusId: string;
+  status: { id: string; name: string; color: string | null };
   startDate: string;
   endDate: string | null;
   courseId: string;
@@ -393,6 +412,21 @@ export interface Batch {
   createdAt: string;
   updatedAt: string;
   _count?: { enrollments: number; sessions: number };
+}
+
+export interface BatchStats {
+  totalBatches: number;
+  totalLearners: number;
+  byStatus: { statusId: string; name: string; count: number }[];
+  byCourse: { courseId: string; courseTitle: string; byStatus: { statusId: string; name: string; count: number }[] }[];
+}
+
+export interface BulkOperation {
+  id: string;
+  type: 'BATCH_ENROLL';
+  payload: { batchId: string; studentIds: string[] };
+  createdAt: string;
+  undoneAt: string | null;
 }
 
 export interface BatchEnrollment {
@@ -428,18 +462,41 @@ export interface BatchTree extends Batch {
 export const batchesApi = {
   list: (courseId: string) => request<Batch[]>(`/courses/${courseId}/batches`),
   get: (id: string) => request<BatchTree>(`/batches/${id}`),
-  create: (courseId: string, data: { name: string; status?: BatchStatus; startDate: string; endDate?: string; facultyId?: string }) =>
+  stats: () => request<BatchStats>('/batches/stats'),
+  create: (courseId: string, data: { name: string; statusId?: string; startDate: string; endDate?: string; facultyId?: string }) =>
     request<Batch>(`/courses/${courseId}/batches`, { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<Pick<Batch, 'name' | 'status' | 'startDate' | 'endDate' | 'facultyId'>>) =>
+  update: (id: string, data: Partial<Pick<Batch, 'name' | 'statusId' | 'startDate' | 'endDate' | 'facultyId'>>) =>
     request<Batch>(`/batches/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/batches/${id}`, { method: 'DELETE' }),
+  extend: (id: string, newEndDate: string) =>
+    request<Batch>(`/batches/${id}/extend`, { method: 'POST', body: JSON.stringify({ newEndDate }) }),
 
   enroll: (batchId: string, studentId: string) =>
     request<BatchEnrollment>(`/batches/${batchId}/enroll`, { method: 'POST', body: JSON.stringify({ studentId }) }),
   bulkEnroll: (batchId: string, studentIds: string[]) =>
-    request<{ enrolled: number }>(`/batches/${batchId}/enroll/bulk`, { method: 'POST', body: JSON.stringify({ studentIds }) }),
+    request<{ enrolled: number; skipped: number; bulkOperationId?: string }>(`/batches/${batchId}/enroll/bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ studentIds }),
+    }),
+  enrollCsv: async (batchId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_URL}/batches/${batchId}/enroll/csv`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new ApiError(res.status, body?.message ?? 'Failed to import CSV');
+    return body as { enrolled: number; skipped: number; bulkOperationId?: string };
+  },
   unenroll: (batchId: string, studentId: string) =>
     request<{ success: boolean }>(`/batches/${batchId}/enroll/${studentId}`, { method: 'DELETE' }),
+};
+
+export const bulkOperationsApi = {
+  listForBatch: (batchId: string) => request<BulkOperation[]>(`/batches/${batchId}/bulk-operations`),
+  undo: (id: string) => request<BulkOperation>(`/bulk-operations/${id}/undo`, { method: 'POST' }),
 };
 
 export const sessionsApi = {

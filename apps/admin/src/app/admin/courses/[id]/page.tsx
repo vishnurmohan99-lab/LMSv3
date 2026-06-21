@@ -9,11 +9,12 @@ import {
   uploadsApi,
   usersApi,
   batchesApi,
+  batchStatusTypesApi,
   ApiError,
   type CourseTree,
   type Segment,
   type Batch,
-  type BatchStatus,
+  type BatchStatusType,
   type Profile,
 } from "@/lib/api";
 import Modal from "@/components/Modal";
@@ -131,6 +132,7 @@ export default function AdminCourseAuthoringPage() {
   const [segments, setSegments] = useState<Segment[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [facultyUsers, setFacultyUsers] = useState<Profile[]>([]);
+  const [statusTypes, setStatusTypes] = useState<BatchStatusType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -147,7 +149,7 @@ export default function AdminCourseAuthoringPage() {
   const [showAddBatch, setShowAddBatch] = useState(false);
   const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
   const [batchName, setBatchName] = useState("");
-  const [batchStatus, setBatchStatus] = useState<BatchStatus>("ACTIVE");
+  const [batchStatusId, setBatchStatusId] = useState("");
   const [batchStartDate, setBatchStartDate] = useState("");
   const [batchEndDate, setBatchEndDate] = useState("");
   const [batchFacultyId, setBatchFacultyId] = useState("");
@@ -156,12 +158,13 @@ export default function AdminCourseAuthoringPage() {
 
   function load() {
     setLoading(true);
-    Promise.all([coursesApi.get(courseId), segmentsApi.list(), batchesApi.list(courseId), usersApi.list()])
-      .then(([c, s, b, users]) => {
+    Promise.all([coursesApi.get(courseId), segmentsApi.list(), batchesApi.list(courseId), usersApi.list(), batchStatusTypesApi.list()])
+      .then(([c, s, b, users, statuses]) => {
         setCourse(c);
         setSegments(s);
         setBatches(b);
         setFacultyUsers(users.filter((u) => u.role === "FACULTY"));
+        setStatusTypes(statuses);
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load course"))
       .finally(() => setLoading(false));
@@ -219,7 +222,7 @@ export default function AdminCourseAuthoringPage() {
 
   function openAddBatch() {
     setBatchName("");
-    setBatchStatus("ACTIVE");
+    setBatchStatusId(statusTypes.find((s) => s.isDefault)?.id ?? statusTypes[0]?.id ?? "");
     setBatchStartDate("");
     setBatchEndDate("");
     setBatchFacultyId("");
@@ -229,7 +232,7 @@ export default function AdminCourseAuthoringPage() {
 
   function openEditBatch(batch: Batch) {
     setBatchName(batch.name);
-    setBatchStatus(batch.status);
+    setBatchStatusId(batch.statusId);
     setBatchStartDate(batch.startDate.slice(0, 10));
     setBatchEndDate(batch.endDate ? batch.endDate.slice(0, 10) : "");
     setBatchFacultyId(batch.facultyId ?? "");
@@ -244,7 +247,7 @@ export default function AdminCourseAuthoringPage() {
     try {
       const data = {
         name: batchName,
-        status: batchStatus,
+        statusId: batchStatusId,
         startDate: new Date(batchStartDate).toISOString(),
         endDate: batchEndDate ? new Date(batchEndDate).toISOString() : undefined,
         facultyId: batchFacultyId || undefined,
@@ -471,12 +474,12 @@ export default function AdminCourseAuthoringPage() {
               onChange={(e) => setBatchName(e.target.value)}
               style={inputStyle}
             />
-            <select value={batchStatus} onChange={(e) => setBatchStatus(e.target.value as BatchStatus)} style={inputStyle}>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="ON_HOLD">On hold</option>
-              <option value="CANCELLED">Cancelled</option>
+            <select value={batchStatusId} onChange={(e) => setBatchStatusId(e.target.value)} style={inputStyle}>
+              {statusTypes.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
             </select>
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1 }}>
@@ -534,17 +537,20 @@ export default function AdminCourseAuthoringPage() {
                   <div style={{ fontWeight: 700, fontSize: 15 }}>{batch.name}</div>
                   <span
                     style={{
-                      display: "inline-block",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
                       marginTop: 4,
                       padding: "2px 8px",
                       borderRadius: 6,
                       fontSize: 11,
                       fontWeight: 700,
-                      background: batch.status === "ACTIVE" ? "var(--green-soft)" : "var(--bg)",
-                      color: batch.status === "ACTIVE" ? "var(--green)" : "var(--ink3)",
+                      background: "var(--bg)",
+                      color: "var(--ink3)",
                     }}
                   >
-                    {batch.status}
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: batch.status.color ?? "var(--ink3)" }} />
+                    {batch.status.name}
                   </span>
                 </div>
                 <span style={{ display: "flex", gap: 12, alignItems: "center" }}>

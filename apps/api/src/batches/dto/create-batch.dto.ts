@@ -1,5 +1,4 @@
-import { IsDateString, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { BatchStatus } from '../../../generated/prisma/client';
+import { IsDateString, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateBatchDto {
   @IsString()
@@ -7,8 +6,8 @@ export class CreateBatchDto {
   name: string;
 
   @IsOptional()
-  @IsEnum(BatchStatus)
-  status?: BatchStatus;
+  @IsString()
+  statusId?: string;
 
   @IsDateString()
   startDate: string;

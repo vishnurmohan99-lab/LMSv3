@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -13,9 +14,12 @@ import { TestsModule } from './tests/tests.module';
 import { ChatModule } from './chat/chat.module';
 import { BatchesModule } from './batches/batches.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { BatchStatusTypesModule } from './batch-status-types/batch-status-types.module';
+import { BulkOperationsModule } from './bulk-operations/bulk-operations.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     PrismaModule,
     UsersModule,
     AuthModule,
@@ -28,6 +32,8 @@ import { SessionsModule } from './sessions/sessions.module';
     ChatModule,
     BatchesModule,
     SessionsModule,
+    BatchStatusTypesModule,
+    BulkOperationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

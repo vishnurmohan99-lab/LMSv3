@@ -7,9 +7,11 @@ import {
   batchesApi,
   sessionsApi,
   usersApi,
+  batchStatusTypesApi,
+  bulkOperationsApi,
   ApiError,
   type BatchTree,
-  type BatchStatus,
+  type BatchStatusType,
   type Session,
   type SessionStatus,
   type Profile,
@@ -78,19 +80,28 @@ export default function BatchDetailPage() {
 
   const [batch, setBatch] = useState<BatchTree | null>(null);
   const [students, setStudents] = useState<Profile[]>([]);
+  const [statusTypes, setStatusTypes] = useState<BatchStatusType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [showEditBatch, setShowEditBatch] = useState(false);
   const [editName, setEditName] = useState("");
-  const [editStatus, setEditStatus] = useState<BatchStatus>("ACTIVE");
+  const [editStatusId, setEditStatusId] = useState("");
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [savingBatch, setSavingBatch] = useState(false);
   const [batchError, setBatchError] = useState<string | null>(null);
 
+  const [showExtend, setShowExtend] = useState(false);
+  const [extendDate, setExtendDate] = useState("");
+  const [extending, setExtending] = useState(false);
+  const [extendError, setExtendError] = useState<string | null>(null);
+
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [enrolling, setEnrolling] = useState(false);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [lastEnroll, setLastEnroll] = useState<{ bulkOperationId?: string; enrolled: number } | null>(null);
 
   const [showAddSession, setShowAddSession] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
@@ -103,10 +114,11 @@ export default function BatchDetailPage() {
 
   function load() {
     setLoading(true);
-    Promise.all([batchesApi.get(batchId), usersApi.list()])
-      .then(([b, users]) => {
+    Promise.all([batchesApi.get(batchId), usersApi.list(), batchStatusTypesApi.list()])
+      .then(([b, users, statuses]) => {
         setBatch(b);
         setStudents(users.filter((u) => u.role === "STUDENT"));
+        setStatusTypes(statuses);
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load batch"))
       .finally(() => setLoading(false));
@@ -117,7 +129,7 @@ export default function BatchDetailPage() {
   function openEditBatch() {
     if (!batch) return;
     setEditName(batch.name);
-    setEditStatus(batch.status);
+    setEditStatusId(batch.statusId);
     setEditStartDate(batch.startDate.slice(0, 10));
     setEditEndDate(batch.endDate ? batch.endDate.slice(0, 10) : "");
     setBatchError(null);
@@ -131,7 +143,7 @@ export default function BatchDetailPage() {
     try {
       await batchesApi.update(batchId, {
         name: editName,
-        status: editStatus,
+        statusId: editStatusId,
         startDate: new Date(editStartDate).toISOString(),
         endDate: editEndDate ? new Date(editEndDate).toISOString() : undefined,
       });
@@ -144,16 +156,63 @@ export default function BatchDetailPage() {
     }
   }
 
+  function openExtend() {
+    if (!batch) return;
+    setExtendDate(batch.endDate ? batch.endDate.slice(0, 10) : "");
+    setExtendError(null);
+    setShowExtend(true);
+  }
+
+  async function onExtend(e: React.FormEvent) {
+    e.preventDefault();
+    setExtending(true);
+    setExtendError(null);
+    try {
+      await batchesApi.extend(batchId, new Date(extendDate).toISOString());
+      setShowExtend(false);
+      load();
+    } catch (err) {
+      setExtendError(err instanceof ApiError ? err.message : "Failed to extend batch");
+    } finally {
+      setExtending(false);
+    }
+  }
+
   async function onEnrollSelected() {
     if (selectedStudentIds.length === 0) return;
     setEnrolling(true);
+    setEnrollError(null);
     try {
-      await batchesApi.bulkEnroll(batchId, selectedStudentIds);
+      const result = await batchesApi.bulkEnroll(batchId, selectedStudentIds);
       setSelectedStudentIds([]);
+      setLastEnroll({ bulkOperationId: result.bulkOperationId, enrolled: result.enrolled });
       load();
+    } catch (err) {
+      setEnrollError(err instanceof ApiError ? err.message : "Failed to enroll students");
     } finally {
       setEnrolling(false);
     }
+  }
+
+  async function onImportCsv(file: File) {
+    setImportingCsv(true);
+    setEnrollError(null);
+    try {
+      const result = await batchesApi.enrollCsv(batchId, file);
+      setLastEnroll({ bulkOperationId: result.bulkOperationId, enrolled: result.enrolled });
+      load();
+    } catch (err) {
+      setEnrollError(err instanceof ApiError ? err.message : "Failed to import CSV");
+    } finally {
+      setImportingCsv(false);
+    }
+  }
+
+  async function onUndoEnroll() {
+    if (!lastEnroll?.bulkOperationId) return;
+    await bulkOperationsApi.undo(lastEnroll.bulkOperationId);
+    setLastEnroll(null);
+    load();
   }
 
   async function onRemoveStudent(studentId: string) {
@@ -227,26 +286,32 @@ export default function BatchDetailPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 12, marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800 }}>{batch.name}</h1>
-          <div style={{ fontSize: 13, color: "var(--ink2)", marginTop: 6 }}>
-            {batch.status} · {new Date(batch.startDate).toLocaleDateString()}
+          <div style={{ fontSize: 13, color: "var(--ink2)", marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: batch.status.color ?? "var(--ink3)" }} />
+            {batch.status.name} · {new Date(batch.startDate).toLocaleDateString()}
             {batch.endDate ? ` – ${new Date(batch.endDate).toLocaleDateString()}` : ""}
           </div>
         </div>
-        <button onClick={openEditBatch} style={{ ...btnStyle, background: "var(--bg)", color: "var(--ink2)", display: "flex", alignItems: "center", gap: 6 }}>
-          <EditIcon /> Edit batch
-        </button>
+        <span style={{ display: "flex", gap: 10 }}>
+          <button onClick={openExtend} style={{ ...btnStyle, background: "var(--bg)", color: "var(--ink2)" }}>
+            Extend batch
+          </button>
+          <button onClick={openEditBatch} style={{ ...btnStyle, background: "var(--bg)", color: "var(--ink2)", display: "flex", alignItems: "center", gap: 6 }}>
+            <EditIcon /> Edit batch
+          </button>
+        </span>
       </div>
 
       {showEditBatch && (
         <Modal title="Edit batch" onClose={() => setShowEditBatch(false)}>
           <form onSubmit={onSaveBatch} style={{ display: "grid", gap: 14 }}>
             <input required autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} style={inputStyle} />
-            <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as BatchStatus)} style={inputStyle}>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="ON_HOLD">On hold</option>
-              <option value="CANCELLED">Cancelled</option>
+            <select value={editStatusId} onChange={(e) => setEditStatusId(e.target.value)} style={inputStyle}>
+              {statusTypes.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
             </select>
             <div style={{ display: "flex", gap: 10 }}>
               <input required type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
@@ -265,20 +330,44 @@ export default function BatchDetailPage() {
         </Modal>
       )}
 
+      {showExtend && (
+        <Modal title="Extend batch" onClose={() => setShowExtend(false)} maxWidth={380}>
+          <form onSubmit={onExtend} style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>New end date</div>
+              <p style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 8 }}>
+                Also pushes every enrolled student&apos;s access window to this date.
+              </p>
+              <input required type="date" value={extendDate} onChange={(e) => setExtendDate(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+            </div>
+            <button
+              type="submit"
+              disabled={extending}
+              style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: extending ? 0.7 : 1 }}
+            >
+              {extending && <Spinner />}
+              {extending ? "Extending…" : "Extend"}
+            </button>
+            {extendError && <span style={{ color: "var(--red)", fontSize: 12 }}>{extendError}</span>}
+          </form>
+        </Modal>
+      )}
+
       <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Roster</div>
       <div
         style={{
           display: "flex",
           gap: 8,
-          marginBottom: 18,
+          marginBottom: 12,
           background: "var(--card)",
           border: "1px solid var(--line)",
           borderRadius: "var(--rm)",
           padding: 14,
           alignItems: "flex-end",
+          flexWrap: "wrap",
         }}
       >
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 220 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Add students</div>
           <select
             multiple
@@ -296,7 +385,46 @@ export default function BatchDetailPage() {
         <button onClick={onEnrollSelected} disabled={enrolling || selectedStudentIds.length === 0} style={{ ...btnStyle, opacity: enrolling ? 0.7 : 1 }}>
           {enrolling ? "Enrolling…" : "Enroll"}
         </button>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Or import a CSV (email column)</div>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            disabled={importingCsv}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImportCsv(file);
+              e.target.value = "";
+            }}
+            style={{ fontSize: 13 }}
+          />
+        </div>
       </div>
+
+      {enrollError && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{enrollError}</p>}
+
+      {lastEnroll && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "10px 14px",
+            background: "var(--green-soft)",
+            color: "var(--green)",
+            borderRadius: 10,
+            fontSize: 13,
+            marginBottom: 18,
+          }}
+        >
+          <span>Enrolled {lastEnroll.enrolled} student{lastEnroll.enrolled === 1 ? "" : "s"}.</span>
+          {lastEnroll.bulkOperationId && (
+            <button onClick={onUndoEnroll} style={{ background: "none", border: "none", color: "var(--green)", fontWeight: 700, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
+              Undo
+            </button>
+          )}
+        </div>
+      )}
 
       {batch.enrollments.length === 0 ? (
         <p style={{ color: "var(--ink2)", marginBottom: 32 }}>No students enrolled yet.</p>

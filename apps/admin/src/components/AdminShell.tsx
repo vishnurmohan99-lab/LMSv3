@@ -59,6 +59,18 @@ function TestsIcon({ active }: { active: boolean }) {
   );
 }
 
+function BatchStatusIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <circle cx="8" cy="8" r="2.5" />
+      <circle cx="16" cy="8" r="2.5" />
+      <circle cx="8" cy="16" r="2.5" />
+      <circle cx="16" cy="16" r="2.5" />
+    </svg>
+  );
+}
+
 function UsersIcon({ active }: { active: boolean }) {
   const c = active ? "#fff" : "var(--ink2)";
   return (
@@ -94,6 +106,7 @@ const navItems = [
   { href: "/admin/courses", label: "Courses", Icon: CoursesIcon },
   { href: "/admin/question-banks", label: "Question Banks", Icon: QuestionBankIcon },
   { href: "/admin/tests", label: "Tests", Icon: TestsIcon },
+  { href: "/admin/batch-statuses", label: "Batch Statuses", Icon: BatchStatusIcon },
   { href: "/admin/users", label: "Users", Icon: UsersIcon },
 ];
 
