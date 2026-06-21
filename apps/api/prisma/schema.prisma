@@ -38,7 +38,7 @@ model User {
 
 model Course {
   id           String   @id @default(uuid())
-  title        String
+  title        String   @unique
   description  String   @default("")
   thumbnailUrl String?
   published    Boolean  @default(false)
@@ -204,7 +204,7 @@ model Enrollment {
 
 model QuestionBank {
   id          String   @id @default(uuid())
-  title       String
+  title       String   @unique
   description String   @default("")
   bannerUrl   String?
   published   Boolean  @default(false)
@@ -247,7 +247,7 @@ enum TestPublishMode {
 
 model Test {
   id              String          @id @default(uuid())
-  title           String
+  title           String          @unique
   description     String          @default("")
   bannerUrl       String?
   published       Boolean         @default(false)

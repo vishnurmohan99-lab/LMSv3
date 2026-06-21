@@ -5,6 +5,7 @@ import { CreateSegmentDto } from './dto/create-segment.dto';
 import { UpdateSegmentDto } from './dto/update-segment.dto';
 import { CreateSubsegmentDto } from './dto/create-subsegment.dto';
 import { UpdateSubsegmentDto } from './dto/update-subsegment.dto';
+import { withUniqueNameCheck } from '../common/unique-violation';
 
 @Injectable()
 export class SegmentsService {
@@ -51,12 +52,15 @@ export class SegmentsService {
   }
 
   createSegment(dto: CreateSegmentDto) {
-    return this.prisma.segment.create({ data: { name: dto.name, order: dto.order ?? 0, bannerUrl: dto.bannerUrl } });
+    return withUniqueNameCheck(
+      () => this.prisma.segment.create({ data: { name: dto.name, order: dto.order ?? 0, bannerUrl: dto.bannerUrl } }),
+      'segment',
+    );
   }
 
   async updateSegment(id: string, dto: UpdateSegmentDto) {
     await this.requireSegment(id);
-    return this.prisma.segment.update({ where: { id }, data: dto });
+    return withUniqueNameCheck(() => this.prisma.segment.update({ where: { id }, data: dto }), 'segment');
   }
 
   async deleteSegment(id: string) {
@@ -67,14 +71,15 @@ export class SegmentsService {
 
   async createSubsegment(segmentId: string, dto: CreateSubsegmentDto) {
     await this.requireSegment(segmentId);
-    return this.prisma.subsegment.create({
-      data: { name: dto.name, order: dto.order ?? 0, segmentId },
-    });
+    return withUniqueNameCheck(
+      () => this.prisma.subsegment.create({ data: { name: dto.name, order: dto.order ?? 0, segmentId } }),
+      'subsegment',
+    );
   }
 
   async updateSubsegment(id: string, dto: UpdateSubsegmentDto) {
     await this.requireSubsegment(id);
-    return this.prisma.subsegment.update({ where: { id }, data: dto });
+    return withUniqueNameCheck(() => this.prisma.subsegment.update({ where: { id }, data: dto }), 'subsegment');
   }
 
   async deleteSubsegment(id: string) {

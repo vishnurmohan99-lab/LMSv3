@@ -8,6 +8,7 @@ import { CreateTestQuestionDto } from './dto/create-test-question.dto';
 import { UpdateTestQuestionDto } from './dto/update-test-question.dto';
 import { ImportQuestionsDto } from './dto/import-questions.dto';
 import { sanitizePrompt } from '../question-banks/sanitize-prompt';
+import { withUniqueNameCheck } from '../common/unique-violation';
 
 function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
   return user.role === 'ADMIN' || user.sub === facultyId;
@@ -57,15 +58,19 @@ export class TestsService {
     if (dto.chapterId) {
       await this.requireChapter(dto.chapterId);
     }
-    return this.prisma.test.create({
-      data: {
-        title: dto.title,
-        description: dto.description ?? '',
-        bannerUrl: dto.bannerUrl,
-        chapterId: dto.chapterId,
-        facultyId: user.sub,
-      },
-    });
+    return withUniqueNameCheck(
+      () =>
+        this.prisma.test.create({
+          data: {
+            title: dto.title,
+            description: dto.description ?? '',
+            bannerUrl: dto.bannerUrl,
+            chapterId: dto.chapterId,
+            facultyId: user.sub,
+          },
+        }),
+      'test',
+    );
   }
 
   async updateTest(id: string, user: JwtPayload, dto: UpdateTestDto) {
@@ -74,14 +79,18 @@ export class TestsService {
     if (dto.chapterId) {
       await this.requireChapter(dto.chapterId);
     }
-    return this.prisma.test.update({
-      where: { id },
-      data: {
-        ...dto,
-        availableFrom: dto.availableFrom !== undefined ? (dto.availableFrom ? new Date(dto.availableFrom) : null) : undefined,
-        availableUntil: dto.availableUntil !== undefined ? (dto.availableUntil ? new Date(dto.availableUntil) : null) : undefined,
-      },
-    });
+    return withUniqueNameCheck(
+      () =>
+        this.prisma.test.update({
+          where: { id },
+          data: {
+            ...dto,
+            availableFrom: dto.availableFrom !== undefined ? (dto.availableFrom ? new Date(dto.availableFrom) : null) : undefined,
+            availableUntil: dto.availableUntil !== undefined ? (dto.availableUntil ? new Date(dto.availableUntil) : null) : undefined,
+          },
+        }),
+      'test',
+    );
   }
 
   async deleteTest(id: string, user: JwtPayload) {

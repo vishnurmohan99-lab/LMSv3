@@ -7,6 +7,7 @@ import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { sanitizePrompt } from './sanitize-prompt';
+import { withUniqueNameCheck } from '../common/unique-violation';
 
 function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
   return user.role === 'ADMIN' || user.sub === facultyId;
@@ -53,20 +54,24 @@ export class QuestionBanksService {
   }
 
   createQuestionBank(user: JwtPayload, dto: CreateQuestionBankDto) {
-    return this.prisma.questionBank.create({
-      data: {
-        title: dto.title,
-        description: dto.description ?? '',
-        bannerUrl: dto.bannerUrl,
-        facultyId: user.sub,
-      },
-    });
+    return withUniqueNameCheck(
+      () =>
+        this.prisma.questionBank.create({
+          data: {
+            title: dto.title,
+            description: dto.description ?? '',
+            bannerUrl: dto.bannerUrl,
+            facultyId: user.sub,
+          },
+        }),
+      'question bank',
+    );
   }
 
   async updateQuestionBank(id: string, user: JwtPayload, dto: UpdateQuestionBankDto) {
     const bank = await this.requireQuestionBank(id);
     this.assertOwnership(user, bank.facultyId);
-    return this.prisma.questionBank.update({ where: { id }, data: dto });
+    return withUniqueNameCheck(() => this.prisma.questionBank.update({ where: { id }, data: dto }), 'question bank');
   }
 
   async deleteQuestionBank(id: string, user: JwtPayload) {

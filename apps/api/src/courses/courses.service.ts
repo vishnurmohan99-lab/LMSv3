@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { AiService, extractFirstJsonValue } from '../ai/ai.service';
+import { withUniqueNameCheck } from '../common/unique-violation';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { LessonType } from '../../generated/prisma/client';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -119,16 +120,20 @@ export class CoursesService {
     if (dto.segmentId) {
       await this.validateSegmentation(dto.segmentId, dto.subsegmentId);
     }
-    return this.prisma.course.create({
-      data: {
-        title: dto.title,
-        description: dto.description ?? '',
-        thumbnailUrl: dto.thumbnailUrl,
-        facultyId: user.sub,
-        segmentId: dto.segmentId,
-        subsegmentId: dto.subsegmentId,
-      },
-    });
+    return withUniqueNameCheck(
+      () =>
+        this.prisma.course.create({
+          data: {
+            title: dto.title,
+            description: dto.description ?? '',
+            thumbnailUrl: dto.thumbnailUrl,
+            facultyId: user.sub,
+            segmentId: dto.segmentId,
+            subsegmentId: dto.subsegmentId,
+          },
+        }),
+      'course',
+    );
   }
 
   async updateCourse(id: string, user: JwtPayload, dto: UpdateCourseDto) {
@@ -137,7 +142,10 @@ export class CoursesService {
 
     if (dto.segmentId === null) {
       // explicit clear: a course without a segment can't keep a subsegment either
-      return this.prisma.course.update({ where: { id }, data: { ...dto, segmentId: null, subsegmentId: null } });
+      return withUniqueNameCheck(
+        () => this.prisma.course.update({ where: { id }, data: { ...dto, segmentId: null, subsegmentId: null } }),
+        'course',
+      );
     }
 
     if (dto.segmentId !== undefined || dto.subsegmentId !== undefined) {
@@ -148,7 +156,7 @@ export class CoursesService {
       }
     }
 
-    return this.prisma.course.update({ where: { id }, data: dto });
+    return withUniqueNameCheck(() => this.prisma.course.update({ where: { id }, data: dto }), 'course');
   }
 
   async deleteCourse(id: string, user: JwtPayload) {
