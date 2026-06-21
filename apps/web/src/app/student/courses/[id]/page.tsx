@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, flashcardsApi, ApiError, type Chapter, type CourseTree, type Lesson } from "@/lib/api";
@@ -42,21 +42,72 @@ function lessonMeta(lesson: Lesson, chapterTitle: string) {
   return chapterTitle;
 }
 
+function VideoPlayer({ src }: { src: string }) {
+  const [playing, setPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  return (
+    <div
+      className="fade-in-up"
+      style={{
+        position: "relative",
+        borderRadius: "var(--rm)",
+        overflow: "hidden",
+        background: "linear-gradient(135deg,#1c1c1c,#2c2620)",
+        boxShadow: "0 16px 40px rgba(0,0,0,.18)",
+      }}
+    >
+      <video
+        ref={videoRef}
+        controls
+        src={src}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        style={{ width: "100%", display: "block", aspectRatio: "16/9", background: "#000" }}
+      />
+      {!playing && (
+        <button
+          onClick={() => videoRef.current?.play()}
+          aria-label="Play"
+          className="pop-in"
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
+          <span
+            style={{
+              width: 62,
+              height: 62,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,.95)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 8px 24px rgba(0,0,0,.3)",
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--ink)">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 function LessonViewer({ lesson }: { lesson: Lesson }) {
   if (lesson.type === "VIDEO") {
     return lesson.contentUrl ? (
-      <div
-        className="fade-in-up"
-        style={{
-          position: "relative",
-          borderRadius: "var(--rm)",
-          overflow: "hidden",
-          background: "linear-gradient(135deg,#1c1c1c,#2c2620)",
-          boxShadow: "0 16px 40px rgba(0,0,0,.18)",
-        }}
-      >
-        <video controls src={lesson.contentUrl} style={{ width: "100%", display: "block", aspectRatio: "16/9", background: "#000" }} />
-      </div>
+      <VideoPlayer src={lesson.contentUrl} />
     ) : (
       <div
         className="fade-in-up"
@@ -261,7 +312,7 @@ export default function StudentCoursePlayerPage() {
   const progressPct = allLessons.length > 0 ? Math.round(((lessonIndex + 1) / allLessons.length) * 100) : 0;
 
   return (
-    <div style={{ display: "flex", margin: 0, minHeight: "100vh", background: "var(--bg)" }}>
+    <div style={{ display: "flex", margin: 0, height: "100%", background: "var(--bg)" }}>
       {/* chapter sidebar */}
       <div style={{ width: 286, flex: "none", background: "var(--card)", borderRight: "1px solid var(--line)", overflowY: "auto" }}>
         <div style={{ padding: "18px 18px 14px", borderBottom: "1px solid var(--line)" }}>
@@ -513,7 +564,7 @@ export default function StudentCoursePlayerPage() {
               </div>
 
               {showChat && selectedLesson.askMeEnabled && (
-                <div style={{ width: 360, flex: "none", marginLeft: 18, height: "calc(100vh - 170px)", position: "sticky", top: 0 }}>
+                <div style={{ width: 360, flex: "none", marginLeft: 18, height: "calc(100% - 24px)", position: "sticky", top: 0 }}>
                   <AskMeChat lessonId={selectedLesson.id} onClose={() => setShowChat(false)} />
                 </div>
               )}
