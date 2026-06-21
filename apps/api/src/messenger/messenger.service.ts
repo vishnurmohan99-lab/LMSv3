@@ -133,7 +133,11 @@ export class MessengerService {
         participants: { include: { user: { select: { id: true, fullName: true, email: true, role: true } } } },
         course: { select: { id: true, title: true } },
         batch: { select: { id: true, name: true } },
-        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          include: { sender: { select: { id: true, fullName: true, role: true } } },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

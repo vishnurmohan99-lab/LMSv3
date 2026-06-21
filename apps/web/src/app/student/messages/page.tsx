@@ -165,7 +165,7 @@ export default function StudentMessagesPage() {
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14.5, marginBottom: 4 }}>{me ? conversationLabel(c, me.id) : "…"}</div>
                 <div style={{ fontSize: 13, color: "var(--ink2)" }}>
-                  {c.lastMessage ? `${c.lastMessage.sender.fullName}: ${c.lastMessage.body.replace(/<[^>]+>/g, "").slice(0, 80)}` : "No messages yet"}
+                  {c.lastMessage ? `${c.lastMessage.sender?.fullName ?? "Someone"}: ${c.lastMessage.body.replace(/<[^>]+>/g, "").slice(0, 80)}` : "No messages yet"}
                 </div>
               </div>
               {c.unreadCount > 0 && (
