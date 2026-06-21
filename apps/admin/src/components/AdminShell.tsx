@@ -100,6 +100,16 @@ function ProfileIcon({ active }: { active: boolean }) {
   );
 }
 
+function FeedbackIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
@@ -117,6 +127,7 @@ const navItems = [
   { href: "/admin/tests", label: "Tests", Icon: TestsIcon },
   { href: "/admin/batch-statuses", label: "Batch Statuses", Icon: BatchStatusIcon },
   { href: "/admin/messages", label: "Messages", Icon: MessagesIcon },
+  { href: "/admin/feedback", label: "Feedback", Icon: FeedbackIcon },
   { href: "/admin/users", label: "Users", Icon: UsersIcon },
 ];
 

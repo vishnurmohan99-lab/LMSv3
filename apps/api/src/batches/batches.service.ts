@@ -19,6 +19,13 @@ export class BatchesService {
     private readonly bulkOperations: BulkOperationsService,
   ) {}
 
+  listAllBatches() {
+    return this.prisma.batch.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { course: { select: { id: true, title: true } }, status: true, _count: { select: { enrollments: true } } },
+    });
+  }
+
   async listBatches(courseId: string, user: JwtPayload) {
     const course = await this.requireCourse(courseId);
     this.assertOwnership(user, course.facultyId);

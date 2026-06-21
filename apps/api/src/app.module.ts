@@ -20,6 +20,7 @@ import { MessengerModule } from './messenger/messenger.module';
 import { TestAttemptsModule } from './test-attempts/test-attempts.module';
 import { WorkoutModule } from './workout/workout.module';
 import { MentorModule } from './mentor/mentor.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { MentorModule } from './mentor/mentor.module';
     TestAttemptsModule,
     WorkoutModule,
     MentorModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

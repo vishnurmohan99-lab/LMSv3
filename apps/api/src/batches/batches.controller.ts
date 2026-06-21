@@ -33,6 +33,12 @@ export class BatchesController {
     return this.batchesService.getStats(user);
   }
 
+  @Roles('ADMIN')
+  @Get('batches')
+  listAll() {
+    return this.batchesService.listAllBatches();
+  }
+
   @Get('batches/:id')
   get(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.batchesService.getBatch(id, user);

@@ -577,6 +577,7 @@ export const batchesApi = {
   },
   unenroll: (batchId: string, studentId: string) =>
     request<{ success: boolean }>(`/batches/${batchId}/enroll/${studentId}`, { method: 'DELETE' }),
+  listAll: () => request<(Batch & { course: { id: string; title: string } })[]>('/batches'),
 };
 
 export const bulkOperationsApi = {
@@ -709,4 +710,71 @@ export const mentorApi = {
   createBooking: (mentorId: string, data: { availabilityId: string; date: string }) =>
     request<MentorBooking>(`/mentors/${mentorId}/bookings`, { method: 'POST', body: JSON.stringify(data) }),
   cancelBooking: (id: string) => request<{ success: boolean }>(`/mentor/bookings/${id}`, { method: 'DELETE' }),
+};
+
+export type FeedbackTargetType = 'COURSE' | 'FACULTY' | 'MENTOR' | 'SYSTEM';
+export type FeedbackAssignType = 'BATCH' | 'SELECTED';
+export type FeedbackQuestionType = 'RATING' | 'TEXT';
+
+export interface FeedbackQuestion {
+  type: FeedbackQuestionType;
+  label: string;
+}
+
+export interface FeedbackForm {
+  id: string;
+  title: string;
+  targetType: FeedbackTargetType;
+  targetSystemArea: string | null;
+  questions: FeedbackQuestion[];
+  assignType: FeedbackAssignType;
+  createdAt: string;
+  targetCourseId: string | null;
+  targetFacultyId: string | null;
+  batchId: string | null;
+  createdById: string;
+  targetCourse: { id: string; title: string } | null;
+  targetFaculty: { id: string; fullName: string } | null;
+  batch: { id: string; name: string } | null;
+  _count: { responses: number };
+  avgRating?: number | null;
+  submitted?: boolean;
+}
+
+export interface FeedbackResponse {
+  id: string;
+  answers: (string | number)[];
+  submittedAt: string;
+  formId: string;
+  studentId: string;
+  student?: { id: string; fullName: string; email: string };
+  rating?: number | null;
+}
+
+export interface FeedbackFormWithResponses extends FeedbackForm {
+  responses: FeedbackResponse[];
+}
+
+export interface FeedbackFormWithMyResponse extends FeedbackForm {
+  myResponse: FeedbackResponse | null;
+}
+
+export const feedbackApi = {
+  list: () => request<FeedbackForm[]>('/feedback-forms'),
+  create: (data: {
+    title: string;
+    targetType: FeedbackTargetType;
+    targetCourseId?: string;
+    targetFacultyId?: string;
+    targetSystemArea?: string;
+    questions: FeedbackQuestion[];
+    assignType: FeedbackAssignType;
+    batchId?: string;
+    studentIds?: string[];
+  }) => request<FeedbackForm>('/feedback-forms', { method: 'POST', body: JSON.stringify(data) }),
+  getForAdmin: (id: string) => request<FeedbackFormWithResponses>(`/feedback-forms/${id}/admin`),
+  listMine: () => request<FeedbackForm[]>('/feedback-forms/me'),
+  getForFill: (id: string) => request<FeedbackFormWithMyResponse>(`/feedback-forms/${id}`),
+  submit: (id: string, answers: (string | number)[]) =>
+    request<FeedbackResponse>(`/feedback-forms/${id}/responses`, { method: 'POST', body: JSON.stringify({ answers }) }),
 };

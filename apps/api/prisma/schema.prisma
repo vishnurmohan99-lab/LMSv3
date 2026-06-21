@@ -50,6 +50,11 @@ model User {
   mentorAvailabilities    MentorAvailability[] @relation("MentorAvailabilities")
   mentorBookingsAsStudent MentorBooking[]      @relation("MentorBookingsAsStudent")
   mentorBookingsAsMentor  MentorBooking[]      @relation("MentorBookingsAsMentor")
+
+  feedbackFormsCreated  FeedbackForm[]     @relation("FeedbackFormCreatedBy")
+  feedbackFormsAsTarget FeedbackForm[]     @relation("FeedbackFormTargetFaculty")
+  feedbackRecipient     FeedbackRecipient[]
+  feedbackResponses     FeedbackResponse[]
 }
 
 model Course {
@@ -75,6 +80,7 @@ model Course {
   batches       Batch[]
   conversations Conversation[]
   mockTests     Test[]
+  feedbackForms FeedbackForm[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -255,6 +261,7 @@ model Batch {
   enrollments   BatchEnrollment[]
   sessions      Session[]
   conversations Conversation[]
+  feedbackForms FeedbackForm[]
 
   @@unique([courseId, name])
 }
@@ -560,4 +567,67 @@ model MentorBooking {
   @@unique([availabilityId, date])
   @@index([studentId])
   @@index([mentorId])
+}
+
+enum FeedbackTargetType {
+  COURSE
+  FACULTY
+  MENTOR
+  SYSTEM
+}
+
+enum FeedbackAssignType {
+  BATCH
+  SELECTED
+}
+
+model FeedbackForm {
+  id               String             @id @default(uuid())
+  title            String
+  targetType       FeedbackTargetType
+  targetSystemArea String?
+  questions        Json
+  assignType       FeedbackAssignType
+  createdAt        DateTime           @default(now())
+
+  targetCourseId String?
+  targetCourse   Course? @relation(fields: [targetCourseId], references: [id], onDelete: Cascade)
+
+  targetFacultyId String?
+  targetFaculty   User?   @relation("FeedbackFormTargetFaculty", fields: [targetFacultyId], references: [id])
+
+  batchId String?
+  batch   Batch?  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("FeedbackFormCreatedBy", fields: [createdById], references: [id])
+
+  recipients FeedbackRecipient[]
+  responses  FeedbackResponse[]
+}
+
+model FeedbackRecipient {
+  id String @id @default(uuid())
+
+  formId String
+  form   FeedbackForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@unique([formId, studentId])
+}
+
+model FeedbackResponse {
+  id          String   @id @default(uuid())
+  answers     Json
+  submittedAt DateTime @default(now())
+
+  formId String
+  form   FeedbackForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@unique([formId, studentId])
 }
