@@ -1,45 +1,153 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { coursesApi, enrollmentsApi, segmentsApi, ApiError, type Course, type Enrollment, type Segment } from "@/lib/api";
 
-function CourseCard({ course, onEnroll, enrolling }: { course: Course; onEnroll: (id: string) => void; enrolling: boolean }) {
+const BANNER_HEIGHT = 130;
+
+function initials(name: string) {
+  return name.trim().slice(0, 2).toUpperCase();
+}
+
+function CardBanner({ url, name }: { url: string | null; name: string }) {
+  if (url) {
+    return (
+      <div style={{ position: "relative", height: BANNER_HEIGHT, background: `url(${url}) center/cover` }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
+      </div>
+    );
+  }
   return (
-    <div
+    <div className="banner-gradient-dark" style={{ position: "relative", height: BANNER_HEIGHT, overflow: "hidden" }}>
+      <div
+        style={{
+          position: "absolute",
+          right: -30,
+          bottom: -30,
+          width: 130,
+          height: 130,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(242,106,27,.35), transparent 70%)",
+        }}
+      />
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          className="banner-gradient-orange"
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 17,
+          }}
+        >
+          {initials(name)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" strokeWidth="2">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  );
+}
+
+function EnrolledCard({ course, index }: { course: Course; index: number }) {
+  return (
+    <Link
+      href={`/student/courses/${course.id}`}
+      className="entity-card fade-in-up"
       style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 18,
+        display: "block",
         background: "var(--card)",
         border: "1px solid var(--line)",
-        borderRadius: "var(--rm)",
+        borderRadius: "var(--rl)",
+        overflow: "hidden",
+        animationDelay: `${index * 40}ms`,
       }}
     >
-      <div>
-        <span style={{ fontWeight: 700 }}>{course.title}</span>
-        {course.description && <p style={{ color: "var(--ink2)", fontSize: 13, marginTop: 6 }}>{course.description}</p>}
+      <CardBanner url={course.thumbnailUrl} name={course.title} />
+      <div style={{ padding: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{course.title}</div>
+        {course.description && (
+          <p style={{ fontSize: 12.5, color: "var(--ink2)", marginBottom: 14, lineHeight: 1.5 }}>{course.description}</p>
+        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "4px 10px", borderRadius: 7 }}>
+            Enrolled
+          </span>
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: "#fff",
+              background: "var(--ink)",
+              padding: "8px 16px",
+              borderRadius: 999,
+            }}
+          >
+            Continue
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </span>
+        </div>
       </div>
-      <button
-        onClick={() => onEnroll(course.id)}
-        disabled={enrolling}
-        style={{
-          padding: "9px 18px",
-          background: "var(--ink)",
-          color: "#fff",
-          border: "none",
-          borderRadius: 10,
-          fontSize: 13,
-          fontWeight: 700,
-          fontFamily: "inherit",
-          cursor: enrolling ? "default" : "pointer",
-          opacity: enrolling ? 0.7 : 1,
-          whiteSpace: "nowrap",
-        }}
-      >
-        {enrolling ? "Enrolling…" : "Enroll"}
-      </button>
+    </Link>
+  );
+}
+
+function CatalogCard({ course, onEnroll, enrolling, index }: { course: Course; onEnroll: (id: string) => void; enrolling: boolean; index: number }) {
+  return (
+    <div
+      className="entity-card fade-in-up"
+      style={{
+        background: "var(--card)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--rl)",
+        overflow: "hidden",
+        animationDelay: `${index * 40}ms`,
+      }}
+    >
+      <CardBanner url={course.thumbnailUrl} name={course.title} />
+      <div style={{ padding: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{course.title}</div>
+        {course.description && (
+          <p style={{ fontSize: 12.5, color: "var(--ink2)", marginBottom: 14, lineHeight: 1.5 }}>{course.description}</p>
+        )}
+        <button
+          onClick={() => onEnroll(course.id)}
+          disabled={enrolling}
+          style={{
+            width: "100%",
+            padding: "11px 16px",
+            background: "var(--ink)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 11,
+            fontSize: 13.5,
+            fontWeight: 700,
+            fontFamily: "inherit",
+            cursor: enrolling ? "default" : "pointer",
+            opacity: enrolling ? 0.7 : 1,
+          }}
+        >
+          {enrolling ? "Enrolling…" : "Enroll now"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -51,6 +159,7 @@ export default function StudentCoursesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   function load() {
     setLoading(true);
@@ -67,7 +176,15 @@ export default function StudentCoursesPage() {
   useEffect(load, []);
 
   const enrolledIds = new Set(enrollments.map((e) => e.courseId));
-  const browsable = catalog.filter((c) => !enrolledIds.has(c.id));
+  const browsableAll = catalog.filter((c) => !enrolledIds.has(c.id));
+  const browsable = useMemo(
+    () => browsableAll.filter((c) => c.title.toLowerCase().includes(search.toLowerCase())),
+    [browsableAll, search],
+  );
+  const enrolledCourses = useMemo(
+    () => enrollments.map((e) => e.course).filter((c) => c.title.toLowerCase().includes(search.toLowerCase())),
+    [enrollments, search],
+  );
 
   const knownSegmentIds = new Set(segments.map((s) => s.id));
   const uncategorized = browsable.filter((c) => !c.segmentId || !knownSegmentIds.has(c.segmentId));
@@ -85,8 +202,30 @@ export default function StudentCoursesPage() {
   }
 
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>My Courses</div>
+    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 1180, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, marginBottom: 24, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>My Courses</div>
+        <div style={{ position: "relative", flex: "1 1 320px", maxWidth: 420 }}>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Find a course that interests you"
+            style={{
+              width: "100%",
+              padding: "11px 44px 11px 18px",
+              border: "1px solid var(--line)",
+              borderRadius: 999,
+              fontSize: 13.5,
+              fontFamily: "inherit",
+              outline: "none",
+              background: "var(--card)",
+            }}
+          />
+          <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)" }}>
+            <SearchIcon />
+          </div>
+        </div>
+      </div>
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
@@ -94,41 +233,29 @@ export default function StudentCoursesPage() {
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
       ) : (
         <>
-          {enrollments.length === 0 ? (
-            <p style={{ color: "var(--ink2)" }}>
-              You haven&apos;t enrolled in any courses yet — browse the catalog below.
-            </p>
-          ) : (
-            <div style={{ display: "grid", gap: 12 }}>
-              {enrollments.map(({ course }) => (
-                <Link
-                  key={course.id}
-                  href={`/student/courses/${course.id}`}
-                  style={{
-                    display: "block",
-                    padding: 18,
-                    background: "var(--card)",
-                    border: "1px solid var(--line)",
-                    borderRadius: "var(--rm)",
-                  }}
-                >
-                  <span style={{ fontWeight: 700 }}>{course.title}</span>
-                  {course.description && (
-                    <p style={{ color: "var(--ink2)", fontSize: 13, marginTop: 6 }}>{course.description}</p>
-                  )}
-                </Link>
-              ))}
+          {enrolledCourses.length > 0 && (
+            <div style={{ marginBottom: 40 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>Continue learning</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
+                {enrolledCourses.map((course, i) => (
+                  <EnrolledCard key={course.id} course={course} index={i} />
+                ))}
+              </div>
             </div>
           )}
 
-          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginTop: 40, marginBottom: 16 }}>
-            Catalog
-          </div>
+          {enrollments.length === 0 && (
+            <p style={{ color: "var(--ink2)", marginBottom: 32 }}>
+              You haven&apos;t enrolled in any courses yet — browse the catalog below.
+            </p>
+          )}
+
+          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>Catalog</div>
 
           {browsable.length === 0 ? (
             <p style={{ color: "var(--ink2)" }}>No new courses to browse right now.</p>
           ) : (
-            <div style={{ display: "grid", gap: 28 }}>
+            <div style={{ display: "grid", gap: 30 }}>
               {segments.map((segment) => {
                 const directCourses = browsable.filter((c) => c.segmentId === segment.id && !c.subsegmentId);
                 const subsegmentGroups = segment.subsegments
@@ -139,24 +266,29 @@ export default function StudentCoursesPage() {
 
                 return (
                   <div key={segment.id}>
-                    <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>{segment.name}</div>
+                    <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12, color: "var(--ink)" }}>{segment.name}</div>
 
                     {directCourses.length > 0 && (
-                      <div style={{ display: "grid", gap: 12, marginBottom: subsegmentGroups.length > 0 ? 20 : 0 }}>
-                        {directCourses.map((course) => (
-                          <CourseCard key={course.id} course={course} onEnroll={onEnroll} enrolling={enrollingId === course.id} />
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                          gap: 18,
+                          marginBottom: subsegmentGroups.length > 0 ? 22 : 0,
+                        }}
+                      >
+                        {directCourses.map((course, i) => (
+                          <CatalogCard key={course.id} course={course} onEnroll={onEnroll} enrolling={enrollingId === course.id} index={i} />
                         ))}
                       </div>
                     )}
 
                     {subsegmentGroups.map(({ sub, courses }) => (
-                      <div key={sub.id} style={{ marginBottom: 20 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>
-                          {sub.name}
-                        </div>
-                        <div style={{ display: "grid", gap: 12 }}>
-                          {courses.map((course) => (
-                            <CourseCard key={course.id} course={course} onEnroll={onEnroll} enrolling={enrollingId === course.id} />
+                      <div key={sub.id} style={{ marginBottom: 22 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>{sub.name}</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
+                          {courses.map((course, i) => (
+                            <CatalogCard key={course.id} course={course} onEnroll={onEnroll} enrolling={enrollingId === course.id} index={i} />
                           ))}
                         </div>
                       </div>
@@ -167,12 +299,10 @@ export default function StudentCoursesPage() {
 
               {uncategorized.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12, color: "var(--ink2)" }}>
-                    Uncategorized
-                  </div>
-                  <div style={{ display: "grid", gap: 12 }}>
-                    {uncategorized.map((course) => (
-                      <CourseCard key={course.id} course={course} onEnroll={onEnroll} enrolling={enrollingId === course.id} />
+                  <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12, color: "var(--ink2)" }}>Uncategorized</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
+                    {uncategorized.map((course, i) => (
+                      <CatalogCard key={course.id} course={course} onEnroll={onEnroll} enrolling={enrollingId === course.id} index={i} />
                     ))}
                   </div>
                 </div>

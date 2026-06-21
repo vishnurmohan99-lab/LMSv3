@@ -10,14 +10,18 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [knownCount, setKnownCount] = useState(0);
+  const [gotIt, setGotIt] = useState(0);
+  const [didntKnow, setDidntKnow] = useState(0);
+  const [skipped, setSkipped] = useState(0);
 
   function load() {
     setLoading(true);
     setDone(false);
     setIndex(0);
     setFlipped(false);
-    setKnownCount(0);
+    setGotIt(0);
+    setDidntKnow(0);
+    setSkipped(0);
     flashcardsApi
       .list(lessonId)
       .then(setCards)
@@ -27,21 +31,32 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
 
   useEffect(load, [lessonId]);
 
-  async function onMark(status: "LEARNING" | "KNOWN") {
-    const card = cards[index];
-    if (!card) return;
-    try {
-      await flashcardsApi.setProgress(card.id, status);
-    } catch {
-      // non-fatal - progress tracking shouldn't block review
-    }
-    if (status === "KNOWN") setKnownCount((c) => c + 1);
+  function advance() {
     if (index + 1 >= cards.length) {
       setDone(true);
     } else {
       setIndex(index + 1);
       setFlipped(false);
     }
+  }
+
+  async function onWrong() {
+    const card = cards[index];
+    if (card) flashcardsApi.setProgress(card.id, "LEARNING").catch(() => {});
+    setDidntKnow((c) => c + 1);
+    advance();
+  }
+
+  function onSkip() {
+    setSkipped((c) => c + 1);
+    advance();
+  }
+
+  async function onRight() {
+    const card = cards[index];
+    if (card) flashcardsApi.setProgress(card.id, "KNOWN").catch(() => {});
+    setGotIt((c) => c + 1);
+    advance();
   }
 
   if (loading) return <p style={{ color: "var(--ink2)" }}>Loading flashcards…</p>;
@@ -56,95 +71,182 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
 
   if (done) {
     return (
-      <div style={{ padding: 24, background: "var(--green-soft)", borderRadius: 14, color: "var(--green)" }}>
-        <b>Deck complete!</b>
-        <p style={{ marginTop: 6, fontSize: 14 }}>
-          You knew {knownCount} of {cards.length} cards.
-        </p>
-        <button
-          onClick={load}
-          style={{
-            marginTop: 14,
-            padding: "9px 18px",
-            background: "var(--ink)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            fontFamily: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          Review again
-        </button>
-      </div>
-    );
-  }
-
-  const card = cards[index];
-
-  return (
-    <div style={{ maxWidth: 480 }}>
-      <div style={{ fontSize: 13, color: "var(--ink2)", marginBottom: 10 }}>
-        Card {index + 1} of {cards.length}
-      </div>
-
       <div
-        onClick={() => setFlipped((f) => !f)}
+        className="pop-in"
         style={{
-          minHeight: 200,
-          padding: 28,
-          background: flipped ? "var(--orange-soft)" : "var(--card)",
+          textAlign: "center",
+          background: "var(--card)",
           border: "1px solid var(--line)",
           borderRadius: "var(--rl)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          fontSize: 18,
-          fontWeight: 700,
-          cursor: "pointer",
+          padding: "48px 40px",
+          maxWidth: 620,
+          margin: "0 auto",
         }}
       >
-        {flipped ? card.back : card.front}
-      </div>
-      <p style={{ textAlign: "center", fontSize: 12, color: "var(--ink3)", marginTop: 8 }}>
-        Tap the card to {flipped ? "see the question" : "reveal the answer"}
-      </p>
-
-      {flipped && (
-        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: "50%",
+            background: "var(--orange-soft)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 18px",
+            fontSize: 34,
+          }}
+        >
+          🎉
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.4 }}>Deck complete!</div>
+        <p style={{ color: "var(--ink3)", fontSize: 14, margin: "8px 0 26px" }}>
+          You reviewed all {cards.length} flashcards. Here&apos;s how you did.
+        </p>
+        <div style={{ display: "flex", gap: 14, justifyContent: "center", marginBottom: 28, flexWrap: "wrap" }}>
+          <div style={{ background: "var(--orange-soft)", borderRadius: 14, padding: "18px 26px" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "var(--orange)" }}>{gotIt}</div>
+            <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>Got it</div>
+          </div>
+          <div style={{ background: "#fbe9e6", borderRadius: 14, padding: "18px 26px" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "var(--red)" }}>{didntKnow}</div>
+            <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>Didn&apos;t know</div>
+          </div>
+          <div style={{ background: "var(--bg)", borderRadius: 14, padding: "18px 26px" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "var(--ink2)" }}>{skipped}</div>
+            <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>Skipped</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
           <button
-            onClick={() => onMark("LEARNING")}
+            onClick={load}
             style={{
-              flex: 1,
-              padding: "11px 16px",
-              background: "var(--amber-soft)",
-              color: "var(--amber)",
+              padding: "13px 26px",
+              background: "var(--orange)",
+              color: "#fff",
               border: "none",
-              borderRadius: 10,
-              fontSize: 13,
+              borderRadius: 12,
+              fontSize: 14,
               fontWeight: 700,
               fontFamily: "inherit",
               cursor: "pointer",
             }}
           >
-            Still learning
+            Practice again
           </button>
-          <button
-            onClick={() => onMark("KNOWN")}
+        </div>
+      </div>
+    );
+  }
+
+  const card = cards[index];
+  const progressPct = Math.round((index / cards.length) * 100);
+
+  return (
+    <div style={{ maxWidth: 620, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+        <div style={{ flex: 1, height: 8, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 5, overflow: "hidden" }}>
+          <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--orange)", borderRadius: 5, transition: "width .3s" }} />
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "5px 11px", borderRadius: 8 }}>
+            ✓ {gotIt}
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--red)", background: "#fbe9e6", padding: "5px 11px", borderRadius: 8 }}>
+            ✕ {didntKnow}
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", background: "var(--bg)", padding: "5px 11px", borderRadius: 8 }}>
+            ↷ {skipped}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 12, color: "var(--ink3)", textAlign: "center", marginBottom: 12 }}>
+        Card {index + 1} of {cards.length} — tap to reveal
+      </div>
+
+      <div className="flip-card-scene" onClick={() => setFlipped((f) => !f)} style={{ height: 320 }}>
+        <div className="flip-card-inner" style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>
+          <div
+            className="flip-card-face"
             style={{
-              flex: 1,
-              padding: "11px 16px",
-              background: "var(--green-soft)",
-              color: "var(--green)",
-              border: "none",
-              borderRadius: 10,
-              fontSize: 13,
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--rl)",
+              boxShadow: "0 12px 40px rgba(0,0,0,.07)",
+              padding: 40,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase", marginBottom: 18 }}>
+              Question
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.4, letterSpacing: -0.3 }}>{card.front}</div>
+            <div style={{ position: "absolute", bottom: 22, fontSize: 12, color: "var(--ink3)" }}>Tap to flip ↺</div>
+          </div>
+          <div
+            className="flip-card-face flip-card-back"
+            style={{
+              background: "#1a1a1a",
+              color: "#fff",
+              borderRadius: "var(--rl)",
+              boxShadow: "0 12px 40px rgba(0,0,0,.18)",
+              padding: 40,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#f7a878", textTransform: "uppercase", marginBottom: 18 }}>
+              Answer
+            </div>
+            <div style={{ fontSize: 19, fontWeight: 600, lineHeight: 1.6 }}>{card.back}</div>
+          </div>
+        </div>
+      </div>
+
+      {flipped && (
+        <div className="fade-in-up" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 24 }}>
+          <button
+            onClick={onWrong}
+            style={{
+              padding: 14,
+              background: "var(--card)",
+              border: "1.5px solid #f0c9c2",
+              color: "var(--red)",
+              borderRadius: 13,
+              fontSize: 14,
               fontWeight: 700,
               fontFamily: "inherit",
               cursor: "pointer",
+            }}
+          >
+            Didn&apos;t know
+          </button>
+          <button
+            onClick={onSkip}
+            style={{
+              padding: 14,
+              background: "var(--card)",
+              border: "1.5px solid var(--line)",
+              color: "var(--ink2)",
+              borderRadius: 13,
+              fontSize: 14,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            Skip
+          </button>
+          <button
+            onClick={onRight}
+            style={{
+              padding: 14,
+              background: "var(--orange)",
+              border: "none",
+              color: "#fff",
+              borderRadius: 13,
+              fontSize: 14,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(242,106,27,.32)",
             }}
           >
             Got it

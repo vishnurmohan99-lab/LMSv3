@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { chatApi, ApiError, type ChatMessage } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmProvider";
 
-export default function AskMeChat({ lessonId }: { lessonId: string }) {
+export default function AskMeChat({ lessonId, onClose }: { lessonId: string; onClose?: () => void }) {
   const confirm = useConfirm();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -52,20 +52,51 @@ export default function AskMeChat({ lessonId }: { lessonId: string }) {
   }
 
   return (
-    <div style={{ maxWidth: 640, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", display: "flex", flexDirection: "column", height: 480 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--line)" }}>
-        <span style={{ fontWeight: 700, fontSize: 14 }}>Ask Me</span>
-        {messages.length > 0 && (
-          <button
-            onClick={onReset}
-            style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 12, cursor: "pointer" }}
-          >
-            Reset conversation
-          </button>
-        )}
+    <div
+      className="slide-in-right"
+      style={{
+        background: "var(--card)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--rl)",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        boxShadow: "0 20px 50px rgba(0,0,0,.12)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "14px 18px",
+          borderBottom: "1px solid var(--line)",
+          background: "var(--orange)",
+          color: "#fff",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span style={{ fontWeight: 700, fontSize: 14.5 }}>Ask a doubt</span>
+        </div>
+        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+          {messages.length > 0 && (
+            <button onClick={onReset} style={{ background: "none", border: "none", color: "rgba(255,255,255,.85)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+              Reset
+            </button>
+          )}
+          {onClose && (
+            <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: "#fff", fontSize: 20, lineHeight: 1, cursor: "pointer", padding: 0 }}>
+              ×
+            </button>
+          )}
+        </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "grid", gap: 10, alignContent: "start" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "grid", gap: 10, alignContent: "start", background: "var(--bg)" }}>
         {loading ? (
           <p style={{ color: "var(--ink2)", fontSize: 13 }}>Loading…</p>
         ) : messages.length === 0 ? (
@@ -74,30 +105,37 @@ export default function AskMeChat({ lessonId }: { lessonId: string }) {
           messages.map((m) => (
             <div
               key={m.id}
+              className="fade-in-up"
               style={{
                 alignSelf: m.role === "USER" ? "flex-end" : "flex-start",
                 maxWidth: "85%",
-                padding: "9px 13px",
-                borderRadius: 12,
-                fontSize: 13,
+                padding: "10px 14px",
+                borderRadius: 14,
+                fontSize: 13.5,
                 lineHeight: 1.5,
-                background: m.role === "USER" ? "var(--orange)" : "var(--bg)",
+                background: m.role === "USER" ? "var(--orange)" : "var(--card)",
                 color: m.role === "USER" ? "#fff" : "var(--ink)",
                 border: m.role === "USER" ? "none" : "1px solid var(--line)",
                 whiteSpace: "pre-wrap",
+                boxShadow: m.role === "USER" ? "0 4px 12px rgba(242,106,27,.25)" : "none",
               }}
             >
               {m.content}
             </div>
           ))
         )}
-        {sending && <p style={{ color: "var(--ink3)", fontSize: 12 }}>Thinking…</p>}
+        {sending && (
+          <p style={{ color: "var(--ink3)", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+            <span className="spin-slow" style={{ display: "inline-block", width: 10, height: 10, border: "2px solid var(--orange-soft)", borderTopColor: "var(--orange)", borderRadius: "50%" }} />
+            Thinking…
+          </p>
+        )}
         <div ref={bottomRef} />
       </div>
 
-      {error && <p style={{ color: "var(--red)", fontSize: 12, padding: "0 16px" }}>{error}</p>}
+      {error && <p style={{ color: "var(--red)", fontSize: 12, padding: "0 16px 8px" }}>{error}</p>}
 
-      <form onSubmit={onSend} style={{ display: "flex", gap: 8, padding: 12, borderTop: "1px solid var(--line)" }}>
+      <form onSubmit={onSend} style={{ display: "flex", gap: 8, padding: 12, borderTop: "1px solid var(--line)", background: "var(--card)" }}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

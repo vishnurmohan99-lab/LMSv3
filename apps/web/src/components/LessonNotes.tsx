@@ -28,12 +28,44 @@ export default function LessonNotes({ lessonId }: { lessonId: string }) {
   }
 
   return (
-    <div style={{ maxWidth: 640, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 20 }}>
-      <p style={{ fontSize: 14, lineHeight: 1.6 }}>{note.summary}</p>
+    <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <div
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 7,
+            background: "var(--orange-soft)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flex: "none",
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2">
+            <path d="M12 2 9 9l-7 1 5 5-1 7 6-3 6 3-1-7 5-5-7-1z" />
+          </svg>
+        </div>
+        <span style={{ fontSize: 14, fontWeight: 700 }}>AI Notes</span>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: "var(--orange)",
+            background: "var(--orange-soft)",
+            padding: "2px 8px",
+            borderRadius: 6,
+            letterSpacing: 0.3,
+          }}
+        >
+          AUTO-GENERATED
+        </span>
+      </div>
+      <p style={{ fontSize: 13.5, lineHeight: 1.7, color: "var(--ink2)", margin: 0 }}>{note.summary}</p>
       {note.keyPoints.length > 0 && (
         <ul style={{ marginTop: 14, paddingLeft: 20, display: "grid", gap: 6 }}>
           {note.keyPoints.map((point, i) => (
-            <li key={i} style={{ fontSize: 14, color: "var(--ink2)" }}>
+            <li key={i} style={{ fontSize: 13.5, lineHeight: 1.6, color: "var(--ink2)" }}>
               {point}
             </li>
           ))}
