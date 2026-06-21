@@ -258,27 +258,6 @@ export default function StudentShell({ children }: { children: React.ReactNode }
 
         <div style={{ flex: 1 }} />
 
-        <div style={{ display: "flex", gap: 4, background: "var(--bg)", borderRadius: 999, padding: 4 }}>
-          {(["Student", "Faculty", "Admin"] as const).map((role) => {
-            const active = role === "Student";
-            return (
-              <span
-                key={role}
-                style={{
-                  padding: "7px 16px",
-                  borderRadius: 999,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  background: active ? "var(--ink)" : "transparent",
-                  color: active ? "#fff" : "var(--ink3)",
-                }}
-              >
-                {role}
-              </span>
-            );
-          })}
-        </div>
-
         <Link
           href="/student/messages"
           style={{
