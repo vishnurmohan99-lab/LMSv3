@@ -17,6 +17,8 @@ import { SessionsModule } from './sessions/sessions.module';
 import { BatchStatusTypesModule } from './batch-status-types/batch-status-types.module';
 import { BulkOperationsModule } from './bulk-operations/bulk-operations.module';
 import { MessengerModule } from './messenger/messenger.module';
+import { TestAttemptsModule } from './test-attempts/test-attempts.module';
+import { WorkoutModule } from './workout/workout.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { MessengerModule } from './messenger/messenger.module';
     BatchStatusTypesModule,
     BulkOperationsModule,
     MessengerModule,
+    TestAttemptsModule,
+    WorkoutModule,
   ],
   controllers: [AppController],
   providers: [AppService],

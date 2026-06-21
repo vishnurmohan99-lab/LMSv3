@@ -349,6 +349,7 @@ export interface Test {
   durationMinutes: number | null;
   facultyId: string;
   chapterId: string | null;
+  courseId: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: { testQuestions: number };
@@ -359,9 +360,14 @@ export interface TestTree extends Test {
 }
 
 export const testsApi = {
-  list: () => request<Test[]>('/tests'),
+  list: (params?: { courseId?: string }) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>,
+    ).toString();
+    return request<Test[]>(`/tests${qs ? `?${qs}` : ''}`);
+  },
   get: (id: string) => request<TestTree>(`/tests/${id}`),
-  create: (data: { title: string; description?: string; bannerUrl?: string; chapterId?: string }) =>
+  create: (data: { title: string; description?: string; bannerUrl?: string; chapterId?: string; courseId?: string }) =>
     request<Test>('/tests', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
@@ -377,6 +383,7 @@ export const testsApi = {
         | 'availableUntil'
         | 'durationMinutes'
         | 'chapterId'
+        | 'courseId'
       >
     >,
   ) => request<Test>(`/tests/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -392,6 +399,58 @@ export const testsApi = {
 
   importQuestions: (testId: string, data: { questionBankId: string; questionIds?: string[] }) =>
     request<TestQuestion[]>(`/tests/${testId}/import-questions`, { method: 'POST', body: JSON.stringify(data) }),
+};
+
+export type TestAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED';
+
+export interface TestAttemptQuestion {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  options: string[];
+  order: number;
+  testId: string;
+}
+
+export interface TestAttempt {
+  id: string;
+  status: TestAttemptStatus;
+  score: number | null;
+  maxScore: number | null;
+  startedAt: string;
+  submittedAt: string | null;
+  testId: string;
+  studentId: string;
+  testQuestions?: TestAttemptQuestion[];
+}
+
+export interface TestAnswerResult {
+  id: string;
+  selectedOption: string | null;
+  isCorrect: boolean | null;
+  attemptId: string;
+  testQuestionId: string;
+  testQuestion: TestQuestion;
+}
+
+export interface TestAttemptResult extends TestAttempt {
+  answers: TestAnswerResult[];
+}
+
+export const testAttemptsApi = {
+  start: (testId: string) => request<TestAttempt>(`/tests/${testId}/attempts`, { method: 'POST' }),
+  mine: (testId: string) => request<TestAttempt[]>(`/tests/${testId}/attempts/mine`),
+  saveAnswer: (attemptId: string, testQuestionId: string, selectedOption?: string) =>
+    request<{ id: string }>(`/attempts/${attemptId}/answers`, { method: 'PATCH', body: JSON.stringify({ testQuestionId, selectedOption }) }),
+  submit: (attemptId: string) => request<TestAttemptResult>(`/attempts/${attemptId}/submit`, { method: 'POST' }),
+};
+
+export const workoutApi = {
+  getQuestions: (courseId: string, params: { chapterId?: string; types: QuestionType[]; count: number }) => {
+    const qs = new URLSearchParams({ types: params.types.join(','), count: String(params.count) });
+    if (params.chapterId) qs.set('chapterId', params.chapterId);
+    return request<Question[]>(`/workout/courses/${courseId}/questions?${qs.toString()}`);
+  },
 };
 
 export interface BatchStatusType {

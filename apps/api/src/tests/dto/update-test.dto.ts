@@ -38,4 +38,8 @@ export class UpdateTestDto {
   @IsOptional()
   @IsString()
   chapterId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  courseId?: string | null;
 }

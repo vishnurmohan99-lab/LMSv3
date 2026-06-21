@@ -16,4 +16,8 @@ export class CreateTestDto {
   @IsOptional()
   @IsString()
   chapterId?: string;
+
+  @IsOptional()
+  @IsString()
+  courseId?: string;
 }

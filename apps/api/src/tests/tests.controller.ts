@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { TestsService } from './tests.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -16,8 +16,8 @@ export class TestsController {
   constructor(private readonly testsService: TestsService) {}
 
   @Get()
-  list(@CurrentUser() user: JwtPayload) {
-    return this.testsService.listTests(user);
+  list(@CurrentUser() user: JwtPayload, @Query('courseId') courseId?: string) {
+    return this.testsService.listTests(user, courseId);
   }
 
   @Get(':id')

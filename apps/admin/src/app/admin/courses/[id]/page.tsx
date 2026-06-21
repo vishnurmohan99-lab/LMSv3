@@ -294,16 +294,21 @@ export default function AdminCourseAuthoringPage() {
           <h1 style={{ fontSize: 24, fontWeight: 800 }}>{course.title}</h1>
           {course.description && <p style={{ color: "var(--ink2)", marginTop: 6 }}>{course.description}</p>}
         </div>
-        <button
-          onClick={onTogglePublished}
-          style={{
-            ...btnStyle,
-            background: course.published ? "var(--amber-soft)" : "var(--green-soft)",
-            color: course.published ? "var(--amber)" : "var(--green)",
-          }}
-        >
-          {course.published ? "Unpublish" : "Publish"}
-        </button>
+        <span style={{ display: "flex", gap: 10 }}>
+          <Link href={`/admin/courses/${courseId}/mock-tests`} style={{ ...btnStyle, background: "var(--purple-soft)", color: "var(--purple)", display: "flex", alignItems: "center" }}>
+            Mock Tests
+          </Link>
+          <button
+            onClick={onTogglePublished}
+            style={{
+              ...btnStyle,
+              background: course.published ? "var(--amber-soft)" : "var(--green-soft)",
+              color: course.published ? "var(--amber)" : "var(--green)",
+            }}
+          >
+            {course.published ? "Unpublish" : "Publish"}
+          </button>
+        </span>
       </div>
 
       <div

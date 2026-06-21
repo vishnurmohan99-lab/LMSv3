@@ -21,12 +21,17 @@ export class TestsService {
     private readonly uploads: UploadsService,
   ) {}
 
-  async listTests(user: JwtPayload) {
+  async listTests(user: JwtPayload, courseId?: string) {
+    const courseFilter = courseId ? { courseId } : {};
     const tests =
       user.role === 'ADMIN'
-        ? await this.prisma.test.findMany({ orderBy: { createdAt: 'desc' }, include: { _count: { select: { testQuestions: true } } } })
+        ? await this.prisma.test.findMany({
+            where: courseFilter,
+            orderBy: { createdAt: 'desc' },
+            include: { _count: { select: { testQuestions: true } } },
+          })
         : await this.prisma.test.findMany({
-            where: { OR: [{ published: true }, { facultyId: user.sub }] },
+            where: { AND: [courseFilter, { OR: [{ published: true }, { facultyId: user.sub }] }] },
             orderBy: { createdAt: 'desc' },
             include: { _count: { select: { testQuestions: true } } },
           });
@@ -48,15 +53,21 @@ export class TestsService {
     if (!test.published && !isOwnerOrAdmin(user, test.facultyId)) {
       throw new ForbiddenException('You do not have access to this test');
     }
+    const owner = isOwnerOrAdmin(user, test.facultyId);
     return {
       ...test,
       bannerUrl: test.bannerUrl ? await this.uploads.presignDownload(test.bannerUrl) : null,
+      testQuestions: owner ? test.testQuestions : test.testQuestions.map((q) => ({ ...q, correctOption: null })),
     };
   }
 
   async createTest(user: JwtPayload, dto: CreateTestDto) {
     if (dto.chapterId) {
       await this.requireChapter(dto.chapterId);
+    }
+    if (dto.courseId) {
+      const course = await this.requireCourse(dto.courseId);
+      this.assertOwnership(user, course.facultyId);
     }
     return withUniqueNameCheck(
       () =>
@@ -66,6 +77,7 @@ export class TestsService {
             description: dto.description ?? '',
             bannerUrl: dto.bannerUrl,
             chapterId: dto.chapterId,
+            courseId: dto.courseId,
             facultyId: user.sub,
           },
         }),
@@ -78,6 +90,10 @@ export class TestsService {
     this.assertOwnership(user, test.facultyId);
     if (dto.chapterId) {
       await this.requireChapter(dto.chapterId);
+    }
+    if (dto.courseId) {
+      const course = await this.requireCourse(dto.courseId);
+      this.assertOwnership(user, course.facultyId);
     }
     return withUniqueNameCheck(
       () =>
@@ -103,6 +119,9 @@ export class TestsService {
   async createQuestion(testId: string, user: JwtPayload, dto: CreateTestQuestionDto) {
     const test = await this.requireTest(testId);
     this.assertOwnership(user, test.facultyId);
+    if (test.courseId && dto.type === 'ESSAY') {
+      throw new BadRequestException('Mock tests only support auto-gradable question types (MCQ, TRUE_FALSE, FILL_BLANK)');
+    }
     const maxOrder = await this.prisma.testQuestion.aggregate({ where: { testId }, _max: { order: true } });
     return this.prisma.testQuestion.create({
       data: {
@@ -143,6 +162,7 @@ export class TestsService {
       where: {
         questionBankId: dto.questionBankId,
         ...(dto.questionIds && dto.questionIds.length > 0 ? { id: { in: dto.questionIds } } : {}),
+        ...(test.courseId ? { type: { not: 'ESSAY' } } : {}),
       },
       orderBy: { order: 'asc' },
     });
@@ -185,5 +205,11 @@ export class TestsService {
     const chapter = await this.prisma.chapter.findUnique({ where: { id } });
     if (!chapter) throw new NotFoundException('Chapter not found');
     return chapter;
+  }
+
+  private async requireCourse(id: string) {
+    const course = await this.prisma.course.findUnique({ where: { id } });
+    if (!course) throw new NotFoundException('Course not found');
+    return course;
   }
 }

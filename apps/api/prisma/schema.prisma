@@ -43,6 +43,7 @@ model User {
   messagesSent             Message[]
   messageRecipients        MessageRecipient[]
   scheduledMessages         ScheduledMessage[]
+  testAttempts              TestAttempt[]
 }
 
 model Course {
@@ -67,6 +68,7 @@ model Course {
   enrollments   Enrollment[]
   batches       Batch[]
   conversations Conversation[]
+  mockTests     Test[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -368,7 +370,13 @@ model Test {
   chapterId String?
   chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
 
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
   testQuestions TestQuestion[]
+  attempts      TestAttempt[]
+
+  @@index([courseId])
 }
 
 model TestQuestion {
@@ -385,6 +393,8 @@ model TestQuestion {
 
   testId String
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  answers TestAnswer[]
 }
 
 enum ConversationType {
@@ -472,4 +482,42 @@ model ScheduledMessage {
   sender   User   @relation(fields: [senderId], references: [id])
 
   @@index([sendAt, sentAt])
+}
+
+enum TestAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+model TestAttempt {
+  id          String            @id @default(uuid())
+  status      TestAttemptStatus @default(IN_PROGRESS)
+  score       Int?
+  maxScore    Int?
+  startedAt   DateTime          @default(now())
+  submittedAt DateTime?
+
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  answers TestAnswer[]
+
+  @@index([testId, studentId])
+}
+
+model TestAnswer {
+  id             String   @id @default(uuid())
+  selectedOption String?
+  isCorrect      Boolean?
+
+  attemptId String
+  attempt   TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  testQuestionId String
+  testQuestion   TestQuestion @relation(fields: [testQuestionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, testQuestionId])
 }
