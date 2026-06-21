@@ -110,6 +110,16 @@ function FeedbackIcon({ active }: { active: boolean }) {
   );
 }
 
+function ForumIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M17 8h2a2 2 0 0 1 2 2v9l-3-2H9a2 2 0 0 1-2-2v-1" />
+      <path d="M3 4h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2l-3 2V6" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
@@ -128,6 +138,7 @@ const navItems = [
   { href: "/admin/batch-statuses", label: "Batch Statuses", Icon: BatchStatusIcon },
   { href: "/admin/messages", label: "Messages", Icon: MessagesIcon },
   { href: "/admin/feedback", label: "Feedback", Icon: FeedbackIcon },
+  { href: "/admin/forum", label: "Forum", Icon: ForumIcon },
   { href: "/admin/users", label: "Users", Icon: UsersIcon },
 ];
 
