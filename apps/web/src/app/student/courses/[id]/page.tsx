@@ -8,17 +8,8 @@ import FlashcardReview from "@/components/FlashcardReview";
 import LessonNotes from "@/components/LessonNotes";
 import AskMeChat from "@/components/AskMeChat";
 
-function LessonIcon({ type, active }: { type: Lesson["type"]; active: boolean }) {
-  const color = active ? "var(--orange)" : "var(--ink3)";
-  const common = { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 2 } as const;
-  if (type === "VIDEO") {
-    return (
-      <svg {...common}>
-        <path d="m10 8 6 4-6 4V8Z" />
-        <rect x="2" y="3" width="20" height="18" rx="3" />
-      </svg>
-    );
-  }
+function LessonIcon({ type, color }: { type: Lesson["type"]; color: string }) {
+  const common = { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 1.8 } as const;
   if (type === "PDF") {
     return (
       <svg {...common}>
@@ -30,17 +21,25 @@ function LessonIcon({ type, active }: { type: Lesson["type"]; active: boolean })
   if (type === "LIVE") {
     return (
       <svg {...common}>
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="3" fill={color} stroke="none" />
+        <path d="m23 7-7 5 7 5V7z" />
+        <rect x="1" y="5" width="15" height="14" rx="2" />
       </svg>
     );
   }
+  // VIDEO / FLASHCARD fallback — circular play icon, matches reference's typeIcon default
   return (
     <svg {...common}>
-      <rect x="3" y="5" width="14" height="16" rx="2" />
-      <path d="M7 5V3h14v16h-2" />
+      <circle cx="12" cy="12" r="10" />
+      <path d="M10 8l6 4-6 4V8z" />
     </svg>
   );
+}
+
+function lessonMeta(lesson: Lesson, chapterTitle: string) {
+  if (lesson.type === "VIDEO") return `Video Lesson · ${chapterTitle}`;
+  if (lesson.type === "PDF") return `PDF Notes · ${chapterTitle}`;
+  if (lesson.type === "LIVE") return lesson.liveAt ? `Live Class · ${new Date(lesson.liveAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : `Live Class · ${chapterTitle}`;
+  return chapterTitle;
 }
 
 function LessonViewer({ lesson }: { lesson: Lesson }) {
@@ -165,6 +164,7 @@ export default function StudentCoursePlayerPage() {
   const [viewMode, setViewMode] = useState<"lesson" | "flashcards">("lesson");
   const [showChat, setShowChat] = useState(false);
   const [flashcardCount, setFlashcardCount] = useState<number | null>(null);
+  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
 
   useEffect(() => {
     coursesApi
@@ -172,6 +172,7 @@ export default function StudentCoursePlayerPage() {
       .then((c) => {
         setCourse(c);
         setSelectedLessonId(c.chapters[0]?.lessons[0]?.id ?? null);
+        setExpandedChapterId(c.chapters[0]?.id ?? null);
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 403) {
@@ -278,43 +279,109 @@ export default function StudentCoursePlayerPage() {
           )}
         </div>
 
-        {course.chapters.map((chapter: Chapter) => (
-          <div key={chapter.id} style={{ padding: "14px 18px 6px" }}>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink3)", textTransform: "uppercase", marginBottom: 6 }}>
-              {chapter.title}
+        {course.chapters.map((chapter: Chapter) => {
+          const open = expandedChapterId === chapter.id;
+          return (
+            <div key={chapter.id} style={{ borderBottom: "1px solid var(--line2)" }}>
+              <button
+                onClick={() => setExpandedChapterId(open ? null : chapter.id)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 11,
+                  padding: "14px 18px",
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  textAlign: "left",
+                }}
+              >
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    background: open ? "var(--orange-soft)" : "var(--bg)",
+                    color: open ? "var(--orange)" : "var(--ink2)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flex: "none",
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M2 7h20M2 12h20M2 17h12" />
+                  </svg>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{chapter.title}</div>
+                  <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 1 }}>{chapter.lessons.length} lessons</div>
+                </div>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--ink3)"
+                  strokeWidth="2"
+                  style={{ transition: "transform .25s", transform: open ? "rotate(90deg)" : "none", flex: "none" }}
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+
+              {open && (
+                <div className="fade-in-up" style={{ paddingBottom: 6 }}>
+                  {chapter.lessons.map((lesson) => {
+                    const active = lesson.id === selectedLessonId;
+                    const color = active ? "var(--orange)" : "var(--ink3)";
+                    return (
+                      <button
+                        key={lesson.id}
+                        onClick={() => setSelectedLessonId(lesson.id)}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 11,
+                          padding: "10px 18px 10px 30px",
+                          border: "none",
+                          background: active ? "var(--orange-soft)" : "transparent",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          textAlign: "left",
+                          borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
+                        }}
+                      >
+                        <span style={{ color, display: "flex" }}>
+                          <LessonIcon type={lesson.type} color={color} />
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 12.5,
+                              fontWeight: active ? 700 : 500,
+                              color: active ? "var(--ink)" : "var(--ink2)",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {lesson.title}
+                          </div>
+                          <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>{lesson.type}</div>
+                        </div>
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            <div style={{ display: "grid", gap: 2, marginBottom: 8 }}>
-              {chapter.lessons.map((lesson) => {
-                const active = lesson.id === selectedLessonId;
-                return (
-                  <button
-                    key={lesson.id}
-                    onClick={() => setSelectedLessonId(lesson.id)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 9,
-                      textAlign: "left",
-                      padding: "9px 10px",
-                      borderRadius: 9,
-                      border: "none",
-                      fontSize: 13,
-                      fontFamily: "inherit",
-                      cursor: "pointer",
-                      background: active ? "var(--orange-soft)" : "transparent",
-                      color: active ? "var(--orange)" : "var(--ink)",
-                      fontWeight: active ? 700 : 500,
-                      transition: "background .15s ease",
-                    }}
-                  >
-                    <LessonIcon type={lesson.type} active={active} />
-                    {lesson.title}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* lesson area */}
@@ -330,6 +397,9 @@ export default function StudentCoursePlayerPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 200px", minWidth: 160 }}>
                   <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.4 }}>{selectedLesson.title}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--ink3)", marginTop: 3 }}>
+                    {lessonMeta(selectedLesson, selectedChapter?.title ?? "")}
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 10, flex: "none", flexWrap: "wrap", marginLeft: "auto" }}>
                   {selectedLesson.flashcardsEnabled && (
@@ -392,6 +462,48 @@ export default function StudentCoursePlayerPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 {viewMode === "flashcards" ? (
                   <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} />
+                ) : selectedLesson.type === "VIDEO" && (selectedChapter?.lessons.length ?? 0) > 1 ? (
+                  <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
+                    <div style={{ display: "grid", gap: 18, minWidth: 0 }}>
+                      <LessonViewer lesson={selectedLesson} />
+                      {selectedLesson.aiNotesEnabled && <LessonNotes lessonId={selectedLesson.id} />}
+                    </div>
+                    <div
+                      className="fade-in-up"
+                      style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18, alignSelf: "start" }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>{selectedChapter?.title}</div>
+                      <div style={{ display: "grid", gap: 4 }}>
+                        {selectedChapter?.lessons.map((l) => {
+                          const active = l.id === selectedLessonId;
+                          return (
+                            <button
+                              key={l.id}
+                              onClick={() => setSelectedLessonId(l.id)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 10,
+                                padding: "9px 11px",
+                                border: "none",
+                                background: active ? "var(--bg)" : "transparent",
+                                borderRadius: 9,
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                textAlign: "left",
+                                width: "100%",
+                              }}
+                            >
+                              <span style={{ color: active ? "var(--orange)" : "var(--ink3)", display: "flex" }}>
+                                <LessonIcon type={l.type} color={active ? "var(--orange)" : "var(--ink3)"} />
+                              </span>
+                              <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "var(--ink)" : "var(--ink2)" }}>{l.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 18 }}>
                     <LessonViewer lesson={selectedLesson} />
