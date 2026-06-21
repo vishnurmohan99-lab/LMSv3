@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { coursesApi, ApiError, type Course } from "@/lib/api";
+import { coursesApi, messengerApi, ApiError, type Course } from "@/lib/api";
 
 function StatCard({ icon, value, label, color, soft }: { icon: React.ReactNode; value: number; label: string; color: string; soft: string }) {
   return (
@@ -43,6 +43,7 @@ export default function FacultyDashboardPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     coursesApi
@@ -50,6 +51,10 @@ export default function FacultyDashboardPage() {
       .then(setCourses)
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load dashboard"))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    messengerApi.getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {});
   }, []);
 
   const totalEnrollments = courses.reduce((sum, c) => sum + (c._count?.enrollments ?? 0), 0);
@@ -65,6 +70,37 @@ export default function FacultyDashboardPage() {
         <p style={{ color: "var(--red)" }}>{error}</p>
       ) : (
         <>
+          <Link
+            href="/faculty/messages"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--rm)",
+              padding: "16px 18px",
+              marginBottom: 18,
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--orange-soft)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>Messages</div>
+                <div style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: 2 }}>Message students, admins, or broadcast announcements</div>
+              </div>
+            </div>
+            {unreadCount > 0 && (
+              <span style={{ background: "var(--orange)", color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 10px" }}>{unreadCount}</span>
+            )}
+          </Link>
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, marginBottom: 18 }}>
             <StatCard
               value={courses.length}

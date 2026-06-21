@@ -515,3 +515,61 @@ export const sessionsApi = {
   ) => request<Session>(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/sessions/${id}`, { method: 'DELETE' }),
 };
+
+export type ConversationType = 'DIRECT' | 'COURSE_BROADCAST' | 'BATCH_BROADCAST' | 'GROUP';
+
+export interface ConversationParticipant {
+  id: string;
+  userId: string;
+  user: { id: string; fullName: string; email: string; role: 'STUDENT' | 'FACULTY' | 'ADMIN' };
+}
+
+export interface Message {
+  id: string;
+  body: string;
+  createdAt: string;
+  conversationId: string;
+  senderId: string;
+  sender: { id: string; fullName: string; role: 'STUDENT' | 'FACULTY' | 'ADMIN' };
+}
+
+export interface Conversation {
+  id: string;
+  type: ConversationType;
+  createdAt: string;
+  courseId: string | null;
+  batchId: string | null;
+  createdById: string;
+  participants: ConversationParticipant[];
+  course: { id: string; title: string } | null;
+  batch: { id: string; name: string } | null;
+  lastMessage: Message | null;
+  unreadCount: number;
+}
+
+export interface ScheduledMessage {
+  id: string;
+  body: string;
+  sendAt: string;
+  sentAt: string | null;
+  createdAt: string;
+  conversationId: string;
+  senderId: string;
+}
+
+export const messengerApi = {
+  listContacts: () => request<{ id: string; fullName: string; email: string; role: 'STUDENT' | 'FACULTY' | 'ADMIN' }[]>('/messenger/contacts'),
+  listConversations: () => request<Conversation[]>('/conversations'),
+  createConversation: (data: { type: ConversationType; userId?: string; courseId?: string; batchId?: string; participantIds?: string[] }) =>
+    request<Conversation>('/conversations', { method: 'POST', body: JSON.stringify(data) }),
+  listMessages: (conversationId: string) => request<Message[]>(`/conversations/${conversationId}/messages`),
+  sendMessage: (conversationId: string, body: string) =>
+    request<Message>(`/conversations/${conversationId}/messages`, { method: 'POST', body: JSON.stringify({ body }) }),
+  markRead: (conversationId: string) =>
+    request<{ success: boolean }>(`/conversations/${conversationId}/read`, { method: 'POST' }),
+  getUnreadCount: () => request<{ count: number }>('/messages/unread-count'),
+  scheduleMessage: (data: { conversationId: string; body: string; sendAt: string }) =>
+    request<ScheduledMessage>('/scheduled-messages', { method: 'POST', body: JSON.stringify(data) }),
+  listScheduled: () => request<ScheduledMessage[]>('/scheduled-messages'),
+  cancelScheduled: (id: string) => request<{ success: boolean }>(`/scheduled-messages/${id}`, { method: 'DELETE' }),
+};

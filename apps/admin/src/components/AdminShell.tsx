@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { authApi, usersApi, type Profile } from "@/lib/api";
+import { authApi, usersApi, messengerApi, type Profile } from "@/lib/api";
 
 function Icon({ children }: { children: React.ReactNode }) {
   return <span style={{ display: "flex", width: 18, justifyContent: "center" }}>{children}</span>;
@@ -71,6 +71,15 @@ function BatchStatusIcon({ active }: { active: boolean }) {
   );
 }
 
+function MessagesIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />
+    </svg>
+  );
+}
+
 function UsersIcon({ active }: { active: boolean }) {
   const c = active ? "#fff" : "var(--ink2)";
   return (
@@ -107,6 +116,7 @@ const navItems = [
   { href: "/admin/question-banks", label: "Question Banks", Icon: QuestionBankIcon },
   { href: "/admin/tests", label: "Tests", Icon: TestsIcon },
   { href: "/admin/batch-statuses", label: "Batch Statuses", Icon: BatchStatusIcon },
+  { href: "/admin/messages", label: "Messages", Icon: MessagesIcon },
   { href: "/admin/users", label: "Users", Icon: UsersIcon },
 ];
 
@@ -132,9 +142,19 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     usersApi.me().then(setProfile).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function poll() {
+      messengerApi.getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {});
+    }
+    poll();
+    const interval = setInterval(poll, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   async function onLogout() {
@@ -223,11 +243,29 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           {navItems.map(({ href, label, Icon: ItemIcon }) => {
             const active = isActive(href);
             return (
-              <Link key={href} href={href} style={navStyle(active)}>
-                <Icon>
-                  <ItemIcon active={active} />
-                </Icon>
-                <span>{label}</span>
+              <Link key={href} href={href} style={{ ...navStyle(active), justifyContent: "space-between" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <Icon>
+                    <ItemIcon active={active} />
+                  </Icon>
+                  <span>{label}</span>
+                </span>
+                {href === "/admin/messages" && unreadCount > 0 && (
+                  <span
+                    style={{
+                      background: "var(--orange)",
+                      color: "#fff",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      borderRadius: 999,
+                      padding: "1px 7px",
+                      minWidth: 18,
+                      textAlign: "center",
+                    }}
+                  >
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
             );
           })}

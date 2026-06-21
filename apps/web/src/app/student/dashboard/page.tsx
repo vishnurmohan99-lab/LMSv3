@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { enrollmentsApi, ApiError, type Enrollment } from "@/lib/api";
+import { enrollmentsApi, messengerApi, ApiError, type Enrollment } from "@/lib/api";
 
 export default function StudentDashboardPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     enrollmentsApi
@@ -15,6 +16,10 @@ export default function StudentDashboardPage() {
       .then(setEnrollments)
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load dashboard"))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    messengerApi.getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {});
   }, []);
 
   return (
@@ -27,7 +32,7 @@ export default function StudentDashboardPage() {
         <p style={{ color: "var(--red)" }}>{error}</p>
       ) : (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 18 }}>
             <div
               style={{
                 background: "var(--card)",
@@ -95,6 +100,34 @@ export default function StudentDashboardPage() {
                 <div style={{ fontSize: 14, fontWeight: 700 }}>Browse catalog</div>
                 <div style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: 2 }}>Find new courses to join</div>
               </div>
+            </Link>
+
+            <Link
+              href="/student/messages"
+              style={{
+                background: "var(--card)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--rm)",
+                padding: "16px 18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--purple-soft)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.8">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Messages</div>
+                  <div style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: 2 }}>Chat with faculty &amp; admin</div>
+                </div>
+              </div>
+              {unreadCount > 0 && (
+                <span style={{ background: "var(--orange)", color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 10px" }}>{unreadCount}</span>
+              )}
             </Link>
           </div>
 

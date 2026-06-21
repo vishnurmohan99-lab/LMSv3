@@ -37,6 +37,12 @@ model User {
   batchesAsFaculty  Batch[]             @relation("BatchFaculty")
   batchEnrollments  BatchEnrollment[]
   bulkOperations    BulkOperation[]
+
+  conversationsCreated    Conversation[]            @relation("ConversationCreatedBy")
+  conversationParticipant ConversationParticipant[]
+  messagesSent             Message[]
+  messageRecipients        MessageRecipient[]
+  scheduledMessages         ScheduledMessage[]
 }
 
 model Course {
@@ -57,9 +63,10 @@ model Course {
   subsegmentId String?
   subsegment   Subsegment? @relation(fields: [subsegmentId], references: [id], onDelete: SetNull)
 
-  chapters    Chapter[]
-  enrollments Enrollment[]
-  batches     Batch[]
+  chapters      Chapter[]
+  enrollments   Enrollment[]
+  batches       Batch[]
+  conversations Conversation[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -237,8 +244,9 @@ model Batch {
   facultyId String?
   faculty   User?   @relation("BatchFaculty", fields: [facultyId], references: [id])
 
-  enrollments BatchEnrollment[]
-  sessions    Session[]
+  enrollments   BatchEnrollment[]
+  sessions      Session[]
+  conversations Conversation[]
 
   @@unique([courseId, name])
 }
@@ -377,4 +385,91 @@ model TestQuestion {
 
   testId String
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+enum ConversationType {
+  DIRECT
+  COURSE_BROADCAST
+  BATCH_BROADCAST
+  GROUP
+}
+
+model Conversation {
+  id        String           @id @default(uuid())
+  type      ConversationType
+  createdAt DateTime         @default(now())
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  batchId String?
+  batch   Batch?  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("ConversationCreatedBy", fields: [createdById], references: [id])
+
+  participants ConversationParticipant[]
+  messages     Message[]
+  scheduledMessages ScheduledMessage[]
+
+  @@index([courseId])
+  @@index([batchId])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id])
+
+  recipients MessageRecipient[]
+
+  @@index([conversationId, createdAt])
+}
+
+model MessageRecipient {
+  id     String    @id @default(uuid())
+  readAt DateTime?
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, readAt])
+}
+
+model ScheduledMessage {
+  id     String    @id @default(uuid())
+  body   String    @db.Text
+  sendAt DateTime
+  sentAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id])
+
+  @@index([sendAt, sentAt])
 }

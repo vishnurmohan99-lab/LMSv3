@@ -16,6 +16,7 @@ import { BatchesModule } from './batches/batches.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { BatchStatusTypesModule } from './batch-status-types/batch-status-types.module';
 import { BulkOperationsModule } from './bulk-operations/bulk-operations.module';
+import { MessengerModule } from './messenger/messenger.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { BulkOperationsModule } from './bulk-operations/bulk-operations.module';
     SessionsModule,
     BatchStatusTypesModule,
     BulkOperationsModule,
+    MessengerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
