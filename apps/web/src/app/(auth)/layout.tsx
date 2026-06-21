@@ -24,7 +24,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               transform: "rotate(45deg)",
             }}
           />
-          <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>duvex</span>
+          <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>Paperlms</span>
         </div>
         <div>
           <div

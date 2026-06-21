@@ -9,7 +9,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Duvex — AI Exam Prep",
+  title: "Paperlms — AI Exam Prep",
   description: "Learn smarter, not harder.",
 };
 

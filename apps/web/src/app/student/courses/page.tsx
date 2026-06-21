@@ -163,13 +163,19 @@ export default function StudentCoursesPage() {
 
   function load() {
     setLoading(true);
-    Promise.all([enrollmentsApi.mine(), coursesApi.list(), segmentsApi.list()])
-      .then(([myEnrollments, allCourses, allSegments]) => {
-        setEnrollments(myEnrollments);
-        setCatalog(allCourses);
-        setSegments(allSegments);
+    setError(null);
+    Promise.allSettled([enrollmentsApi.mine(), coursesApi.list(), segmentsApi.list()])
+      .then(([enrollmentsResult, catalogResult, segmentsResult]) => {
+        if (enrollmentsResult.status === "fulfilled") setEnrollments(enrollmentsResult.value);
+        if (catalogResult.status === "fulfilled") setCatalog(catalogResult.value);
+        if (segmentsResult.status === "fulfilled") setSegments(segmentsResult.value);
+
+        const failed = [enrollmentsResult, catalogResult, segmentsResult].find((r) => r.status === "rejected");
+        if (failed && failed.status === "rejected") {
+          const err = failed.reason;
+          setError(err instanceof ApiError ? err.message : "Some course data failed to load");
+        }
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load courses"))
       .finally(() => setLoading(false));
   }
 

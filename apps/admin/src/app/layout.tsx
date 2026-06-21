@@ -9,8 +9,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Duvex Admin",
-  description: "Duvex platform administration.",
+  title: "Paperlms Admin",
+  description: "Paperlms platform administration.",
 };
 
 export default function RootLayout({
