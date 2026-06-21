@@ -3,7 +3,19 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, segmentsApi, uploadsApi, ApiError, type CourseTree, type LessonType, type Segment } from "@/lib/api";
+import {
+  coursesApi,
+  segmentsApi,
+  uploadsApi,
+  usersApi,
+  batchesApi,
+  ApiError,
+  type CourseTree,
+  type Segment,
+  type Batch,
+  type BatchStatus,
+  type Profile,
+} from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
@@ -117,6 +129,8 @@ export default function AdminCourseAuthoringPage() {
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [facultyUsers, setFacultyUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,12 +144,24 @@ export default function AdminCourseAuthoringPage() {
   const [editChapterBanner, setEditChapterBanner] = useState<File | null>(null);
   const [savingChapter, setSavingChapter] = useState(false);
 
+  const [showAddBatch, setShowAddBatch] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
+  const [batchName, setBatchName] = useState("");
+  const [batchStatus, setBatchStatus] = useState<BatchStatus>("ACTIVE");
+  const [batchStartDate, setBatchStartDate] = useState("");
+  const [batchEndDate, setBatchEndDate] = useState("");
+  const [batchFacultyId, setBatchFacultyId] = useState("");
+  const [savingBatch, setSavingBatch] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
+
   function load() {
     setLoading(true);
-    Promise.all([coursesApi.get(courseId), segmentsApi.list()])
-      .then(([c, s]) => {
+    Promise.all([coursesApi.get(courseId), segmentsApi.list(), batchesApi.list(courseId), usersApi.list()])
+      .then(([c, s, b, users]) => {
         setCourse(c);
         setSegments(s);
+        setBatches(b);
+        setFacultyUsers(users.filter((u) => u.role === "FACULTY"));
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load course"))
       .finally(() => setLoading(false));
@@ -189,6 +215,59 @@ export default function AdminCourseAuthoringPage() {
     } finally {
       setSavingChapter(false);
     }
+  }
+
+  function openAddBatch() {
+    setBatchName("");
+    setBatchStatus("ACTIVE");
+    setBatchStartDate("");
+    setBatchEndDate("");
+    setBatchFacultyId("");
+    setBatchError(null);
+    setShowAddBatch(true);
+  }
+
+  function openEditBatch(batch: Batch) {
+    setBatchName(batch.name);
+    setBatchStatus(batch.status);
+    setBatchStartDate(batch.startDate.slice(0, 10));
+    setBatchEndDate(batch.endDate ? batch.endDate.slice(0, 10) : "");
+    setBatchFacultyId(batch.facultyId ?? "");
+    setBatchError(null);
+    setEditingBatch(batch);
+  }
+
+  async function onSaveBatch(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingBatch(true);
+    setBatchError(null);
+    try {
+      const data = {
+        name: batchName,
+        status: batchStatus,
+        startDate: new Date(batchStartDate).toISOString(),
+        endDate: batchEndDate ? new Date(batchEndDate).toISOString() : undefined,
+        facultyId: batchFacultyId || undefined,
+      };
+      if (editingBatch) {
+        await batchesApi.update(editingBatch.id, data);
+        setEditingBatch(null);
+      } else {
+        await batchesApi.create(courseId, data);
+        setShowAddBatch(false);
+      }
+      load();
+    } catch (err) {
+      setBatchError(err instanceof ApiError ? err.message : "Failed to save batch");
+    } finally {
+      setSavingBatch(false);
+    }
+  }
+
+  async function onDeleteBatch(id: string) {
+    if (!(await confirm({ message: "Delete this batch? This removes its roster and sessions too. This cannot be undone." }))) return;
+    await batchesApi.remove(id);
+    load();
   }
 
   if (loading) return <div style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></div>;
@@ -367,6 +446,136 @@ export default function AdminCourseAuthoringPage() {
 
               <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 4 }}>
                 {chapter.lessons.length} lesson{chapter.lessons.length === 1 ? "" : "s"}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 32, marginBottom: 14 }}>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>Batches</div>
+        <button onClick={openAddBatch} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 7 }}>
+          <PlusIcon />
+          Add batch
+        </button>
+      </div>
+
+      {(showAddBatch || editingBatch) && (
+        <Modal title={editingBatch ? "Edit batch" : "Add batch"} onClose={() => (editingBatch ? setEditingBatch(null) : setShowAddBatch(false))}>
+          <form onSubmit={onSaveBatch} style={{ display: "grid", gap: 14 }}>
+            <input
+              required
+              autoFocus
+              placeholder="Batch name"
+              value={batchName}
+              onChange={(e) => setBatchName(e.target.value)}
+              style={inputStyle}
+            />
+            <select value={batchStatus} onChange={(e) => setBatchStatus(e.target.value as BatchStatus)} style={inputStyle}>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="ON_HOLD">On hold</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Start date</div>
+                <input
+                  required
+                  type="date"
+                  value={batchStartDate}
+                  onChange={(e) => setBatchStartDate(e.target.value)}
+                  style={{ ...inputStyle, width: "100%" }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>End date (optional)</div>
+                <input
+                  type="date"
+                  value={batchEndDate}
+                  onChange={(e) => setBatchEndDate(e.target.value)}
+                  style={{ ...inputStyle, width: "100%" }}
+                />
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Assigned faculty (optional)</div>
+              <select value={batchFacultyId} onChange={(e) => setBatchFacultyId(e.target.value)} style={{ ...inputStyle, width: "100%" }}>
+                <option value="">— None —</option>
+                {facultyUsers.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.fullName} ({f.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={savingBatch}
+              style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: savingBatch ? 0.7 : 1 }}
+            >
+              {savingBatch && <Spinner />}
+              {savingBatch ? "Saving…" : editingBatch ? "Save changes" : "Add batch"}
+            </button>
+            {batchError && <span style={{ color: "var(--red)", fontSize: 12 }}>{batchError}</span>}
+          </form>
+        </Modal>
+      )}
+
+      {batches.length === 0 ? (
+        <p style={{ color: "var(--ink2)" }}>No batches yet — add the first one above.</p>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
+          {batches.map((batch) => (
+            <div key={batch.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{batch.name}</div>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      marginTop: 4,
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      background: batch.status === "ACTIVE" ? "var(--green-soft)" : "var(--bg)",
+                      color: batch.status === "ACTIVE" ? "var(--green)" : "var(--ink3)",
+                    }}
+                  >
+                    {batch.status}
+                  </span>
+                </div>
+                <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <Link href={`/admin/courses/${courseId}/batches/${batch.id}`} title="View batch" style={{ display: "flex" }}>
+                    <EyeIcon />
+                  </Link>
+                  <button
+                    onClick={() => openEditBatch(batch)}
+                    title="Edit batch"
+                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    onClick={() => onDeleteBatch(batch.id)}
+                    title="Delete batch"
+                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    <TrashIcon />
+                  </button>
+                </span>
+              </div>
+
+              <div style={{ fontSize: 12, color: "var(--ink2)" }}>
+                {new Date(batch.startDate).toLocaleDateString()}
+                {batch.endDate ? ` – ${new Date(batch.endDate).toLocaleDateString()}` : ""}
+              </div>
+
+              <div style={{ fontSize: 12, color: "var(--ink3)" }}>
+                {batch._count?.enrollments ?? 0} student{(batch._count?.enrollments ?? 0) === 1 ? "" : "s"} ·{" "}
+                {batch._count?.sessions ?? 0} session{(batch._count?.sessions ?? 0) === 1 ? "" : "s"}
               </div>
             </div>
           ))}

@@ -34,6 +34,8 @@ model User {
   enrollments       Enrollment[]
   flashcardProgress FlashcardProgress[]
   chatMessages      ChatMessage[]
+  batchesAsFaculty  Batch[]             @relation("BatchFaculty")
+  batchEnrollments  BatchEnrollment[]
 }
 
 model Course {
@@ -56,6 +58,7 @@ model Course {
 
   chapters    Chapter[]
   enrollments Enrollment[]
+  batches     Batch[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -128,6 +131,7 @@ model Lesson {
   flashcards   Flashcard[]
   note         LessonNote?
   chatMessages ChatMessage[]
+  sessions     Session[]
 }
 
 model LessonNote {
@@ -200,6 +204,75 @@ model Enrollment {
   enrolledAt DateTime @default(now())
 
   @@unique([studentId, courseId])
+}
+
+enum BatchStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+model Batch {
+  id        String      @id @default(uuid())
+  name      String
+  status    BatchStatus @default(ACTIVE)
+  startDate DateTime
+  endDate   DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  facultyId String?
+  faculty   User?   @relation("BatchFaculty", fields: [facultyId], references: [id])
+
+  enrollments BatchEnrollment[]
+  sessions    Session[]
+
+  @@unique([courseId, name])
+}
+
+model BatchEnrollment {
+  id              String    @id @default(uuid())
+  joinedAt        DateTime  @default(now())
+  accessExpiresAt DateTime?
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, studentId])
+}
+
+enum SessionStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+model Session {
+  id            String        @id @default(uuid())
+  title         String
+  scheduledAt   DateTime
+  durationMin   Int
+  status        SessionStatus @default(SCHEDULED)
+  actualStartAt DateTime?
+  actualEndAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 }
 
 model QuestionBank {

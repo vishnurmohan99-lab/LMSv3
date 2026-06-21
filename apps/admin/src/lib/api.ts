@@ -379,3 +379,82 @@ export const testsApi = {
   importQuestions: (testId: string, data: { questionBankId: string; questionIds?: string[] }) =>
     request<TestQuestion[]>(`/tests/${testId}/import-questions`, { method: 'POST', body: JSON.stringify(data) }),
 };
+
+export type BatchStatus = 'ACTIVE' | 'INACTIVE' | 'COMPLETED' | 'ON_HOLD' | 'CANCELLED';
+
+export interface Batch {
+  id: string;
+  name: string;
+  status: BatchStatus;
+  startDate: string;
+  endDate: string | null;
+  courseId: string;
+  facultyId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { enrollments: number; sessions: number };
+}
+
+export interface BatchEnrollment {
+  id: string;
+  studentId: string;
+  batchId: string;
+  joinedAt: string;
+  accessExpiresAt: string | null;
+  student: { id: string; fullName: string; email: string };
+}
+
+export type SessionStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';
+
+export interface Session {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  durationMin: number;
+  status: SessionStatus;
+  actualStartAt: string | null;
+  actualEndAt: string | null;
+  batchId: string;
+  lessonId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BatchTree extends Batch {
+  enrollments: BatchEnrollment[];
+  sessions: Session[];
+}
+
+export const batchesApi = {
+  list: (courseId: string) => request<Batch[]>(`/courses/${courseId}/batches`),
+  get: (id: string) => request<BatchTree>(`/batches/${id}`),
+  create: (courseId: string, data: { name: string; status?: BatchStatus; startDate: string; endDate?: string; facultyId?: string }) =>
+    request<Batch>(`/courses/${courseId}/batches`, { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Pick<Batch, 'name' | 'status' | 'startDate' | 'endDate' | 'facultyId'>>) =>
+    request<Batch>(`/batches/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/batches/${id}`, { method: 'DELETE' }),
+
+  enroll: (batchId: string, studentId: string) =>
+    request<BatchEnrollment>(`/batches/${batchId}/enroll`, { method: 'POST', body: JSON.stringify({ studentId }) }),
+  bulkEnroll: (batchId: string, studentIds: string[]) =>
+    request<{ enrolled: number }>(`/batches/${batchId}/enroll/bulk`, { method: 'POST', body: JSON.stringify({ studentIds }) }),
+  unenroll: (batchId: string, studentId: string) =>
+    request<{ success: boolean }>(`/batches/${batchId}/enroll/${studentId}`, { method: 'DELETE' }),
+};
+
+export const sessionsApi = {
+  listForBatch: (batchId: string) => request<Session[]>(`/batches/${batchId}/sessions`),
+  list: (params?: { batchId?: string; from?: string; to?: string }) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>,
+    ).toString();
+    return request<Session[]>(`/sessions${qs ? `?${qs}` : ''}`);
+  },
+  create: (batchId: string, data: { title: string; scheduledAt: string; durationMin: number; status?: SessionStatus; lessonId?: string }) =>
+    request<Session>(`/batches/${batchId}/sessions`, { method: 'POST', body: JSON.stringify(data) }),
+  update: (
+    id: string,
+    data: Partial<Pick<Session, 'title' | 'scheduledAt' | 'durationMin' | 'status' | 'lessonId' | 'actualStartAt' | 'actualEndAt'>>,
+  ) => request<Session>(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/sessions/${id}`, { method: 'DELETE' }),
+};

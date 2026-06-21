@@ -11,6 +11,8 @@ import { SegmentsModule } from './segments/segments.module';
 import { QuestionBanksModule } from './question-banks/question-banks.module';
 import { TestsModule } from './tests/tests.module';
 import { ChatModule } from './chat/chat.module';
+import { BatchesModule } from './batches/batches.module';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { ChatModule } from './chat/chat.module';
     QuestionBanksModule,
     TestsModule,
     ChatModule,
+    BatchesModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
