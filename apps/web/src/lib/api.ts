@@ -6,7 +6,24 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+let refreshPromise: Promise<boolean> | null = null;
+
+// The access_token cookie expires after 15 minutes; the refresh_token lives for 7 days.
+// On a 401 we silently exchange it for a fresh access token and retry once, instead of
+// forcing the user back to the login page just because they were idle for >15 minutes.
+function refreshAccessToken(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include' })
+      .then((res) => res.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     credentials: 'include',
@@ -15,6 +32,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       ...options.headers,
     },
   });
+
+  if (res.status === 401 && !_retried && path !== '/auth/refresh' && path !== '/auth/login') {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return request<T>(path, options, true);
+    }
+  }
 
   const body = await res.json().catch(() => null);
 
