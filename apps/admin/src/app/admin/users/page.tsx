@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usersApi, ApiError, type Profile } from "@/lib/api";
+import { usersApi, mentorApi, ApiError, type Profile } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -74,6 +74,26 @@ export default function AdminUsersPage() {
       loadUsers();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to update role");
+    }
+  }
+
+  async function onToggleMentor(u: Profile) {
+    setError(null);
+    try {
+      await mentorApi.setMentorFlag(u.id, { isMentor: !u.isMentor, specialty: u.mentorSpecialty ?? undefined });
+      loadUsers();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update mentor status");
+    }
+  }
+
+  async function onSpecialtyBlur(u: Profile, specialty: string) {
+    if (!u.isMentor || specialty === (u.mentorSpecialty ?? "")) return;
+    try {
+      await mentorApi.setMentorFlag(u.id, { isMentor: true, specialty });
+      loadUsers();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update specialty");
     }
   }
 
@@ -216,6 +236,7 @@ export default function AdminUsersPage() {
                 <th style={{ padding: "8px 6px" }}>Name</th>
                 <th style={{ padding: "8px 6px" }}>Email</th>
                 <th style={{ padding: "8px 6px" }}>Role</th>
+                <th style={{ padding: "8px 6px" }}>Mentor</th>
               </tr>
             </thead>
             <tbody>
@@ -231,6 +252,26 @@ export default function AdminUsersPage() {
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td style={{ padding: "10px 6px" }}>
+                    {u.role === "FACULTY" ? (
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12.5 }}>
+                          <input type="checkbox" checked={!!u.isMentor} onChange={() => onToggleMentor(u)} style={{ accentColor: "var(--orange)" }} />
+                          Mentor
+                        </label>
+                        {u.isMentor && (
+                          <input
+                            defaultValue={u.mentorSpecialty ?? ""}
+                            placeholder="Specialty e.g. Front-end · 6y"
+                            onBlur={(e) => onSpecialtyBlur(u, e.target.value)}
+                            style={{ ...inputStyle, padding: "6px 10px", fontSize: 12.5, width: 180 }}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <span style={{ color: "var(--ink3)", fontSize: 12.5 }}>—</span>
+                    )}
                   </td>
                 </tr>
               ))}

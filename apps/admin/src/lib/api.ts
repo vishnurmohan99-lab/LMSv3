@@ -69,6 +69,8 @@ export interface Profile {
   email: string;
   fullName: string;
   role: 'STUDENT' | 'FACULTY' | 'ADMIN';
+  isMentor?: boolean;
+  mentorSpecialty?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -655,4 +657,56 @@ export const messengerApi = {
     request<ScheduledMessage>('/scheduled-messages', { method: 'POST', body: JSON.stringify(data) }),
   listScheduled: () => request<ScheduledMessage[]>('/scheduled-messages'),
   cancelScheduled: (id: string) => request<{ success: boolean }>(`/scheduled-messages/${id}`, { method: 'DELETE' }),
+};
+
+export interface Mentor {
+  id: string;
+  fullName: string;
+  email: string;
+  mentorSpecialty: string | null;
+}
+
+export interface MentorAvailability {
+  id: string;
+  dayOfWeek: number;
+  time: string;
+  createdAt: string;
+  mentorId: string;
+}
+
+export interface MentorSlot {
+  availabilityId: string;
+  date: string;
+  time: string;
+  dayOfWeek: number;
+  booked: boolean;
+}
+
+export interface MentorBooking {
+  id: string;
+  date: string;
+  createdAt: string;
+  cancelledAt: string | null;
+  availabilityId: string;
+  mentorId: string;
+  studentId: string;
+  mentor?: Mentor;
+  student?: { id: string; fullName: string; email: string };
+  availability?: MentorAvailability;
+}
+
+export const mentorApi = {
+  listMentors: () => request<Mentor[]>('/mentors'),
+  setMentorFlag: (userId: string, data: { isMentor: boolean; specialty?: string }) =>
+    request<Mentor>(`/users/${userId}/mentor`, { method: 'POST', body: JSON.stringify(data) }),
+  getSlots: (mentorId: string, days = 14) => request<MentorSlot[]>(`/mentors/${mentorId}/slots?days=${days}`),
+  listOwnAvailability: () => request<MentorAvailability[]>('/mentor/availability'),
+  addAvailability: (data: { dayOfWeek: number; time: string }) =>
+    request<MentorAvailability>('/mentor/availability', { method: 'POST', body: JSON.stringify(data) }),
+  removeAvailability: (id: string) => request<{ success: boolean }>(`/mentor/availability/${id}`, { method: 'DELETE' }),
+  listBookingsAsMentor: () => request<MentorBooking[]>('/mentor/bookings/mine'),
+  listBookingsAsStudent: () => request<MentorBooking[]>('/mentor/bookings/me'),
+  createBooking: (mentorId: string, data: { availabilityId: string; date: string }) =>
+    request<MentorBooking>(`/mentors/${mentorId}/bookings`, { method: 'POST', body: JSON.stringify(data) }),
+  cancelBooking: (id: string) => request<{ success: boolean }>(`/mentor/bookings/${id}`, { method: 'DELETE' }),
 };

@@ -19,6 +19,7 @@ import { BulkOperationsModule } from './bulk-operations/bulk-operations.module';
 import { MessengerModule } from './messenger/messenger.module';
 import { TestAttemptsModule } from './test-attempts/test-attempts.module';
 import { WorkoutModule } from './workout/workout.module';
+import { MentorModule } from './mentor/mentor.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { WorkoutModule } from './workout/workout.module';
     MessengerModule,
     TestAttemptsModule,
     WorkoutModule,
+    MentorModule,
   ],
   controllers: [AppController],
   providers: [AppService],

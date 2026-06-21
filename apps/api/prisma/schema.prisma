@@ -20,13 +20,15 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  fullName     String
-  role         Role     @default(STUDENT)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  fullName        String
+  role            Role     @default(STUDENT)
+  isMentor        Boolean  @default(false)
+  mentorSpecialty String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   courses           Course[]            @relation("FacultyCourses")
   questionBanks     QuestionBank[]      @relation("FacultyQuestionBanks")
@@ -44,6 +46,10 @@ model User {
   messageRecipients        MessageRecipient[]
   scheduledMessages         ScheduledMessage[]
   testAttempts              TestAttempt[]
+
+  mentorAvailabilities    MentorAvailability[] @relation("MentorAvailabilities")
+  mentorBookingsAsStudent MentorBooking[]      @relation("MentorBookingsAsStudent")
+  mentorBookingsAsMentor  MentorBooking[]      @relation("MentorBookingsAsMentor")
 }
 
 model Course {
@@ -520,4 +526,38 @@ model TestAnswer {
   testQuestion   TestQuestion @relation(fields: [testQuestionId], references: [id], onDelete: Cascade)
 
   @@unique([attemptId, testQuestionId])
+}
+
+model MentorAvailability {
+  id        String   @id @default(uuid())
+  dayOfWeek Int
+  time      String
+  createdAt DateTime @default(now())
+
+  mentorId String
+  mentor   User   @relation("MentorAvailabilities", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  bookings MentorBooking[]
+
+  @@unique([mentorId, dayOfWeek, time])
+}
+
+model MentorBooking {
+  id          String    @id @default(uuid())
+  date        DateTime
+  createdAt   DateTime  @default(now())
+  cancelledAt DateTime?
+
+  availabilityId String
+  availability   MentorAvailability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+
+  mentorId String
+  mentor   User   @relation("MentorBookingsAsMentor", fields: [mentorId], references: [id])
+
+  studentId String
+  student   User   @relation("MentorBookingsAsStudent", fields: [studentId], references: [id])
+
+  @@unique([availabilityId, date])
+  @@index([studentId])
+  @@index([mentorId])
 }

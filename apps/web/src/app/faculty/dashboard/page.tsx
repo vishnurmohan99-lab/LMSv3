@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { coursesApi, messengerApi, ApiError, type Course } from "@/lib/api";
+import { coursesApi, messengerApi, usersApi, ApiError, type Course } from "@/lib/api";
 
 function StatCard({ icon, value, label, color, soft }: { icon: React.ReactNode; value: number; label: string; color: string; soft: string }) {
   return (
@@ -44,6 +44,7 @@ export default function FacultyDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMentor, setIsMentor] = useState(false);
 
   useEffect(() => {
     coursesApi
@@ -55,6 +56,10 @@ export default function FacultyDashboardPage() {
 
   useEffect(() => {
     messengerApi.getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    usersApi.me().then((u) => setIsMentor(!!u.isMentor)).catch(() => {});
   }, []);
 
   const totalEnrollments = courses.reduce((sum, c) => sum + (c._count?.enrollments ?? 0), 0);
@@ -255,6 +260,26 @@ export default function FacultyDashboardPage() {
               Manage all →
             </Link>
           </div>
+
+          {isMentor && (
+            <div
+              style={{
+                background: "var(--card)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--rl)",
+                padding: 22,
+                marginTop: 18,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 700 }}>Mentor Availability</div>
+              <Link href="/faculty/mentor" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
+                Manage slots →
+              </Link>
+            </div>
+          )}
         </>
       )}
     </main>
