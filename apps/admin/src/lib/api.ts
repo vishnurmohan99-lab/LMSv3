@@ -833,3 +833,24 @@ export const forumApi = {
   updateThread: (threadId: string, data: { pinned?: boolean; locked?: boolean }) =>
     request<ForumThread>(`/forum/threads/${threadId}`, { method: 'PATCH', body: JSON.stringify(data) }),
 };
+
+export interface AdminReport {
+  enrollmentTrend: { period: string; count: number }[];
+  scoreDistribution: { bucket: string; count: number }[];
+  batchCompletion: { completed: number; total: number; rate: number };
+  totals: { totalCourses: number; totalBatches: number; totalMockTestAttempts: number; totalEnrollments: number };
+}
+
+export interface FacultyReportCourse {
+  courseId: string;
+  title: string;
+  enrollmentCount: number;
+  batches: { id: string; name: string; status: string; enrolledCount: number }[];
+  mockTestCount: number;
+  students: { id: string; fullName: string; email: string; enrolledAt: string; bestScorePct: number | null; attemptCount: number }[];
+}
+
+export const reportsApi = {
+  getAdminReport: () => request<AdminReport>('/reports/admin'),
+  getFacultyReport: () => request<FacultyReportCourse[]>('/reports/faculty'),
+};
