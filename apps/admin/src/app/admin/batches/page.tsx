@@ -57,7 +57,6 @@ export default function AdminBatchesPage() {
 
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
-  const [scopeType, setScopeType] = useState<"segment" | "subsegment">("segment");
   const [segmentId, setSegmentId] = useState("");
   const [subsegmentId, setSubsegmentId] = useState("");
   const [statusId, setStatusId] = useState("");
@@ -84,7 +83,6 @@ export default function AdminBatchesPage() {
 
   function openAdd() {
     setName("");
-    setScopeType("segment");
     setSegmentId("");
     setSubsegmentId("");
     setStatusId(statusTypes.find((s) => s.isDefault)?.id ?? statusTypes[0]?.id ?? "");
@@ -93,6 +91,14 @@ export default function AdminBatchesPage() {
     setFacultyId("");
     setSaveError(null);
     setShowAdd(true);
+  }
+
+  const selectedSegment = segments.find((s) => s.id === segmentId);
+  const hasSubsegments = (selectedSegment?.subsegments.length ?? 0) > 0;
+
+  function onSegmentChange(id: string) {
+    setSegmentId(id);
+    setSubsegmentId("");
   }
 
   async function onSave(e: React.FormEvent) {
@@ -106,8 +112,8 @@ export default function AdminBatchesPage() {
         startDate: new Date(startDate).toISOString(),
         endDate: endDate ? new Date(endDate).toISOString() : undefined,
         facultyId: facultyId || undefined,
-        segmentId: scopeType === "segment" ? segmentId : undefined,
-        subsegmentId: scopeType === "subsegment" ? subsegmentId : undefined,
+        segmentId: hasSubsegments ? undefined : segmentId,
+        subsegmentId: hasSubsegments ? subsegmentId : undefined,
       });
       setShowAdd(false);
       load();
@@ -118,8 +124,7 @@ export default function AdminBatchesPage() {
     }
   }
 
-  const allSubsegments = segments.flatMap((s) => s.subsegments.map((sub) => ({ ...sub, segmentName: s.name })));
-  const canSave = name.trim().length > 0 && startDate && (scopeType === "segment" ? !!segmentId : !!subsegmentId);
+  const canSave = name.trim().length > 0 && startDate && !!segmentId && (!hasSubsegments || !!subsegmentId);
 
   return (
     <div className="fade-in" style={{ padding: "30px 40px 60px", maxWidth: 1100, margin: "0 auto" }}>
@@ -143,38 +148,21 @@ export default function AdminBatchesPage() {
           <form onSubmit={onSave} style={{ display: "grid", gap: 14 }}>
             <input required autoFocus placeholder="Batch name (e.g. 10A)" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
 
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                onClick={() => setScopeType("segment")}
-                style={{ ...inputStyle, cursor: "pointer", fontWeight: 700, background: scopeType === "segment" ? "var(--orange-soft)" : "var(--card)", color: scopeType === "segment" ? "var(--orange)" : "var(--ink2)" }}
-              >
-                Segment
-              </button>
-              <button
-                type="button"
-                onClick={() => setScopeType("subsegment")}
-                style={{ ...inputStyle, cursor: "pointer", fontWeight: 700, background: scopeType === "subsegment" ? "var(--orange-soft)" : "var(--card)", color: scopeType === "subsegment" ? "var(--orange)" : "var(--ink2)" }}
-              >
-                Subsegment
-              </button>
-            </div>
+            <select required value={segmentId} onChange={(e) => onSegmentChange(e.target.value)} style={inputStyle}>
+              <option value="">Select segment…</option>
+              {segments.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
 
-            {scopeType === "segment" ? (
-              <select required value={segmentId} onChange={(e) => setSegmentId(e.target.value)} style={inputStyle}>
-                <option value="">Select segment…</option>
-                {segments.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
+            {hasSubsegments && (
               <select required value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={inputStyle}>
                 <option value="">Select subsegment…</option>
-                {allSubsegments.map((sub) => (
+                {selectedSegment!.subsegments.map((sub) => (
                   <option key={sub.id} value={sub.id}>
-                    {sub.segmentName} / {sub.name}
+                    {sub.name}
                   </option>
                 ))}
               </select>
