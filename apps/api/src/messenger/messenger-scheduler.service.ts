@@ -16,7 +16,7 @@ export class MessengerSchedulerService {
   async dispatchDueScheduledMessages() {
     const due = await this.prisma.scheduledMessage.findMany({
       where: { sendAt: { lte: new Date() }, sentAt: null },
-      include: { conversation: { include: { course: true, batch: { include: { course: true } } } } },
+      include: { conversation: { include: { course: true, batch: true } } },
     });
 
     for (const scheduled of due) {

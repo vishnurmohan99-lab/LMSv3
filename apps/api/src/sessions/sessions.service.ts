@@ -5,8 +5,8 @@ import { JwtPayload } from '../auth/jwt-payload.interface';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 
-function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
-  return user.role === 'ADMIN' || user.sub === facultyId;
+function isOwnerOrAdmin(user: JwtPayload, facultyId: string | null) {
+  return user.role === 'ADMIN' || (!!facultyId && user.sub === facultyId);
 }
 
 @Injectable()
@@ -17,8 +17,8 @@ export class SessionsService {
   ) {}
 
   async listForBatch(batchId: string, user: JwtPayload) {
-    const batch = await this.batches.requireBatchWithCourse(batchId);
-    await this.assertCanView(user, batch.course.facultyId, batchId);
+    const batch = await this.batches.requireBatch(batchId);
+    await this.assertCanView(user, batch.facultyId, batchId);
     return this.prisma.session.findMany({ where: { batchId }, orderBy: { scheduledAt: 'asc' } });
   }
 
@@ -46,7 +46,7 @@ export class SessionsService {
         where: {
           ...(filters.batchId ? { batchId: filters.batchId } : {}),
           ...dateFilter,
-          batch: { course: { facultyId: user.sub } },
+          batch: { facultyId: user.sub },
         },
         orderBy: { scheduledAt: 'asc' },
       });
@@ -64,8 +64,8 @@ export class SessionsService {
   }
 
   async createSession(batchId: string, user: JwtPayload, dto: CreateSessionDto) {
-    const batch = await this.batches.requireBatchWithCourse(batchId);
-    this.assertOwnership(user, batch.course.facultyId);
+    const batch = await this.batches.requireBatch(batchId);
+    this.assertOwnership(user, batch.facultyId);
     return this.prisma.session.create({
       data: {
         title: dto.title,
@@ -79,8 +79,8 @@ export class SessionsService {
   }
 
   async updateSession(id: string, user: JwtPayload, dto: UpdateSessionDto) {
-    const session = await this.requireSessionWithBatchAndCourse(id);
-    this.assertOwnership(user, session.batch.course.facultyId);
+    const session = await this.requireSessionWithBatch(id);
+    this.assertOwnership(user, session.batch.facultyId);
     return this.prisma.session.update({
       where: { id },
       data: {
@@ -93,19 +93,19 @@ export class SessionsService {
   }
 
   async deleteSession(id: string, user: JwtPayload) {
-    const session = await this.requireSessionWithBatchAndCourse(id);
-    this.assertOwnership(user, session.batch.course.facultyId);
+    const session = await this.requireSessionWithBatch(id);
+    this.assertOwnership(user, session.batch.facultyId);
     await this.prisma.session.delete({ where: { id } });
     return { success: true };
   }
 
-  private assertOwnership(user: JwtPayload, facultyId: string) {
+  private assertOwnership(user: JwtPayload, facultyId: string | null) {
     if (!isOwnerOrAdmin(user, facultyId)) {
       throw new ForbiddenException('You do not own this session');
     }
   }
 
-  private async assertCanView(user: JwtPayload, facultyId: string, batchId: string) {
+  private async assertCanView(user: JwtPayload, facultyId: string | null, batchId: string) {
     if (isOwnerOrAdmin(user, facultyId)) return;
     const enrollment = await this.prisma.batchEnrollment.findUnique({
       where: { batchId_studentId: { batchId, studentId: user.sub } },
@@ -113,10 +113,10 @@ export class SessionsService {
     if (!enrollment) throw new ForbiddenException('You do not have access to this batch');
   }
 
-  private async requireSessionWithBatchAndCourse(id: string) {
+  private async requireSessionWithBatch(id: string) {
     const session = await this.prisma.session.findUnique({
       where: { id },
-      include: { batch: { include: { course: true } } },
+      include: { batch: true },
     });
     if (!session) throw new NotFoundException('Session not found');
     return session;

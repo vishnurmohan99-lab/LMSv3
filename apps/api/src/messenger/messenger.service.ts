@@ -6,7 +6,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 import { ScheduleMessageDto } from './dto/schedule-message.dto';
 import { sanitizePrompt } from '../question-banks/sanitize-prompt';
 
-function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
+function isOwnerOrAdmin(user: JwtPayload, facultyId: string | null) {
   return user.role === 'ADMIN' || user.sub === facultyId;
 }
 
@@ -70,9 +70,9 @@ export class MessengerService {
 
     if (dto.type === 'BATCH_BROADCAST') {
       if (!dto.batchId) throw new BadRequestException('batchId is required for a batch broadcast');
-      const batch = await this.prisma.batch.findUnique({ where: { id: dto.batchId }, include: { course: true } });
+      const batch = await this.prisma.batch.findUnique({ where: { id: dto.batchId } });
       if (!batch) throw new NotFoundException('Batch not found');
-      this.assertOwnership(user, batch.course.facultyId);
+      this.assertOwnership(user, batch.facultyId);
       return this.prisma.conversation.create({
         data: { type: 'BATCH_BROADCAST', createdById: user.sub, batchId: dto.batchId },
       });
@@ -123,7 +123,7 @@ export class MessengerService {
         OR: [
           { participants: { some: { userId: user.sub } } },
           { course: { facultyId: user.sub } },
-          { batch: { course: { facultyId: user.sub } } },
+          { batch: { facultyId: user.sub } },
           ...(user.role === 'ADMIN'
             ? [{ type: { in: ['COURSE_BROADCAST', 'BATCH_BROADCAST'] as ('COURSE_BROADCAST' | 'BATCH_BROADCAST')[] } }]
             : []),
@@ -269,18 +269,18 @@ export class MessengerService {
     return [];
   }
 
-  private assertOwnership(user: JwtPayload, facultyId: string) {
+  private assertOwnership(user: JwtPayload, facultyId: string | null) {
     if (!isOwnerOrAdmin(user, facultyId)) {
       throw new ForbiddenException('You do not own this course or batch');
     }
   }
 
   private assertCanPost(
-    conversation: { type: string; course: { facultyId: string } | null; batch: { course: { facultyId: string } } | null },
+    conversation: { type: string; course: { facultyId: string } | null; batch: { facultyId: string | null } | null },
     user: JwtPayload,
   ) {
     if (conversation.type !== 'COURSE_BROADCAST' && conversation.type !== 'BATCH_BROADCAST') return;
-    const facultyId = conversation.type === 'COURSE_BROADCAST' ? conversation.course?.facultyId : conversation.batch?.course.facultyId;
+    const facultyId = conversation.type === 'COURSE_BROADCAST' ? conversation.course?.facultyId : conversation.batch?.facultyId;
     if (!facultyId || !isOwnerOrAdmin(user, facultyId)) {
       throw new ForbiddenException('Only the course/batch owner can post to this broadcast');
     }
@@ -289,7 +289,7 @@ export class MessengerService {
   async requireParticipantAccess(user: JwtPayload, conversationId: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
-      include: { course: true, batch: { include: { course: true } } },
+      include: { course: true, batch: true },
     });
     if (!conversation) throw new NotFoundException('Conversation not found');
 
@@ -311,7 +311,7 @@ export class MessengerService {
     }
 
     if (conversation.type === 'BATCH_BROADCAST' && conversation.batch) {
-      if (isOwnerOrAdmin(user, conversation.batch.course.facultyId)) return conversation;
+      if (isOwnerOrAdmin(user, conversation.batch.facultyId)) return conversation;
       const enrolled = await this.prisma.batchEnrollment.findUnique({
         where: { batchId_studentId: { batchId: conversation.batch.id, studentId: user.sub } },
       });

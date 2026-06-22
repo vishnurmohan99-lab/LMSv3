@@ -73,8 +73,7 @@ function toLocalDatetimeValue(iso: string) {
 }
 
 export default function BatchDetailPage() {
-  const params = useParams<{ id: string; batchId: string }>();
-  const courseId = params.id;
+  const params = useParams<{ batchId: string }>();
   const batchId = params.batchId;
   const confirm = useConfirm();
 
@@ -279,8 +278,8 @@ export default function BatchDetailPage() {
 
   return (
     <div className="fade-in" style={{ padding: "30px 40px 60px" }}>
-      <Link href={`/admin/courses/${courseId}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
-        ← Back to course
+      <Link href="/admin/batches" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
+        ← Back to batches
       </Link>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 12, marginBottom: 24 }}>
@@ -290,6 +289,8 @@ export default function BatchDetailPage() {
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: batch.status.color ?? "var(--ink3)" }} />
             {batch.status.name} · {new Date(batch.startDate).toLocaleDateString()}
             {batch.endDate ? ` – ${new Date(batch.endDate).toLocaleDateString()}` : ""}
+            {" · "}
+            {batch.segment?.name ?? batch.subsegment?.name ?? "Unscoped"}
           </div>
         </div>
         <span style={{ display: "flex", gap: 10 }}>

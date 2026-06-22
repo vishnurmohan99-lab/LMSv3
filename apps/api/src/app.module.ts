@@ -23,6 +23,7 @@ import { MentorModule } from './mentor/mentor.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { ForumModule } from './forum/forum.module';
 import { ReportsModule } from './reports/reports.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ReportsModule } from './reports/reports.module';
     FeedbackModule,
     ForumModule,
     ReportsModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

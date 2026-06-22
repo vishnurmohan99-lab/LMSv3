@@ -1,4 +1,5 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { CourseType } from '../../../generated/prisma/client';
 
 export class CreateCourseDto {
   @IsString()
@@ -20,4 +21,8 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   thumbnailUrl?: string;
+
+  @IsOptional()
+  @IsEnum(CourseType)
+  type?: CourseType;
 }

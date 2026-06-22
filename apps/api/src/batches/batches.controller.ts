@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BatchesService } from './batches.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
@@ -13,70 +13,80 @@ import { BulkEnrollDto } from './dto/bulk-enroll.dto';
 import { ExtendBatchDto } from './dto/extend-batch.dto';
 
 @UseGuards(JwtAccessGuard, RolesGuard)
-@Roles('FACULTY', 'ADMIN')
 @Controller()
 export class BatchesController {
   constructor(private readonly batchesService: BatchesService) {}
 
-  @Get('courses/:courseId/batches')
-  list(@Param('courseId') courseId: string, @CurrentUser() user: JwtPayload) {
-    return this.batchesService.listBatches(courseId, user);
-  }
-
-  @Post('courses/:courseId/batches')
-  create(@Param('courseId') courseId: string, @Body() dto: CreateBatchDto, @CurrentUser() user: JwtPayload) {
-    return this.batchesService.createBatch(courseId, user, dto);
-  }
-
-  @Get('batches/stats')
-  stats(@CurrentUser() user: JwtPayload) {
-    return this.batchesService.getStats(user);
+  @Roles('ADMIN')
+  @Get('batches')
+  list(@Query('segmentId') segmentId?: string, @Query('subsegmentId') subsegmentId?: string) {
+    return this.batchesService.listAllBatches(segmentId, subsegmentId);
   }
 
   @Roles('ADMIN')
-  @Get('batches')
-  listAll() {
-    return this.batchesService.listAllBatches();
+  @Post('batches')
+  create(@Body() dto: CreateBatchDto) {
+    return this.batchesService.createBatch(dto);
   }
 
+  @Roles('FACULTY')
+  @Get('batches/mine')
+  listMine(@CurrentUser() user: JwtPayload) {
+    return this.batchesService.listBatchesForFaculty(user.sub);
+  }
+
+  @Roles('ADMIN')
+  @Get('batches/stats')
+  stats() {
+    return this.batchesService.getStats();
+  }
+
+  @Roles('ADMIN', 'FACULTY')
   @Get('batches/:id')
   get(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.batchesService.getBatch(id, user);
   }
 
+  @Roles('ADMIN')
   @Patch('batches/:id')
-  update(@Param('id') id: string, @Body() dto: UpdateBatchDto, @CurrentUser() user: JwtPayload) {
-    return this.batchesService.updateBatch(id, user, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateBatchDto) {
+    return this.batchesService.updateBatch(id, dto);
   }
 
+  @Roles('ADMIN')
   @Delete('batches/:id')
-  remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.batchesService.deleteBatch(id, user);
+  remove(@Param('id') id: string) {
+    return this.batchesService.deleteBatch(id);
   }
 
+  @Roles('ADMIN')
   @Post('batches/:id/extend')
-  extend(@Param('id') id: string, @Body() dto: ExtendBatchDto, @CurrentUser() user: JwtPayload) {
-    return this.batchesService.extendBatch(id, user, dto.newEndDate);
+  extend(@Param('id') id: string, @Body() dto: ExtendBatchDto) {
+    return this.batchesService.extendBatch(id, dto.newEndDate);
   }
 
+  @Roles('ADMIN')
   @Post('batches/:id/enroll')
-  enroll(@Param('id') id: string, @Body() dto: EnrollStudentDto, @CurrentUser() user: JwtPayload) {
-    return this.batchesService.enrollStudent(id, user, dto.studentId);
+  enroll(@Param('id') id: string, @Body() dto: EnrollStudentDto) {
+    return this.batchesService.enrollStudent(id, dto.studentId);
   }
 
+  @Roles('ADMIN')
   @Post('batches/:id/enroll/bulk')
   bulkEnroll(@Param('id') id: string, @Body() dto: BulkEnrollDto, @CurrentUser() user: JwtPayload) {
     return this.batchesService.bulkEnroll(id, user, dto.studentIds);
   }
 
+  @Roles('ADMIN')
   @Post('batches/:id/enroll/csv')
   @UseInterceptors(FileInterceptor('file'))
   enrollCsv(@Param('id') id: string, @UploadedFile() file: Express.Multer.File, @CurrentUser() user: JwtPayload) {
     return this.batchesService.enrollFromCsv(id, user, file.buffer);
   }
 
+  @Roles('ADMIN')
   @Delete('batches/:id/enroll/:studentId')
-  unenroll(@Param('id') id: string, @Param('studentId') studentId: string, @CurrentUser() user: JwtPayload) {
-    return this.batchesService.unenrollStudent(id, user, studentId);
+  unenroll(@Param('id') id: string, @Param('studentId') studentId: string) {
+    return this.batchesService.unenrollStudent(id, studentId);
   }
 }

@@ -1,4 +1,5 @@
-import { IsBoolean, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { CourseType } from '../../../generated/prisma/client';
 
 export class UpdateCourseDto {
   @IsOptional()
@@ -25,4 +26,8 @@ export class UpdateCourseDto {
   @IsOptional()
   @IsString()
   subsegmentId?: string | null;
+
+  @IsOptional()
+  @IsEnum(CourseType)
+  type?: CourseType;
 }

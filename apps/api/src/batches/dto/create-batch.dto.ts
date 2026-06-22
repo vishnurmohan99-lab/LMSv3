@@ -19,4 +19,12 @@ export class CreateBatchDto {
   @IsOptional()
   @IsString()
   facultyId?: string;
+
+  @IsOptional()
+  @IsString()
+  segmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  subsegmentId?: string;
 }

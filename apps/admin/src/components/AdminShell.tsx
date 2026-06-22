@@ -110,6 +110,16 @@ function FeedbackIcon({ active }: { active: boolean }) {
   );
 }
 
+function SubscriptionsIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </svg>
+  );
+}
+
 function ForumIcon({ active }: { active: boolean }) {
   const c = active ? "#fff" : "var(--ink2)";
   return (
@@ -145,7 +155,9 @@ const navItems = [
   { href: "/admin/courses", label: "Courses", Icon: CoursesIcon },
   { href: "/admin/question-banks", label: "Question Banks", Icon: QuestionBankIcon },
   { href: "/admin/tests", label: "Tests", Icon: TestsIcon },
+  { href: "/admin/batches", label: "Batches", Icon: BatchStatusIcon },
   { href: "/admin/batch-statuses", label: "Batch Statuses", Icon: BatchStatusIcon },
+  { href: "/admin/subscriptions", label: "Subscriptions", Icon: SubscriptionsIcon },
   { href: "/admin/messages", label: "Messages", Icon: MessagesIcon },
   { href: "/admin/feedback", label: "Feedback", Icon: FeedbackIcon },
   { href: "/admin/forum", label: "Forum", Icon: ForumIcon },

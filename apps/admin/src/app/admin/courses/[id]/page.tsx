@@ -8,13 +8,11 @@ import {
   segmentsApi,
   uploadsApi,
   usersApi,
-  batchesApi,
-  batchStatusTypesApi,
   ApiError,
   type CourseTree,
   type Segment,
-  type Batch,
-  type BatchStatusType,
+  type CourseType,
+  type CoursePrivateAccess,
   type Profile,
 } from "@/lib/api";
 import Modal from "@/components/Modal";
@@ -130,11 +128,13 @@ export default function AdminCourseAuthoringPage() {
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [facultyUsers, setFacultyUsers] = useState<Profile[]>([]);
-  const [statusTypes, setStatusTypes] = useState<BatchStatusType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [privateAccess, setPrivateAccess] = useState<CoursePrivateAccess[]>([]);
+  const [students, setStudents] = useState<Profile[]>([]);
+  const [grantStudentId, setGrantStudentId] = useState("");
+  const [grantingAccess, setGrantingAccess] = useState(false);
 
   const [showAddChapter, setShowAddChapter] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState("");
@@ -146,25 +146,12 @@ export default function AdminCourseAuthoringPage() {
   const [editChapterBanner, setEditChapterBanner] = useState<File | null>(null);
   const [savingChapter, setSavingChapter] = useState(false);
 
-  const [showAddBatch, setShowAddBatch] = useState(false);
-  const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
-  const [batchName, setBatchName] = useState("");
-  const [batchStatusId, setBatchStatusId] = useState("");
-  const [batchStartDate, setBatchStartDate] = useState("");
-  const [batchEndDate, setBatchEndDate] = useState("");
-  const [batchFacultyId, setBatchFacultyId] = useState("");
-  const [savingBatch, setSavingBatch] = useState(false);
-  const [batchError, setBatchError] = useState<string | null>(null);
-
   function load() {
     setLoading(true);
-    Promise.all([coursesApi.get(courseId), segmentsApi.list(), batchesApi.list(courseId), usersApi.list(), batchStatusTypesApi.list()])
-      .then(([c, s, b, users, statuses]) => {
+    Promise.all([coursesApi.get(courseId), segmentsApi.list()])
+      .then(([c, s]) => {
         setCourse(c);
         setSegments(s);
-        setBatches(b);
-        setFacultyUsers(users.filter((u) => u.role === "FACULTY"));
-        setStatusTypes(statuses);
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load course"))
       .finally(() => setLoading(false));
@@ -172,10 +159,46 @@ export default function AdminCourseAuthoringPage() {
 
   useEffect(load, [courseId]);
 
+  useEffect(() => {
+    usersApi.list().then((all) => setStudents(all.filter((u) => u.role === "STUDENT"))).catch(() => {});
+  }, []);
+
+  function loadPrivateAccess() {
+    coursesApi.listPrivateAccess(courseId).then(setPrivateAccess).catch(() => {});
+  }
+
+  useEffect(() => {
+    if (course?.type === "PRIVATE") loadPrivateAccess();
+  }, [course?.type, courseId]);
+
   async function onTogglePublished() {
     if (!course) return;
     const updated = await coursesApi.update(course.id, { published: !course.published });
     setCourse({ ...course, published: updated.published });
+  }
+
+  async function onChangeType(type: CourseType) {
+    if (!course) return;
+    const updated = await coursesApi.update(course.id, { type });
+    setCourse({ ...course, type: updated.type });
+  }
+
+  async function onGrantAccess() {
+    if (!grantStudentId) return;
+    setGrantingAccess(true);
+    try {
+      await coursesApi.grantPrivateAccess(courseId, grantStudentId);
+      setGrantStudentId("");
+      loadPrivateAccess();
+    } finally {
+      setGrantingAccess(false);
+    }
+  }
+
+  async function onRevokeAccess(studentId: string) {
+    if (!(await confirm({ message: "Revoke this student's access to the course? Their existing enrollment will remain unless removed separately." }))) return;
+    await coursesApi.revokePrivateAccess(courseId, studentId);
+    loadPrivateAccess();
   }
 
   async function onAddChapter(e: React.FormEvent) {
@@ -218,59 +241,6 @@ export default function AdminCourseAuthoringPage() {
     } finally {
       setSavingChapter(false);
     }
-  }
-
-  function openAddBatch() {
-    setBatchName("");
-    setBatchStatusId(statusTypes.find((s) => s.isDefault)?.id ?? statusTypes[0]?.id ?? "");
-    setBatchStartDate("");
-    setBatchEndDate("");
-    setBatchFacultyId("");
-    setBatchError(null);
-    setShowAddBatch(true);
-  }
-
-  function openEditBatch(batch: Batch) {
-    setBatchName(batch.name);
-    setBatchStatusId(batch.statusId);
-    setBatchStartDate(batch.startDate.slice(0, 10));
-    setBatchEndDate(batch.endDate ? batch.endDate.slice(0, 10) : "");
-    setBatchFacultyId(batch.facultyId ?? "");
-    setBatchError(null);
-    setEditingBatch(batch);
-  }
-
-  async function onSaveBatch(e: React.FormEvent) {
-    e.preventDefault();
-    setSavingBatch(true);
-    setBatchError(null);
-    try {
-      const data = {
-        name: batchName,
-        statusId: batchStatusId,
-        startDate: new Date(batchStartDate).toISOString(),
-        endDate: batchEndDate ? new Date(batchEndDate).toISOString() : undefined,
-        facultyId: batchFacultyId || undefined,
-      };
-      if (editingBatch) {
-        await batchesApi.update(editingBatch.id, data);
-        setEditingBatch(null);
-      } else {
-        await batchesApi.create(courseId, data);
-        setShowAddBatch(false);
-      }
-      load();
-    } catch (err) {
-      setBatchError(err instanceof ApiError ? err.message : "Failed to save batch");
-    } finally {
-      setSavingBatch(false);
-    }
-  }
-
-  async function onDeleteBatch(id: string) {
-    if (!(await confirm({ message: "Delete this batch? This removes its roster and sessions too. This cannot be undone." }))) return;
-    await batchesApi.remove(id);
-    load();
   }
 
   if (loading) return <div style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></div>;
@@ -333,6 +303,95 @@ export default function AdminCourseAuthoringPage() {
           </Link>
         </span>
       </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          marginTop: 10,
+          padding: "12px 16px",
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rm)",
+          alignItems: "center",
+          fontSize: 13,
+        }}
+      >
+        <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Type:</span>
+        <select
+          value={course.type}
+          onChange={(e) => onChangeType(e.target.value as CourseType)}
+          style={{ ...inputStyle, width: 160 }}
+        >
+          <option value="FREE">Free</option>
+          <option value="PAID">Paid</option>
+          <option value="PRIVATE">Private</option>
+        </select>
+        <span style={{ color: "var(--ink3)" }}>
+          {course.type === "FREE" && "Students in this segment can self-enroll."}
+          {course.type === "PAID" && "Requires admin enrollment or a subscription — no self-enroll."}
+          {course.type === "PRIVATE" && "Only whitelisted students below can access this course."}
+        </span>
+      </div>
+
+      {course.type === "PRIVATE" && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: "16px 18px",
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--rm)",
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>Private access</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+            <select value={grantStudentId} onChange={(e) => setGrantStudentId(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+              <option value="">Select a student to grant access…</option>
+              {students
+                .filter((s) => !privateAccess.some((a) => a.studentId === s.id))
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.fullName} ({s.email})
+                  </option>
+                ))}
+            </select>
+            <button onClick={onGrantAccess} disabled={!grantStudentId || grantingAccess} style={{ ...btnStyle, opacity: !grantStudentId || grantingAccess ? 0.7 : 1 }}>
+              {grantingAccess ? "Granting…" : "Grant access"}
+            </button>
+          </div>
+          {privateAccess.length === 0 ? (
+            <p style={{ color: "var(--ink3)", fontSize: 13 }}>No students have been granted access yet.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 8 }}>
+              {privateAccess.map((a) => (
+                <div
+                  key={a.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "8px 12px",
+                    background: "var(--bg)",
+                    borderRadius: 8,
+                    fontSize: 13,
+                  }}
+                >
+                  <span>
+                    <b>{a.student.fullName}</b> <span style={{ color: "var(--ink3)" }}>{a.student.email}</span>
+                  </span>
+                  <button
+                    onClick={() => onRevokeAccess(a.studentId)}
+                    style={{ background: "none", border: "none", color: "var(--red)", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
+                  >
+                    Revoke
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, marginBottom: 14 }}>
         <div style={{ fontSize: 16, fontWeight: 700 }}>Chapters</div>
@@ -460,138 +519,6 @@ export default function AdminCourseAuthoringPage() {
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 32, marginBottom: 14 }}>
-        <div style={{ fontSize: 16, fontWeight: 700 }}>Batches</div>
-        <button onClick={openAddBatch} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 7 }}>
-          <PlusIcon />
-          Add batch
-        </button>
-      </div>
-
-      {(showAddBatch || editingBatch) && (
-        <Modal title={editingBatch ? "Edit batch" : "Add batch"} onClose={() => (editingBatch ? setEditingBatch(null) : setShowAddBatch(false))}>
-          <form onSubmit={onSaveBatch} style={{ display: "grid", gap: 14 }}>
-            <input
-              required
-              autoFocus
-              placeholder="Batch name"
-              value={batchName}
-              onChange={(e) => setBatchName(e.target.value)}
-              style={inputStyle}
-            />
-            <select value={batchStatusId} onChange={(e) => setBatchStatusId(e.target.value)} style={inputStyle}>
-              {statusTypes.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-            <div style={{ display: "flex", gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Start date</div>
-                <input
-                  required
-                  type="date"
-                  value={batchStartDate}
-                  onChange={(e) => setBatchStartDate(e.target.value)}
-                  style={{ ...inputStyle, width: "100%" }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>End date (optional)</div>
-                <input
-                  type="date"
-                  value={batchEndDate}
-                  onChange={(e) => setBatchEndDate(e.target.value)}
-                  style={{ ...inputStyle, width: "100%" }}
-                />
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Assigned faculty (optional)</div>
-              <select value={batchFacultyId} onChange={(e) => setBatchFacultyId(e.target.value)} style={{ ...inputStyle, width: "100%" }}>
-                <option value="">— None —</option>
-                {facultyUsers.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.fullName} ({f.email})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={savingBatch}
-              style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: savingBatch ? 0.7 : 1 }}
-            >
-              {savingBatch && <Spinner />}
-              {savingBatch ? "Saving…" : editingBatch ? "Save changes" : "Add batch"}
-            </button>
-            {batchError && <span style={{ color: "var(--red)", fontSize: 12 }}>{batchError}</span>}
-          </form>
-        </Modal>
-      )}
-
-      {batches.length === 0 ? (
-        <p style={{ color: "var(--ink2)" }}>No batches yet — add the first one above.</p>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
-          {batches.map((batch) => (
-            <div key={batch.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{batch.name}</div>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      marginTop: 4,
-                      padding: "2px 8px",
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      background: "var(--bg)",
-                      color: "var(--ink3)",
-                    }}
-                  >
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: batch.status.color ?? "var(--ink3)" }} />
-                    {batch.status.name}
-                  </span>
-                </div>
-                <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <Link href={`/admin/courses/${courseId}/batches/${batch.id}`} title="View batch" style={{ display: "flex" }}>
-                    <EyeIcon />
-                  </Link>
-                  <button
-                    onClick={() => openEditBatch(batch)}
-                    title="Edit batch"
-                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    onClick={() => onDeleteBatch(batch.id)}
-                    title="Delete batch"
-                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                  >
-                    <TrashIcon />
-                  </button>
-                </span>
-              </div>
-
-              <div style={{ fontSize: 12, color: "var(--ink2)" }}>
-                {new Date(batch.startDate).toLocaleDateString()}
-                {batch.endDate ? ` – ${new Date(batch.endDate).toLocaleDateString()}` : ""}
-              </div>
-
-              <div style={{ fontSize: 12, color: "var(--ink3)" }}>
-                {batch._count?.enrollments ?? 0} student{(batch._count?.enrollments ?? 0) === 1 ? "" : "s"} ·{" "}
-                {batch._count?.sessions ?? 0} session{(batch._count?.sessions ?? 0) === 1 ? "" : "s"}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

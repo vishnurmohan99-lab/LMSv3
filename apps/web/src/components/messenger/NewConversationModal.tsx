@@ -39,12 +39,12 @@ export default function NewConversationModal({ basePath, mode, onClose }: { base
   }, [mode]);
 
   useEffect(() => {
-    if (type !== "BATCH_BROADCAST" || !selectedCourseId) {
+    if (type !== "BATCH_BROADCAST") {
       setBatches([]);
       return;
     }
-    batchesApi.list(selectedCourseId).then(setBatches).catch(() => {});
-  }, [type, selectedCourseId]);
+    batchesApi.listMine().then(setBatches).catch(() => {});
+  }, [type]);
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -102,24 +102,14 @@ export default function NewConversationModal({ basePath, mode, onClose }: { base
         )}
 
         {type === "BATCH_BROADCAST" && (
-          <>
-            <select required value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)} style={inputStyle}>
-              <option value="">Select a course…</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
-            <select required value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)} style={inputStyle} disabled={!selectedCourseId}>
-              <option value="">Select a batch…</option>
-              {batches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </>
+          <select required value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)} style={inputStyle}>
+            <option value="">Select a batch…</option>
+            {batches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name} — {b.segment?.name ?? b.subsegment?.name ?? "Unscoped"}
+              </option>
+            ))}
+          </select>
         )}
 
         {error && <p style={{ color: "var(--red)", fontSize: 12.5, margin: 0 }}>{error}</p>}

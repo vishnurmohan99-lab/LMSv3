@@ -8,10 +8,6 @@ import { UpdateBatchDto } from './dto/update-batch.dto';
 import { withUniqueNameCheck } from '../common/unique-violation';
 import { Prisma } from '../../generated/prisma/client';
 
-function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
-  return user.role === 'ADMIN' || user.sub === facultyId;
-}
-
 @Injectable()
 export class BatchesService {
   constructor(
@@ -19,30 +15,45 @@ export class BatchesService {
     private readonly bulkOperations: BulkOperationsService,
   ) {}
 
-  listAllBatches() {
+  listAllBatches(segmentId?: string, subsegmentId?: string) {
     return this.prisma.batch.findMany({
+      where: { ...(segmentId && { segmentId }), ...(subsegmentId && { subsegmentId }) },
       orderBy: { createdAt: 'desc' },
-      include: { course: { select: { id: true, title: true } }, status: true, _count: { select: { enrollments: true } } },
+      include: {
+        segment: { select: { id: true, name: true } },
+        subsegment: { select: { id: true, name: true } },
+        faculty: { select: { id: true, fullName: true } },
+        status: true,
+        _count: { select: { enrollments: true } },
+      },
     });
   }
 
-  async listBatches(courseId: string, user: JwtPayload) {
-    const course = await this.requireCourse(courseId);
-    this.assertOwnership(user, course.facultyId);
+  listBatchesForFaculty(facultyId: string) {
     return this.prisma.batch.findMany({
-      where: { courseId },
+      where: { facultyId },
       orderBy: { createdAt: 'desc' },
-      include: { status: true, _count: { select: { enrollments: true, sessions: true } } },
+      include: {
+        segment: { select: { id: true, name: true } },
+        subsegment: { select: { id: true, name: true } },
+        status: true,
+        _count: { select: { enrollments: true } },
+      },
     });
   }
 
   async getBatch(id: string, user: JwtPayload) {
-    const batch = await this.requireBatchWithCourse(id);
-    this.assertOwnership(user, batch.course.facultyId);
+    const batch = await this.requireBatch(id);
+    if (user.role !== 'ADMIN' && batch.facultyId !== user.sub) {
+      throw new ForbiddenException('You are not assigned to this batch');
+    }
     return this.prisma.batch.findUnique({
       where: { id },
       include: {
+        segment: { select: { id: true, name: true } },
+        subsegment: { select: { id: true, name: true } },
         status: true,
+        faculty: { select: { id: true, fullName: true } },
         enrollments: { include: { student: { select: { id: true, fullName: true, email: true } } } },
         sessions: { orderBy: { scheduledAt: 'asc' } },
         _count: { select: { enrollments: true, sessions: true } },
@@ -50,9 +61,13 @@ export class BatchesService {
     });
   }
 
-  async createBatch(courseId: string, user: JwtPayload, dto: CreateBatchDto) {
-    const course = await this.requireCourse(courseId);
-    this.assertOwnership(user, course.facultyId);
+  async createBatch(dto: CreateBatchDto) {
+    if (!dto.segmentId && !dto.subsegmentId) {
+      throw new BadRequestException('A batch must be created under a segment or subsegment');
+    }
+    if (dto.segmentId && dto.subsegmentId) {
+      throw new BadRequestException('A batch can only belong to one of segment or subsegment, not both');
+    }
     const statusId = dto.statusId ?? (await this.requireDefaultStatus()).id;
     return withUniqueNameCheck(
       () =>
@@ -63,16 +78,16 @@ export class BatchesService {
             startDate: new Date(dto.startDate),
             endDate: dto.endDate ? new Date(dto.endDate) : undefined,
             facultyId: dto.facultyId,
-            courseId,
+            segmentId: dto.segmentId,
+            subsegmentId: dto.subsegmentId,
           },
         }),
       'batch',
     );
   }
 
-  async updateBatch(id: string, user: JwtPayload, dto: UpdateBatchDto) {
-    const batch = await this.requireBatchWithCourse(id);
-    this.assertOwnership(user, batch.course.facultyId);
+  async updateBatch(id: string, dto: UpdateBatchDto) {
+    await this.requireBatch(id);
     return withUniqueNameCheck(
       () =>
         this.prisma.batch.update({
@@ -87,16 +102,14 @@ export class BatchesService {
     );
   }
 
-  async deleteBatch(id: string, user: JwtPayload) {
-    const batch = await this.requireBatchWithCourse(id);
-    this.assertOwnership(user, batch.course.facultyId);
+  async deleteBatch(id: string) {
+    await this.requireBatch(id);
     await this.prisma.batch.delete({ where: { id } });
     return { success: true };
   }
 
-  async extendBatch(id: string, user: JwtPayload, newEndDate: string) {
-    const batch = await this.requireBatchWithCourse(id);
-    this.assertOwnership(user, batch.course.facultyId);
+  async extendBatch(id: string, newEndDate: string) {
+    await this.requireBatch(id);
     const endDate = new Date(newEndDate);
 
     return this.prisma.$transaction(
@@ -109,48 +122,60 @@ export class BatchesService {
     );
   }
 
-  async getStats(user: JwtPayload) {
-    const courseFilter = user.role === 'ADMIN' ? {} : { course: { facultyId: user.sub } };
-
+  async getStats() {
     const batches = await this.prisma.batch.findMany({
-      where: courseFilter,
       include: {
         status: { select: { id: true, name: true } },
-        course: { select: { id: true, title: true } },
+        segment: { select: { id: true, name: true } },
+        subsegment: { select: { id: true, name: true } },
         _count: { select: { enrollments: true } },
       },
     });
 
     const byStatus = new Map<string, { statusId: string; name: string; count: number }>();
-    const byCourse = new Map<string, { courseId: string; courseTitle: string; byStatus: Map<string, { statusId: string; name: string; count: number }> }>();
+    const bySegment = new Map<string, { label: string; byStatus: Map<string, { statusId: string; name: string; count: number }> }>();
 
     for (const batch of batches) {
       const statusEntry = byStatus.get(batch.statusId) ?? { statusId: batch.statusId, name: batch.status.name, count: 0 };
       statusEntry.count++;
       byStatus.set(batch.statusId, statusEntry);
 
-      const courseEntry =
-        byCourse.get(batch.courseId) ?? { courseId: batch.courseId, courseTitle: batch.course.title, byStatus: new Map() };
-      const courseStatusEntry =
-        courseEntry.byStatus.get(batch.statusId) ?? { statusId: batch.statusId, name: batch.status.name, count: 0 };
-      courseStatusEntry.count++;
-      courseEntry.byStatus.set(batch.statusId, courseStatusEntry);
-      byCourse.set(batch.courseId, courseEntry);
+      const scopeKey = batch.segmentId ?? batch.subsegmentId ?? 'unscoped';
+      const scopeLabel = batch.segment?.name ?? batch.subsegment?.name ?? 'Unscoped';
+      const scopeEntry = bySegment.get(scopeKey) ?? { label: scopeLabel, byStatus: new Map() };
+      const scopeStatusEntry = scopeEntry.byStatus.get(batch.statusId) ?? { statusId: batch.statusId, name: batch.status.name, count: 0 };
+      scopeStatusEntry.count++;
+      scopeEntry.byStatus.set(batch.statusId, scopeStatusEntry);
+      bySegment.set(scopeKey, scopeEntry);
     }
 
     return {
       totalBatches: batches.length,
       totalLearners: batches.reduce((sum, b) => sum + b._count.enrollments, 0),
       byStatus: [...byStatus.values()],
-      byCourse: [...byCourse.values()].map((c) => ({ courseId: c.courseId, courseTitle: c.courseTitle, byStatus: [...c.byStatus.values()] })),
+      bySegment: [...bySegment.entries()].map(([id, c]) => ({ id, label: c.label, byStatus: [...c.byStatus.values()] })),
     };
   }
 
-  async enrollStudent(batchId: string, user: JwtPayload, studentId: string) {
-    const batch = await this.requireBatchWithCourse(batchId);
-    this.assertOwnership(user, batch.course.facultyId);
+  private async syncCourseEnrollments(studentId: string, batch: { segmentId: string | null; subsegmentId: string | null }) {
+    if (!batch.segmentId && !batch.subsegmentId) return;
+    const courses = await this.prisma.course.findMany({
+      where: { OR: [...(batch.segmentId ? [{ segmentId: batch.segmentId }] : []), ...(batch.subsegmentId ? [{ subsegmentId: batch.subsegmentId }] : [])] },
+      select: { id: true },
+    });
+    if (courses.length === 0) return;
+    await this.prisma.enrollment.createMany({
+      data: courses.map((c) => ({ studentId, courseId: c.id, source: 'BATCH' as const })),
+      skipDuplicates: true,
+    });
+  }
+
+  async enrollStudent(batchId: string, studentId: string) {
+    const batch = await this.requireBatch(batchId);
     try {
-      return await this.prisma.batchEnrollment.create({ data: { batchId, studentId } });
+      const enrollment = await this.prisma.batchEnrollment.create({ data: { batchId, studentId } });
+      await this.syncCourseEnrollments(studentId, batch);
+      return enrollment;
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
         throw new ConflictException('This student is already enrolled in this batch');
@@ -163,8 +188,7 @@ export class BatchesService {
   }
 
   async bulkEnroll(batchId: string, user: JwtPayload, studentIds: string[]) {
-    const batch = await this.requireBatchWithCourse(batchId);
-    this.assertOwnership(user, batch.course.facultyId);
+    const batch = await this.requireBatch(batchId);
 
     const validStudents = await this.prisma.user.findMany({
       where: { id: { in: studentIds }, role: 'STUDENT' },
@@ -176,12 +200,12 @@ export class BatchesService {
 
     const newIds = await this.diffNewEnrollments(batchId, validStudents.map((s) => s.id));
     const { bulkOperationId } = await this.insertEnrollmentsAndRecord(batchId, user, newIds);
+    for (const studentId of newIds) await this.syncCourseEnrollments(studentId, batch);
     return { enrolled: newIds.length, skipped: validStudents.length - newIds.length, bulkOperationId };
   }
 
   async enrollFromCsv(batchId: string, user: JwtPayload, buffer: Buffer) {
-    const batch = await this.requireBatchWithCourse(batchId);
-    this.assertOwnership(user, batch.course.facultyId);
+    const batch = await this.requireBatch(batchId);
 
     const text = buffer.toString('utf-8');
     const parsed = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true });
@@ -200,12 +224,12 @@ export class BatchesService {
 
     const newIds = await this.diffNewEnrollments(batchId, validStudents.map((s) => s.id));
     const { bulkOperationId } = await this.insertEnrollmentsAndRecord(batchId, user, newIds);
+    for (const studentId of newIds) await this.syncCourseEnrollments(studentId, batch);
     return { enrolled: newIds.length, skipped: validStudents.length - newIds.length, bulkOperationId };
   }
 
-  async unenrollStudent(batchId: string, user: JwtPayload, studentId: string) {
-    const batch = await this.requireBatchWithCourse(batchId);
-    this.assertOwnership(user, batch.course.facultyId);
+  async unenrollStudent(batchId: string, studentId: string) {
+    await this.requireBatch(batchId);
     const enrollment = await this.prisma.batchEnrollment.findUnique({
       where: { batchId_studentId: { batchId, studentId } },
     });
@@ -244,20 +268,8 @@ export class BatchesService {
     return status;
   }
 
-  private assertOwnership(user: JwtPayload, facultyId: string) {
-    if (!isOwnerOrAdmin(user, facultyId)) {
-      throw new ForbiddenException('You do not own this batch');
-    }
-  }
-
-  private async requireCourse(id: string) {
-    const course = await this.prisma.course.findUnique({ where: { id } });
-    if (!course) throw new NotFoundException('Course not found');
-    return course;
-  }
-
-  async requireBatchWithCourse(id: string) {
-    const batch = await this.prisma.batch.findUnique({ where: { id }, include: { course: true } });
+  async requireBatch(id: string) {
+    const batch = await this.prisma.batch.findUnique({ where: { id } });
     if (!batch) throw new NotFoundException('Batch not found');
     return batch;
   }

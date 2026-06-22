@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role, User } from '../../generated/prisma/client';
@@ -37,9 +37,28 @@ export class UsersService {
     return toSafeUser(user);
   }
 
-  async updateProfile(id: string, data: { fullName: string }): Promise<SafeUser> {
+  async updateProfile(id: string, data: { fullName?: string; segmentId?: string | null; subsegmentId?: string | null }): Promise<SafeUser> {
+    if (data.segmentId === null) {
+      const user = await this.prisma.user.update({ where: { id }, data: { ...data, segmentId: null, subsegmentId: null } });
+      return toSafeUser(user);
+    }
+    if (data.segmentId) {
+      await this.validateSegmentation(data.segmentId, data.subsegmentId ?? undefined);
+    }
     const user = await this.prisma.user.update({ where: { id }, data });
     return toSafeUser(user);
+  }
+
+  private async validateSegmentation(segmentId: string, subsegmentId?: string) {
+    const segment = await this.prisma.segment.findUnique({ where: { id: segmentId } });
+    if (!segment) throw new BadRequestException('Segment not found');
+    if (subsegmentId) {
+      const subsegment = await this.prisma.subsegment.findUnique({ where: { id: subsegmentId } });
+      if (!subsegment) throw new BadRequestException('Subsegment not found');
+      if (subsegment.segmentId !== segmentId) {
+        throw new BadRequestException('Subsegment does not belong to the selected segment');
+      }
+    }
   }
 
   async createByAdmin(data: { fullName: string; email: string; password: string; role: Role }): Promise<SafeUser> {

@@ -487,7 +487,7 @@ export default function AdminFeedbackPage() {
                 <option value="">Select batch</option>
                 {batches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name} — {(b as Batch & { course: { title: string } }).course?.title}
+                    {b.name} — {b.segment?.name ?? b.subsegment?.name ?? "Unscoped"}
                   </option>
                 ))}
               </select>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usersApi, ApiError, type Profile } from "@/lib/api";
+import { usersApi, segmentsApi, ApiError, type Profile, type Segment } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -18,6 +18,9 @@ const inputStyle: React.CSSProperties = {
 export default function ProfileForm() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState("");
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [segmentId, setSegmentId] = useState("");
+  const [subsegmentId, setSubsegmentId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,9 +32,15 @@ export default function ProfileForm() {
       .then((p) => {
         setProfile(p);
         setFullName(p.fullName);
+        setSegmentId(p.segmentId ?? "");
+        setSubsegmentId(p.subsegmentId ?? "");
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load profile"))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    segmentsApi.list().then(setSegments).catch(() => {});
   }, []);
 
   async function onSubmit(e: React.FormEvent) {
@@ -40,7 +49,11 @@ export default function ProfileForm() {
     setSaved(false);
     setSaving(true);
     try {
-      const updated = await usersApi.updateMe({ fullName });
+      const updated = await usersApi.updateMe(
+        profile?.role === "STUDENT"
+          ? { fullName, segmentId: segmentId || null, subsegmentId: segmentId ? subsegmentId || null : null }
+          : { fullName },
+      );
       setProfile(updated);
       setSaved(true);
     } catch (err) {
@@ -52,6 +65,8 @@ export default function ProfileForm() {
 
   if (loading) return <p style={{ color: "var(--ink2)" }}>Loading…</p>;
   if (!profile) return <p style={{ color: "var(--red)" }}>{error ?? "Could not load profile"}</p>;
+
+  const selectedSegment = segments.find((s) => s.id === segmentId);
 
   return (
     <div
@@ -72,6 +87,44 @@ export default function ProfileForm() {
       <form onSubmit={onSubmit}>
         <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>Full name</label>
         <input value={fullName} onChange={(e) => setFullName(e.target.value)} style={inputStyle} />
+
+        {profile.role === "STUDENT" && (
+          <>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>Segment / Class</label>
+            <select
+              value={segmentId}
+              onChange={(e) => {
+                setSegmentId(e.target.value);
+                setSubsegmentId("");
+              }}
+              style={inputStyle}
+            >
+              <option value="">Not set</option>
+              {segments.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
+            {selectedSegment && selectedSegment.subsegments.length > 0 && (
+              <>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>Subsegment / Stream (optional)</label>
+                <select value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={inputStyle}>
+                  <option value="">None</option>
+                  {selectedSegment.subsegments.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+            <p style={{ fontSize: 12, color: "var(--ink3)", marginTop: -10, marginBottom: 16 }}>
+              This determines which courses appear in your catalog.
+            </p>
+          </>
+        )}
 
         {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 10 }}>{error}</p>}
         {saved && <p style={{ color: "var(--green)", fontSize: 13, marginBottom: 10 }}>Saved.</p>}

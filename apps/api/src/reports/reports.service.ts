@@ -67,7 +67,6 @@ export class ReportsService {
       where: { facultyId: faculty.sub },
       include: {
         enrollments: { include: { student: { select: { id: true, fullName: true, email: true } } } },
-        batches: { include: { status: true, _count: { select: { enrollments: true } } } },
         mockTests: { where: { courseId: { not: null } } },
       },
       orderBy: { title: 'asc' },
@@ -82,6 +81,10 @@ export class ReportsService {
       students: { id: string; fullName: string; email: string; enrolledAt: Date; bestScorePct: number | null; attemptCount: number }[];
     }[] = [];
     for (const course of courses) {
+      const batches = await this.prisma.batch.findMany({
+        where: { OR: [...(course.segmentId ? [{ segmentId: course.segmentId }] : []), ...(course.subsegmentId ? [{ subsegmentId: course.subsegmentId }] : [])] },
+        include: { status: true, _count: { select: { enrollments: true } } },
+      });
       const mockTestIds = course.mockTests.map((t) => t.id);
       const attempts = mockTestIds.length
         ? await this.prisma.testAttempt.findMany({
@@ -102,7 +105,7 @@ export class ReportsService {
         courseId: course.id,
         title: course.title,
         enrollmentCount: course.enrollments.length,
-        batches: course.batches.map((b) => ({ id: b.id, name: b.name, status: b.status.name, enrolledCount: b._count.enrollments })),
+        batches: batches.map((b) => ({ id: b.id, name: b.name, status: b.status.name, enrolledCount: b._count.enrollments })),
         mockTestCount: course.mockTests.length,
         students: course.enrollments.map((e) => ({
           id: e.student.id,

@@ -14,14 +14,24 @@ export class TestAttemptsService {
   async startAttempt(user: JwtPayload, testId: string) {
     const test = await this.prisma.test.findUnique({ where: { id: testId } });
     if (!test) throw new NotFoundException('Test not found');
-    if (!test.courseId) throw new BadRequestException('This test is not a mock test and cannot be attempted directly');
     if (!test.published) throw new ForbiddenException('This mock test is not published yet');
 
-    if (user.role === 'STUDENT') {
-      const enrolled = await this.prisma.enrollment.findUnique({
-        where: { studentId_courseId: { studentId: user.sub, courseId: test.courseId } },
-      });
-      if (!enrolled) throw new ForbiddenException('You are not enrolled in this course');
+    if (test.courseId) {
+      if (user.role === 'STUDENT') {
+        const enrolled = await this.prisma.enrollment.findUnique({
+          where: { studentId_courseId: { studentId: user.sub, courseId: test.courseId } },
+        });
+        if (!enrolled) throw new ForbiddenException('You are not enrolled in this course');
+      }
+    } else {
+      const subTest = await this.prisma.subscriptionTest.findFirst({ where: { testId } });
+      if (!subTest) throw new BadRequestException('This test is not a mock test and cannot be attempted directly');
+      if (user.role === 'STUDENT') {
+        const subEnrolled = await this.prisma.subscriptionEnrollment.findUnique({
+          where: { subscriptionId_studentId: { subscriptionId: subTest.subscriptionId, studentId: user.sub } },
+        });
+        if (!subEnrolled) throw new ForbiddenException('You are not subscribed to access this test');
+      }
     }
 
     if (test.publishMode === 'TIMED') {

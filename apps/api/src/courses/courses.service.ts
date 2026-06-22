@@ -37,8 +37,20 @@ export class CoursesService {
 
     let courses;
     if (user.role === 'STUDENT') {
+      const me = await this.prisma.user.findUnique({ where: { id: user.sub }, select: { segmentId: true, subsegmentId: true } });
+      const segmentMatch = me?.segmentId
+        ? { OR: [{ segmentId: me.segmentId }, ...(me.subsegmentId ? [{ subsegmentId: me.subsegmentId }] : [])] }
+        : {};
       courses = await this.prisma.course.findMany({
-        where: { published: true, ...categoryFilter },
+        where: {
+          published: true,
+          ...categoryFilter,
+          OR: [
+            { type: { in: ['FREE', 'PAID'] }, ...segmentMatch },
+            { type: 'PRIVATE', privateAccess: { some: { studentId: user.sub } } },
+            { enrollments: { some: { studentId: user.sub } } },
+          ],
+        },
         orderBy: { createdAt: 'desc' },
       });
     } else if (user.role === 'ADMIN') {
@@ -67,6 +79,15 @@ export class CoursesService {
     const course = await this.requireCourse(courseId);
     if (!course.published) {
       throw new ForbiddenException('This course is not open for enrollment');
+    }
+    if (course.type === 'PAID') {
+      throw new ForbiddenException('This course requires an active subscription — contact admin');
+    }
+    if (course.type === 'PRIVATE') {
+      const access = await this.prisma.coursePrivateAccess.findUnique({
+        where: { courseId_studentId: { courseId, studentId: user.sub } },
+      });
+      if (!access) throw new ForbiddenException('This course is private and you have not been granted access');
     }
     return this.prisma.enrollment.upsert({
       where: { studentId_courseId: { studentId: user.sub, courseId } },
@@ -157,6 +178,39 @@ export class CoursesService {
     }
 
     return withUniqueNameCheck(() => this.prisma.course.update({ where: { id }, data: dto }), 'course');
+  }
+
+  async listPrivateAccess(courseId: string, user: JwtPayload) {
+    const course = await this.requireCourse(courseId);
+    this.assertOwnership(user, course.facultyId);
+    return this.prisma.coursePrivateAccess.findMany({
+      where: { courseId },
+      include: { student: { select: { id: true, fullName: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async grantPrivateAccess(courseId: string, user: JwtPayload, studentId: string) {
+    const course = await this.requireCourse(courseId);
+    this.assertOwnership(user, course.facultyId);
+    const access = await this.prisma.coursePrivateAccess.upsert({
+      where: { courseId_studentId: { courseId, studentId } },
+      create: { courseId, studentId },
+      update: {},
+    });
+    await this.prisma.enrollment.upsert({
+      where: { studentId_courseId: { studentId, courseId } },
+      create: { studentId, courseId, source: 'ADMIN' },
+      update: {},
+    });
+    return access;
+  }
+
+  async revokePrivateAccess(courseId: string, user: JwtPayload, studentId: string) {
+    const course = await this.requireCourse(courseId);
+    this.assertOwnership(user, course.facultyId);
+    await this.prisma.coursePrivateAccess.deleteMany({ where: { courseId, studentId } });
+    return { success: true };
   }
 
   async deleteCourse(id: string, user: JwtPayload) {

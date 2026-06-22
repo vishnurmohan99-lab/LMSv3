@@ -146,7 +146,7 @@ const navItems = [
   { href: "/student/mock-test", label: "Mock Test", Icon: MockTestIcon, enabled: true },
   { href: "/student/mentor", label: "Mentor", Icon: MentorIcon, enabled: true },
   { href: "/student/planner", label: "Planner", Icon: PlannerIcon, enabled: false },
-  { href: "/student/subscription", label: "Subscription", Icon: SubscriptionIcon, enabled: false },
+  { href: "/student/subscription", label: "Subscription", Icon: SubscriptionIcon, enabled: true },
 ];
 
 function navStyle(active: boolean, enabled: boolean): React.CSSProperties {

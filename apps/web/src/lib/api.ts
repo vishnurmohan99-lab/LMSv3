@@ -71,13 +71,15 @@ export interface Profile {
   role: 'STUDENT' | 'FACULTY' | 'ADMIN';
   isMentor?: boolean;
   mentorSpecialty?: string | null;
+  segmentId?: string | null;
+  subsegmentId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export const usersApi = {
   me: () => request<Profile>('/users/me'),
-  updateMe: (data: { fullName: string }) =>
+  updateMe: (data: { fullName?: string; segmentId?: string | null; subsegmentId?: string | null }) =>
     request<Profile>('/users/me', { method: 'PATCH', body: JSON.stringify(data) }),
 };
 
@@ -104,18 +106,29 @@ export interface Chapter {
   lessons: Lesson[];
 }
 
+export type CourseType = 'FREE' | 'PAID' | 'PRIVATE';
+
 export interface Course {
   id: string;
   title: string;
   description: string;
   thumbnailUrl: string | null;
   published: boolean;
+  type: CourseType;
   facultyId: string;
   createdAt: string;
   updatedAt: string;
   segmentId: string | null;
   subsegmentId: string | null;
   _count?: { enrollments: number };
+}
+
+export interface CoursePrivateAccess {
+  id: string;
+  courseId: string;
+  studentId: string;
+  createdAt: string;
+  student: { id: string; fullName: string; email: string };
 }
 
 export interface CourseTree extends Course {
@@ -170,14 +183,20 @@ export const coursesApi = {
     return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string; thumbnailUrl?: string }) =>
+  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string; thumbnailUrl?: string; type?: CourseType }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId'>>,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type'>>,
   ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
   enroll: (id: string) => request<{ id: string }>(`/courses/${id}/enroll`, { method: 'POST' }),
+
+  listPrivateAccess: (courseId: string) => request<CoursePrivateAccess[]>(`/courses/${courseId}/private-access`),
+  grantPrivateAccess: (courseId: string, studentId: string) =>
+    request<CoursePrivateAccess>(`/courses/${courseId}/private-access/${studentId}`, { method: 'POST' }),
+  revokePrivateAccess: (courseId: string, studentId: string) =>
+    request<{ success: boolean }>(`/courses/${courseId}/private-access/${studentId}`, { method: 'DELETE' }),
 
   createChapter: (courseId: string, data: { title: string; order?: number; bannerUrl?: string }) =>
     request<Chapter>(`/courses/${courseId}/chapters`, { method: 'POST', body: JSON.stringify(data) }),
@@ -506,8 +525,12 @@ export interface Batch {
   status: { id: string; name: string; color: string | null };
   startDate: string;
   endDate: string | null;
-  courseId: string;
+  segmentId: string | null;
+  subsegmentId: string | null;
+  segment?: { id: string; name: string } | null;
+  subsegment?: { id: string; name: string } | null;
   facultyId: string | null;
+  faculty?: { id: string; fullName: string } | null;
   createdAt: string;
   updatedAt: string;
   _count?: { enrollments: number; sessions: number };
@@ -517,7 +540,7 @@ export interface BatchStats {
   totalBatches: number;
   totalLearners: number;
   byStatus: { statusId: string; name: string; count: number }[];
-  byCourse: { courseId: string; courseTitle: string; byStatus: { statusId: string; name: string; count: number }[] }[];
+  bySegment: { id: string; label: string; byStatus: { statusId: string; name: string; count: number }[] }[];
 }
 
 export interface BulkOperation {
@@ -559,11 +582,15 @@ export interface BatchTree extends Batch {
 }
 
 export const batchesApi = {
-  list: (courseId: string) => request<Batch[]>(`/courses/${courseId}/batches`),
+  list: (params?: { segmentId?: string; subsegmentId?: string }) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>).toString();
+    return request<Batch[]>(`/batches${qs ? `?${qs}` : ''}`);
+  },
+  listMine: () => request<Batch[]>('/batches/mine'),
   get: (id: string) => request<BatchTree>(`/batches/${id}`),
   stats: () => request<BatchStats>('/batches/stats'),
-  create: (courseId: string, data: { name: string; statusId?: string; startDate: string; endDate?: string; facultyId?: string }) =>
-    request<Batch>(`/courses/${courseId}/batches`, { method: 'POST', body: JSON.stringify(data) }),
+  create: (data: { name: string; statusId?: string; startDate: string; endDate?: string; facultyId?: string; segmentId?: string; subsegmentId?: string }) =>
+    request<Batch>('/batches', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Pick<Batch, 'name' | 'statusId' | 'startDate' | 'endDate' | 'facultyId'>>) =>
     request<Batch>(`/batches/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/batches/${id}`, { method: 'DELETE' }),
@@ -591,7 +618,7 @@ export const batchesApi = {
   },
   unenroll: (batchId: string, studentId: string) =>
     request<{ success: boolean }>(`/batches/${batchId}/enroll/${studentId}`, { method: 'DELETE' }),
-  listAll: () => request<(Batch & { course: { id: string; title: string } })[]>('/batches'),
+  listAll: () => request<Batch[]>('/batches'),
 };
 
 export const bulkOperationsApi = {
@@ -867,4 +894,34 @@ export interface FacultyReportCourse {
 export const reportsApi = {
   getAdminReport: () => request<AdminReport>('/reports/admin'),
   getFacultyReport: () => request<FacultyReportCourse[]>('/reports/faculty'),
+};
+
+export interface Subscription {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  _count: { courses: number; tests: number; enrollments: number };
+  subscribed?: boolean;
+}
+
+export interface SubscriptionDetail extends Subscription {
+  courses: { course: { id: string; title: string; type: CourseType } }[];
+  tests: { test: { id: string; title: string } }[];
+}
+
+export interface SubscriptionEnrollment {
+  id: string;
+  subscriptionId: string;
+  studentId: string;
+  enrolledAt: string;
+  subscription: Subscription;
+}
+
+export const subscriptionsApi = {
+  listAvailable: () => request<Subscription[]>('/subscriptions/available'),
+  listMine: () => request<SubscriptionEnrollment[]>('/subscriptions/me'),
+  getDetail: (id: string) => request<SubscriptionDetail>(`/subscriptions/${id}`),
+  subscribe: (id: string) => request(`/subscriptions/${id}/subscribe`, { method: 'POST' }),
 };

@@ -54,4 +54,25 @@ export class CoursesController {
   enroll(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.coursesService.enroll(id, user);
   }
+
+  @UseGuards(RolesGuard)
+  @Roles('FACULTY', 'ADMIN')
+  @Get(':id/private-access')
+  listPrivateAccess(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.listPrivateAccess(id, user);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('FACULTY', 'ADMIN')
+  @Post(':id/private-access/:studentId')
+  grantPrivateAccess(@Param('id') id: string, @Param('studentId') studentId: string, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.grantPrivateAccess(id, user, studentId);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('FACULTY', 'ADMIN')
+  @Delete(':id/private-access/:studentId')
+  revokePrivateAccess(@Param('id') id: string, @Param('studentId') studentId: string, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.revokePrivateAccess(id, user, studentId);
+  }
 }

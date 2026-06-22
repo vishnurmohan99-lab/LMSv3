@@ -30,6 +30,15 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  segmentId String?
+  segment   Segment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+
+  subsegmentId String?
+  subsegment   Subsegment? @relation(fields: [subsegmentId], references: [id], onDelete: SetNull)
+
+  privateCourseAccess   CoursePrivateAccess[]
+  subscriptionEnrollments SubscriptionEnrollment[]
+
   courses           Course[]            @relation("FacultyCourses")
   questionBanks     QuestionBank[]      @relation("FacultyQuestionBanks")
   tests             Test[]              @relation("FacultyTests")
@@ -61,14 +70,21 @@ model User {
   forumThreadLikes ForumThreadLike[]
 }
 
+enum CourseType {
+  FREE
+  PAID
+  PRIVATE
+}
+
 model Course {
-  id           String   @id @default(uuid())
-  title        String   @unique
-  description  String   @default("")
+  id           String     @id @default(uuid())
+  title        String     @unique
+  description  String     @default("")
   thumbnailUrl String?
-  published    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  published    Boolean    @default(false)
+  type         CourseType @default(FREE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   facultyId String
   faculty   User   @relation("FacultyCourses", fields: [facultyId], references: [id])
@@ -79,16 +95,31 @@ model Course {
   subsegmentId String?
   subsegment   Subsegment? @relation(fields: [subsegmentId], references: [id], onDelete: SetNull)
 
-  chapters      Chapter[]
-  enrollments   Enrollment[]
-  batches       Batch[]
-  conversations Conversation[]
-  mockTests     Test[]
-  feedbackForms FeedbackForm[]
-  forumThreads  ForumThread[]
+  chapters         Chapter[]
+  enrollments      Enrollment[]
+  conversations    Conversation[]
+  mockTests        Test[]
+  feedbackForms    FeedbackForm[]
+  forumThreads     ForumThread[]
+  privateAccess    CoursePrivateAccess[]
+  subscriptionCourses SubscriptionCourse[]
 
   @@index([segmentId])
   @@index([subsegmentId])
+}
+
+model CoursePrivateAccess {
+  id String @id @default(uuid())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, studentId])
 }
 
 model Segment {
@@ -101,6 +132,8 @@ model Segment {
 
   subsegments Subsegment[]
   courses     Course[]
+  students    User[]
+  batches     Batch[]
 }
 
 model Subsegment {
@@ -113,7 +146,9 @@ model Subsegment {
   segmentId String
   segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
 
-  courses Course[]
+  courses  Course[]
+  students User[]
+  batches  Batch[]
 
   @@unique([segmentId, name])
 }
@@ -222,13 +257,21 @@ model FlashcardProgress {
   @@unique([studentId, flashcardId])
 }
 
+enum EnrollmentSource {
+  SELF
+  BATCH
+  SUBSCRIPTION
+  ADMIN
+}
+
 model Enrollment {
-  id         String   @id @default(uuid())
+  id         String           @id @default(uuid())
   studentId  String
-  student    User     @relation(fields: [studentId], references: [id])
+  student    User             @relation(fields: [studentId], references: [id])
   courseId   String
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  enrolledAt DateTime @default(now())
+  course     Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime         @default(now())
+  source     EnrollmentSource @default(SELF)
 
   @@unique([studentId, courseId])
 }
@@ -257,8 +300,11 @@ model Batch {
   statusId String
   status   BatchStatusType @relation(fields: [statusId], references: [id], onDelete: Restrict)
 
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  segmentId String?
+  segment   Segment? @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  subsegmentId String?
+  subsegment   Subsegment? @relation(fields: [subsegmentId], references: [id], onDelete: Cascade)
 
   facultyId String?
   faculty   User?   @relation("BatchFaculty", fields: [facultyId], references: [id])
@@ -268,7 +314,8 @@ model Batch {
   conversations Conversation[]
   feedbackForms FeedbackForm[]
 
-  @@unique([courseId, name])
+  @@index([segmentId])
+  @@index([subsegmentId])
 }
 
 enum BulkOperationType {
@@ -393,6 +440,7 @@ model Test {
 
   testQuestions TestQuestion[]
   attempts      TestAttempt[]
+  subscriptions SubscriptionTest[]
 
   @@index([courseId])
 }
@@ -681,4 +729,54 @@ model ForumThreadLike {
   user   User   @relation(fields: [userId], references: [id])
 
   @@unique([threadId, userId])
+}
+
+model Subscription {
+  id          String   @id @default(uuid())
+  title       String   @unique
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses     SubscriptionCourse[]
+  tests       SubscriptionTest[]
+  enrollments SubscriptionEnrollment[]
+}
+
+model SubscriptionCourse {
+  id String @id @default(uuid())
+
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, courseId])
+}
+
+model SubscriptionTest {
+  id String @id @default(uuid())
+
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, testId])
+}
+
+model SubscriptionEnrollment {
+  id String @id @default(uuid())
+
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  enrolledAt DateTime @default(now())
+
+  @@unique([subscriptionId, studentId])
 }
