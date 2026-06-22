@@ -1,212 +1,218 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { enrollmentsApi, messengerApi, ApiError, type Enrollment } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { enrollmentsApi, testsApi, testAttemptsApi, mentorApi, ApiError, type MentorBooking } from "@/lib/api";
 
-export default function StudentDashboardPage() {
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+interface ScoredAttempt {
+  pct: number;
+  submittedAt: string;
+}
 
-  useEffect(() => {
-    enrollmentsApi
-      .mine()
-      .then(setEnrollments)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load dashboard"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    messengerApi.getUnreadCount().then((r) => setUnreadCount(r.count)).catch(() => {});
-  }, []);
-
+function PerformanceRing({ pct }: { pct: number | null }) {
+  const value = pct ?? 0;
+  const r = 60;
+  const c = 2 * Math.PI * r;
   return (
-    <main style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>Overview</div>
+    <div style={{ position: "relative", width: 150, height: 150, margin: "8px auto 0" }}>
+      <svg width="150" height="150" viewBox="0 0 150 150">
+        <circle cx="75" cy="75" r={r} fill="none" stroke="var(--line)" strokeWidth="14" />
+        {pct !== null && (
+          <circle
+            cx="75"
+            cy="75"
+            r={r}
+            fill="none"
+            stroke="var(--orange)"
+            strokeWidth="14"
+            strokeDasharray={`${(value / 100) * c} ${c}`}
+            strokeLinecap="round"
+            transform="rotate(-90 75 75)"
+          />
+        )}
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1 }}>{pct !== null ? `${Math.round(pct)}%` : "—"}</div>
+        <div style={{ fontSize: 11, color: "var(--ink3)" }}>Performance</div>
+      </div>
+    </div>
+  );
+}
 
-      {loading ? (
-        <p style={{ color: "var(--ink2)" }}>Loading…</p>
-      ) : error ? (
-        <p style={{ color: "var(--red)" }}>{error}</p>
-      ) : (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 18 }}>
-            <div
-              style={{
-                background: "var(--card)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--rm)",
-                padding: "16px 18px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-              }}
-            >
-              <div
-                style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 14,
-                  background: "var(--ink)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flex: "none",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
-                  <path d="m12 2 9 5-9 5-9-5 9-5Z" />
-                  <path d="m3 12 9 5 9-5M3 17l9 5 9-5" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>{enrollments.length}</div>
-                <div style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: 2 }}>Enrolled courses</div>
-              </div>
-            </div>
+const BAR_TRACK_HEIGHT = 120;
 
-            <Link
-              href="/student/courses"
-              style={{
-                background: "var(--card)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--rm)",
-                padding: "16px 18px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-              }}
-            >
-              <div
-                style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 14,
-                  background: "var(--orange-soft)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flex: "none",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>Browse catalog</div>
-                <div style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: 2 }}>Find new courses to join</div>
-              </div>
-            </Link>
-
-            <Link
-              href="/student/messages"
-              style={{
-                background: "var(--card)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--rm)",
-                padding: "16px 18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--purple-soft)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.8">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>Messages</div>
-                  <div style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: 2 }}>Chat with faculty &amp; admin</div>
-                </div>
-              </div>
-              {unreadCount > 0 && (
-                <span style={{ background: "var(--orange)", color: "#fff", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 10px" }}>{unreadCount}</span>
-              )}
-            </Link>
-          </div>
-
+function ExamScoresChart({ attempts }: { attempts: ScoredAttempt[] }) {
+  const last8 = attempts.slice(-8);
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: BAR_TRACK_HEIGHT }}>
+      {last8.map((a, i) => (
+        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", gap: 4 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ink2)" }}>{Math.round(a.pct)}</div>
           <div
             style={{
-              background: "var(--card)",
-              border: "1px solid var(--line)",
-              borderRadius: "var(--rl)",
-              padding: 22,
+              width: "100%",
+              maxWidth: 28,
+              height: Math.max((a.pct / 100) * (BAR_TRACK_HEIGHT - 20), 3),
+              background: "var(--orange)",
+              borderRadius: "6px 6px 0 0",
             }}
-          >
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Continue learning</div>
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
 
-            {enrollments.length === 0 ? (
-              <p style={{ color: "var(--ink2)", fontSize: 13.5 }}>
-                You haven&apos;t enrolled in any courses yet.{" "}
-                <Link href="/student/courses" style={{ color: "var(--orange)", fontWeight: 700 }}>
-                  Browse the catalog
-                </Link>
-                .
-              </p>
+export default function StudentDashboardPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [enrolledCount, setEnrolledCount] = useState(0);
+  const [attempts, setAttempts] = useState<ScoredAttempt[]>([]);
+  const [bookings, setBookings] = useState<MentorBooking[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const enrollments = await enrollmentsApi.mine();
+        setEnrolledCount(enrollments.length);
+
+        const allAttempts: ScoredAttempt[] = [];
+        for (const e of enrollments) {
+          const tests = await testsApi.list({ courseId: e.courseId });
+          for (const t of tests.filter((t) => t.published)) {
+            const myAttempts = await testAttemptsApi.mine(t.id).catch(() => []);
+            for (const a of myAttempts) {
+              if (a.status === "SUBMITTED" && a.score !== null && a.maxScore) {
+                allAttempts.push({ pct: (a.score / a.maxScore) * 100, submittedAt: a.submittedAt ?? a.startedAt });
+              }
+            }
+          }
+        }
+        allAttempts.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+        setAttempts(allAttempts);
+
+        const myBookings = await mentorApi.listBookingsAsStudent().catch(() => []);
+        setBookings(myBookings);
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : "Failed to load dashboard");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <main style={{ padding: "30px 30px 60px" }}>
+        <p style={{ color: "var(--ink2)" }}>Loading…</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main style={{ padding: "30px 30px 60px" }}>
+        <p style={{ color: "var(--red)" }}>{error}</p>
+      </main>
+    );
+  }
+
+  const avgPct = attempts.length ? attempts.reduce((s, a) => s + a.pct, 0) / attempts.length : null;
+  const today = new Date();
+  const completedSessions = bookings.filter((b) => new Date(b.date) < today).length;
+
+  return (
+    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, marginBottom: 18 }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center", maxWidth: 360 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink2)" }}>Performance</div>
+          </div>
+          <PerformanceRing pct={avgPct} />
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)", marginTop: 6 }}>
+            {avgPct === null ? "Take a mock test to see your performance." : avgPct >= 70 ? "You did a great job!" : "Keep practicing — you're getting there."}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 64px", gap: 18, marginBottom: 18 }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
+              <path d="m12 2 9 5-9 5-9-5 9-5Z" />
+              <path d="m3 12 9 5 9-5M3 17l9 5 9-5" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>{enrolledCount} Enrolled</div>
+            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Courses</div>
+          </div>
+        </div>
+
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
+              <path d="M9 11H3v9h6v-9ZM21 4h-6v16h6V4ZM15 9H9v11h6V9Z" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>{attempts.length} Taken</div>
+            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Mock tests</div>
+          </div>
+        </div>
+
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>{bookings.length} Booked</div>
+            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Mentor sessions</div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => router.push("/student/mentor")}
+          title="Book a Mentor"
+          style={{ background: "var(--ink)", border: "none", borderRadius: "var(--rm)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+        </button>
+      </div>
+
+      <div style={{ marginTop: 18 }}>
+        <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3, marginBottom: 14 }}>Performance analytics</div>
+        <div style={{ display: "grid", gridTemplateColumns: attempts.length ? "1.3fr 1fr" : "1fr", gap: 18 }}>
+          {attempts.length > 0 && (
+            <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Exam scores</div>
+              <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 16 }}>Last {Math.min(attempts.length, 8)} mock test attempts</div>
+              <ExamScoresChart attempts={attempts} />
+            </div>
+          )}
+
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: attempts.length ? "center" : "left" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Mentorship</div>
+            <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 10 }}>Sessions booked</div>
+            {bookings.length === 0 ? (
+              <p style={{ fontSize: 13, color: "var(--ink3)" }}>No mentor sessions booked yet.</p>
             ) : (
-              <div style={{ display: "grid", gap: 12 }}>
-                {enrollments.map(({ course }) => (
-                  <Link
-                    key={course.id}
-                    href={`/student/courses/${course.id}`}
-                    style={{
-                      border: "1px solid var(--line)",
-                      borderRadius: "var(--rm)",
-                      padding: 14,
-                      display: "flex",
-                      gap: 13,
-                      alignItems: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: "var(--orange-soft)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flex: "none",
-                      }}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
-                        <path d="m12 3 9 5-9 5-9-5 9-5Z" />
-                        <path d="M21 12v5a2 2 0 0 1-1 1.7l-7 3.3-7-3.3A2 2 0 0 1 3 17v-5" />
-                      </svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>{course.title}</div>
-                      {course.description && (
-                        <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>{course.description}</div>
-                      )}
-                    </div>
-                    <span
-                      style={{
-                        padding: "8px 18px",
-                        background: "var(--ink)",
-                        color: "#fff",
-                        borderRadius: 10,
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        flex: "none",
-                      }}
-                    >
-                      Continue
-                    </span>
-                  </Link>
-                ))}
-              </div>
+              <>
+                <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, margin: "8px 0" }}>{bookings.length}</div>
+                <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>{completedSessions} completed</div>
+              </>
             )}
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </main>
   );
 }
