@@ -124,9 +124,9 @@ export default function StudentDashboardPage() {
   const completedSessions = bookings.filter((b) => new Date(b.date) < today).length;
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <main className="fade-in" style={{ padding: "30px 30px 60px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, marginBottom: 18 }}>
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center", maxWidth: 360 }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink2)" }}>Performance</div>
           </div>
