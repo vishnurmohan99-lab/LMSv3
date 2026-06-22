@@ -20,6 +20,11 @@ export class TestAttemptsController {
     return this.attempts.listMine(user, testId);
   }
 
+  @Get('tests/:id/leaderboard')
+  leaderboard(@Param('id') testId: string, @CurrentUser() user: JwtPayload) {
+    return this.attempts.getLeaderboard(user, testId);
+  }
+
   @Patch('attempts/:id/answers')
   saveAnswer(@Param('id') attemptId: string, @Body() dto: SaveAnswerDto, @CurrentUser() user: JwtPayload) {
     return this.attempts.saveAnswer(user, attemptId, dto);

@@ -183,7 +183,7 @@ export const coursesApi = {
     return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string; segmentId: string; subsegmentId?: string; thumbnailUrl?: string; type?: CourseType }) =>
+  create: (data: { title: string; description?: string; segmentId?: string; subsegmentId?: string; thumbnailUrl?: string; type?: CourseType }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
@@ -488,7 +488,23 @@ export const testAttemptsApi = {
   saveAnswer: (attemptId: string, testQuestionId: string, selectedOption?: string) =>
     request<{ id: string }>(`/attempts/${attemptId}/answers`, { method: 'PATCH', body: JSON.stringify({ testQuestionId, selectedOption }) }),
   submit: (attemptId: string) => request<TestAttemptResult>(`/attempts/${attemptId}/submit`, { method: 'POST' }),
+  leaderboard: (testId: string) => request<Leaderboard>(`/tests/${testId}/leaderboard`),
 };
+
+export interface LeaderboardEntry {
+  rank: number;
+  studentId: string;
+  studentName: string;
+  score: number | null;
+  maxScore: number | null;
+  isMe: boolean;
+}
+
+export interface Leaderboard {
+  top: LeaderboardEntry[];
+  me: LeaderboardEntry | null;
+  totalRanked: number;
+}
 
 export const workoutApi = {
   getQuestions: (courseId: string, params: { chapterId?: string; types: QuestionType[]; count: number }) => {

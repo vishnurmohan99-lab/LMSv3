@@ -2,8 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { testsApi, testAttemptsApi, ApiError, type TestTree, type TestAttempt, type TestAttemptResult } from "@/lib/api";
+import { testsApi, testAttemptsApi, ApiError, type TestTree, type TestAttempt, type TestAttemptResult, type Leaderboard } from "@/lib/api";
 import ProgressRing from "@/components/ProgressRing";
+
+function initials(name: string) {
+  return name.trim().slice(0, 1).toUpperCase();
+}
 
 const btnStyle: React.CSSProperties = {
   padding: "11px 20px",
@@ -37,6 +41,7 @@ export default function StudentMockTestTakePage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [current, setCurrent] = useState(0);
   const [result, setResult] = useState<TestAttemptResult | null>(null);
+  const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const submittingRef = useRef(false);
 
@@ -81,6 +86,7 @@ export default function StudentMockTestTakePage() {
         const res = await testAttemptsApi.submit(attempt.id);
         setResult(res);
         setView("results");
+        testAttemptsApi.leaderboard(testId).then(setLeaderboard).catch(() => {});
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "Failed to submit attempt");
       } finally {
@@ -331,6 +337,43 @@ export default function StudentMockTestTakePage() {
             </div>
           </div>
         </div>
+
+        {leaderboard && leaderboard.top.length > 0 && (
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24, marginTop: 18 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Leaderboard</div>
+            <div style={{ display: "grid" }}>
+              {[...leaderboard.top, ...(leaderboard.me ? [leaderboard.me] : [])].map((entry, i) => {
+                const pctScore = entry.maxScore ? Math.round(((entry.score ?? 0) / entry.maxScore) * 100) : 0;
+                const highlight = entry.isMe && entry.rank > leaderboard.top.length;
+                return (
+                  <div
+                    key={entry.studentId}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      padding: "12px 10px",
+                      borderTop: i ? "1px solid var(--line)" : "none",
+                      background: highlight ? "var(--orange-soft)" : "transparent",
+                      margin: highlight ? "8px 0 0" : 0,
+                      borderRadius: highlight ? 10 : 0,
+                    }}
+                  >
+                    <span style={{ width: 30, fontSize: 13, fontWeight: 800, color: entry.rank <= 3 ? "var(--orange)" : "var(--ink3)" }}>#{entry.rank}</span>
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flex: "none" }}>
+                      {initials(entry.studentName)}
+                    </div>
+                    <div style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>
+                      {entry.studentName}
+                      {entry.isMe && <span style={{ color: "var(--ink3)", fontWeight: 600 }}> (You)</span>}
+                    </div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700 }}>{pctScore}%</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 26 }}>
           <button onClick={onStart} style={{ ...btnStyle, background: "var(--orange)", color: "#fff", border: "none" }}>

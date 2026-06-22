@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, uploadsApi, ApiError, type CourseTree } from "@/lib/api";
+import { coursesApi, uploadsApi, segmentsApi, messengerApi, ApiError, type CourseTree, type Segment, type CourseType, type CoursePrivateAccess } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmProvider";
+
+type StudentContact = { id: string; fullName: string; email: string; role: "STUDENT" | "FACULTY" | "ADMIN" };
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -59,6 +61,7 @@ export default function CourseAuthoringPage() {
   const confirm = useConfirm();
 
   const [course, setCourse] = useState<CourseTree | null>(null);
+  const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newChapterTitle, setNewChapterTitle] = useState("");
@@ -68,21 +71,64 @@ export default function CourseAuthoringPage() {
   const [editChapterBanner, setEditChapterBanner] = useState<File | null>(null);
   const [savingChapter, setSavingChapter] = useState(false);
 
+  const [privateAccess, setPrivateAccess] = useState<CoursePrivateAccess[]>([]);
+  const [students, setStudents] = useState<StudentContact[]>([]);
+  const [grantStudentId, setGrantStudentId] = useState("");
+  const [grantingAccess, setGrantingAccess] = useState(false);
+
   function load() {
     setLoading(true);
-    coursesApi
-      .get(courseId)
-      .then(setCourse)
+    Promise.all([coursesApi.get(courseId), segmentsApi.list()])
+      .then(([c, s]) => {
+        setCourse(c);
+        setSegments(s);
+      })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load course"))
       .finally(() => setLoading(false));
   }
 
   useEffect(load, [courseId]);
 
+  useEffect(() => {
+    messengerApi.listContacts().then((all) => setStudents(all.filter((u) => u.role === "STUDENT"))).catch(() => {});
+  }, []);
+
+  function loadPrivateAccess() {
+    coursesApi.listPrivateAccess(courseId).then(setPrivateAccess).catch(() => {});
+  }
+
+  useEffect(() => {
+    if (course?.type === "PRIVATE") loadPrivateAccess();
+  }, [course?.type, courseId]);
+
   async function onTogglePublished() {
     if (!course) return;
     const updated = await coursesApi.update(course.id, { published: !course.published });
     setCourse({ ...course, published: updated.published });
+  }
+
+  async function onChangeType(type: CourseType) {
+    if (!course) return;
+    const updated = await coursesApi.update(course.id, { type });
+    setCourse({ ...course, type: updated.type });
+  }
+
+  async function onGrantAccess() {
+    if (!grantStudentId) return;
+    setGrantingAccess(true);
+    try {
+      await coursesApi.grantPrivateAccess(courseId, grantStudentId);
+      setGrantStudentId("");
+      loadPrivateAccess();
+    } finally {
+      setGrantingAccess(false);
+    }
+  }
+
+  async function onRevokeAccess(studentId: string) {
+    if (!(await confirm({ message: "Revoke this student's access to the course?" }))) return;
+    await coursesApi.revokePrivateAccess(courseId, studentId);
+    loadPrivateAccess();
   }
 
   async function onAddChapter(e: React.FormEvent) {
@@ -150,6 +196,93 @@ export default function CourseAuthoringPage() {
           </button>
         </span>
       </div>
+
+      {(() => {
+        const courseSegment = segments.find((s) => s.id === course.segmentId);
+        const courseSubsegment = courseSegment?.subsegments.find((sub) => sub.id === course.subsegmentId);
+        const categoryLabel = courseSegment ? (courseSubsegment ? `${courseSegment.name} / ${courseSubsegment.name}` : courseSegment.name) : "Uncategorized";
+        return (
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              marginTop: 20,
+              padding: "12px 16px",
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--rm)",
+              alignItems: "center",
+              fontSize: 13,
+            }}
+          >
+            <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Category:</span>
+            <span style={{ color: courseSegment ? "var(--ink)" : "var(--ink3)" }}>{categoryLabel}</span>
+          </div>
+        );
+      })()}
+
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          marginTop: 10,
+          padding: "12px 16px",
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rm)",
+          alignItems: "center",
+          fontSize: 13,
+        }}
+      >
+        <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Type:</span>
+        <select value={course.type} onChange={(e) => onChangeType(e.target.value as CourseType)} style={{ ...inputStyle, width: 160 }}>
+          <option value="FREE">Free</option>
+          <option value="PAID">Paid</option>
+          <option value="PRIVATE">Private</option>
+        </select>
+        <span style={{ color: "var(--ink3)" }}>
+          {course.type === "FREE" && "Students in this segment can self-enroll."}
+          {course.type === "PAID" && "Requires admin enrollment or a subscription — no self-enroll."}
+          {course.type === "PRIVATE" && "Only whitelisted students below can access this course."}
+        </span>
+      </div>
+
+      {course.type === "PRIVATE" && (
+        <div style={{ marginTop: 14, padding: "16px 18px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>Private access</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+            <select value={grantStudentId} onChange={(e) => setGrantStudentId(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+              <option value="">Select a student to grant access…</option>
+              {students
+                .filter((s) => !privateAccess.some((a) => a.studentId === s.id))
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.fullName} ({s.email})
+                  </option>
+                ))}
+            </select>
+            <button onClick={onGrantAccess} disabled={!grantStudentId || grantingAccess} style={{ ...btnStyle, opacity: !grantStudentId || grantingAccess ? 0.7 : 1 }}>
+              {grantingAccess ? "Granting…" : "Grant access"}
+            </button>
+          </div>
+          {privateAccess.length === 0 ? (
+            <p style={{ color: "var(--ink3)", fontSize: 13 }}>No students have been granted access yet.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 8 }}>
+              {privateAccess.map((a) => (
+                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--bg)", borderRadius: 8, fontSize: 13 }}>
+                  <span>
+                    <b>{a.student.fullName}</b> <span style={{ color: "var(--ink3)" }}>{a.student.email}</span>
+                  </span>
+                  <button onClick={() => onRevokeAccess(a.studentId)} style={{ background: "none", border: "none", color: "var(--red)", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>
+                    Revoke
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={onAddChapter} style={{ display: "flex", gap: 10, marginTop: 28, marginBottom: 20 }}>
         <input

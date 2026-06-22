@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment } from "@/lib/api";
+import Modal from "@/components/Modal";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -12,18 +13,21 @@ const inputStyle: React.CSSProperties = {
   fontFamily: "inherit",
   outline: "none",
   background: "var(--card)",
+  width: "100%",
 };
 
 export default function FacultyCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState("");
   const [segmentId, setSegmentId] = useState("");
   const [subsegmentId, setSubsegmentId] = useState("");
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   function load() {
     setLoading(true);
@@ -40,17 +44,23 @@ export default function FacultyCoursesPage() {
 
   const selectedSegment = segments.find((s) => s.id === segmentId);
 
+  function openAdd() {
+    setTitle("");
+    setSegmentId("");
+    setSubsegmentId("");
+    setBannerFile(null);
+    setError(null);
+    setShowAddModal(true);
+  }
+
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCreating(true);
     try {
       const thumbnailUrl = bannerFile ? await uploadsApi.uploadFile(bannerFile) : undefined;
-      await coursesApi.create({ title, segmentId, subsegmentId: subsegmentId || undefined, thumbnailUrl });
-      setTitle("");
-      setSegmentId("");
-      setSubsegmentId("");
-      setBannerFile(null);
+      await coursesApi.create({ title, segmentId: segmentId || undefined, subsegmentId: subsegmentId || undefined, thumbnailUrl });
+      setShowAddModal(false);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create course");
@@ -59,69 +69,24 @@ export default function FacultyCoursesPage() {
     }
   }
 
+  function categoryLabel(course: Course): string {
+    if (!course.segmentId) return "Uncategorized";
+    const segment = segments.find((s) => s.id === course.segmentId);
+    if (!segment) return "Uncategorized";
+    const subsegment = segment.subsegments.find((sub) => sub.id === course.subsegmentId);
+    return subsegment ? `${segment.name} / ${subsegment.name}` : segment.name;
+  }
+
   return (
     <main className="fade-in" style={{ padding: "30px 40px 60px" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 22 }}>My Courses</div>
-
-      <form
-        onSubmit={onCreate}
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          marginBottom: 22,
-          background: "var(--card)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--rm)",
-          padding: 16,
-        }}
-      >
-        <input
-          required
-          placeholder="New course title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ ...inputStyle, flex: "1 1 200px" }}
-        />
-        <select
-          required
-          value={segmentId}
-          onChange={(e) => {
-            setSegmentId(e.target.value);
-            setSubsegmentId("");
-          }}
-          style={inputStyle}
-        >
-          <option value="" disabled>
-            Select segment
-          </option>
-          {segments.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        {selectedSegment && selectedSegment.subsegments.length > 0 && (
-          <select value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={inputStyle}>
-            <option value="">No sub-segment</option>
-            {selectedSegment.subsegments.map((sub) => (
-              <option key={sub.id} value={sub.id}>
-                {sub.name}
-              </option>
-            ))}
-          </select>
-        )}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)}
-          style={{ fontSize: 13, alignSelf: "center" }}
-          title="Banner image (optional)"
-        />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>My Courses</div>
         <button
-          type="submit"
-          disabled={creating}
+          onClick={openAdd}
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
             padding: "10px 18px",
             background: "var(--ink)",
             color: "#fff",
@@ -130,22 +95,94 @@ export default function FacultyCoursesPage() {
             fontSize: 14,
             fontWeight: 700,
             fontFamily: "inherit",
-            cursor: creating ? "default" : "pointer",
-            opacity: creating ? 0.7 : 1,
-            whiteSpace: "nowrap",
+            cursor: "pointer",
           }}
         >
-          {creating ? "Creating…" : "Create course"}
+          + Add course
         </button>
-      </form>
+      </div>
 
-      {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
+      {showAddModal && (
+        <Modal title="Add course" onClose={() => setShowAddModal(false)}>
+          <form onSubmit={onCreate}>
+            <input
+              required
+              autoFocus
+              placeholder="Course name"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={{ ...inputStyle, marginBottom: 12 }}
+            />
 
-      {!loading && segments.length === 0 && (
-        <p style={{ color: "var(--amber)", fontSize: 13, marginBottom: 16 }}>
-          No segments exist yet — ask an admin to create one before you can add new courses.
-        </p>
+            <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>Segment (optional)</label>
+            <select
+              value={segmentId}
+              onChange={(e) => {
+                setSegmentId(e.target.value);
+                setSubsegmentId("");
+              }}
+              style={{ ...inputStyle, marginTop: 8, marginBottom: 12 }}
+            >
+              <option value="">Uncategorized</option>
+              {segments.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
+            {selectedSegment && selectedSegment.subsegments.length > 0 && (
+              <>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>Subsegment (optional)</label>
+                <select value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={{ ...inputStyle, marginTop: 8, marginBottom: 12 }}>
+                  <option value="">None</option>
+                  {selectedSegment.subsegments.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Banner image (optional)</div>
+              <input type="file" accept="image/*" onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+            </div>
+
+            <p style={{ color: "var(--ink3)", fontSize: 12, marginBottom: 16 }}>
+              You can change the segment, or set the course to Paid/Private, any time from the course page.
+            </p>
+
+            <button
+              type="submit"
+              disabled={creating}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "11px 18px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: creating ? "default" : "pointer",
+                opacity: creating ? 0.7 : 1,
+              }}
+            >
+              {creating ? "Creating…" : "Create course"}
+            </button>
+            {error && <p style={{ color: "var(--red)", fontSize: 12.5, marginTop: 10 }}>{error}</p>}
+          </form>
+        </Modal>
       )}
+
+      {error && !showAddModal && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       {loading ? (
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
@@ -209,6 +246,7 @@ export default function FacultyCoursesPage() {
                     {c.published ? "Published" : "Draft"}
                   </span>
                 </div>
+                <div style={{ fontSize: 12, color: c.segmentId ? "var(--ink2)" : "var(--ink3)", marginTop: 6 }}>{categoryLabel(c)}</div>
                 {c.description && <p style={{ color: "var(--ink2)", fontSize: 13, marginTop: 6 }}>{c.description}</p>}
               </div>
             </Link>

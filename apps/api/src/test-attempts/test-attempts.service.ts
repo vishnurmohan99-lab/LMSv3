@@ -108,6 +108,48 @@ export class TestAttemptsService {
     });
   }
 
+  async getLeaderboard(user: JwtPayload, testId: string) {
+    const test = await this.prisma.test.findUnique({ where: { id: testId } });
+    if (!test) throw new NotFoundException('Test not found');
+
+    const attempts = await this.prisma.testAttempt.findMany({
+      where: { testId, status: 'SUBMITTED', score: { not: null } },
+      include: { student: { select: { id: true, fullName: true } } },
+      orderBy: { score: 'desc' },
+    });
+
+    const bestByStudent = new Map<string, (typeof attempts)[number]>();
+    for (const a of attempts) {
+      const existing = bestByStudent.get(a.studentId);
+      if (!existing || (a.score ?? 0) > (existing.score ?? 0)) bestByStudent.set(a.studentId, a);
+    }
+
+    const ranked = [...bestByStudent.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    const top = ranked.slice(0, 5).map((a, i) => ({
+      rank: i + 1,
+      studentId: a.studentId,
+      studentName: a.student.fullName,
+      score: a.score,
+      maxScore: a.maxScore,
+      isMe: a.studentId === user.sub,
+    }));
+
+    const myIndex = ranked.findIndex((a) => a.studentId === user.sub);
+    const me =
+      myIndex >= 0 && myIndex >= 5
+        ? {
+            rank: myIndex + 1,
+            studentId: user.sub,
+            studentName: ranked[myIndex].student.fullName,
+            score: ranked[myIndex].score,
+            maxScore: ranked[myIndex].maxScore,
+            isMe: true,
+          }
+        : null;
+
+    return { top, me, totalRanked: ranked.length };
+  }
+
   private async requireOwnAttempt(user: JwtPayload, attemptId: string) {
     const attempt = await this.prisma.testAttempt.findUnique({ where: { id: attemptId }, include: { test: true } });
     if (!attempt) throw new NotFoundException('Attempt not found');
