@@ -1,5 +1,5 @@
-import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { CourseType } from '../../../generated/prisma/client';
+import { IsBoolean, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { CourseType, DripType } from '../../../generated/prisma/client';
 
 export class CreateCourseDto {
   @IsString()
@@ -25,4 +25,12 @@ export class CreateCourseDto {
   @IsOptional()
   @IsEnum(CourseType)
   type?: CourseType;
+
+  @IsOptional()
+  @IsEnum(DripType)
+  dripType?: DripType;
+
+  @IsOptional()
+  @IsBoolean()
+  published?: boolean;
 }

@@ -199,8 +199,16 @@ export const coursesApi = {
     return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string; thumbnailUrl?: string; segmentId?: string; subsegmentId?: string; type?: CourseType }) =>
-    request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
+  create: (data: {
+    title: string;
+    description?: string;
+    thumbnailUrl?: string;
+    segmentId?: string;
+    subsegmentId?: string;
+    type?: CourseType;
+    dripType?: DripType;
+    published?: boolean;
+  }) => request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
     data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType'>>,

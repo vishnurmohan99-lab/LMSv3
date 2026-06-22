@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment } from "@/lib/api";
+import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment, type CourseType, type DripType } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 
@@ -102,6 +102,9 @@ export default function AdminCoursesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState("");
   const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [newType, setNewType] = useState<CourseType>("FREE");
+  const [newDripType, setNewDripType] = useState<DripType>("NONE");
+  const [newPublished, setNewPublished] = useState(false);
   const [creating, setCreating] = useState(false);
 
   function load() {
@@ -134,15 +137,22 @@ export default function AdminCoursesPage() {
     });
   }, [courses, search, statusFilter]);
 
+  function openAdd() {
+    setTitle("");
+    setBannerFile(null);
+    setNewType("FREE");
+    setNewDripType("NONE");
+    setNewPublished(false);
+    setShowAddModal(true);
+  }
+
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCreating(true);
     try {
       const thumbnailUrl = bannerFile ? await uploadsApi.uploadFile(bannerFile) : undefined;
-      await coursesApi.create({ title, thumbnailUrl });
-      setTitle("");
-      setBannerFile(null);
+      await coursesApi.create({ title, thumbnailUrl, type: newType, dripType: newDripType, published: newPublished });
       setShowAddModal(false);
       load();
     } catch (err) {
@@ -157,7 +167,7 @@ export default function AdminCoursesPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Courses</div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={openAdd}
           style={{
             display: "flex",
             alignItems: "center",
@@ -195,8 +205,32 @@ export default function AdminCoursesPage() {
               </div>
               <input type="file" accept="image/*" onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
             </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Type</div>
+              <select value={newType} onChange={(e) => setNewType(e.target.value as CourseType)} style={{ ...inputStyle, width: "100%" }}>
+                <option value="FREE">Free</option>
+                <option value="PAID">Paid</option>
+                <option value="PRIVATE">Private</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Dripping</div>
+              <select value={newDripType} onChange={(e) => setNewDripType(e.target.value as DripType)} style={{ ...inputStyle, width: "100%" }}>
+                <option value="NONE">Off — all chapters open</option>
+                <option value="CALENDAR">Calendar — unlock on a fixed date</option>
+                <option value="ENROLLMENT_RELATIVE">Enrollment-relative — unlock N days after joining</option>
+              </select>
+            </div>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontSize: 13, fontWeight: 700, color: "var(--ink2)", cursor: "pointer" }}>
+              <input type="checkbox" checked={newPublished} onChange={(e) => setNewPublished(e.target.checked)} />
+              Publish immediately
+            </label>
+
             <p style={{ color: "var(--ink3)", fontSize: 12, marginBottom: 16 }}>
-              Courses start uncategorized — assign them to a segment or sub-segment from the Segments page.
+              Courses start uncategorized — assign them to a segment or sub-segment from the Segments page. All of this can be changed later from the course page.
             </p>
             <button
               type="submit"
