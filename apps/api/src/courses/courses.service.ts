@@ -114,20 +114,31 @@ export class CoursesService {
     const canView = await this.canViewCourseContent(course, user);
     if (!canView) throw new ForbiddenException('You do not have access to this course');
 
+    const bypassDripping = isOwnerOrAdmin(user, course.facultyId);
+    const enrolledAt = bypassDripping ? null : await this.getEnrollmentDate(course.id, user);
+
     const chapters = await Promise.all(
-      course.chapters.map(async (chapter) => ({
-        ...chapter,
-        bannerUrl: chapter.bannerUrl ? await this.uploads.presignDownload(chapter.bannerUrl) : null,
-        lessons: await Promise.all(
-          chapter.lessons.map(async (lesson) => ({
-            ...lesson,
-            contentUrl:
-              lesson.contentUrl && (lesson.type === LessonType.VIDEO || lesson.type === LessonType.PDF)
-                ? await this.uploads.presignDownload(lesson.contentUrl)
-                : lesson.contentUrl,
-          })),
-        ),
-      })),
+      course.chapters.map(async (chapter) => {
+        const { unlocked, unlocksAt } = bypassDripping
+          ? { unlocked: true, unlocksAt: null as Date | null }
+          : this.resolveChapterUnlock(course, chapter, enrolledAt);
+
+        return {
+          ...chapter,
+          unlocked,
+          unlocksAt,
+          bannerUrl: chapter.bannerUrl ? await this.uploads.presignDownload(chapter.bannerUrl) : null,
+          lessons: await Promise.all(
+            chapter.lessons.map(async (lesson) => ({
+              ...lesson,
+              contentUrl:
+                unlocked && lesson.contentUrl && (lesson.type === LessonType.VIDEO || lesson.type === LessonType.PDF)
+                  ? await this.uploads.presignDownload(lesson.contentUrl)
+                  : null,
+            })),
+          ),
+        };
+      }),
     );
 
     return {
@@ -135,6 +146,40 @@ export class CoursesService {
       thumbnailUrl: course.thumbnailUrl ? await this.uploads.presignDownload(course.thumbnailUrl) : null,
       chapters,
     };
+  }
+
+  private async getEnrollmentDate(courseId: string, user: JwtPayload): Promise<Date | null> {
+    if (user.role !== 'STUDENT') return null;
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { studentId_courseId: { studentId: user.sub, courseId } },
+      select: { enrolledAt: true },
+    });
+    return enrollment?.enrolledAt ?? null;
+  }
+
+  private resolveChapterUnlock(
+    course: { dripType: string },
+    chapter: { unlockAt: Date | null; unlockAfterDays: number | null },
+    enrolledAt: Date | null,
+  ): { unlocked: boolean; unlocksAt: Date | null } {
+    if (course.dripType === 'CALENDAR') {
+      if (!chapter.unlockAt) return { unlocked: true, unlocksAt: null };
+      return { unlocked: new Date() >= chapter.unlockAt, unlocksAt: chapter.unlockAt };
+    }
+    if (course.dripType === 'ENROLLMENT_RELATIVE') {
+      if (!chapter.unlockAfterDays || !enrolledAt) return { unlocked: true, unlocksAt: null };
+      const unlocksAt = new Date(enrolledAt.getTime() + chapter.unlockAfterDays * 24 * 60 * 60 * 1000);
+      return { unlocked: new Date() >= unlocksAt, unlocksAt };
+    }
+    return { unlocked: true, unlocksAt: null };
+  }
+
+  private async isChapterUnlockedForUser(chapterId: string, user: JwtPayload): Promise<boolean> {
+    const chapter = await this.prisma.chapter.findUnique({ where: { id: chapterId }, include: { course: true } });
+    if (!chapter) throw new NotFoundException('Chapter not found');
+    if (isOwnerOrAdmin(user, chapter.course.facultyId)) return true;
+    const enrolledAt = await this.getEnrollmentDate(chapter.course.id, user);
+    return this.resolveChapterUnlock(chapter.course, chapter, enrolledAt).unlocked;
   }
 
   async createCourse(user: JwtPayload, dto: CreateCourseDto) {
@@ -223,13 +268,25 @@ export class CoursesService {
   async createChapter(courseId: string, user: JwtPayload, dto: CreateChapterDto) {
     const course = await this.requireCourse(courseId);
     this.assertOwnership(user, course.facultyId);
-    return this.prisma.chapter.create({ data: { title: dto.title, order: dto.order ?? 0, bannerUrl: dto.bannerUrl, courseId } });
+    return this.prisma.chapter.create({
+      data: {
+        title: dto.title,
+        order: dto.order ?? 0,
+        bannerUrl: dto.bannerUrl,
+        unlockAt: dto.unlockAt ? new Date(dto.unlockAt) : undefined,
+        unlockAfterDays: dto.unlockAfterDays,
+        courseId,
+      },
+    });
   }
 
   async updateChapter(id: string, user: JwtPayload, dto: UpdateChapterDto) {
     const chapter = await this.requireChapterWithCourse(id);
     this.assertOwnership(user, chapter.course.facultyId);
-    return this.prisma.chapter.update({ where: { id }, data: dto });
+    return this.prisma.chapter.update({
+      where: { id },
+      data: { ...dto, unlockAt: dto.unlockAt === undefined ? undefined : dto.unlockAt ? new Date(dto.unlockAt) : null },
+    });
   }
 
   async deleteChapter(id: string, user: JwtPayload) {
@@ -388,6 +445,9 @@ export class CoursesService {
     const lesson = await this.requireLessonWithCourse(lessonId);
     const canView = await this.canViewCourseContent(lesson.chapter.course, user);
     if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+    if (!(await this.isChapterUnlockedForUser(lesson.chapterId, user))) {
+      throw new ForbiddenException('This chapter is not unlocked yet');
+    }
 
     return this.prisma.lessonNote.findUnique({ where: { lessonId } });
   }
@@ -397,6 +457,9 @@ export class CoursesService {
     const lesson = await this.requireLessonWithCourse(lessonId);
     const canView = await this.canViewCourseContent(lesson.chapter.course, user);
     if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+    if (!(await this.isChapterUnlockedForUser(lesson.chapterId, user))) {
+      throw new ForbiddenException('This chapter is not unlocked yet');
+    }
     if (!lesson.askMeEnabled) {
       throw new BadRequestException('Ask Me is not enabled for this lesson');
     }
@@ -445,6 +508,9 @@ export class CoursesService {
     const lesson = await this.requireLessonWithCourse(lessonId);
     const canView = await this.canViewCourseContent(lesson.chapter.course, user);
     if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+    if (!(await this.isChapterUnlockedForUser(lesson.chapterId, user))) {
+      throw new ForbiddenException('This chapter is not unlocked yet');
+    }
 
     const flashcards = await this.prisma.flashcard.findMany({
       where: { lessonId },
@@ -467,6 +533,9 @@ export class CoursesService {
     const flashcard = await this.requireFlashcardWithCourse(flashcardId);
     const canView = await this.canViewCourseContent(flashcard.lesson.chapter.course, user);
     if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+    if (!(await this.isChapterUnlockedForUser(flashcard.lesson.chapterId, user))) {
+      throw new ForbiddenException('This chapter is not unlocked yet');
+    }
 
     return this.prisma.flashcardProgress.upsert({
       where: { studentId_flashcardId: { studentId: user.sub, flashcardId } },

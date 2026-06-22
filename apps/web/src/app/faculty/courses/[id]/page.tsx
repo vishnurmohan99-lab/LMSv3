@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, uploadsApi, segmentsApi, messengerApi, ApiError, type CourseTree, type Segment, type CourseType, type CoursePrivateAccess } from "@/lib/api";
+import { coursesApi, uploadsApi, segmentsApi, messengerApi, ApiError, type CourseTree, type Segment, type CourseType, type DripType, type CoursePrivateAccess } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmProvider";
 
 type StudentContact = { id: string; fullName: string; email: string; role: "STUDENT" | "FACULTY" | "ADMIN" };
@@ -69,6 +69,8 @@ export default function CourseAuthoringPage() {
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [editChapterTitle, setEditChapterTitle] = useState("");
   const [editChapterBanner, setEditChapterBanner] = useState<File | null>(null);
+  const [editUnlockAt, setEditUnlockAt] = useState("");
+  const [editUnlockAfterDays, setEditUnlockAfterDays] = useState("");
   const [savingChapter, setSavingChapter] = useState(false);
 
   const [privateAccess, setPrivateAccess] = useState<CoursePrivateAccess[]>([]);
@@ -113,6 +115,12 @@ export default function CourseAuthoringPage() {
     setCourse({ ...course, type: updated.type });
   }
 
+  async function onChangeDripType(dripType: DripType) {
+    if (!course) return;
+    const updated = await coursesApi.update(course.id, { dripType });
+    setCourse({ ...course, dripType: updated.dripType });
+  }
+
   async function onGrantAccess() {
     if (!grantStudentId) return;
     setGrantingAccess(true);
@@ -147,10 +155,12 @@ export default function CourseAuthoringPage() {
     load();
   }
 
-  function openEditChapter(id: string, title: string) {
+  function openEditChapter(id: string, title: string, unlockAt: string | null, unlockAfterDays: number | null) {
     setEditingChapterId(id);
     setEditChapterTitle(title);
     setEditChapterBanner(null);
+    setEditUnlockAt(unlockAt ? unlockAt.slice(0, 16) : "");
+    setEditUnlockAfterDays(unlockAfterDays != null ? String(unlockAfterDays) : "");
   }
 
   async function onSaveChapterEdit(e: React.FormEvent) {
@@ -159,7 +169,12 @@ export default function CourseAuthoringPage() {
     setSavingChapter(true);
     try {
       const bannerUrl = editChapterBanner ? await uploadsApi.uploadFile(editChapterBanner) : undefined;
-      await coursesApi.updateChapter(editingChapterId, { title: editChapterTitle, bannerUrl });
+      await coursesApi.updateChapter(editingChapterId, {
+        title: editChapterTitle,
+        bannerUrl,
+        unlockAt: editUnlockAt ? new Date(editUnlockAt).toISOString() : null,
+        unlockAfterDays: editUnlockAfterDays ? Number(editUnlockAfterDays) : null,
+      });
       setEditingChapterId(null);
       load();
     } finally {
@@ -245,6 +260,28 @@ export default function CourseAuthoringPage() {
           {course.type === "PAID" && "Requires admin enrollment or a subscription — no self-enroll."}
           {course.type === "PRIVATE" && "Only whitelisted students below can access this course."}
         </span>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          marginTop: 10,
+          padding: "12px 16px",
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rm)",
+          alignItems: "center",
+          fontSize: 13,
+        }}
+      >
+        <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Dripping:</span>
+        <select value={course.dripType} onChange={(e) => onChangeDripType(e.target.value as DripType)} style={{ ...inputStyle, width: 220 }}>
+          <option value="NONE">Off — all chapters open</option>
+          <option value="CALENDAR">Calendar — unlock on a fixed date</option>
+          <option value="ENROLLMENT_RELATIVE">Enrollment-relative — unlock N days after joining</option>
+        </select>
+        <span style={{ color: "var(--ink3)" }}>Set per-chapter unlock timing by editing each chapter below.</span>
       </div>
 
       {course.type === "PRIVATE" && (
@@ -344,6 +381,18 @@ export default function CourseAuthoringPage() {
                     style={inputStyle}
                   />
                   <input type="file" accept="image/*" onChange={(e) => setEditChapterBanner(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+                  {course.dripType === "CALENDAR" && (
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Unlock date (blank = always open)</div>
+                      <input type="datetime-local" value={editUnlockAt} onChange={(e) => setEditUnlockAt(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+                    </div>
+                  )}
+                  {course.dripType === "ENROLLMENT_RELATIVE" && (
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Unlock N days after enrolling (blank = always open)</div>
+                      <input type="number" min={0} value={editUnlockAfterDays} onChange={(e) => setEditUnlockAfterDays(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 8 }}>
                     <button type="submit" disabled={savingChapter} style={{ ...btnStyle, opacity: savingChapter ? 0.7 : 1 }}>
                       {savingChapter ? "Saving…" : "Save"}
@@ -366,7 +415,7 @@ export default function CourseAuthoringPage() {
                         <EyeIcon />
                       </Link>
                       <button
-                        onClick={() => openEditChapter(chapter.id, chapter.title)}
+                        onClick={() => openEditChapter(chapter.id, chapter.title, chapter.unlockAt, chapter.unlockAfterDays)}
                         title="Edit chapter"
                         style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                       >
@@ -385,6 +434,14 @@ export default function CourseAuthoringPage() {
                   <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 4 }}>
                     {chapter.lessons.length} lesson{chapter.lessons.length === 1 ? "" : "s"}
                   </div>
+                  {course.dripType === "CALENDAR" && chapter.unlockAt && (
+                    <div style={{ fontSize: 12, color: "var(--orange)", marginTop: 4 }}>Unlocks {new Date(chapter.unlockAt).toLocaleString()}</div>
+                  )}
+                  {course.dripType === "ENROLLMENT_RELATIVE" && chapter.unlockAfterDays != null && (
+                    <div style={{ fontSize: 12, color: "var(--orange)", marginTop: 4 }}>
+                      Unlocks {chapter.unlockAfterDays} day{chapter.unlockAfterDays === 1 ? "" : "s"} after enrolling
+                    </div>
+                  )}
                 </>
               )}
 

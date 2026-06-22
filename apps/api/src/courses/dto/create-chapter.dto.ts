@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
 
 export class CreateChapterDto {
   @IsString()
@@ -12,4 +12,13 @@ export class CreateChapterDto {
   @IsOptional()
   @IsString()
   bannerUrl?: string;
+
+  @IsOptional()
+  @IsDateString()
+  unlockAt?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  unlockAfterDays?: number;
 }

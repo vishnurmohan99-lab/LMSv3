@@ -76,6 +76,12 @@ enum CourseType {
   PRIVATE
 }
 
+enum DripType {
+  NONE
+  CALENDAR
+  ENROLLMENT_RELATIVE
+}
+
 model Course {
   id           String     @id @default(uuid())
   title        String     @unique
@@ -83,6 +89,7 @@ model Course {
   thumbnailUrl String?
   published    Boolean    @default(false)
   type         CourseType @default(FREE)
+  dripType     DripType   @default(NONE)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -154,10 +161,12 @@ model Subsegment {
 }
 
 model Chapter {
-  id        String  @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
-  order     Int     @default(0)
+  order     Int       @default(0)
   bannerUrl String?
+  unlockAt        DateTime?
+  unlockAfterDays Int?
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)

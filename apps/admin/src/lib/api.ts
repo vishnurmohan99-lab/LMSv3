@@ -121,10 +121,15 @@ export interface Chapter {
   title: string;
   order: number;
   bannerUrl: string | null;
+  unlockAt: string | null;
+  unlockAfterDays: number | null;
+  unlocked?: boolean;
+  unlocksAt?: string | null;
   lessons: Lesson[];
 }
 
 export type CourseType = 'FREE' | 'PAID' | 'PRIVATE';
+export type DripType = 'NONE' | 'CALENDAR' | 'ENROLLMENT_RELATIVE';
 
 export interface Course {
   id: string;
@@ -133,6 +138,7 @@ export interface Course {
   thumbnailUrl: string | null;
   published: boolean;
   type: CourseType;
+  dripType: DripType;
   facultyId: string;
   createdAt: string;
   updatedAt: string;
@@ -197,7 +203,7 @@ export const coursesApi = {
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type'>>,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType'>>,
   ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
 
@@ -207,9 +213,9 @@ export const coursesApi = {
   revokePrivateAccess: (courseId: string, studentId: string) =>
     request<{ success: boolean }>(`/courses/${courseId}/private-access/${studentId}`, { method: 'DELETE' }),
 
-  createChapter: (courseId: string, data: { title: string; order?: number; bannerUrl?: string }) =>
+  createChapter: (courseId: string, data: { title: string; order?: number; bannerUrl?: string; unlockAt?: string; unlockAfterDays?: number }) =>
     request<Chapter>(`/courses/${courseId}/chapters`, { method: 'POST', body: JSON.stringify(data) }),
-  updateChapter: (id: string, data: { title?: string; order?: number; bannerUrl?: string }) =>
+  updateChapter: (id: string, data: { title?: string; order?: number; bannerUrl?: string; unlockAt?: string | null; unlockAfterDays?: number | null }) =>
     request<Chapter>(`/chapters/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeChapter: (id: string) => request<{ success: boolean }>(`/chapters/${id}`, { method: 'DELETE' }),
 

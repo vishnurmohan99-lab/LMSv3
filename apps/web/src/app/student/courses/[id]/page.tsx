@@ -222,8 +222,9 @@ export default function StudentCoursePlayerPage() {
       .get(courseId)
       .then((c) => {
         setCourse(c);
-        setSelectedLessonId(c.chapters[0]?.lessons[0]?.id ?? null);
-        setExpandedChapterId(c.chapters[0]?.id ?? null);
+        const firstUnlocked = c.chapters.find((ch) => ch.unlocked !== false) ?? c.chapters[0];
+        setSelectedLessonId(firstUnlocked?.lessons[0]?.id ?? null);
+        setExpandedChapterId(firstUnlocked?.id ?? null);
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 403) {
@@ -332,6 +333,7 @@ export default function StudentCoursePlayerPage() {
 
         {course.chapters.map((chapter: Chapter) => {
           const open = expandedChapterId === chapter.id;
+          const locked = chapter.unlocked === false;
           return (
             <div key={chapter.id} style={{ borderBottom: "1px solid var(--line2)" }}>
               <button
@@ -347,6 +349,7 @@ export default function StudentCoursePlayerPage() {
                   cursor: "pointer",
                   fontFamily: "inherit",
                   textAlign: "left",
+                  opacity: locked ? 0.6 : 1,
                 }}
               >
                 <div
@@ -362,13 +365,26 @@ export default function StudentCoursePlayerPage() {
                     flex: "none",
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M2 7h20M2 12h20M2 17h12" />
-                  </svg>
+                  {locked ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <rect x="5" y="11" width="14" height="9" rx="2" />
+                      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M2 7h20M2 12h20M2 17h12" />
+                    </svg>
+                  )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{chapter.title}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 1 }}>{chapter.lessons.length} lessons</div>
+                  <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 1 }}>
+                    {locked
+                      ? chapter.unlocksAt
+                        ? `Unlocks ${new Date(chapter.unlocksAt).toLocaleDateString()}`
+                        : "Locked"
+                      : `${chapter.lessons.length} lessons`}
+                  </div>
                 </div>
                 <svg
                   width="16"
@@ -385,49 +401,56 @@ export default function StudentCoursePlayerPage() {
 
               {open && (
                 <div className="fade-in-up" style={{ paddingBottom: 6 }}>
-                  {chapter.lessons.map((lesson) => {
-                    const active = lesson.id === selectedLessonId;
-                    const color = active ? "var(--orange)" : "var(--ink3)";
-                    return (
-                      <button
-                        key={lesson.id}
-                        onClick={() => setSelectedLessonId(lesson.id)}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 11,
-                          padding: "10px 18px 10px 30px",
-                          border: "none",
-                          background: active ? "var(--orange-soft)" : "transparent",
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                          textAlign: "left",
-                          borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
-                        }}
-                      >
-                        <span style={{ color, display: "flex" }}>
-                          <LessonIcon type={lesson.type} color={color} />
-                        </span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: 12.5,
-                              fontWeight: active ? 700 : 500,
-                              color: active ? "var(--ink)" : "var(--ink2)",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {lesson.title}
+                  {locked ? (
+                    <div style={{ padding: "8px 18px 14px 30px", fontSize: 12, color: "var(--ink3)" }}>
+                      This chapter is locked
+                      {chapter.unlocksAt ? ` until ${new Date(chapter.unlocksAt).toLocaleString()}` : ""}.
+                    </div>
+                  ) : (
+                    chapter.lessons.map((lesson) => {
+                      const active = lesson.id === selectedLessonId;
+                      const color = active ? "var(--orange)" : "var(--ink3)";
+                      return (
+                        <button
+                          key={lesson.id}
+                          onClick={() => setSelectedLessonId(lesson.id)}
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 11,
+                            padding: "10px 18px 10px 30px",
+                            border: "none",
+                            background: active ? "var(--orange-soft)" : "transparent",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            textAlign: "left",
+                            borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
+                          }}
+                        >
+                          <span style={{ color, display: "flex" }}>
+                            <LessonIcon type={lesson.type} color={color} />
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontSize: 12.5,
+                                fontWeight: active ? 700 : 500,
+                                color: active ? "var(--ink)" : "var(--ink2)",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {lesson.title}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>{lesson.type}</div>
                           </div>
-                          <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>{lesson.type}</div>
-                        </div>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
-                      </button>
-                    );
-                  })}
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               )}
             </div>
