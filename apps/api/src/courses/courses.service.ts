@@ -178,7 +178,7 @@ export class CoursesService {
     return { unlocked: true, unlocksAt: null };
   }
 
-  private async isChapterUnlockedForUser(chapterId: string, user: JwtPayload): Promise<boolean> {
+  async isChapterUnlockedForUser(chapterId: string, user: JwtPayload): Promise<boolean> {
     const chapter = await this.prisma.chapter.findUnique({ where: { id: chapterId }, include: { course: true } });
     if (!chapter) throw new NotFoundException('Chapter not found');
     if (isOwnerOrAdmin(user, chapter.course.facultyId)) return true;

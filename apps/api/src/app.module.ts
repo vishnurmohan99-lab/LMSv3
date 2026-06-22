@@ -24,6 +24,7 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { ForumModule } from './forum/forum.module';
 import { ReportsModule } from './reports/reports.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     ForumModule,
     ReportsModule,
     SubscriptionsModule,
+    CalendarModule,
   ],
   controllers: [AppController],
   providers: [AppService],

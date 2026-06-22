@@ -138,7 +138,7 @@ function SearchIcon() {
 const navItems = [
   { href: "/student/dashboard", label: "Overview", Icon: OverviewIcon, enabled: true },
   { href: "/student/courses", label: "Course", Icon: CourseIcon, enabled: true },
-  { href: "/student/calendar", label: "Calendar", Icon: CalendarIcon, enabled: false },
+  { href: "/student/calendar", label: "Calendar", Icon: CalendarIcon, enabled: true },
   { href: "/student/messages", label: "Messages", Icon: MessagesIcon, enabled: true },
   { href: "/student/forum", label: "Forum", Icon: ForumIcon, enabled: true },
   { href: "/student/feedback", label: "Feedback", Icon: FeedbackIcon, enabled: true },

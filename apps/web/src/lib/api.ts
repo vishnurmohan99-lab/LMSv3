@@ -775,6 +775,24 @@ export const mentorApi = {
   cancelBooking: (id: string) => request<{ success: boolean }>(`/mentor/bookings/${id}`, { method: 'DELETE' }),
 };
 
+export type CalendarEventType = 'LIVE_LESSON' | 'MENTOR_SESSION';
+
+export interface CalendarEvent {
+  id: string;
+  type: CalendarEventType;
+  title: string;
+  date: string;
+  courseId?: string;
+  courseTitle?: string;
+  lessonId?: string;
+  otherPartyName?: string;
+}
+
+export const calendarApi = {
+  student: () => request<CalendarEvent[]>('/calendar/student'),
+  faculty: () => request<CalendarEvent[]>('/calendar/faculty'),
+};
+
 export type FeedbackTargetType = 'COURSE' | 'FACULTY' | 'MENTOR' | 'SYSTEM';
 export type FeedbackAssignType = 'BATCH' | 'SELECTED';
 export type FeedbackQuestionType = 'RATING' | 'TEXT';
