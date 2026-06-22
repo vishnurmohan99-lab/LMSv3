@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { reportsApi, ApiError, type AdminReport } from "@/lib/api";
 
+const BAR_TRACK_HEIGHT = 120;
+
 function BarChart({ data, labelKey, valueKey }: { data: Record<string, string | number>[]; labelKey: string; valueKey: string }) {
   const max = Math.max(1, ...data.map((d) => Number(d[valueKey])));
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 14, height: 160, padding: "0 4px" }}>
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 14, padding: "0 4px" }}>
       {data.map((d, i) => {
         const value = Number(d[valueKey]);
-        const heightPct = (value / max) * 100;
+        const barHeight = Math.max((value / max) * BAR_TRACK_HEIGHT, 3);
         return (
           <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>{value}</div>
@@ -17,12 +19,21 @@ function BarChart({ data, labelKey, valueKey }: { data: Record<string, string | 
               style={{
                 width: "100%",
                 maxWidth: 48,
-                height: `${Math.max(heightPct, 2)}%`,
-                background: value > 0 ? "var(--orange)" : "var(--line)",
-                borderRadius: "8px 8px 0 0",
-                transition: "height .3s",
+                height: BAR_TRACK_HEIGHT,
+                display: "flex",
+                alignItems: "flex-end",
               }}
-            />
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: barHeight,
+                  background: value > 0 ? "var(--orange)" : "var(--line)",
+                  borderRadius: "8px 8px 0 0",
+                  transition: "height .3s",
+                }}
+              />
+            </div>
             <div style={{ fontSize: 11, color: "var(--ink3)", fontWeight: 600 }}>{d[labelKey]}</div>
           </div>
         );
