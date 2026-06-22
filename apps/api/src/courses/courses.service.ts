@@ -38,9 +38,13 @@ export class CoursesService {
     let courses;
     if (user.role === 'STUDENT') {
       const me = await this.prisma.user.findUnique({ where: { id: user.sub }, select: { segmentId: true, subsegmentId: true } });
-      const segmentMatch = me?.segmentId
-        ? { OR: [{ segmentId: me.segmentId }, ...(me.subsegmentId ? [{ subsegmentId: me.subsegmentId }] : [])] }
-        : {};
+      // A course tagged with a subsegment only matches students in that exact subsegment — matching by
+      // parent segmentId alone would also surface every sibling subsegment's courses (they share segmentId).
+      const segmentMatch = me?.subsegmentId
+        ? { subsegmentId: me.subsegmentId }
+        : me?.segmentId
+          ? { segmentId: me.segmentId, subsegmentId: null }
+          : {};
       courses = await this.prisma.course.findMany({
         where: {
           published: true,

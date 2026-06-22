@@ -346,31 +346,55 @@ export default function SegmentDetailPage() {
         )}
       </section>
 
-      {/* Direct courses */}
-      <section
-        style={{
-          background: "var(--card)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--rl)",
-          padding: 20,
-        }}
-      >
-        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>
-          Courses directly in {segment.name}
-        </div>
+      {/* Direct courses — only when this segment has no sub-segments. Once sub-segments
+          exist, courses must be assigned to one of them instead of the parent segment. */}
+      {segment.subsegments.length === 0 ? (
+        <section
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--rl)",
+            padding: 20,
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>
+            Courses in {segment.name}
+          </div>
 
-        {directCourses.length === 0 ? (
-          <p style={{ color: "var(--ink2)", fontSize: 13.5, marginBottom: 4 }}>No courses assigned directly yet.</p>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginBottom: 12 }}>
+          {directCourses.length === 0 ? (
+            <p style={{ color: "var(--ink2)", fontSize: 13.5, marginBottom: 4 }}>No courses assigned yet.</p>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginBottom: 12 }}>
+              {directCourses.map((c) => (
+                <CourseRow key={c.id} course={c} onRemove={() => onRemoveFromCategory(c.id)} />
+              ))}
+            </div>
+          )}
+
+          <AddCoursePicker allCourses={allCourses} onPick={onAssignToSegment} />
+        </section>
+      ) : directCourses.length > 0 ? (
+        <section
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--rl)",
+            padding: 20,
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
+            Courses directly in {segment.name}
+          </div>
+          <p style={{ color: "var(--ink3)", fontSize: 12.5, marginBottom: 14 }}>
+            This segment now has sub-segments — move these into a sub-segment above. New courses can only be added to a sub-segment.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 }}>
             {directCourses.map((c) => (
               <CourseRow key={c.id} course={c} onRemove={() => onRemoveFromCategory(c.id)} />
             ))}
           </div>
-        )}
-
-        <AddCoursePicker allCourses={allCourses} onPick={onAssignToSegment} />
-      </section>
+        </section>
+      ) : null}
     </div>
   );
 }

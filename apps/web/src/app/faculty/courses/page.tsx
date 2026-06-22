@@ -53,8 +53,12 @@ export default function FacultyCoursesPage() {
     setShowAddModal(true);
   }
 
+  const requiresSubsegment = !!selectedSegment && selectedSegment.subsegments.length > 0;
+  const canCreate = title.trim().length > 0 && (!requiresSubsegment || !!subsegmentId);
+
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (!canCreate) return;
     setError(null);
     setCreating(true);
     try {
@@ -131,12 +135,12 @@ export default function FacultyCoursesPage() {
               ))}
             </select>
 
-            {selectedSegment && selectedSegment.subsegments.length > 0 && (
+            {requiresSubsegment && (
               <>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>Subsegment (optional)</label>
-                <select value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={{ ...inputStyle, marginTop: 8, marginBottom: 12 }}>
-                  <option value="">None</option>
-                  {selectedSegment.subsegments.map((sub) => (
+                <label style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>Subsegment</label>
+                <select required value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={{ ...inputStyle, marginTop: 8, marginBottom: 12 }}>
+                  <option value="">Select subsegment…</option>
+                  {selectedSegment!.subsegments.map((sub) => (
                     <option key={sub.id} value={sub.id}>
                       {sub.name}
                     </option>
@@ -156,7 +160,7 @@ export default function FacultyCoursesPage() {
 
             <button
               type="submit"
-              disabled={creating}
+              disabled={creating || !canCreate}
               style={{
                 width: "100%",
                 display: "flex",
@@ -171,8 +175,8 @@ export default function FacultyCoursesPage() {
                 fontSize: 14,
                 fontWeight: 700,
                 fontFamily: "inherit",
-                cursor: creating ? "default" : "pointer",
-                opacity: creating ? 0.7 : 1,
+                cursor: creating || !canCreate ? "default" : "pointer",
+                opacity: creating || !canCreate ? 0.7 : 1,
               }}
             >
               {creating ? "Creating…" : "Create course"}

@@ -67,6 +67,8 @@ export default function ProfileForm() {
   if (!profile) return <p style={{ color: "var(--red)" }}>{error ?? "Could not load profile"}</p>;
 
   const selectedSegment = segments.find((s) => s.id === segmentId);
+  const requiresSubsegment = !!selectedSegment && selectedSegment.subsegments.length > 0;
+  const canSave = profile.role !== "STUDENT" || !requiresSubsegment || !!subsegmentId;
 
   return (
     <div
@@ -109,9 +111,9 @@ export default function ProfileForm() {
 
             {selectedSegment && selectedSegment.subsegments.length > 0 && (
               <>
-                <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>Subsegment / Stream (optional)</label>
-                <select value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={inputStyle}>
-                  <option value="">None</option>
+                <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>Subsegment / Stream</label>
+                <select required value={subsegmentId} onChange={(e) => setSubsegmentId(e.target.value)} style={inputStyle}>
+                  <option value="">Select…</option>
                   {selectedSegment.subsegments.map((sub) => (
                     <option key={sub.id} value={sub.id}>
                       {sub.name}
@@ -131,7 +133,7 @@ export default function ProfileForm() {
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || !canSave}
           style={{
             padding: "11px 20px",
             background: "var(--ink)",
@@ -141,8 +143,8 @@ export default function ProfileForm() {
             fontSize: 14,
             fontWeight: 700,
             fontFamily: "inherit",
-            cursor: saving ? "default" : "pointer",
-            opacity: saving ? 0.7 : 1,
+            cursor: saving || !canSave ? "default" : "pointer",
+            opacity: saving || !canSave ? 0.7 : 1,
           }}
         >
           {saving ? "Saving…" : "Save changes"}
