@@ -25,6 +25,11 @@ function avgRating(questions: { type: string }[], answers: (string | number)[]) 
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
+function isAnswerEmpty(answer: unknown): boolean {
+  if (Array.isArray(answer)) return answer.length === 0;
+  return answer === undefined || answer === null || String(answer).trim() === '';
+}
+
 @Injectable()
 export class FeedbackService {
   constructor(private readonly prisma: PrismaService) {}
@@ -147,8 +152,14 @@ export class FeedbackService {
     const assigned = await this.isAssignedToStudent(form, student.sub);
     if (!assigned) throw new ForbiddenException('This feedback form is not assigned to you');
 
-    const questions = form.questions as { type: string; label: string }[];
+    const questions = form.questions as { type: string; label: string; required?: boolean }[];
     if (dto.answers.length !== questions.length) throw new BadRequestException('answers must match the number of questions');
+
+    questions.forEach((q, i) => {
+      if (q.required && isAnswerEmpty(dto.answers[i])) {
+        throw new BadRequestException(`"${q.label}" is required`);
+      }
+    });
 
     try {
       return await this.prisma.feedbackResponse.create({

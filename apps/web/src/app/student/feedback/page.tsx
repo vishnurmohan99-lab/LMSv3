@@ -50,7 +50,7 @@ export default function StudentFeedbackPage() {
 
   const [openFormId, setOpenFormId] = useState<string | null>(null);
   const [openForm, setOpenForm] = useState<FeedbackFormWithMyResponse | null>(null);
-  const [answers, setAnswers] = useState<(string | number)[]>([]);
+  const [answers, setAnswers] = useState<(string | number | string[])[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   function loadForms() {
@@ -71,17 +71,37 @@ export default function StudentFeedbackPage() {
       .getForFill(id)
       .then((f) => {
         setOpenForm(f);
-        setAnswers(f.myResponse ? f.myResponse.answers : f.questions.map((q) => (q.type === "RATING" ? 0 : "")));
+        setAnswers(f.myResponse ? f.myResponse.answers : f.questions.map((q) => (q.type === "RATING" ? 0 : q.type === "CHECKBOXES" ? [] : "")));
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load form"));
   }
 
-  function setAnswer(i: number, value: string | number) {
+  function setAnswer(i: number, value: string | number | string[]) {
     setAnswers((a) => a.map((x, idx) => (idx === i ? value : x)));
+  }
+
+  function toggleCheckboxOption(i: number, option: string) {
+    setAnswers((a) =>
+      a.map((x, idx) => {
+        if (idx !== i) return x;
+        const current = Array.isArray(x) ? x : [];
+        return current.includes(option) ? current.filter((o) => o !== option) : [...current, option];
+      }),
+    );
+  }
+
+  function isAnswerEmpty(value: string | number | string[] | undefined): boolean {
+    if (Array.isArray(value)) return value.length === 0;
+    return value === undefined || value === null || String(value).trim() === "";
   }
 
   async function onSubmit() {
     if (!openForm) return;
+    const missing = openForm.questions.find((q, i) => q.required && isAnswerEmpty(answers[i]));
+    if (missing) {
+      setError(`"${missing.label}" is required`);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -121,10 +141,13 @@ export default function StudentFeedbackPage() {
             <p style={{ fontSize: 13.5, color: "var(--ink3)", margin: "6px 0 26px" }}>Share your feedback about {targetName(openForm)}</p>
             {openForm.questions.map((q, qi) => (
               <div key={qi} style={{ marginBottom: 22 }}>
-                <label style={{ fontSize: 13.5, fontWeight: 700, display: "block", marginBottom: 10 }}>{q.label}</label>
+                <label style={{ fontSize: 13.5, fontWeight: 700, display: "block", marginBottom: 10 }}>
+                  {q.label}
+                  {q.required && <span style={{ color: "var(--red)" }}> *</span>}
+                </label>
                 {q.type === "RATING" ? (
                   <Stars value={Number(answers[qi]) || 0} onPick={readOnly ? undefined : (n) => setAnswer(qi, n)} size={32} />
-                ) : (
+                ) : q.type === "PARAGRAPH" ? (
                   <textarea
                     value={String(answers[qi] ?? "")}
                     readOnly={readOnly}
@@ -141,6 +164,75 @@ export default function StudentFeedbackPage() {
                       background: readOnly ? "var(--bg)" : "var(--card)",
                       minHeight: 100,
                       resize: "vertical",
+                    }}
+                  />
+                ) : q.type === "MULTIPLE_CHOICE" ? (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {(q.options ?? []).map((opt) => (
+                      <label key={opt} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, cursor: readOnly ? "default" : "pointer" }}>
+                        <input
+                          type="radio"
+                          name={`q-${qi}`}
+                          checked={answers[qi] === opt}
+                          disabled={readOnly}
+                          onChange={() => setAnswer(qi, opt)}
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                ) : q.type === "CHECKBOXES" ? (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {(q.options ?? []).map((opt) => (
+                      <label key={opt} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, cursor: readOnly ? "default" : "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={Array.isArray(answers[qi]) && (answers[qi] as string[]).includes(opt)}
+                          disabled={readOnly}
+                          onChange={() => toggleCheckboxOption(qi, opt)}
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                ) : q.type === "DROPDOWN" ? (
+                  <select
+                    value={String(answers[qi] ?? "")}
+                    disabled={readOnly}
+                    onChange={(e) => setAnswer(qi, e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      border: "1px solid var(--line)",
+                      borderRadius: 12,
+                      fontSize: 13.5,
+                      fontFamily: "inherit",
+                      outline: "none",
+                      background: readOnly ? "var(--bg)" : "var(--card)",
+                    }}
+                  >
+                    <option value="">Select…</option>
+                    {(q.options ?? []).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={String(answers[qi] ?? "")}
+                    readOnly={readOnly}
+                    onChange={(e) => setAnswer(qi, e.target.value)}
+                    placeholder="Your answer"
+                    style={{
+                      width: "100%",
+                      padding: "13px 16px",
+                      border: "1px solid var(--line)",
+                      borderRadius: 12,
+                      fontSize: 13.5,
+                      fontFamily: "inherit",
+                      outline: "none",
+                      background: readOnly ? "var(--bg)" : "var(--card)",
                     }}
                   />
                 )}

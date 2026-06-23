@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   feedbackApi,
   coursesApi,
@@ -11,6 +11,7 @@ import {
   type FeedbackForm,
   type FeedbackFormWithResponses,
   type FeedbackQuestion,
+  type FeedbackQuestionType,
   type FeedbackTargetType,
   type FeedbackAssignType,
   type Course,
@@ -47,24 +48,183 @@ const TARGET_META: Record<FeedbackTargetType, { label: string; color: string; so
 
 const DEFAULT_QUESTIONS: Record<FeedbackTargetType, FeedbackQuestion[]> = {
   COURSE: [
-    { type: "RATING", label: "Overall course rating" },
-    { type: "RATING", label: "Content clarity" },
-    { type: "TEXT", label: "What could be improved?" },
+    { type: "RATING", label: "Overall course rating", required: true },
+    { type: "RATING", label: "Content clarity", required: true },
+    { type: "PARAGRAPH", label: "What could be improved?" },
   ],
   FACULTY: [
-    { type: "RATING", label: "Teaching effectiveness" },
-    { type: "RATING", label: "Doubt resolution" },
-    { type: "TEXT", label: "Additional comments" },
+    { type: "RATING", label: "Teaching effectiveness", required: true },
+    { type: "RATING", label: "Doubt resolution", required: true },
+    { type: "PARAGRAPH", label: "Additional comments" },
   ],
   MENTOR: [
-    { type: "RATING", label: "How helpful was the session?" },
-    { type: "TEXT", label: "Additional comments" },
+    { type: "RATING", label: "How helpful was the session?", required: true },
+    { type: "PARAGRAPH", label: "Additional comments" },
   ],
   SYSTEM: [
-    { type: "RATING", label: "Overall app experience" },
-    { type: "TEXT", label: "Suggestions for improvement" },
+    { type: "RATING", label: "Overall app experience", required: true },
+    { type: "PARAGRAPH", label: "Suggestions for improvement" },
   ],
 };
+
+const QUESTION_TYPES: { value: FeedbackQuestionType; label: string; icon: string; hasOptions?: boolean }[] = [
+  { value: "RATING", label: "Rating", icon: "★" },
+  { value: "SHORT_TEXT", label: "Short answer", icon: "—" },
+  { value: "PARAGRAPH", label: "Paragraph", icon: "≡" },
+  { value: "MULTIPLE_CHOICE", label: "Multiple choice", icon: "◉", hasOptions: true },
+  { value: "CHECKBOXES", label: "Checkboxes", icon: "☑", hasOptions: true },
+  { value: "DROPDOWN", label: "Dropdown", icon: "▾", hasOptions: true },
+];
+
+function questionHasOptions(type: FeedbackQuestionType) {
+  return type === "MULTIPLE_CHOICE" || type === "CHECKBOXES" || type === "DROPDOWN";
+}
+
+function QuestionEditor({
+  questions,
+  onChange,
+}: {
+  questions: FeedbackQuestion[];
+  onChange: (updater: (qs: FeedbackQuestion[]) => FeedbackQuestion[]) => void;
+}) {
+  const dragIndexRef = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  function update(i: number, patch: Partial<FeedbackQuestion>) {
+    onChange((qs) => qs.map((q, idx) => (idx === i ? { ...q, ...patch } : q)));
+  }
+  function remove(i: number) {
+    onChange((qs) => qs.filter((_, idx) => idx !== i));
+  }
+  function addOption(i: number) {
+    onChange((qs) => qs.map((q, idx) => (idx === i ? { ...q, options: [...(q.options ?? []), ""] } : q)));
+  }
+  function setOption(i: number, oi: number, value: string) {
+    onChange((qs) => qs.map((q, idx) => (idx === i ? { ...q, options: (q.options ?? []).map((o, oidx) => (oidx === oi ? value : o)) } : q)));
+  }
+  function removeOption(i: number, oi: number) {
+    onChange((qs) => qs.map((q, idx) => (idx === i ? { ...q, options: (q.options ?? []).filter((_, oidx) => oidx !== oi) } : q)));
+  }
+  function reorder(from: number, to: number) {
+    if (from === to) return;
+    onChange((qs) => {
+      const copy = [...qs];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {questions.map((q, i) => (
+        <div
+          key={i}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOverIndex(i);
+          }}
+          onDragLeave={() => setDragOverIndex((cur) => (cur === i ? null : cur))}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (dragIndexRef.current !== null) reorder(dragIndexRef.current, i);
+            dragIndexRef.current = null;
+            setDragOverIndex(null);
+          }}
+          style={{
+            display: "flex",
+            gap: 10,
+            background: "var(--bg)",
+            borderRadius: 12,
+            padding: "12px 12px",
+            border: dragOverIndex === i ? "1.5px dashed var(--orange)" : "1.5px solid transparent",
+          }}
+        >
+          <span
+            draggable
+            onDragStart={() => {
+              dragIndexRef.current = i;
+            }}
+            onDragEnd={() => {
+              dragIndexRef.current = null;
+              setDragOverIndex(null);
+            }}
+            title="Drag to reorder"
+            style={{ cursor: "grab", color: "var(--ink3)", fontSize: 16, paddingTop: 8, userSelect: "none", flex: "none" }}
+          >
+            ⠿
+          </span>
+          <div style={{ flex: 1, minWidth: 0, display: "grid", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                value={q.label}
+                onChange={(e) => update(i, { label: e.target.value })}
+                placeholder="Question label"
+                style={{ flex: 1, minWidth: 0, padding: "9px 11px", border: "1px solid var(--line)", borderRadius: 9, fontSize: 13, fontFamily: "inherit", outline: "none", background: "var(--card)" }}
+              />
+              <select
+                value={q.type === "TEXT" ? "SHORT_TEXT" : q.type}
+                onChange={(e) => {
+                  const type = e.target.value as FeedbackQuestionType;
+                  update(i, { type, options: questionHasOptions(type) ? q.options ?? ["", ""] : undefined });
+                }}
+                style={{ padding: "9px 10px", border: "1px solid var(--line)", borderRadius: 9, fontSize: 12.5, fontFamily: "inherit", outline: "none", background: "var(--card)", flex: "none" }}
+              >
+                {QUESTION_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.icon} {t.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => remove(i)}
+                title="Delete question"
+                style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink3)", cursor: "pointer", flex: "none", fontSize: 16, lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+
+            {questionHasOptions(q.type) && (
+              <div style={{ display: "grid", gap: 6, paddingLeft: 4 }}>
+                {(q.options ?? []).map((opt, oi) => (
+                  <div key={oi} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ color: "var(--ink3)", fontSize: 13, width: 16, textAlign: "center", flex: "none" }}>
+                      {q.type === "MULTIPLE_CHOICE" ? "◉" : q.type === "CHECKBOXES" ? "☑" : `${oi + 1}.`}
+                    </span>
+                    <input
+                      value={opt}
+                      onChange={(e) => setOption(i, oi, e.target.value)}
+                      placeholder={`Option ${oi + 1}`}
+                      style={{ flex: 1, padding: "7px 10px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 12.5, fontFamily: "inherit", outline: "none", background: "var(--card)" }}
+                    />
+                    <button
+                      onClick={() => removeOption(i, oi)}
+                      style={{ width: 26, height: 26, borderRadius: 7, border: "none", background: "transparent", color: "var(--ink3)", cursor: "pointer", flex: "none", fontSize: 14 }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => addOption(i)}
+                  style={{ alignSelf: "start", padding: "6px 10px", border: "none", background: "none", color: "var(--orange)", fontWeight: 700, fontSize: 12, fontFamily: "inherit", cursor: "pointer" }}
+                >
+                  + Add option
+                </button>
+              </div>
+            )}
+
+            <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "var(--ink2)", fontWeight: 600, cursor: "pointer" }}>
+              <input type="checkbox" checked={!!q.required} onChange={(e) => update(i, { required: e.target.checked })} />
+              Required
+            </label>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function targetName(f: FeedbackForm) {
   if (f.targetType === "COURSE") return f.targetCourse?.title ?? "—";
@@ -159,17 +319,8 @@ export default function AdminFeedbackPage() {
     setQuestions(DEFAULT_QUESTIONS[t]);
   }
 
-  function setQuestionType(i: number, type: "RATING" | "TEXT") {
-    setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, type } : q)));
-  }
-  function setQuestionLabel(i: number, label: string) {
-    setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, label } : q)));
-  }
   function addQuestion() {
-    setQuestions((qs) => [...qs, { type: "TEXT", label: "" }]);
-  }
-  function removeQuestion(i: number) {
-    setQuestions((qs) => qs.filter((_, idx) => idx !== i));
+    setQuestions((qs) => [...qs, { type: "SHORT_TEXT", label: "" }]);
   }
   function toggleStudent(id: string) {
     setStudentIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
@@ -180,7 +331,7 @@ export default function AdminFeedbackPage() {
     title.trim().length > 0 &&
     !!targetNameValue &&
     questions.length > 0 &&
-    questions.every((q) => q.label.trim().length > 0) &&
+    questions.every((q) => q.label.trim().length > 0 && (!questionHasOptions(q.type) || (q.options ?? []).filter((o) => o.trim()).length >= 2)) &&
     (assignType === "BATCH" ? !!batchId : studentIds.length > 0);
 
   async function onCreate() {
@@ -396,44 +547,9 @@ export default function AdminFeedbackPage() {
             )}
 
             <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Questions</label>
-            <div style={{ display: "grid", gap: 10, margin: "8px 0 12px" }}>
-              {questions.map((q, i) => (
-                <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", background: "var(--bg)", borderRadius: 12, padding: "10px 12px" }}>
-                  <div style={{ display: "flex", gap: 4, background: "var(--card)", borderRadius: 9, padding: 3, flex: "none" }}>
-                    {(["RATING", "TEXT"] as const).map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setQuestionType(i, t)}
-                        style={{
-                          padding: "6px 10px",
-                          borderRadius: 7,
-                          border: "none",
-                          background: q.type === t ? "var(--ink)" : "transparent",
-                          color: q.type === t ? "#fff" : "var(--ink3)",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          fontFamily: "inherit",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {t === "RATING" ? "★" : "Aa"}
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    value={q.label}
-                    onChange={(e) => setQuestionLabel(i, e.target.value)}
-                    placeholder="Question label"
-                    style={{ flex: 1, minWidth: 0, padding: "9px 11px", border: "1px solid var(--line)", borderRadius: 9, fontSize: 13, fontFamily: "inherit", outline: "none", background: "var(--card)" }}
-                  />
-                  <button
-                    onClick={() => removeQuestion(i)}
-                    style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink3)", cursor: "pointer", flex: "none", fontSize: 16, lineHeight: 1 }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+            <p style={{ fontSize: 11.5, color: "var(--ink3)", margin: "4px 0 10px" }}>Drag ⠿ to reorder.</p>
+            <div style={{ margin: "0 0 12px" }}>
+              <QuestionEditor questions={questions} onChange={(updater) => setQuestions(updater)} />
             </div>
             <button
               onClick={addQuestion}
@@ -613,6 +729,8 @@ export default function AdminFeedbackPage() {
                             <span style={{ color: "var(--ink3)" }}>{q.label}: </span>
                             {q.type === "RATING" ? (
                               <b style={{ color: "var(--orange)" }}>{r.answers[qi] || 0}★</b>
+                            ) : Array.isArray(r.answers[qi]) ? (
+                              <span style={{ color: "var(--ink)" }}>{(r.answers[qi] as string[]).join(", ") || "—"}</span>
                             ) : (
                               <span style={{ color: "var(--ink)" }}>&ldquo;{r.answers[qi] || "—"}&rdquo;</span>
                             )}

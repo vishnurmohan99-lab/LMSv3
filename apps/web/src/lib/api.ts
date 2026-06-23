@@ -800,11 +800,13 @@ export const calendarApi = {
 
 export type FeedbackTargetType = 'COURSE' | 'FACULTY' | 'MENTOR' | 'SYSTEM';
 export type FeedbackAssignType = 'BATCH' | 'SELECTED';
-export type FeedbackQuestionType = 'RATING' | 'TEXT';
+export type FeedbackQuestionType = 'RATING' | 'TEXT' | 'SHORT_TEXT' | 'PARAGRAPH' | 'MULTIPLE_CHOICE' | 'CHECKBOXES' | 'DROPDOWN';
 
 export interface FeedbackQuestion {
   type: FeedbackQuestionType;
   label: string;
+  required?: boolean;
+  options?: string[];
 }
 
 export interface FeedbackForm {
@@ -829,7 +831,7 @@ export interface FeedbackForm {
 
 export interface FeedbackResponse {
   id: string;
-  answers: (string | number)[];
+  answers: (string | number | string[])[];
   submittedAt: string;
   formId: string;
   studentId: string;
@@ -861,7 +863,7 @@ export const feedbackApi = {
   getForAdmin: (id: string) => request<FeedbackFormWithResponses>(`/feedback-forms/${id}/admin`),
   listMine: () => request<FeedbackForm[]>('/feedback-forms/me'),
   getForFill: (id: string) => request<FeedbackFormWithMyResponse>(`/feedback-forms/${id}`),
-  submit: (id: string, answers: (string | number)[]) =>
+  submit: (id: string, answers: (string | number | string[])[]) =>
     request<FeedbackResponse>(`/feedback-forms/${id}/responses`, { method: 'POST', body: JSON.stringify({ answers }) }),
 };
 
