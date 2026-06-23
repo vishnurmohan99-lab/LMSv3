@@ -8,6 +8,7 @@ import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesso
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -429,6 +430,7 @@ export default function ChapterDetailPage() {
   const courseId = params.id;
   const chapterId = params.chapterId;
   const confirm = useConfirm();
+  const openImage = useImageLightbox();
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -511,7 +513,10 @@ export default function ChapterDetailPage() {
       </Link>
 
       {chapter.bannerUrl ? (
-        <div style={{ position: "relative", height: 140, borderRadius: "var(--rl)", marginTop: 16, marginBottom: 18, background: `url(${chapter.bannerUrl}) center/cover` }}>
+        <div
+          onClick={() => openImage(chapter.bannerUrl!, chapter.title)}
+          style={{ position: "relative", height: 140, borderRadius: "var(--rl)", marginTop: 16, marginBottom: 18, background: `url(${chapter.bannerUrl}) center/cover`, cursor: "pointer" }}
+        >
           <div style={{ position: "absolute", inset: 0, borderRadius: "var(--rl)", background: "linear-gradient(transparent 30%, rgba(0,0,0,.55))" }} />
           <h1 style={{ position: "absolute", left: 20, bottom: 16, color: "#fff", fontSize: 24, fontWeight: 800 }}>{chapter.title}</h1>
         </div>

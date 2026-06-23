@@ -19,6 +19,7 @@ import {
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -80,9 +81,13 @@ function chapterInitials(name: string) {
 }
 
 function ChapterBanner({ url, name }: { url: string | null; name: string }) {
+  const openImage = useImageLightbox();
   if (url) {
     return (
-      <div style={{ position: "relative", height: 100, margin: "-20px -20px 16px", background: `url(${url}) center/cover` }}>
+      <div
+        onClick={() => openImage(url, name)}
+        style={{ position: "relative", height: 100, margin: "-20px -20px 16px", background: `url(${url}) center/cover`, cursor: "pointer" }}
+      >
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
       </div>
     );

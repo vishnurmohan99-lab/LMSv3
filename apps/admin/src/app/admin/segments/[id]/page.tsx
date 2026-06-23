@@ -7,6 +7,7 @@ import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -60,10 +61,14 @@ function courseInitials(name: string) {
 }
 
 function CourseRow({ course, onRemove }: { course: Course; onRemove: () => void }) {
+  const openImage = useImageLightbox();
   return (
     <div className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden" }}>
       {course.thumbnailUrl ? (
-        <div style={{ position: "relative", height: 80, background: `url(${course.thumbnailUrl}) center/cover` }}>
+        <div
+          onClick={() => openImage(course.thumbnailUrl!, course.title)}
+          style={{ position: "relative", height: 80, background: `url(${course.thumbnailUrl}) center/cover`, cursor: "pointer" }}
+        >
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
         </div>
       ) : (

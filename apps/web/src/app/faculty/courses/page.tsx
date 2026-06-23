@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -17,6 +18,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function FacultyCoursesPage() {
+  const openImage = useImageLightbox();
   const [courses, setCourses] = useState<Course[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,7 +210,14 @@ export default function FacultyCoursesPage() {
               }}
             >
               {c.thumbnailUrl ? (
-                <div style={{ position: "relative", height: 110, background: `url(${c.thumbnailUrl}) center/cover` }}>
+                <div
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openImage(c.thumbnailUrl!, c.title);
+                  }}
+                  style={{ position: "relative", height: 110, background: `url(${c.thumbnailUrl}) center/cover`, cursor: "pointer" }}
+                >
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
                 </div>
               ) : (

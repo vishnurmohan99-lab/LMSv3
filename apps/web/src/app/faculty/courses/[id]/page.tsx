@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, uploadsApi, segmentsApi, messengerApi, ApiError, type CourseTree, type Segment, type CourseType, type DripType, type CoursePrivateAccess } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 type StudentContact = { id: string; fullName: string; email: string; role: "STUDENT" | "FACULTY" | "ADMIN" };
 
@@ -59,6 +60,7 @@ export default function CourseAuthoringPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
   const confirm = useConfirm();
+  const openImage = useImageLightbox();
 
   const [course, setCourse] = useState<CourseTree | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -344,7 +346,10 @@ export default function CourseAuthoringPage() {
           return (
             <div key={chapter.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 20, overflow: "hidden" }}>
               {chapter.bannerUrl ? (
-                <div style={{ position: "relative", height: 100, margin: "-20px -20px 16px", background: `url(${chapter.bannerUrl}) center/cover` }}>
+                <div
+                  onClick={() => openImage(chapter.bannerUrl!, chapter.title)}
+                  style={{ position: "relative", height: 100, margin: "-20px -20px 16px", background: `url(${chapter.bannerUrl}) center/cover`, cursor: "pointer" }}
+                >
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
                 </div>
               ) : (

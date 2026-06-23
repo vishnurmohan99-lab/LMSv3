@@ -7,6 +7,7 @@ import { segmentsApi, uploadsApi, ApiError, type Segment } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const BANNER_HEIGHT = 110;
 
@@ -15,9 +16,13 @@ function initials(name: string) {
 }
 
 function CardBanner({ url, name }: { url: string | null; name: string }) {
+  const openImage = useImageLightbox();
   if (url) {
     return (
-      <div style={{ position: "relative", height: BANNER_HEIGHT, background: `url(${url}) center/cover` }}>
+      <div
+        onClick={() => openImage(url, name)}
+        style={{ position: "relative", height: BANNER_HEIGHT, background: `url(${url}) center/cover`, cursor: "pointer" }}
+      >
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
       </div>
     );

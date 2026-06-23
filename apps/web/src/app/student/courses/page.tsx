@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { coursesApi, enrollmentsApi, segmentsApi, ApiError, type Course, type Enrollment, type Segment } from "@/lib/api";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const BANNER_HEIGHT = 130;
 
@@ -11,9 +12,17 @@ function initials(name: string) {
 }
 
 function CardBanner({ url, name }: { url: string | null; name: string }) {
+  const openImage = useImageLightbox();
   if (url) {
     return (
-      <div style={{ position: "relative", height: BANNER_HEIGHT, background: `url(${url}) center/cover` }}>
+      <div
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openImage(url, name);
+        }}
+        style={{ position: "relative", height: BANNER_HEIGHT, background: `url(${url}) center/cover`, cursor: "pointer" }}
+      >
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
       </div>
     );

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { questionBanksApi, uploadsApi, ApiError, type QuestionBank } from "@/lib/api";
+import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -36,6 +37,7 @@ function StatusBadge({ published }: { published: boolean }) {
 }
 
 export default function FacultyQuestionBanksPage() {
+  const openImage = useImageLightbox();
   const [banks, setBanks] = useState<QuestionBank[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,7 +143,14 @@ export default function FacultyQuestionBanksPage() {
               style={{ display: "block", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden" }}
             >
               {bank.bannerUrl ? (
-                <div style={{ position: "relative", height: 110, background: `url(${bank.bannerUrl}) center/cover` }}>
+                <div
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openImage(bank.bannerUrl!, bank.title);
+                  }}
+                  style={{ position: "relative", height: 110, background: `url(${bank.bannerUrl}) center/cover`, cursor: "pointer" }}
+                >
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%, rgba(0,0,0,.45))" }} />
                 </div>
               ) : (
