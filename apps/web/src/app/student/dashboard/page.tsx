@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { enrollmentsApi, testsApi, testAttemptsApi, mentorApi, ApiError, type MentorBooking } from "@/lib/api";
+import Link from "next/link";
+import { enrollmentsApi, testsApi, testAttemptsApi, mentorApi, calendarApi, ApiError, type MentorBooking, type CalendarEvent } from "@/lib/api";
 
 interface ScoredAttempt {
   pct: number;
@@ -63,6 +64,59 @@ function ExamScoresChart({ attempts }: { attempts: ScoredAttempt[] }) {
   );
 }
 
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function LiveIcon({ color }: { color: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+      <path d="m23 7-7 5 7 5V7z" />
+      <rect x="1" y="5" width="15" height="14" rx="2" />
+    </svg>
+  );
+}
+
+function EventMentorIcon({ color }: { color: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+    </svg>
+  );
+}
+
+function ScheduleRow({ event }: { event: CalendarEvent }) {
+  const date = new Date(event.date);
+  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const isLive = event.type === "LIVE_LESSON";
+  const content = (
+    <div style={{ display: "flex", gap: 14, alignItems: "center", padding: "13px 0", borderTop: "1px solid var(--line)" }}>
+      <div style={{ width: 56, flex: "none", textAlign: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {isLive ? <LiveIcon color="var(--orange)" /> : <EventMentorIcon color="var(--purple)" />}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: -0.3, marginTop: 2 }}>{time}</div>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</div>
+        <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>
+          {isLive ? event.courseTitle : `with ${event.otherPartyName}`}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isLive && event.courseId) {
+    return (
+      <Link href={`/student/courses/${event.courseId}`} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
+        {content}
+      </Link>
+    );
+  }
+  return content;
+}
+
 export default function StudentDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -70,6 +124,7 @@ export default function StudentDashboardPage() {
   const [enrolledCount, setEnrolledCount] = useState(0);
   const [attempts, setAttempts] = useState<ScoredAttempt[]>([]);
   const [bookings, setBookings] = useState<MentorBooking[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -94,6 +149,9 @@ export default function StudentDashboardPage() {
 
         const myBookings = await mentorApi.listBookingsAsStudent().catch(() => []);
         setBookings(myBookings);
+
+        const calendarEvents = await calendarApi.student().catch(() => []);
+        setEvents(calendarEvents);
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "Failed to load dashboard");
       } finally {
@@ -122,10 +180,16 @@ export default function StudentDashboardPage() {
   const avgPct = attempts.length ? attempts.reduce((s, a) => s + a.pct, 0) / attempts.length : null;
   const today = new Date();
   const completedSessions = bookings.filter((b) => new Date(b.date) < today).length;
+  const now = new Date();
+  const todayEvents = events.filter((e) => sameDay(new Date(e.date), now)).sort((a, b) => a.date.localeCompare(b.date));
+  const upcomingEvents = events
+    .filter((e) => new Date(e.date).getTime() >= now.getTime() && !sameDay(new Date(e.date), now))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 5);
 
   return (
     <main className="fade-in" style={{ padding: "30px 30px 60px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18, marginBottom: 18 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 18, marginBottom: 18 }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink2)" }}>Performance</div>
@@ -134,6 +198,26 @@ export default function StudentDashboardPage() {
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)", marginTop: 6 }}>
             {avgPct === null ? "Take a mock test to see your performance." : avgPct >= 70 ? "You did a great job!" : "Keep practicing — you're getting there."}
           </div>
+        </div>
+
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Today&apos;s Schedule</div>
+            <Link href="/student/calendar" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>
+              {now.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            </Link>
+          </div>
+          {todayEvents.length === 0 ? (
+            <div style={{ padding: "26px 0", textAlign: "center", color: "var(--ink3)", fontSize: 13.5, fontWeight: 600 }}>
+              Nothing scheduled today.
+            </div>
+          ) : (
+            <div>
+              {todayEvents.map((e) => (
+                <ScheduleRow key={e.id} event={e} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -187,6 +271,22 @@ export default function StudentDashboardPage() {
           </svg>
         </button>
       </div>
+
+      {upcomingEvents.length > 0 && (
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Upcoming</div>
+            <Link href="/student/calendar" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>
+              View all
+            </Link>
+          </div>
+          <div>
+            {upcomingEvents.map((e) => (
+              <ScheduleRow key={e.id} event={e} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ marginTop: 18 }}>
         <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3, marginBottom: 14 }}>Performance analytics</div>
