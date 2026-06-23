@@ -28,4 +28,10 @@ export class ChaptersController {
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.coursesService.deleteChapter(id, user);
   }
+
+  @Roles('STUDENT')
+  @Post('chapters/:id/complete')
+  markComplete(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.markChapterComplete(id, user);
+  }
 }

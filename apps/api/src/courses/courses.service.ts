@@ -111,7 +111,12 @@ export class CoursesService {
   async getCourseTree(id: string, user: JwtPayload) {
     const course = await this.prisma.course.findUnique({
       where: { id },
-      include: { chapters: { orderBy: { order: 'asc' }, include: { lessons: { orderBy: { order: 'asc' } } } } },
+      include: {
+        chapters: {
+          orderBy: { order: 'asc' },
+          include: { lessons: { orderBy: { order: 'asc' } }, tests: { select: { id: true } } },
+        },
+      },
     });
     if (!course) throw new NotFoundException('Course not found');
 
@@ -120,17 +125,22 @@ export class CoursesService {
 
     const bypassDripping = isOwnerOrAdmin(user, course.facultyId);
     const enrolledAt = bypassDripping ? null : await this.getEnrollmentDate(course.id, user);
+    const unlockMap = bypassDripping
+      ? null
+      : await this.getChapterUnlockMap(course, course.chapters, enrolledAt, user.sub);
+    const finishedMap =
+      !bypassDripping && course.dripType === 'SEQUENTIAL' ? await this.computeFinishedMap(course, course.chapters, user.sub) : null;
 
     const chapters = await Promise.all(
       course.chapters.map(async (chapter) => {
-        const { unlocked, unlocksAt } = bypassDripping
-          ? { unlocked: true, unlocksAt: null as Date | null }
-          : this.resolveChapterUnlock(course, chapter, enrolledAt);
+        const { unlocked, unlocksAt } = bypassDripping ? { unlocked: true, unlocksAt: null as Date | null } : unlockMap!.get(chapter.id)!;
+        const finished = finishedMap?.get(chapter.id) ?? false;
 
         return {
           ...chapter,
           unlocked,
           unlocksAt,
+          finished,
           bannerUrl: chapter.bannerUrl ? await this.uploads.presignDownload(chapter.bannerUrl) : null,
           lessons: await Promise.all(
             chapter.lessons.map(async (lesson) => ({
@@ -178,12 +188,136 @@ export class CoursesService {
     return { unlocked: true, unlocksAt: null };
   }
 
+  /**
+   * Builds the per-chapter unlock state for a course. For CALENDAR/ENROLLMENT_RELATIVE/NONE this is just
+   * resolveChapterUnlock per chapter. For SEQUENTIAL, chapter N is unlocked only if every earlier chapter
+   * (by `order`) is "finished" per the course's completionRule — see computeFinishedMap.
+   */
+  private async getChapterUnlockMap(
+    course: { dripType: string; completionRule: string },
+    chapters: { id: string; order: number; unlockAt: Date | null; unlockAfterDays: number | null; lessons: { id: string }[]; tests: { id: string }[] }[],
+    enrolledAt: Date | null,
+    studentId: string,
+  ): Promise<Map<string, { unlocked: boolean; unlocksAt: Date | null }>> {
+    const map = new Map<string, { unlocked: boolean; unlocksAt: Date | null }>();
+
+    if (course.dripType !== 'SEQUENTIAL') {
+      for (const chapter of chapters) {
+        map.set(chapter.id, this.resolveChapterUnlock(course, chapter, enrolledAt));
+      }
+      return map;
+    }
+
+    const ordered = [...chapters].sort((a, b) => a.order - b.order);
+    const finishedMap = await this.computeFinishedMap(course, ordered, studentId);
+    let chainUnlocked = true;
+    for (const chapter of ordered) {
+      map.set(chapter.id, { unlocked: chainUnlocked, unlocksAt: null });
+      chainUnlocked = chainUnlocked && !!finishedMap.get(chapter.id);
+    }
+    return map;
+  }
+
+  /** Determines, per the course's completionRule, whether each chapter counts as "finished" for this student. */
+  private async computeFinishedMap(
+    course: { completionRule: string },
+    chapters: { id: string; lessons: { id: string }[]; tests: { id: string }[] }[],
+    studentId: string,
+  ): Promise<Map<string, boolean>> {
+    const finished = new Map<string, boolean>();
+
+    if (course.completionRule === 'ALL_LESSONS_VIEWED') {
+      const allLessonIds = chapters.flatMap((c) => c.lessons.map((l) => l.id));
+      const views = allLessonIds.length
+        ? await this.prisma.lessonView.findMany({ where: { studentId, lessonId: { in: allLessonIds } }, select: { lessonId: true } })
+        : [];
+      const viewed = new Set(views.map((v) => v.lessonId));
+      for (const chapter of chapters) {
+        finished.set(chapter.id, chapter.lessons.length > 0 && chapter.lessons.every((l) => viewed.has(l.id)));
+      }
+      return finished;
+    }
+
+    if (course.completionRule === 'PASS_TEST') {
+      const allTestIds = chapters.flatMap((c) => c.tests.map((t) => t.id));
+      const attempts = allTestIds.length
+        ? await this.prisma.testAttempt.findMany({
+            where: { studentId, testId: { in: allTestIds }, status: 'SUBMITTED' },
+            select: { testId: true, score: true, maxScore: true },
+          })
+        : [];
+      const passedTestIds = new Set(
+        attempts.filter((a) => a.score != null && a.maxScore && a.score * 2 >= a.maxScore).map((a) => a.testId),
+      );
+      // Chapters with no test attached can't be gated by a test score — fall back to manual completion for those.
+      const fallbackChapterIds = chapters.filter((c) => c.tests.length === 0).map((c) => c.id);
+      const fallbackCompletions = fallbackChapterIds.length
+        ? await this.prisma.chapterCompletion.findMany({ where: { studentId, chapterId: { in: fallbackChapterIds } }, select: { chapterId: true } })
+        : [];
+      const manuallyCompleted = new Set(fallbackCompletions.map((c) => c.chapterId));
+      for (const chapter of chapters) {
+        finished.set(
+          chapter.id,
+          chapter.tests.length > 0 ? chapter.tests.some((t) => passedTestIds.has(t.id)) : manuallyCompleted.has(chapter.id),
+        );
+      }
+      return finished;
+    }
+
+    // MANUAL (default): student explicitly marks the chapter complete.
+    const chapterIds = chapters.map((c) => c.id);
+    const completions = chapterIds.length
+      ? await this.prisma.chapterCompletion.findMany({ where: { studentId, chapterId: { in: chapterIds } }, select: { chapterId: true } })
+      : [];
+    const completedSet = new Set(completions.map((c) => c.chapterId));
+    for (const chapter of chapters) finished.set(chapter.id, completedSet.has(chapter.id));
+    return finished;
+  }
+
   async isChapterUnlockedForUser(chapterId: string, user: JwtPayload): Promise<boolean> {
     const chapter = await this.prisma.chapter.findUnique({ where: { id: chapterId }, include: { course: true } });
     if (!chapter) throw new NotFoundException('Chapter not found');
     if (isOwnerOrAdmin(user, chapter.course.facultyId)) return true;
-    const enrolledAt = await this.getEnrollmentDate(chapter.course.id, user);
-    return this.resolveChapterUnlock(chapter.course, chapter, enrolledAt).unlocked;
+    if (chapter.course.dripType !== 'SEQUENTIAL') {
+      const enrolledAt = await this.getEnrollmentDate(chapter.course.id, user);
+      return this.resolveChapterUnlock(chapter.course, chapter, enrolledAt).unlocked;
+    }
+    const siblings = await this.prisma.chapter.findMany({
+      where: { courseId: chapter.course.id },
+      orderBy: { order: 'asc' },
+      include: { lessons: { select: { id: true } }, tests: { select: { id: true } } },
+    });
+    const unlockMap = await this.getChapterUnlockMap(chapter.course, siblings, null, user.sub);
+    return !!unlockMap.get(chapterId)?.unlocked;
+  }
+
+  async markChapterComplete(chapterId: string, user: JwtPayload) {
+    const chapter = await this.requireChapterWithCourse(chapterId);
+    const canView = await this.canViewCourseContent(chapter.course, user);
+    if (!canView) throw new ForbiddenException('You do not have access to this chapter');
+    if (chapter.course.dripType !== 'SEQUENTIAL') {
+      throw new BadRequestException('This course does not use sequential unlocking');
+    }
+    const unlocked = await this.isChapterUnlockedForUser(chapterId, user);
+    if (!unlocked) throw new ForbiddenException('This chapter is not unlocked yet');
+    return this.prisma.chapterCompletion.upsert({
+      where: { chapterId_studentId: { chapterId, studentId: user.sub } },
+      create: { chapterId, studentId: user.sub },
+      update: {},
+    });
+  }
+
+  async recordLessonView(lessonId: string, user: JwtPayload) {
+    if (user.role !== 'STUDENT') return { success: true };
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    const canView = await this.canViewCourseContent(lesson.chapter.course, user);
+    if (!canView) return { success: true };
+    await this.prisma.lessonView.upsert({
+      where: { lessonId_studentId: { lessonId, studentId: user.sub } },
+      create: { lessonId, studentId: user.sub },
+      update: {},
+    });
+    return { success: true };
   }
 
   async createCourse(user: JwtPayload, dto: CreateCourseDto) {
@@ -202,6 +336,7 @@ export class CoursesService {
             subsegmentId: dto.subsegmentId,
             type: dto.type,
             dripType: dto.dripType,
+            completionRule: dto.completionRule,
             published: dto.published ?? false,
           },
         }),

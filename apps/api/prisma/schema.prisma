@@ -68,6 +68,9 @@ model User {
   forumThreads    ForumThread[]
   forumPosts      ForumPost[]
   forumThreadLikes ForumThreadLike[]
+
+  chapterCompletions ChapterCompletion[]
+  lessonViews        LessonView[]
 }
 
 enum CourseType {
@@ -80,18 +83,26 @@ enum DripType {
   NONE
   CALENDAR
   ENROLLMENT_RELATIVE
+  SEQUENTIAL
+}
+
+enum CompletionRule {
+  MANUAL
+  ALL_LESSONS_VIEWED
+  PASS_TEST
 }
 
 model Course {
-  id           String     @id @default(uuid())
-  title        String     @unique
-  description  String     @default("")
-  thumbnailUrl String?
-  published    Boolean    @default(false)
-  type         CourseType @default(FREE)
-  dripType     DripType   @default(NONE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id             String         @id @default(uuid())
+  title          String         @unique
+  description    String         @default("")
+  thumbnailUrl   String?
+  published      Boolean        @default(false)
+  type           CourseType     @default(FREE)
+  dripType       DripType       @default(NONE)
+  completionRule CompletionRule @default(MANUAL)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   facultyId String
   faculty   User   @relation("FacultyCourses", fields: [facultyId], references: [id])
@@ -171,8 +182,37 @@ model Chapter {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  lessons Lesson[]
-  tests   Test[]
+  lessons     Lesson[]
+  tests       Test[]
+  completions ChapterCompletion[]
+}
+
+model ChapterCompletion {
+  id String @id @default(uuid())
+
+  chapterId String
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  completedAt DateTime @default(now())
+
+  @@unique([chapterId, studentId])
+}
+
+model LessonView {
+  id String @id @default(uuid())
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  viewedAt DateTime @default(now())
+
+  @@unique([lessonId, studentId])
 }
 
 enum LessonType {
@@ -203,6 +243,7 @@ model Lesson {
   note         LessonNote?
   chatMessages ChatMessage[]
   sessions     Session[]
+  views        LessonView[]
 }
 
 model LessonNote {

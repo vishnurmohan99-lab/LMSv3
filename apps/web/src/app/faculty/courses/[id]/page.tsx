@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, uploadsApi, segmentsApi, messengerApi, ApiError, type CourseTree, type Segment, type CourseType, type DripType, type CoursePrivateAccess } from "@/lib/api";
+import { coursesApi, uploadsApi, segmentsApi, messengerApi, ApiError, type CourseTree, type Segment, type CourseType, type DripType, type CompletionRule, type CoursePrivateAccess } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
@@ -121,6 +121,12 @@ export default function CourseAuthoringPage() {
     if (!course) return;
     const updated = await coursesApi.update(course.id, { dripType });
     setCourse({ ...course, dripType: updated.dripType });
+  }
+
+  async function onChangeCompletionRule(completionRule: CompletionRule) {
+    if (!course) return;
+    const updated = await coursesApi.update(course.id, { completionRule });
+    setCourse({ ...course, completionRule: updated.completionRule });
   }
 
   async function onGrantAccess() {
@@ -282,8 +288,24 @@ export default function CourseAuthoringPage() {
           <option value="NONE">Off — all chapters open</option>
           <option value="CALENDAR">Calendar — unlock on a fixed date</option>
           <option value="ENROLLMENT_RELATIVE">Enrollment-relative — unlock N days after joining</option>
+          <option value="SEQUENTIAL">Sequential — unlock next chapter when previous is finished</option>
         </select>
-        <span style={{ color: "var(--ink3)" }}>Set per-chapter unlock timing by editing each chapter below.</span>
+        {course.dripType === "SEQUENTIAL" ? (
+          <>
+            <span style={{ color: "var(--ink3)" }}>Counts as finished when:</span>
+            <select
+              value={course.completionRule}
+              onChange={(e) => onChangeCompletionRule(e.target.value as CompletionRule)}
+              style={{ ...inputStyle, width: 220 }}
+            >
+              <option value="MANUAL">Student marks it done</option>
+              <option value="ALL_LESSONS_VIEWED">Student opens every lesson</option>
+              <option value="PASS_TEST">Student passes the chapter's test</option>
+            </select>
+          </>
+        ) : (
+          <span style={{ color: "var(--ink3)" }}>Set per-chapter unlock timing by editing each chapter below.</span>
+        )}
       </div>
 
       {course.type === "PRIVATE" && (
@@ -445,6 +467,13 @@ export default function CourseAuthoringPage() {
                   {course.dripType === "ENROLLMENT_RELATIVE" && chapter.unlockAfterDays != null && (
                     <div style={{ fontSize: 12, color: "var(--orange)", marginTop: 4 }}>
                       Unlocks {chapter.unlockAfterDays} day{chapter.unlockAfterDays === 1 ? "" : "s"} after enrolling
+                    </div>
+                  )}
+                  {course.dripType === "SEQUENTIAL" && (
+                    <div style={{ fontSize: 12, color: "var(--orange)", marginTop: 4 }}>
+                      {course.completionRule === "MANUAL" && "Unlocks once student marks the previous chapter done"}
+                      {course.completionRule === "ALL_LESSONS_VIEWED" && "Unlocks once student opens every lesson in the previous chapter"}
+                      {course.completionRule === "PASS_TEST" && "Unlocks once student passes the previous chapter's test"}
                     </div>
                   )}
                 </>

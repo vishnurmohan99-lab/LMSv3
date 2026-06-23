@@ -1,5 +1,5 @@
 import { IsBoolean, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { CourseType, DripType } from '../../../generated/prisma/client';
+import { CourseType, DripType, CompletionRule } from '../../../generated/prisma/client';
 
 export class UpdateCourseDto {
   @IsOptional()
@@ -34,4 +34,8 @@ export class UpdateCourseDto {
   @IsOptional()
   @IsEnum(DripType)
   dripType?: DripType;
+
+  @IsOptional()
+  @IsEnum(CompletionRule)
+  completionRule?: CompletionRule;
 }

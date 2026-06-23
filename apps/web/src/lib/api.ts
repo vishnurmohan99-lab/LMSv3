@@ -107,11 +107,13 @@ export interface Chapter {
   unlockAfterDays: number | null;
   unlocked?: boolean;
   unlocksAt?: string | null;
+  finished?: boolean;
   lessons: Lesson[];
 }
 
 export type CourseType = 'FREE' | 'PAID' | 'PRIVATE';
-export type DripType = 'NONE' | 'CALENDAR' | 'ENROLLMENT_RELATIVE';
+export type DripType = 'NONE' | 'CALENDAR' | 'ENROLLMENT_RELATIVE' | 'SEQUENTIAL';
+export type CompletionRule = 'MANUAL' | 'ALL_LESSONS_VIEWED' | 'PASS_TEST';
 
 export interface Course {
   id: string;
@@ -121,6 +123,7 @@ export interface Course {
   published: boolean;
   type: CourseType;
   dripType: DripType;
+  completionRule: CompletionRule;
   facultyId: string;
   createdAt: string;
   updatedAt: string;
@@ -193,10 +196,12 @@ export const coursesApi = {
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType'>>,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType' | 'completionRule'>>,
   ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
   enroll: (id: string) => request<{ id: string }>(`/courses/${id}/enroll`, { method: 'POST' }),
+  markChapterComplete: (chapterId: string) => request<{ id: string }>(`/chapters/${chapterId}/complete`, { method: 'POST' }),
+  recordLessonView: (lessonId: string) => request<{ success: boolean }>(`/lessons/${lessonId}/view`, { method: 'POST' }),
 
   listPrivateAccess: (courseId: string) => request<CoursePrivateAccess[]>(`/courses/${courseId}/private-access`),
   grantPrivateAccess: (courseId: string, studentId: string) =>

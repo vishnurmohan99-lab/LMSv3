@@ -216,6 +216,7 @@ export default function StudentCoursePlayerPage() {
   const [showChat, setShowChat] = useState(false);
   const [flashcardCount, setFlashcardCount] = useState<number | null>(null);
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
+  const [completingChapterId, setCompletingChapterId] = useState<string | null>(null);
 
   useEffect(() => {
     coursesApi
@@ -250,6 +251,24 @@ export default function StudentCoursePlayerPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLessonId, course]);
+
+  useEffect(() => {
+    if (course?.dripType === "SEQUENTIAL" && selectedLessonId) {
+      coursesApi.recordLessonView(selectedLessonId).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLessonId, course?.dripType]);
+
+  async function onMarkChapterComplete(chapterId: string) {
+    setCompletingChapterId(chapterId);
+    try {
+      await coursesApi.markChapterComplete(chapterId);
+      const c = await coursesApi.get(courseId);
+      setCourse(c);
+    } finally {
+      setCompletingChapterId(null);
+    }
+  }
 
   async function onEnroll() {
     setEnrolling(true);
@@ -450,6 +469,32 @@ export default function StudentCoursePlayerPage() {
                         </button>
                       );
                     })
+                  )}
+                  {!locked && course.dripType === "SEQUENTIAL" && course.completionRule === "MANUAL" && (
+                    <div style={{ padding: "8px 18px 12px 30px" }}>
+                      {chapter.finished ? (
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green)" }}>✓ Marked complete</span>
+                      ) : (
+                        <button
+                          onClick={() => onMarkChapterComplete(chapter.id)}
+                          disabled={completingChapterId === chapter.id}
+                          style={{
+                            padding: "7px 14px",
+                            background: "var(--orange)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 9,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            fontFamily: "inherit",
+                            cursor: completingChapterId === chapter.id ? "default" : "pointer",
+                            opacity: completingChapterId === chapter.id ? 0.7 : 1,
+                          }}
+                        >
+                          {completingChapterId === chapter.id ? "Marking…" : "Mark chapter complete"}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

@@ -28,4 +28,10 @@ export class LessonsController {
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.coursesService.deleteLesson(id, user);
   }
+
+  @Roles('STUDENT')
+  @Post('lessons/:id/view')
+  recordView(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.recordLessonView(id, user);
+  }
 }
