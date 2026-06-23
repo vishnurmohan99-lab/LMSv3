@@ -34,7 +34,7 @@ export default function ForumApp() {
 
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
-  const [newCourseId, setNewCourseId] = useState("");
+  const [newCategoryId, setNewCategoryId] = useState("");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -125,14 +125,14 @@ export default function ForumApp() {
   }
 
   async function onCreateThread() {
-    if (!newTitle.trim() || !newBody.trim()) return;
+    if (!newTitle.trim() || !newBody.trim() || !newCategoryId) return;
     setCreating(true);
     setError(null);
     try {
-      const t = await forumApi.createThread({ title: newTitle.trim(), body: newBody.trim(), courseId: newCourseId || undefined });
+      const t = await forumApi.createThread({ title: newTitle.trim(), body: newBody.trim(), categoryId: newCategoryId });
       setNewTitle("");
       setNewBody("");
-      setNewCourseId("");
+      setNewCategoryId("");
       setView("list");
       loadThreads();
       loadCategories();
@@ -145,6 +145,7 @@ export default function ForumApp() {
   }
 
   const isAdmin = me?.role === "ADMIN";
+  const postableCategories = categories.filter((c) => c.canPost);
 
   return (
     <div style={{ display: "flex", height: "100%", minHeight: "calc(100vh - 70px)" }}>
@@ -199,40 +200,46 @@ export default function ForumApp() {
             </button>
             <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "26px 28px" }}>
               <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.3, marginBottom: 18 }}>Start a new thread</div>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Category</label>
-              <select
-                value={newCourseId}
-                onChange={(e) => setNewCourseId(e.target.value)}
-                style={{ width: "100%", margin: "8px 0 16px", padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 11, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--bg)", color: "var(--ink)" }}
-              >
-                <option value="">General</option>
-                {categories.filter((c) => c.id !== "general").map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Title</label>
-              <input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="What's your question or topic?"
-                style={{ width: "100%", margin: "8px 0 16px", padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 11, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--bg)" }}
-              />
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Description</label>
-              <textarea
-                value={newBody}
-                onChange={(e) => setNewBody(e.target.value)}
-                placeholder="Share details…"
-                style={{ width: "100%", margin: "8px 0 20px", padding: "13px 15px", border: "1px solid var(--line)", borderRadius: 12, fontFamily: "inherit", fontSize: 13.5, lineHeight: 1.6, outline: "none", resize: "vertical", minHeight: 110, background: "var(--bg)" }}
-              />
-              <button
-                onClick={onCreateThread}
-                disabled={!newTitle.trim() || !newBody.trim() || creating}
-                style={{ width: "100%", padding: 14, background: !newTitle.trim() || !newBody.trim() || creating ? "var(--line)" : "var(--ink)", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: creating ? "default" : "pointer" }}
-              >
-                {creating ? "Posting…" : "Post thread"}
-              </button>
+              {postableCategories.length === 0 ? (
+                <p style={{ color: "var(--ink3)", fontSize: 13.5 }}>You don&apos;t have permission to post in any forum category right now.</p>
+              ) : (
+                <>
+                  <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Category</label>
+                  <select
+                    value={newCategoryId}
+                    onChange={(e) => setNewCategoryId(e.target.value)}
+                    style={{ width: "100%", margin: "8px 0 16px", padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 11, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--bg)", color: "var(--ink)" }}
+                  >
+                    <option value="">Select a category…</option>
+                    {postableCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Title</label>
+                  <input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="What's your question or topic?"
+                    style={{ width: "100%", margin: "8px 0 16px", padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 11, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--bg)" }}
+                  />
+                  <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Description</label>
+                  <textarea
+                    value={newBody}
+                    onChange={(e) => setNewBody(e.target.value)}
+                    placeholder="Share details…"
+                    style={{ width: "100%", margin: "8px 0 20px", padding: "13px 15px", border: "1px solid var(--line)", borderRadius: 12, fontFamily: "inherit", fontSize: 13.5, lineHeight: 1.6, outline: "none", resize: "vertical", minHeight: 110, background: "var(--bg)" }}
+                  />
+                  <button
+                    onClick={onCreateThread}
+                    disabled={!newTitle.trim() || !newBody.trim() || !newCategoryId || creating}
+                    style={{ width: "100%", padding: 14, background: !newTitle.trim() || !newBody.trim() || !newCategoryId || creating ? "var(--line)" : "var(--ink)", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: creating ? "default" : "pointer" }}
+                  >
+                    {creating ? "Posting…" : "Post thread"}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -289,6 +296,10 @@ export default function ForumApp() {
                 {openThread.locked ? (
                   <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--bg)", borderRadius: "var(--rm)", fontSize: 13, color: "var(--ink3)", fontWeight: 600, textAlign: "center" }}>
                     🔒 This thread is locked — no new replies.
+                  </div>
+                ) : !openThread.canComment ? (
+                  <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--bg)", borderRadius: "var(--rm)", fontSize: 13, color: "var(--ink3)", fontWeight: 600, textAlign: "center" }}>
+                    You don&apos;t have permission to comment in this category.
                   </div>
                 ) : (
                   <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "18px 20px", marginTop: 16, display: "flex", gap: 12, alignItems: "center" }}>

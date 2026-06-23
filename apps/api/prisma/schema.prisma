@@ -68,6 +68,8 @@ model User {
   forumThreads    ForumThread[]
   forumPosts      ForumPost[]
   forumThreadLikes ForumThreadLike[]
+  forumCategoriesCreated ForumCategory[]     @relation("ForumCategoryCreatedBy")
+  forumCategoryPermissions ForumCategoryUser[]
 
   chapterCompletions ChapterCompletion[]
   lessonViews        LessonView[]
@@ -118,7 +120,7 @@ model Course {
   conversations    Conversation[]
   mockTests        Test[]
   feedbackForms    FeedbackForm[]
-  forumThreads     ForumThread[]
+  forumCategories  ForumCategory[]
   privateAccess    CoursePrivateAccess[]
   subscriptionCourses SubscriptionCourse[]
 
@@ -363,6 +365,7 @@ model Batch {
   sessions      Session[]
   conversations Conversation[]
   feedbackForms FeedbackForm[]
+  forumCategories ForumCategory[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -735,6 +738,71 @@ model FeedbackResponse {
   @@unique([formId, studentId])
 }
 
+enum ForumScopeType {
+  BATCH
+  COURSE
+  GENERAL
+}
+
+enum ForumAccessMode {
+  ALL
+  SELECTED
+  NONE
+}
+
+enum ForumPermissionPurpose {
+  AUDIENCE
+  POST
+  COMMENT
+}
+
+model ForumCategory {
+  id        String         @id @default(uuid())
+  name      String
+  scopeType ForumScopeType
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  batchId String?
+  batch   Batch?  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Only meaningful for GENERAL — BATCH/COURSE categories' audience is implicitly that batch/course's members.
+  audienceFacultyMode ForumAccessMode @default(ALL)
+  audienceStudentMode ForumAccessMode @default(ALL)
+
+  postFacultyMode ForumAccessMode @default(ALL)
+  postStudentMode ForumAccessMode @default(ALL)
+
+  commentFacultyMode ForumAccessMode @default(ALL)
+  commentStudentMode ForumAccessMode @default(ALL)
+
+  createdById String
+  createdBy   User   @relation("ForumCategoryCreatedBy", fields: [createdById], references: [id])
+
+  permissionUsers ForumCategoryUser[]
+  threads         ForumThread[]
+
+  @@index([batchId])
+  @@index([courseId])
+}
+
+model ForumCategoryUser {
+  id String @id @default(uuid())
+
+  categoryId String
+  category   ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  purpose ForumPermissionPurpose
+
+  @@unique([categoryId, userId, purpose])
+}
+
 model ForumThread {
   id        String   @id @default(uuid())
   title     String
@@ -743,8 +811,8 @@ model ForumThread {
   locked    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  courseId String?
-  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
@@ -752,7 +820,7 @@ model ForumThread {
   posts ForumPost[]
   likes ForumThreadLike[]
 
-  @@index([courseId])
+  @@index([categoryId])
 }
 
 model ForumPost {

@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ForumService } from './forum.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-payload.interface';
+import { CreateForumCategoryDto } from './dto/create-forum-category.dto';
+import { UpdateForumCategoryDto } from './dto/update-forum-category.dto';
 import { CreateThreadDto } from './dto/create-thread.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdateThreadDto } from './dto/update-thread.dto';
@@ -15,13 +17,48 @@ export class ForumController {
   constructor(private readonly forum: ForumService) {}
 
   @Get('categories')
-  listCategories() {
-    return this.forum.listCategories();
+  listCategories(@CurrentUser() user: JwtPayload) {
+    return this.forum.listCategoriesForUser(user);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Get('admin/categories')
+  listCategoriesForAdmin() {
+    return this.forum.listCategoriesForAdmin();
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Get('admin/categories/:id')
+  getCategoryForAdmin(@Param('id') id: string) {
+    return this.forum.getCategoryForAdmin(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Post('admin/categories')
+  createCategory(@CurrentUser() user: JwtPayload, @Body() dto: CreateForumCategoryDto) {
+    return this.forum.createCategory(user, dto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Patch('admin/categories/:id')
+  updateCategory(@Param('id') id: string, @Body() dto: UpdateForumCategoryDto) {
+    return this.forum.updateCategory(id, dto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Delete('admin/categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.forum.deleteCategory(id);
   }
 
   @Get('threads')
-  listThreads(@Query('categoryId') categoryId?: string, @Query('search') search?: string) {
-    return this.forum.listThreads(categoryId, search);
+  listThreads(@CurrentUser() user: JwtPayload, @Query('categoryId') categoryId?: string, @Query('search') search?: string) {
+    return this.forum.listThreads(user, categoryId, search);
   }
 
   @Get('threads/:id')

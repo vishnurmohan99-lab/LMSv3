@@ -865,10 +865,16 @@ export const feedbackApi = {
     request<FeedbackResponse>(`/feedback-forms/${id}/responses`, { method: 'POST', body: JSON.stringify({ answers }) }),
 };
 
+export type ForumScopeType = 'BATCH' | 'COURSE' | 'GENERAL';
+export type ForumAccessMode = 'ALL' | 'SELECTED' | 'NONE';
+
 export interface ForumCategory {
   id: string;
   name: string;
+  scopeType: ForumScopeType;
   count: number;
+  canPost: boolean;
+  canComment: boolean;
 }
 
 export interface ForumAuthor {
@@ -884,7 +890,7 @@ export interface ForumThread {
   pinned: boolean;
   locked: boolean;
   createdAt: string;
-  courseId: string | null;
+  categoryId: string;
   authorId: string;
   author: ForumAuthor;
   _count: { posts: number; likes: number };
@@ -902,6 +908,7 @@ export interface ForumPost {
 export interface ForumThreadDetail extends ForumThread {
   posts: ForumPost[];
   likedByMe: boolean;
+  canComment: boolean;
 }
 
 export const forumApi = {
@@ -911,7 +918,7 @@ export const forumApi = {
     return request<ForumThread[]>(`/forum/threads${qs ? `?${qs}` : ""}`);
   },
   getThread: (id: string) => request<ForumThreadDetail>(`/forum/threads/${id}`),
-  createThread: (data: { title: string; body: string; courseId?: string }) =>
+  createThread: (data: { title: string; body: string; categoryId: string }) =>
     request<ForumThread>('/forum/threads', { method: 'POST', body: JSON.stringify(data) }),
   addPost: (threadId: string, body: string) =>
     request<ForumPost>(`/forum/threads/${threadId}/posts`, { method: 'POST', body: JSON.stringify({ body }) }),
