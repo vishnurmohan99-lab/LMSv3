@@ -8,6 +8,7 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @UseGuards(JwtAccessGuard)
 @Controller('users')
@@ -43,5 +44,12 @@ export class UsersController {
   @Patch(':id/role')
   updateRole(@Param('id') id: string, @Body() dto: UpdateRoleDto) {
     return this.usersService.updateRole(id, dto.role);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Patch(':id')
+  updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.updateByAdmin(id, dto);
   }
 }

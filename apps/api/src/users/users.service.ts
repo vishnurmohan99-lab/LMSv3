@@ -77,4 +77,9 @@ export class UsersService {
     const user = await this.prisma.user.update({ where: { id }, data: { role } });
     return toSafeUser(user);
   }
+
+  async updateByAdmin(id: string, data: { fullName?: string }): Promise<SafeUser> {
+    const user = await this.prisma.user.update({ where: { id }, data });
+    return toSafeUser(user);
+  }
 }

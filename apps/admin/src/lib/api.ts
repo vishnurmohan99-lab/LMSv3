@@ -86,6 +86,8 @@ export const usersApi = {
     request<Profile>('/users', { method: 'POST', body: JSON.stringify(data) }),
   updateRole: (id: string, role: Profile['role']) =>
     request<Profile>(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  update: (id: string, data: { fullName?: string }) =>
+    request<Profile>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 };
 
 export interface AdminStats {
