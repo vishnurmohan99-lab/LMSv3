@@ -9,6 +9,7 @@ import { CreateTestDto } from './dto/create-test.dto';
 import { UpdateTestDto } from './dto/update-test.dto';
 import { CreateTestQuestionDto } from './dto/create-test-question.dto';
 import { ImportQuestionsDto } from './dto/import-questions.dto';
+import { CreateComprehensionDto } from './dto/create-comprehension.dto';
 
 @UseGuards(JwtAccessGuard)
 @Controller('tests')
@@ -58,5 +59,12 @@ export class TestsController {
   @Post(':id/import-questions')
   importQuestions(@Param('id') id: string, @Body() dto: ImportQuestionsDto, @CurrentUser() user: JwtPayload) {
     return this.testsService.importQuestions(id, user, dto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('FACULTY', 'ADMIN')
+  @Post(':id/comprehension')
+  createComprehension(@Param('id') id: string, @Body() dto: CreateComprehensionDto, @CurrentUser() user: JwtPayload) {
+    return this.testsService.createComprehension(id, user, dto);
   }
 }

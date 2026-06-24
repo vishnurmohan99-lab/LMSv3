@@ -6,6 +6,7 @@ import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { CreateComprehensionDto } from './dto/create-comprehension.dto';
 import { sanitizePrompt } from './sanitize-prompt';
 import { withUniqueNameCheck } from '../common/unique-violation';
 
@@ -41,7 +42,7 @@ export class QuestionBanksService {
   async getQuestionBank(id: string, user: JwtPayload) {
     const bank = await this.prisma.questionBank.findUnique({
       where: { id },
-      include: { questions: { orderBy: { order: 'asc' } } },
+      include: { questions: { orderBy: { order: 'asc' }, include: { passage: true } } },
     });
     if (!bank) throw new NotFoundException('Question bank not found');
     if (!bank.published && !isOwnerOrAdmin(user, bank.facultyId)) {
@@ -50,6 +51,17 @@ export class QuestionBanksService {
     return {
       ...bank,
       bannerUrl: bank.bannerUrl ? await this.uploads.presignDownload(bank.bannerUrl) : null,
+      questions: await Promise.all(bank.questions.map((q) => this.presignQuestionImages(q))),
+    };
+  }
+
+  private async presignQuestionImages<T extends { imageUrl: string | null; passage: { imageUrl: string | null } | null }>(q: T): Promise<T> {
+    return {
+      ...q,
+      imageUrl: q.imageUrl ? await this.uploads.presignDownload(q.imageUrl) : null,
+      passage: q.passage
+        ? { ...q.passage, imageUrl: q.passage.imageUrl ? await this.uploads.presignDownload(q.passage.imageUrl) : null }
+        : null,
     };
   }
 
@@ -91,8 +103,36 @@ export class QuestionBanksService {
         order: dto.order ?? 0,
         options: dto.options ?? [],
         correctOption: dto.correctOption,
+        imageUrl: dto.imageUrl,
         questionBankId: bankId,
       },
+    });
+  }
+
+  /** Creates one Passage plus a batch of MCQ questions that all reference it — a "Comprehension" set. */
+  async createComprehension(bankId: string, user: JwtPayload, dto: CreateComprehensionDto) {
+    const bank = await this.requireQuestionBank(bankId);
+    this.assertOwnership(user, bank.facultyId);
+    const existingMax = await this.prisma.question.aggregate({ where: { questionBankId: bankId }, _max: { order: true } });
+    let order = (existingMax._max.order ?? -1) + 1;
+
+    return this.prisma.passage.create({
+      data: {
+        text: dto.passageText.trim(),
+        imageUrl: dto.passageImageUrl,
+        questions: {
+          create: dto.questions.map((q) => ({
+            type: 'MCQ',
+            prompt: sanitizePrompt(q.prompt),
+            options: q.options,
+            correctOption: q.correctOption,
+            imageUrl: q.imageUrl,
+            order: order++,
+            questionBankId: bankId,
+          })),
+        },
+      },
+      include: { questions: true },
     });
   }
 

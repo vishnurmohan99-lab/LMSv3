@@ -448,11 +448,23 @@ enum QuestionType {
   TRUE_FALSE
 }
 
+model Passage {
+  id        String   @id @default(uuid())
+  text      String   @db.Text
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questions     Question[]
+  testQuestions TestQuestion[]
+}
+
 model Question {
-  id     String       @id @default(uuid())
-  type   QuestionType
-  prompt String
-  order  Int          @default(0)
+  id       String       @id @default(uuid())
+  type     QuestionType
+  prompt   String
+  order    Int          @default(0)
+  imageUrl String?
 
   options       String[] @default([])
   correctOption String?
@@ -462,6 +474,11 @@ model Question {
 
   questionBankId String
   questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+
+  passageId String?
+  passage   Passage? @relation(fields: [passageId], references: [id], onDelete: SetNull)
+
+  @@index([passageId])
 }
 
 enum TestPublishMode {
@@ -499,10 +516,11 @@ model Test {
 }
 
 model TestQuestion {
-  id     String       @id @default(uuid())
-  type   QuestionType
-  prompt String
-  order  Int          @default(0)
+  id       String       @id @default(uuid())
+  type     QuestionType
+  prompt   String
+  order    Int          @default(0)
+  imageUrl String?
 
   options       String[] @default([])
   correctOption String?
@@ -513,7 +531,12 @@ model TestQuestion {
   testId String
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
 
+  passageId String?
+  passage   Passage? @relation(fields: [passageId], references: [id], onDelete: SetNull)
+
   answers TestAnswer[]
+
+  @@index([passageId])
 }
 
 enum ConversationType {

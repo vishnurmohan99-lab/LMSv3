@@ -21,4 +21,8 @@ export class CreateTestQuestionDto {
   @IsOptional()
   @IsString()
   correctOption?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }

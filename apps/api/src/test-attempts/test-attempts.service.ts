@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadsService } from '../uploads/uploads.service';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { SaveAnswerDto } from './dto/save-answer.dto';
 
@@ -9,7 +10,10 @@ function normalize(value: string | null | undefined): string {
 
 @Injectable()
 export class TestAttemptsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploads: UploadsService,
+  ) {}
 
   async startAttempt(user: JwtPayload, testId: string) {
     const test = await this.prisma.test.findUnique({ where: { id: testId } });
@@ -44,11 +48,20 @@ export class TestAttemptsService {
       data: { testId, studentId: user.sub },
     });
 
-    const testQuestions = await this.prisma.testQuestion.findMany({
+    const rawQuestions = await this.prisma.testQuestion.findMany({
       where: { testId },
       orderBy: { order: 'asc' },
-      select: { id: true, type: true, prompt: true, options: true, order: true, testId: true },
+      select: { id: true, type: true, prompt: true, options: true, order: true, testId: true, imageUrl: true, passage: true },
     });
+    const testQuestions = await Promise.all(
+      rawQuestions.map(async (q) => ({
+        ...q,
+        imageUrl: q.imageUrl ? await this.uploads.presignDownload(q.imageUrl) : null,
+        passage: q.passage
+          ? { ...q.passage, imageUrl: q.passage.imageUrl ? await this.uploads.presignDownload(q.passage.imageUrl) : null }
+          : null,
+      })),
+    );
 
     return { ...attempt, testQuestions };
   }

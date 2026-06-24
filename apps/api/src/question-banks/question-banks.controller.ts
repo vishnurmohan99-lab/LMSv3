@@ -8,6 +8,7 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { CreateComprehensionDto } from './dto/create-comprehension.dto';
 
 @UseGuards(JwtAccessGuard)
 @Controller('question-banks')
@@ -50,5 +51,12 @@ export class QuestionBanksController {
   @Post(':id/questions')
   createQuestion(@Param('id') id: string, @Body() dto: CreateQuestionDto, @CurrentUser() user: JwtPayload) {
     return this.questionBanksService.createQuestion(id, user, dto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('FACULTY', 'ADMIN')
+  @Post(':id/comprehension')
+  createComprehension(@Param('id') id: string, @Body() dto: CreateComprehensionDto, @CurrentUser() user: JwtPayload) {
+    return this.questionBanksService.createComprehension(id, user, dto);
   }
 }

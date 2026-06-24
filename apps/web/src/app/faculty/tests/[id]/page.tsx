@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   testsApi,
   questionBanksApi,
+  uploadsApi,
   ApiError,
   type TestTree,
   type TestQuestion,
@@ -50,7 +51,7 @@ function QuestionForm({
   onCancel,
 }: {
   initial?: TestQuestion;
-  onSubmit: (data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string }) => Promise<void>;
+  onSubmit: (data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [type, setType] = useState<QuestionType>(initial?.type ?? "MCQ");
@@ -67,6 +68,8 @@ function QuestionForm({
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<"true" | "false">(
     initial?.correctOption === "false" ? "false" : "true",
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState(initial?.imageUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,16 +78,17 @@ function QuestionForm({
     setError(null);
     setBusy(true);
     try {
+      const imageUrl = imageFile ? await uploadsApi.uploadFile(imageFile) : existingImageUrl || undefined;
       if (type === "MCQ") {
         const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
         if (cleanOptions.length < 2) throw new Error("Add at least 2 options");
-        await onSubmit({ type, prompt, options: cleanOptions, correctOption: cleanOptions[correctIndex] ?? cleanOptions[0] });
+        await onSubmit({ type, prompt, options: cleanOptions, correctOption: cleanOptions[correctIndex] ?? cleanOptions[0], imageUrl });
       } else if (type === "TRUE_FALSE") {
-        await onSubmit({ type, prompt, correctOption: trueFalseAnswer });
+        await onSubmit({ type, prompt, correctOption: trueFalseAnswer, imageUrl });
       } else if (type === "FILL_BLANK") {
-        await onSubmit({ type, prompt, correctOption: fillAnswer });
+        await onSubmit({ type, prompt, correctOption: fillAnswer, imageUrl });
       } else {
-        await onSubmit({ type, prompt });
+        await onSubmit({ type, prompt, imageUrl });
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Failed to save question");
@@ -109,6 +113,19 @@ function QuestionForm({
       <div>
         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Question prompt</div>
         <RichTextEditor value={prompt} onChange={setPrompt} />
+      </div>
+
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Attach image (optional)</div>
+        {existingImageUrl && !imageFile && (
+          <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={existingImageUrl} alt="Attached" style={{ maxWidth: 160, maxHeight: 100, borderRadius: 8, border: "1px solid var(--line)" }} />
+            <button type="button" onClick={() => setExistingImageUrl("")} style={{ background: "none", border: "none", color: "var(--red)", fontSize: 12, cursor: "pointer" }}>
+              Remove
+            </button>
+          </div>
+        )}
+        <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
       </div>
 
       {type === "MCQ" && (
@@ -219,6 +236,141 @@ function QuestionAnswerSummary({ question }: { question: TestQuestion }) {
     return <div style={{ fontSize: 12.5, color: "var(--green)", fontWeight: 700 }}>Answer: {question.correctOption}</div>;
   }
   return <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Freeform answer — ungraded</div>;
+}
+
+type ComprehensionQuestionDraft = { prompt: string; options: string[]; correctIndex: number; imageFile: File | null };
+
+function ComprehensionForm({
+  onSubmit,
+  onCancel,
+}: {
+  onSubmit: (data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] }) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [passageText, setPassageText] = useState("");
+  const [passageImageFile, setPassageImageFile] = useState<File | null>(null);
+  const [questions, setQuestions] = useState<ComprehensionQuestionDraft[]>(
+    Array.from({ length: 6 }, () => ({ prompt: "", options: ["", "", "", ""], correctIndex: 0, imageFile: null })),
+  );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function updateQuestion(i: number, patch: Partial<ComprehensionQuestionDraft>) {
+    setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, ...patch } : q)));
+  }
+  function updateOption(i: number, oi: number, value: string) {
+    setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, options: q.options.map((o, j) => (j === oi ? value : o)) } : q)));
+  }
+  function addQuestionDraft() {
+    setQuestions((qs) => [...qs, { prompt: "", options: ["", "", "", ""], correctIndex: 0, imageFile: null }]);
+  }
+  function removeQuestionDraft(i: number) {
+    setQuestions((qs) => qs.filter((_, idx) => idx !== i));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      if (!passageText.trim()) throw new Error("Passage text is required");
+      const cleanQuestions = questions.filter((q) => q.prompt.trim());
+      if (cleanQuestions.length === 0) throw new Error("Add at least one question");
+      for (const q of cleanQuestions) {
+        if (q.options.filter((o) => o.trim()).length < 2) throw new Error("Each question needs at least 2 options");
+      }
+      const passageImageUrl = passageImageFile ? await uploadsApi.uploadFile(passageImageFile) : undefined;
+      const builtQuestions = await Promise.all(
+        cleanQuestions.map(async (q) => {
+          const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
+          const imageUrl = q.imageFile ? await uploadsApi.uploadFile(q.imageFile) : undefined;
+          return { prompt: q.prompt, options: cleanOptions, correctOption: cleanOptions[q.correctIndex] ?? cleanOptions[0], imageUrl };
+        }),
+      );
+      await onSubmit({ passageText, passageImageUrl, questions: builtQuestions });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Failed to save comprehension set");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: "grid", gap: 16, marginBottom: 24, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 16, maxHeight: "70vh", overflowY: "auto" }}
+    >
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Passage</div>
+        <textarea
+          required
+          value={passageText}
+          onChange={(e) => setPassageText(e.target.value)}
+          placeholder="Paste or write the comprehension passage…"
+          style={{ ...inputStyle, width: "100%", minHeight: 140, resize: "vertical", lineHeight: 1.6 }}
+        />
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Passage image (optional)</div>
+          <input type="file" accept="image/*" onChange={(e) => setPassageImageFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Questions ({questions.length})</div>
+        <div style={{ display: "grid", gap: 12 }}>
+          {questions.map((q, i) => (
+            <div key={i} style={{ background: "var(--bg)", borderRadius: 12, padding: 12 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink3)", flex: "none" }}>Q{i + 1}</span>
+                <input
+                  value={q.prompt}
+                  onChange={(e) => updateQuestion(i, { prompt: e.target.value })}
+                  placeholder="Question prompt"
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+                <button type="button" onClick={() => removeQuestionDraft(i)} style={{ background: "none", border: "none", color: "var(--red)", fontSize: 12, cursor: "pointer", flex: "none" }}>
+                  Remove
+                </button>
+              </div>
+              <div style={{ display: "grid", gap: 6, paddingLeft: 20 }}>
+                {q.options.map((opt, oi) => (
+                  <div key={oi} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input type="radio" name={`correct-${i}`} checked={q.correctIndex === oi} onChange={() => updateQuestion(i, { correctIndex: oi })} />
+                    <input
+                      value={opt}
+                      onChange={(e) => updateOption(i, oi, e.target.value)}
+                      placeholder={`Option ${oi + 1}`}
+                      style={{ ...inputStyle, flex: 1, padding: "7px 10px", fontSize: 13 }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 8, paddingLeft: 20 }}>
+                <input type="file" accept="image/*" onChange={(e) => updateQuestion(i, { imageFile: e.target.files?.[0] ?? null })} style={{ fontSize: 12 }} title="Attach image (optional)" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={addQuestionDraft}
+          style={{ marginTop: 8, background: "none", border: "none", color: "var(--orange)", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
+        >
+          + Add another question
+        </button>
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="submit" disabled={busy} style={{ ...btnStyle, opacity: busy ? 0.7 : 1 }}>
+          {busy ? "Saving…" : "Create comprehension set"}
+        </button>
+        <button type="button" onClick={onCancel} style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 13, cursor: "pointer" }}>
+          Cancel
+        </button>
+      </div>
+      {error && <span style={{ color: "var(--red)", fontSize: 12 }}>{error}</span>}
+    </form>
+  );
 }
 
 function ImportFromBank({ onDone }: { onDone: (questionIds: string[] | undefined, bankId: string) => Promise<void> }) {
@@ -339,6 +491,7 @@ export default function FacultyTestDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showComprehensionForm, setShowComprehensionForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<TestQuestion | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -375,19 +528,20 @@ export default function FacultyTestDetailPage() {
     router.push("/faculty/tests");
   }
 
-  async function onAddQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string }) {
+  async function onAddQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) {
     await testsApi.createQuestion(testId, data);
     setShowAddForm(false);
     load();
   }
 
-  async function onEditQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string }) {
+  async function onEditQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) {
     if (!editingQuestion) return;
     await testsApi.updateQuestion(editingQuestion.id, {
       type: data.type,
       prompt: data.prompt,
       options: data.options ?? [],
       correctOption: data.correctOption,
+      imageUrl: data.imageUrl ?? null,
     });
     setEditingQuestion(null);
     load();
@@ -396,6 +550,12 @@ export default function FacultyTestDetailPage() {
   async function onDeleteQuestion(id: string) {
     if (!(await confirm({ message: "Delete this question? This cannot be undone." }))) return;
     await testsApi.removeQuestion(id);
+    load();
+  }
+
+  async function onAddComprehension(data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] }) {
+    await testsApi.createComprehension(testId, data);
+    setShowComprehensionForm(false);
     load();
   }
 
@@ -552,11 +712,15 @@ export default function FacultyTestDetailPage() {
           <button onClick={() => setShowAddForm((s) => !s)} style={btnStyle}>
             {showAddForm ? "Close" : "+ Add manually"}
           </button>
+          <button onClick={() => setShowComprehensionForm((s) => !s)} style={{ ...btnStyle, background: "var(--purple-soft)", color: "var(--purple)" }}>
+            {showComprehensionForm ? "Close" : "+ Add comprehension"}
+          </button>
         </span>
       </div>
 
       {showImport && <ImportFromBank onDone={onImport} />}
       {showAddForm && <QuestionForm onSubmit={onAddQuestion} onCancel={() => setShowAddForm(false)} />}
+      {showComprehensionForm && <ComprehensionForm onSubmit={onAddComprehension} onCancel={() => setShowComprehensionForm(false)} />}
       {editingQuestion && <QuestionForm initial={editingQuestion} onSubmit={onEditQuestion} onCancel={() => setEditingQuestion(null)} />}
 
       {test.testQuestions.length === 0 ? (
@@ -578,6 +742,8 @@ export default function FacultyTestDetailPage() {
                   </button>
                 </span>
               </div>
+              {question.passage && <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)", marginBottom: 6 }}>📖 Comprehension</div>}
+              {question.imageUrl && <img src={question.imageUrl} alt="" style={{ width: "100%", maxHeight: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />}
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, maxHeight: 80, overflow: "hidden" }} dangerouslySetInnerHTML={{ __html: question.prompt }} />
               <QuestionAnswerSummary question={question} />
             </div>

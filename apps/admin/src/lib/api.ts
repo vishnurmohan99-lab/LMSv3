@@ -332,6 +332,12 @@ export const uploadsApi = {
 
 export type QuestionType = 'MCQ' | 'FILL_BLANK' | 'ESSAY' | 'TRUE_FALSE';
 
+export interface Passage {
+  id: string;
+  text: string;
+  imageUrl: string | null;
+}
+
 export interface Question {
   id: string;
   type: QuestionType;
@@ -339,6 +345,9 @@ export interface Question {
   order: number;
   options: string[];
   correctOption: string | null;
+  imageUrl: string | null;
+  passageId: string | null;
+  passage: Passage | null;
   questionBankId: string;
 }
 
@@ -369,11 +378,15 @@ export const questionBanksApi = {
 
   createQuestion: (
     bankId: string,
-    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string },
+    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string; imageUrl?: string },
   ) => request<Question>(`/question-banks/${bankId}/questions`, { method: 'POST', body: JSON.stringify(data) }),
-  updateQuestion: (id: string, data: Partial<Pick<Question, 'type' | 'prompt' | 'order' | 'options' | 'correctOption'>>) =>
+  updateQuestion: (id: string, data: Partial<Pick<Question, 'type' | 'prompt' | 'order' | 'options' | 'correctOption' | 'imageUrl'>>) =>
     request<Question>(`/questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeQuestion: (id: string) => request<{ success: boolean }>(`/questions/${id}`, { method: 'DELETE' }),
+  createComprehension: (
+    bankId: string,
+    data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] },
+  ) => request<Passage & { questions: Question[] }>(`/question-banks/${bankId}/comprehension`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
 export type TestPublishMode = 'MANUAL' | 'TIMED';
@@ -385,6 +398,9 @@ export interface TestQuestion {
   order: number;
   options: string[];
   correctOption: string | null;
+  imageUrl: string | null;
+  passageId: string | null;
+  passage: Passage | null;
   testId: string;
 }
 
@@ -442,14 +458,18 @@ export const testsApi = {
 
   createQuestion: (
     testId: string,
-    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string },
+    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string; imageUrl?: string },
   ) => request<TestQuestion>(`/tests/${testId}/questions`, { method: 'POST', body: JSON.stringify(data) }),
-  updateQuestion: (id: string, data: Partial<Pick<TestQuestion, 'type' | 'prompt' | 'order' | 'options' | 'correctOption'>>) =>
+  updateQuestion: (id: string, data: Partial<Pick<TestQuestion, 'type' | 'prompt' | 'order' | 'options' | 'correctOption' | 'imageUrl'>>) =>
     request<TestQuestion>(`/test-questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeQuestion: (id: string) => request<{ success: boolean }>(`/test-questions/${id}`, { method: 'DELETE' }),
 
   importQuestions: (testId: string, data: { questionBankId: string; questionIds?: string[] }) =>
     request<TestQuestion[]>(`/tests/${testId}/import-questions`, { method: 'POST', body: JSON.stringify(data) }),
+  createComprehension: (
+    testId: string,
+    data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] },
+  ) => request<Passage & { testQuestions: TestQuestion[] }>(`/tests/${testId}/comprehension`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
 export type TestAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED';
@@ -460,6 +480,8 @@ export interface TestAttemptQuestion {
   prompt: string;
   options: string[];
   order: number;
+  imageUrl: string | null;
+  passage: Passage | null;
   testId: string;
 }
 

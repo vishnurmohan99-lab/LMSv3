@@ -7,6 +7,7 @@ import { UpdateTestDto } from './dto/update-test.dto';
 import { CreateTestQuestionDto } from './dto/create-test-question.dto';
 import { UpdateTestQuestionDto } from './dto/update-test-question.dto';
 import { ImportQuestionsDto } from './dto/import-questions.dto';
+import { CreateComprehensionDto } from './dto/create-comprehension.dto';
 import { sanitizePrompt } from '../question-banks/sanitize-prompt';
 import { withUniqueNameCheck } from '../common/unique-violation';
 
@@ -47,17 +48,28 @@ export class TestsService {
   async getTest(id: string, user: JwtPayload) {
     const test = await this.prisma.test.findUnique({
       where: { id },
-      include: { testQuestions: { orderBy: { order: 'asc' } } },
+      include: { testQuestions: { orderBy: { order: 'asc' }, include: { passage: true } } },
     });
     if (!test) throw new NotFoundException('Test not found');
     if (!test.published && !isOwnerOrAdmin(user, test.facultyId)) {
       throw new ForbiddenException('You do not have access to this test');
     }
     const owner = isOwnerOrAdmin(user, test.facultyId);
+    const presigned = await Promise.all(test.testQuestions.map((q) => this.presignQuestionImages(q)));
     return {
       ...test,
       bannerUrl: test.bannerUrl ? await this.uploads.presignDownload(test.bannerUrl) : null,
-      testQuestions: owner ? test.testQuestions : test.testQuestions.map((q) => ({ ...q, correctOption: null })),
+      testQuestions: owner ? presigned : presigned.map((q) => ({ ...q, correctOption: null })),
+    };
+  }
+
+  private async presignQuestionImages<T extends { imageUrl: string | null; passage: { imageUrl: string | null } | null }>(q: T): Promise<T> {
+    return {
+      ...q,
+      imageUrl: q.imageUrl ? await this.uploads.presignDownload(q.imageUrl) : null,
+      passage: q.passage
+        ? { ...q.passage, imageUrl: q.passage.imageUrl ? await this.uploads.presignDownload(q.passage.imageUrl) : null }
+        : null,
     };
   }
 
@@ -130,8 +142,36 @@ export class TestsService {
         order: dto.order ?? (maxOrder._max.order ?? -1) + 1,
         options: dto.options ?? [],
         correctOption: dto.correctOption,
+        imageUrl: dto.imageUrl,
         testId,
       },
+    });
+  }
+
+  /** Creates one Passage plus a batch of MCQ test questions that all reference it — a "Comprehension" set. */
+  async createComprehension(testId: string, user: JwtPayload, dto: CreateComprehensionDto) {
+    const test = await this.requireTest(testId);
+    this.assertOwnership(user, test.facultyId);
+    const maxOrder = await this.prisma.testQuestion.aggregate({ where: { testId }, _max: { order: true } });
+    let order = (maxOrder._max.order ?? -1) + 1;
+
+    return this.prisma.passage.create({
+      data: {
+        text: dto.passageText.trim(),
+        imageUrl: dto.passageImageUrl,
+        testQuestions: {
+          create: dto.questions.map((q) => ({
+            type: 'MCQ',
+            prompt: sanitizePrompt(q.prompt),
+            options: q.options,
+            correctOption: q.correctOption,
+            imageUrl: q.imageUrl,
+            order: order++,
+            testId,
+          })),
+        },
+      },
+      include: { testQuestions: true },
     });
   }
 
@@ -177,6 +217,8 @@ export class TestsService {
         prompt: q.prompt,
         options: q.options,
         correctOption: q.correctOption,
+        imageUrl: q.imageUrl,
+        passageId: q.passageId,
         order: order++,
         testId,
       })),

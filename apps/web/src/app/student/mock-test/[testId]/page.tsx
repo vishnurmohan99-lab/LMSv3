@@ -29,6 +29,101 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+type HighlightRange = { start: number; end: number };
+
+/** Sums text-node lengths up to (node, offset) within container — gives a stable plain-text character offset
+ *  even though highlighted spans split the passage across multiple DOM text nodes. */
+function getTextOffset(container: Node, node: Node, offset: number): number {
+  let total = 0;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  let current = walker.nextNode();
+  while (current) {
+    if (current === node) return total + offset;
+    total += current.textContent?.length ?? 0;
+    current = walker.nextNode();
+  }
+  return total;
+}
+
+function renderHighlightedText(text: string, ranges: HighlightRange[], onRemove: (index: number) => void) {
+  if (ranges.length === 0) return text;
+  const ordered = ranges.map((r, i) => ({ ...r, i })).sort((a, b) => a.start - b.start);
+  const nodes: React.ReactNode[] = [];
+  let pos = 0;
+  for (const r of ordered) {
+    if (r.start > pos) nodes.push(text.slice(pos, r.start));
+    nodes.push(
+      <mark
+        key={r.i}
+        onClick={() => onRemove(r.i)}
+        title="Click to remove highlight"
+        style={{ background: "#fde08d", cursor: "pointer", borderRadius: 2 }}
+      >
+        {text.slice(r.start, r.end)}
+      </mark>,
+    );
+    pos = Math.max(pos, r.end);
+  }
+  if (pos < text.length) nodes.push(text.slice(pos));
+  return nodes;
+}
+
+function PassagePanel({
+  passage,
+  highlights,
+  onAddHighlight,
+  onRemoveHighlight,
+}: {
+  passage: { id: string; text: string; imageUrl: string | null };
+  highlights: HighlightRange[];
+  onAddHighlight: (range: HighlightRange) => void;
+  onRemoveHighlight: (index: number) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  function onMouseUp() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !containerRef.current) return;
+    const range = sel.getRangeAt(0);
+    if (!containerRef.current.contains(range.commonAncestorContainer)) return;
+    const start = getTextOffset(containerRef.current, range.startContainer, range.startOffset);
+    const end = getTextOffset(containerRef.current, range.endContainer, range.endOffset);
+    sel.removeAllRanges();
+    if (end > start) onAddHighlight({ start: Math.min(start, end), end: Math.max(start, end) });
+  }
+
+  return (
+    <div
+      style={{
+        position: "sticky",
+        top: 20,
+        alignSelf: "start",
+        maxHeight: "calc(100vh - 60px)",
+        overflowY: "auto",
+        background: "var(--card)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--rl)",
+        padding: 22,
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}>
+        Passage
+      </div>
+      {passage.imageUrl && (
+        <img src={passage.imageUrl} alt="" style={{ width: "100%", borderRadius: 10, marginBottom: 14 }} />
+      )}
+      <div
+        ref={containerRef}
+        onMouseUp={onMouseUp}
+        style={{ fontSize: 13.5, lineHeight: 1.8, color: "var(--ink2)", whiteSpace: "pre-wrap", userSelect: "text" }}
+      >
+        {renderHighlightedText(passage.text, highlights, onRemoveHighlight)}
+      </div>
+      <p style={{ fontSize: 11, color: "var(--ink3)", marginTop: 12 }}>Select any text above to highlight it for reference.</p>
+    </div>
+  );
+}
+
 export default function StudentMockTestTakePage() {
   const params = useParams<{ testId: string }>();
   const router = useRouter();
@@ -43,7 +138,15 @@ export default function StudentMockTestTakePage() {
   const [result, setResult] = useState<TestAttemptResult | null>(null);
   const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [highlights, setHighlights] = useState<Record<string, HighlightRange[]>>({});
   const submittingRef = useRef(false);
+
+  function addHighlight(passageId: string, range: HighlightRange) {
+    setHighlights((h) => ({ ...h, [passageId]: [...(h[passageId] ?? []), range] }));
+  }
+  function removeHighlight(passageId: string, index: number) {
+    setHighlights((h) => ({ ...h, [passageId]: (h[passageId] ?? []).filter((_, i) => i !== index) }));
+  }
 
   useEffect(() => {
     setView("loading");
@@ -166,8 +269,16 @@ export default function StudentMockTestTakePage() {
   if (view === "taking" && attempt) {
     const q = questions[current];
     return (
-      <main className="fade-in" style={{ padding: "26px 30px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 20 }}>
+      <main className="fade-in" style={{ padding: "26px 30px", maxWidth: q?.passage ? 1480 : 1100, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: q?.passage ? "400px 1fr 260px" : "1fr 260px", gap: 20 }}>
+          {q?.passage && (
+            <PassagePanel
+              passage={q.passage}
+              highlights={highlights[q.passage.id] ?? []}
+              onAddHighlight={(range) => addHighlight(q.passage!.id, range)}
+              onRemoveHighlight={(index) => removeHighlight(q.passage!.id, index)}
+            />
+          )}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>
@@ -187,8 +298,9 @@ export default function StudentMockTestTakePage() {
             {q && (
               <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 30 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}>
-                  {q.type === "MCQ" ? "Multiple Choice" : q.type === "TRUE_FALSE" ? "True / False" : "Fill in the blank"}
+                  {q.passage ? "Comprehension" : q.type === "MCQ" ? "Multiple Choice" : q.type === "TRUE_FALSE" ? "True / False" : "Fill in the blank"}
                 </div>
+                {q.imageUrl && <img src={q.imageUrl} alt="" style={{ width: "100%", maxHeight: 280, objectFit: "contain", borderRadius: 12, marginBottom: 18, background: "var(--bg)" }} />}
                 <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.5, marginBottom: 22 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
 
                 {q.type === "FILL_BLANK" ? (

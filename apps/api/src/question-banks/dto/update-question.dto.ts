@@ -23,4 +23,8 @@ export class UpdateQuestionDto {
   @IsOptional()
   @IsString()
   correctOption?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }
