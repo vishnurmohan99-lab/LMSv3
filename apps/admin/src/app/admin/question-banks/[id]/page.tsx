@@ -240,6 +240,76 @@ function QuestionForm({
   );
 }
 
+type QuestionGroup = { kind: "single"; question: Question } | { kind: "comprehension"; passage: NonNullable<Question["passage"]>; questions: Question[] };
+
+function groupQuestions(questions: Question[]): QuestionGroup[] {
+  const groups: QuestionGroup[] = [];
+  const passageGroups = new Map<string, QuestionGroup & { kind: "comprehension" }>();
+  for (const q of questions) {
+    if (q.passageId && q.passage) {
+      let group = passageGroups.get(q.passageId);
+      if (!group) {
+        group = { kind: "comprehension", passage: q.passage, questions: [] };
+        passageGroups.set(q.passageId, group);
+        groups.push(group);
+      }
+      group.questions.push(q);
+    } else {
+      groups.push({ kind: "single", question: q });
+    }
+  }
+  return groups;
+}
+
+function ComprehensionGroupCard({
+  passage,
+  questions,
+  onEdit,
+  onDelete,
+}: {
+  passage: NonNullable<Question["passage"]>;
+  questions: Question[];
+  onEdit: (q: Question) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div
+      className="entity-card"
+      style={{ gridColumn: "1 / -1", background: "var(--card)", border: "1px solid var(--purple)", borderRadius: "var(--rl)", padding: 20 }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--purple)", textTransform: "uppercase", marginBottom: 10 }}>
+        📖 Comprehension passage · {questions.length} question{questions.length === 1 ? "" : "s"}
+      </div>
+      {passage.imageUrl && <img src={passage.imageUrl} alt="" style={{ width: "100%", maxHeight: 180, objectFit: "cover", borderRadius: 10, marginBottom: 12 }} />}
+      <div style={{ fontSize: 13.5, lineHeight: 1.7, color: "var(--ink2)", background: "var(--bg)", borderRadius: 10, padding: 14, marginBottom: 16, whiteSpace: "pre-wrap" }}>
+        {passage.text}
+      </div>
+      <div style={{ display: "grid", gap: 12 }}>
+        {questions.map((question, i) => (
+          <div key={question.id} style={{ background: "var(--bg)", borderRadius: 12, padding: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink3)" }}>Sub-question {i + 1}</span>
+              <span style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => onEdit(question)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  <EditIcon />
+                </button>
+                <button onClick={() => onDelete(question.id)} title="Delete" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  <TrashIcon />
+                </button>
+              </span>
+            </div>
+            {question.imageUrl && (
+              <img src={question.imageUrl} alt="" style={{ width: "100%", maxHeight: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
+            )}
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }} dangerouslySetInnerHTML={{ __html: question.prompt }} />
+            <QuestionAnswerSummary question={question} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function QuestionAnswerSummary({ question }: { question: Question }) {
   if (question.type === "MCQ") {
     return (
@@ -563,43 +633,50 @@ export default function AdminQuestionBankDetailPage() {
         <p style={{ color: "var(--ink2)" }}>No questions yet — add the first one above.</p>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
-          {bank.questions.map((question) => (
-            <div key={question.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: "3px 9px",
-                    borderRadius: 7,
-                    background: "var(--purple-soft)",
-                    color: "var(--purple)",
-                  }}
-                >
-                  {TYPE_LABEL[question.type]}
-                </span>
-                <span style={{ display: "flex", gap: 10 }}>
-                  <button onClick={() => setEditingQuestion(question)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <EditIcon />
-                  </button>
-                  <button onClick={() => onDeleteQuestion(question.id)} title="Delete" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <TrashIcon />
-                  </button>
-                </span>
-              </div>
-              {question.passage && (
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)", marginBottom: 6 }}>📖 Comprehension</div>
-              )}
-              {question.imageUrl && (
-                <img src={question.imageUrl} alt="" style={{ width: "100%", maxHeight: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
-              )}
-              <div
-                style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, maxHeight: 80, overflow: "hidden" }}
-                dangerouslySetInnerHTML={{ __html: question.prompt }}
+          {groupQuestions(bank.questions).map((group) =>
+            group.kind === "comprehension" ? (
+              <ComprehensionGroupCard
+                key={group.passage.id}
+                passage={group.passage}
+                questions={group.questions}
+                onEdit={setEditingQuestion}
+                onDelete={onDeleteQuestion}
               />
-              <QuestionAnswerSummary question={question} />
-            </div>
-          ))}
+            ) : (
+              <div key={group.question.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 7,
+                      background: "var(--purple-soft)",
+                      color: "var(--purple)",
+                    }}
+                  >
+                    {TYPE_LABEL[group.question.type]}
+                  </span>
+                  <span style={{ display: "flex", gap: 10 }}>
+                    <button onClick={() => setEditingQuestion(group.question)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <EditIcon />
+                    </button>
+                    <button onClick={() => onDeleteQuestion(group.question.id)} title="Delete" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <TrashIcon />
+                    </button>
+                  </span>
+                </div>
+                {group.question.imageUrl && (
+                  <img src={group.question.imageUrl} alt="" style={{ width: "100%", maxHeight: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
+                )}
+                <div
+                  style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, maxHeight: 80, overflow: "hidden" }}
+                  dangerouslySetInnerHTML={{ __html: group.question.prompt }}
+                />
+                <QuestionAnswerSummary question={group.question} />
+              </div>
+            ),
+          )}
         </div>
       )}
     </div>
