@@ -56,6 +56,22 @@ function TrashIcon() {
   );
 }
 
+function UpArrowIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  );
+}
+
+function DownArrowIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+      <path d="M12 5v14M5 12l7 7 7-7" />
+    </svg>
+  );
+}
+
 export default function CourseAuthoringPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
@@ -160,6 +176,18 @@ export default function CourseAuthoringPage() {
   async function onDeleteChapter(id: string) {
     if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(id);
+    load();
+  }
+
+  async function onMoveChapter(index: number, direction: -1 | 1) {
+    if (!course) return;
+    const target = index + direction;
+    if (target < 0 || target >= course.chapters.length) return;
+    const reordered = [...course.chapters];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    await Promise.all(
+      reordered.map((chapter, i) => (chapter.order === i ? Promise.resolve() : coursesApi.updateChapter(chapter.id, { order: i }))),
+    );
     load();
   }
 
@@ -363,7 +391,7 @@ export default function CourseAuthoringPage() {
       </form>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 18 }}>
-        {course.chapters.map((chapter) => {
+        {course.chapters.map((chapter, i) => {
           const editing = editingChapterId === chapter.id;
           return (
             <div key={chapter.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 20, overflow: "hidden" }}>
@@ -437,7 +465,32 @@ export default function CourseAuthoringPage() {
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
-                    <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                    <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                      <span style={{ display: "flex", gap: 2 }}>
+                        <button
+                          onClick={() => onMoveChapter(i, -1)}
+                          disabled={i === 0}
+                          title="Move up"
+                          style={{ display: "flex", background: "none", border: "none", cursor: i === 0 ? "default" : "pointer", padding: 2, opacity: i === 0 ? 0.35 : 1 }}
+                        >
+                          <UpArrowIcon />
+                        </button>
+                        <button
+                          onClick={() => onMoveChapter(i, 1)}
+                          disabled={i === course.chapters.length - 1}
+                          title="Move down"
+                          style={{
+                            display: "flex",
+                            background: "none",
+                            border: "none",
+                            cursor: i === course.chapters.length - 1 ? "default" : "pointer",
+                            padding: 2,
+                            opacity: i === course.chapters.length - 1 ? 0.35 : 1,
+                          }}
+                        >
+                          <DownArrowIcon />
+                        </button>
+                      </span>
                       <Link href={`/faculty/courses/${courseId}/chapters/${chapter.id}`} title="View chapter" style={{ display: "flex" }}>
                         <EyeIcon />
                       </Link>

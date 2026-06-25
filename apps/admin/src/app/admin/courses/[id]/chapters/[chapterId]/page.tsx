@@ -821,17 +821,17 @@ export default function ChapterDetailPage() {
       {combinedItems.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No lessons or tests yet — add one above.</p>
       ) : (
-        <div style={{ display: "grid", gap: 14 }}>
-          {combinedItems.map((item, i) => (
-            <div key={item.id} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 18, flex: "none" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
+          {combinedItems.map((item, i) => {
+            const moveControls = (
+              <span style={{ display: "flex", gap: 2 }}>
                 <button
                   onClick={() => onMoveContentItem(combinedItems, i, -1)}
                   disabled={i === 0}
                   title="Move up"
-                  style={{ display: "flex", background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 7, cursor: i === 0 ? "default" : "pointer", padding: 4, opacity: i === 0 ? 0.4 : 1 }}
+                  style={{ display: "flex", background: "none", border: "none", cursor: i === 0 ? "default" : "pointer", padding: 2, opacity: i === 0 ? 0.35 : 1 }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
                     <path d="M12 19V5M5 12l7-7 7 7" />
                   </svg>
                 </button>
@@ -841,105 +841,108 @@ export default function ChapterDetailPage() {
                   title="Move down"
                   style={{
                     display: "flex",
-                    background: "var(--bg)",
-                    border: "1px solid var(--line)",
-                    borderRadius: 7,
+                    background: "none",
+                    border: "none",
                     cursor: i === combinedItems.length - 1 ? "default" : "pointer",
-                    padding: 4,
-                    opacity: i === combinedItems.length - 1 ? 0.4 : 1,
+                    padding: 2,
+                    opacity: i === combinedItems.length - 1 ? 0.35 : 1,
                   }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
                     <path d="M12 5v14M5 12l7 7 7-7" />
                   </svg>
                 </button>
-              </div>
+              </span>
+            );
 
-              {item.kind === "lesson" ? (
-                <div className="entity-card" style={{ flex: 1, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 15 }}>{item.data.title}</div>
-                      <LessonTypeBadge type={item.data.type} />
-                    </div>
-                    <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <button
-                        onClick={() => setViewingLesson(item.data)}
-                        title="View lesson"
-                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                      >
-                        <EyeIcon />
-                      </button>
-                      <button
-                        onClick={() => setEditingLesson(item.data)}
-                        title="Edit lesson"
-                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                      >
-                        <EditIcon />
-                      </button>
-                      <button onClick={() => onDeleteLesson(item.data.id)} title="Delete lesson" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                        <TrashIcon />
-                      </button>
-                    </span>
+            return item.kind === "lesson" ? (
+              <div key={item.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{item.data.title}</div>
+                    <LessonTypeBadge type={item.data.type} />
                   </div>
-
-                  <div style={{ fontSize: 12, color: lessonContentReady(item.data) ? "var(--ink2)" : "var(--amber)" }}>
-                    {lessonContentStatus(item.data)}
-                  </div>
-
-                  {(item.data.flashcardsEnabled || (item.data.aiNotesEnabled && item.data.type === "VIDEO") || item.data.askMeEnabled || item.data.summaryDeckEnabled) && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {item.data.flashcardsEnabled && (
-                        <FeatureBadge label="Flashcards" href={`/admin/courses/${courseId}/lessons/${item.data.id}/flashcards`} />
-                      )}
-                      {item.data.aiNotesEnabled && item.data.type === "VIDEO" && (
-                        <FeatureBadge label="AI Notes" href={`/admin/courses/${courseId}/lessons/${item.data.id}/notes`} />
-                      )}
-                      {item.data.summaryDeckEnabled && (
-                        <FeatureBadge label="Summary Deck" href={`/admin/courses/${courseId}/lessons/${item.data.id}/summary-deck`} />
-                      )}
-                      {item.data.askMeEnabled && <FeatureBadge label="Ask Me" />}
-                    </div>
-                  )}
-
-                  <FeaturePicker
-                    features={{
-                      flashcardsEnabled: item.data.flashcardsEnabled,
-                      aiNotesEnabled: item.data.aiNotesEnabled,
-                      askMeEnabled: item.data.askMeEnabled,
-                      summaryDeckEnabled: item.data.summaryDeckEnabled,
-                    }}
-                    onToggle={(key, next) => onToggleLessonFeature(item.data, key, next)}
-                    excludeKeys={excludedFeatureKeys(item.data.type)}
-                  />
-                </div>
-              ) : (
-                <div className="entity-card" style={{ flex: 1, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: "3px 9px",
-                        borderRadius: 7,
-                        background: item.data.published ? "var(--green-soft)" : "var(--amber-soft)",
-                        color: item.data.published ? "var(--green)" : "var(--amber)",
-                      }}
+                  <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    {moveControls}
+                    <button
+                      onClick={() => setViewingLesson(item.data)}
+                      title="View lesson"
+                      style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >
-                      {item.data.published ? "Published" : "Draft"}
-                    </span>
+                      <EyeIcon />
+                    </button>
+                    <button
+                      onClick={() => setEditingLesson(item.data)}
+                      title="Edit lesson"
+                      style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button onClick={() => onDeleteLesson(item.data.id)} title="Delete lesson" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <TrashIcon />
+                    </button>
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 12, color: lessonContentReady(item.data) ? "var(--ink2)" : "var(--amber)" }}>
+                  {lessonContentStatus(item.data)}
+                </div>
+
+                {(item.data.flashcardsEnabled || (item.data.aiNotesEnabled && item.data.type === "VIDEO") || item.data.askMeEnabled || item.data.summaryDeckEnabled) && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {item.data.flashcardsEnabled && (
+                      <FeatureBadge label="Flashcards" href={`/admin/courses/${courseId}/lessons/${item.data.id}/flashcards`} />
+                    )}
+                    {item.data.aiNotesEnabled && item.data.type === "VIDEO" && (
+                      <FeatureBadge label="AI Notes" href={`/admin/courses/${courseId}/lessons/${item.data.id}/notes`} />
+                    )}
+                    {item.data.summaryDeckEnabled && (
+                      <FeatureBadge label="Summary Deck" href={`/admin/courses/${courseId}/lessons/${item.data.id}/summary-deck`} />
+                    )}
+                    {item.data.askMeEnabled && <FeatureBadge label="Ask Me" />}
+                  </div>
+                )}
+
+                <FeaturePicker
+                  features={{
+                    flashcardsEnabled: item.data.flashcardsEnabled,
+                    aiNotesEnabled: item.data.aiNotesEnabled,
+                    askMeEnabled: item.data.askMeEnabled,
+                    summaryDeckEnabled: item.data.summaryDeckEnabled,
+                  }}
+                  onToggle={(key, next) => onToggleLessonFeature(item.data, key, next)}
+                  excludeKeys={excludedFeatureKeys(item.data.type)}
+                />
+              </div>
+            ) : (
+              <div key={item.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 7,
+                      background: item.data.published ? "var(--green-soft)" : "var(--amber-soft)",
+                      color: item.data.published ? "var(--green)" : "var(--amber)",
+                    }}
+                  >
+                    {item.data.published ? "Published" : "Draft"}
+                  </span>
+                  <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    {moveControls}
                     <button onClick={() => onDetachTest(item.data.id)} title="Detach from chapter" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                       <TrashIcon />
                     </button>
-                  </div>
-                  <Link href={`/admin/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
-                    {item.data.title}
-                  </Link>
-                  <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+                <Link href={`/admin/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
+                  {item.data.title}
+                </Link>
+                <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

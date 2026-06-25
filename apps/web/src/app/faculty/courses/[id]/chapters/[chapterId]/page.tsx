@@ -475,12 +475,14 @@ function LessonCard({
   onDelete,
   onToggleFeature,
   onUpdate,
+  moveControls,
 }: {
   lesson: Lesson;
   courseId: string;
   onDelete: () => void;
   onToggleFeature: (key: FeatureKey, next: boolean) => void;
   onUpdate: (data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) => Promise<void>;
+  moveControls?: React.ReactNode;
 }) {
   const [viewing, setViewing] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -493,6 +495,7 @@ function LessonCard({
           <span style={{ color: "var(--ink3)", fontSize: 12 }}>{lesson.type}</span>
         </div>
         <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {moveControls}
           <button
             onClick={() => setViewing((v) => !v)}
             title="View lesson"
@@ -857,17 +860,17 @@ export default function FacultyChapterDetailPage() {
       {combinedItems.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No lessons or tests yet — add one above.</p>
       ) : (
-        <div style={{ display: "grid", gap: 14 }}>
-          {combinedItems.map((item, i) => (
-            <div key={item.id} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 18, flex: "none" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
+          {combinedItems.map((item, i) => {
+            const moveControls = (
+              <span style={{ display: "flex", gap: 2 }}>
                 <button
                   onClick={() => onMoveContentItem(combinedItems, i, -1)}
                   disabled={i === 0}
                   title="Move up"
-                  style={{ display: "flex", background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 7, cursor: i === 0 ? "default" : "pointer", padding: 4, opacity: i === 0 ? 0.4 : 1 }}
+                  style={{ display: "flex", background: "none", border: "none", cursor: i === 0 ? "default" : "pointer", padding: 2, opacity: i === 0 ? 0.35 : 1 }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
                     <path d="M12 19V5M5 12l7-7 7 7" />
                   </svg>
                 </button>
@@ -877,57 +880,59 @@ export default function FacultyChapterDetailPage() {
                   title="Move down"
                   style={{
                     display: "flex",
-                    background: "var(--bg)",
-                    border: "1px solid var(--line)",
-                    borderRadius: 7,
+                    background: "none",
+                    border: "none",
                     cursor: i === combinedItems.length - 1 ? "default" : "pointer",
-                    padding: 4,
-                    opacity: i === combinedItems.length - 1 ? 0.4 : 1,
+                    padding: 2,
+                    opacity: i === combinedItems.length - 1 ? 0.35 : 1,
                   }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
                     <path d="M12 5v14M5 12l7 7 7-7" />
                   </svg>
                 </button>
-              </div>
+              </span>
+            );
 
-              {item.kind === "lesson" ? (
-                <div style={{ flex: 1 }}>
-                  <LessonCard
-                    lesson={item.data}
-                    courseId={courseId}
-                    onDelete={() => onDeleteLesson(item.data.id)}
-                    onToggleFeature={(key, next) => onToggleLessonFeature(item.data, key, next)}
-                    onUpdate={(data) => onUpdateLesson(item.data.id, data)}
-                  />
-                </div>
-              ) : (
-                <div className="entity-card" style={{ flex: 1, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: "3px 9px",
-                        borderRadius: 7,
-                        background: item.data.published ? "var(--green-soft)" : "var(--amber-soft)",
-                        color: item.data.published ? "var(--green)" : "var(--amber)",
-                      }}
-                    >
-                      {item.data.published ? "Published" : "Draft"}
-                    </span>
+            return item.kind === "lesson" ? (
+              <LessonCard
+                key={item.id}
+                lesson={item.data}
+                courseId={courseId}
+                onDelete={() => onDeleteLesson(item.data.id)}
+                onToggleFeature={(key, next) => onToggleLessonFeature(item.data, key, next)}
+                onUpdate={(data) => onUpdateLesson(item.data.id, data)}
+                moveControls={moveControls}
+              />
+            ) : (
+              <div key={item.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 7,
+                      background: item.data.published ? "var(--green-soft)" : "var(--amber-soft)",
+                      color: item.data.published ? "var(--green)" : "var(--amber)",
+                    }}
+                  >
+                    {item.data.published ? "Published" : "Draft"}
+                  </span>
+                  <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    {moveControls}
                     <button onClick={() => onDetachTest(item.data.id)} title="Detach from chapter" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                       <TrashIcon />
                     </button>
-                  </div>
-                  <Link href={`/faculty/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
-                    {item.data.title}
-                  </Link>
-                  <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+                <Link href={`/faculty/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
+                  {item.data.title}
+                </Link>
+                <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>
+              </div>
+            );
+          })}
         </div>
       )}
     </main>
