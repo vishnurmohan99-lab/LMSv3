@@ -36,6 +36,10 @@ export class UpdateLessonDto {
   askMeEnabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  summaryDeckEnabled?: boolean;
+
+  @IsOptional()
   @IsString()
   transcript?: string;
 }

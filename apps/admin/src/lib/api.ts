@@ -115,6 +115,7 @@ export interface Lesson {
   flashcardsEnabled: boolean;
   aiNotesEnabled: boolean;
   askMeEnabled: boolean;
+  summaryDeckEnabled: boolean;
   transcript: string | null;
 }
 
@@ -245,6 +246,7 @@ export const coursesApi = {
       flashcardsEnabled?: boolean;
       aiNotesEnabled?: boolean;
       askMeEnabled?: boolean;
+      summaryDeckEnabled?: boolean;
       transcript?: string;
     },
   ) => request<Lesson>(`/chapters/${chapterId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
@@ -253,7 +255,16 @@ export const coursesApi = {
     data: Partial<
       Pick<
         Lesson,
-        'title' | 'type' | 'order' | 'contentUrl' | 'liveAt' | 'flashcardsEnabled' | 'aiNotesEnabled' | 'askMeEnabled' | 'transcript'
+        | 'title'
+        | 'type'
+        | 'order'
+        | 'contentUrl'
+        | 'liveAt'
+        | 'flashcardsEnabled'
+        | 'aiNotesEnabled'
+        | 'askMeEnabled'
+        | 'summaryDeckEnabled'
+        | 'transcript'
       >
     >,
   ) => request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -291,6 +302,19 @@ export interface LessonNote {
 export const notesApi = {
   get: (lessonId: string) => request<LessonNote | null>(`/lessons/${lessonId}/notes`),
   generate: (lessonId: string) => request<LessonNote>(`/lessons/${lessonId}/notes/generate`, { method: 'POST' }),
+};
+
+export interface SummaryDeck {
+  id: string;
+  cards: string[];
+  lessonId: string;
+  updatedAt: string;
+}
+
+export const summaryDeckApi = {
+  get: (lessonId: string) => request<SummaryDeck | null>(`/lessons/${lessonId}/summary-deck`),
+  generate: (lessonId: string, count?: number) =>
+    request<SummaryDeck>(`/lessons/${lessonId}/summary-deck/generate`, { method: 'POST', body: JSON.stringify({ count }) }),
 };
 
 export const uploadsApi = {

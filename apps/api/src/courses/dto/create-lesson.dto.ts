@@ -34,6 +34,10 @@ export class CreateLessonDto {
   askMeEnabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  summaryDeckEnabled?: boolean;
+
+  @IsOptional()
   @IsString()
   transcript?: string;
 }

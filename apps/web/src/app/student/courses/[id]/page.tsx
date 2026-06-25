@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, flashcardsApi, ApiError, type Chapter, type CourseTree, type Lesson } from "@/lib/api";
 import FlashcardReview from "@/components/FlashcardReview";
+import SummaryDeckReview from "@/components/SummaryDeckReview";
 import LessonNotes from "@/components/LessonNotes";
 import AskMeChat from "@/components/AskMeChat";
 
@@ -212,7 +213,7 @@ export default function StudentCoursePlayerPage() {
   const [error, setError] = useState<string | null>(null);
   const [notEnrolled, setNotEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [viewMode, setViewMode] = useState<"lesson" | "flashcards">("lesson");
+  const [viewMode, setViewMode] = useState<"lesson" | "flashcards" | "summary">("lesson");
   const [showChat, setShowChat] = useState(false);
   const [flashcardCount, setFlashcardCount] = useState<number | null>(null);
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
@@ -601,6 +602,32 @@ export default function StudentCoursePlayerPage() {
                       Flashcards{flashcardCount !== null ? ` (${flashcardCount})` : ""}
                     </button>
                   )}
+                  {selectedLesson.summaryDeckEnabled && (
+                    <button
+                      onClick={() => setViewMode(viewMode === "summary" ? "lesson" : "summary")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 7,
+                        padding: "10px 14px",
+                        background: viewMode === "summary" ? "var(--purple)" : "var(--purple-soft)",
+                        color: viewMode === "summary" ? "#fff" : "var(--purple)",
+                        border: "none",
+                        borderRadius: 11,
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 11l3 3L22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                      </svg>
+                      Summary Deck
+                    </button>
+                  )}
                   {selectedLesson.askMeEnabled && (
                     <button
                       onClick={() => setShowChat((s) => !s)}
@@ -635,6 +662,8 @@ export default function StudentCoursePlayerPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 {viewMode === "flashcards" ? (
                   <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} />
+                ) : viewMode === "summary" ? (
+                  <SummaryDeckReview key={selectedLesson.id} lessonId={selectedLesson.id} />
                 ) : selectedLesson.type === "VIDEO" && (selectedChapter?.lessons.length ?? 0) > 1 ? (
                   <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
                     <div style={{ display: "grid", gap: 18, minWidth: 0 }}>
@@ -690,7 +719,7 @@ export default function StudentCoursePlayerPage() {
                 ) : (
                   <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 18 }}>
                     <LessonViewer lesson={selectedLesson} />
-                    {selectedLesson.aiNotesEnabled && <LessonNotes lessonId={selectedLesson.id} />}
+                    {selectedLesson.aiNotesEnabled && selectedLesson.type === "VIDEO" && <LessonNotes lessonId={selectedLesson.id} />}
                   </div>
                 )}
               </div>

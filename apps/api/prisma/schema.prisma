@@ -233,21 +233,32 @@ model Lesson {
   type              LessonType
   contentUrl        String?
   liveAt            DateTime?
-  flashcardsEnabled Boolean    @default(false)
-  aiNotesEnabled    Boolean    @default(false)
-  askMeEnabled      Boolean    @default(false)
-  transcript        String?    @db.Text
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  flashcardsEnabled  Boolean    @default(false)
+  aiNotesEnabled     Boolean    @default(false)
+  askMeEnabled       Boolean    @default(false)
+  summaryDeckEnabled Boolean    @default(false)
+  transcript         String?    @db.Text
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   chapterId String
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   flashcards   Flashcard[]
   note         LessonNote?
+  summaryDeck  SummaryDeck?
   chatMessages ChatMessage[]
   sessions     Session[]
   views        LessonView[]
+}
+
+model SummaryDeck {
+  id        String   @id @default(uuid())
+  cards     String[] @default([])
+  updatedAt DateTime @updatedAt
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
 
 model LessonNote {

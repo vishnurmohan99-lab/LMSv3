@@ -496,6 +496,7 @@ export class CoursesService {
         flashcardsEnabled: dto.flashcardsEnabled ?? false,
         aiNotesEnabled: dto.aiNotesEnabled ?? false,
         askMeEnabled: dto.askMeEnabled ?? false,
+        summaryDeckEnabled: dto.summaryDeckEnabled ?? false,
         transcript: dto.transcript,
         chapterId,
       },
@@ -617,6 +618,9 @@ export class CoursesService {
     if (!lesson.aiNotesEnabled) {
       throw new BadRequestException('AI Notes is not enabled for this lesson');
     }
+    if (lesson.type !== LessonType.VIDEO) {
+      throw new BadRequestException('AI Notes is only available for video lessons');
+    }
 
     const content = await this.getLessonContext(lesson);
     const note = await this.callAiForNotes(content);
@@ -637,6 +641,56 @@ export class CoursesService {
     }
 
     return this.prisma.lessonNote.findUnique({ where: { lessonId } });
+  }
+
+  async generateSummaryDeck(lessonId: string, user: JwtPayload, count = 8) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    this.assertOwnership(user, lesson.chapter.course.facultyId);
+
+    if (!lesson.summaryDeckEnabled) {
+      throw new BadRequestException('Summary Deck is not enabled for this lesson');
+    }
+
+    const content = await this.getLessonContext(lesson);
+    const cards = await this.callAiForSummaryDeck(content, count);
+
+    return this.prisma.summaryDeck.upsert({
+      where: { lessonId },
+      create: { lessonId, cards },
+      update: { cards },
+    });
+  }
+
+  async getSummaryDeck(lessonId: string, user: JwtPayload) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    const canView = await this.canViewCourseContent(lesson.chapter.course, user);
+    if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+    if (!(await this.isChapterUnlockedForUser(lesson.chapterId, user))) {
+      throw new ForbiddenException('This chapter is not unlocked yet');
+    }
+
+    return this.prisma.summaryDeck.findUnique({ where: { lessonId } });
+  }
+
+  private async callAiForSummaryDeck(content: string, count: number): Promise<string[]> {
+    const jsonText = await this.completeJsonText(
+      `Split the following lesson content into exactly ${count} short summary cards that together cover the ENTIRE content from start to finish, in order. Each card should be 1-3 sentences, self-contained, and readable on its own. Respond with ONLY a JSON array of strings, no markdown, no commentary, in this exact shape: ["card 1 text", "card 2 text"].\n\nLesson content:\n${content}`,
+      '[',
+      ']',
+    );
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch {
+      throw new BadRequestException('AI response was not valid JSON');
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new BadRequestException('AI response was not a list of summary cards');
+    }
+
+    return parsed.filter((c): c is string => typeof c === 'string' && c.trim().length > 0).slice(0, count);
   }
 
   /** Used by the chat module: verifies access and returns the lesson's grounding text. */

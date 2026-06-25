@@ -63,28 +63,53 @@ function SparkleIcon() {
   );
 }
 
-type FeatureKey = "flashcardsEnabled" | "aiNotesEnabled" | "askMeEnabled";
+type FeatureKey = "flashcardsEnabled" | "aiNotesEnabled" | "askMeEnabled" | "summaryDeckEnabled";
 
 const AVAILABLE_FEATURES: { key: FeatureKey; label: string }[] = [
   { key: "flashcardsEnabled", label: "Flashcards" },
   { key: "aiNotesEnabled", label: "AI Notes" },
+  { key: "summaryDeckEnabled", label: "Summary Deck" },
   { key: "askMeEnabled", label: "Ask Me" },
 ];
+
+/** AI Notes is a video-only feature — every other feature works for both video and PDF lessons. */
+function excludedFeatureKeys(type: LessonType): FeatureKey[] {
+  return type === "VIDEO" ? [] : ["aiNotesEnabled"];
+}
+
+/** Parses a .srt subtitle file into plain transcript text (strips indices and timestamps). */
+function parseSrtToTranscript(srt: string): string {
+  return srt
+    .replace(/\r/g, "")
+    .split(/\n\n+/)
+    .map((block) =>
+      block
+        .split("\n")
+        .filter((line) => !/^\d+$/.test(line.trim()) && !/^\d{2}:\d{2}:\d{2},\d{3}\s*-->/.test(line))
+        .join(" ")
+        .trim(),
+    )
+    .filter(Boolean)
+    .join("\n");
+}
 
 const MENU_WIDTH = 180;
 
 function FeaturePicker({
   features,
   onToggle,
+  excludeKeys = [],
 }: {
   features: Record<FeatureKey, boolean>;
   onToggle: (key: FeatureKey, next: boolean) => void;
+  excludeKeys?: FeatureKey[];
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const anyEnabled = AVAILABLE_FEATURES.some((f) => features[f.key]);
+  const visibleFeatures = AVAILABLE_FEATURES.filter((f) => !excludeKeys.includes(f.key));
+  const anyEnabled = visibleFeatures.some((f) => features[f.key]);
 
   function openMenu() {
     const rect = btnRef.current?.getBoundingClientRect();
@@ -147,7 +172,7 @@ function FeaturePicker({
               minWidth: MENU_WIDTH,
             }}
           >
-            {AVAILABLE_FEATURES.map((f) => (
+            {visibleFeatures.map((f) => (
               <button
                 key={f.key}
                 type="button"
@@ -223,11 +248,19 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
     flashcardsEnabled: false,
     aiNotesEnabled: false,
     askMeEnabled: false,
+    summaryDeckEnabled: false,
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const anyAiFeatureOn = features.aiNotesEnabled || features.askMeEnabled;
+  const anyAiFeatureOn = features.aiNotesEnabled || features.askMeEnabled || features.summaryDeckEnabled;
+
+  function onChangeType(next: LessonType) {
+    setType(next);
+    if (next !== "VIDEO" && features.aiNotesEnabled) {
+      setFeatures((f) => ({ ...f, aiNotesEnabled: false }));
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -257,7 +290,7 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
   return (
     <form onSubmit={onSubmit} style={{ display: "grid", gap: 10, marginBottom: 24, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 16 }}>
       <input required autoFocus placeholder="Lesson title" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
-      <select value={type} onChange={(e) => setType(e.target.value as LessonType)} style={inputStyle}>
+      <select value={type} onChange={(e) => onChangeType(e.target.value as LessonType)} style={inputStyle}>
         <option value="VIDEO">Video</option>
         <option value="PDF">PDF</option>
         <option value="LIVE">Live class</option>
@@ -275,16 +308,34 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
       )}
       <div>
         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>AI features</div>
-        <FeaturePicker features={features} onToggle={(key, next) => setFeatures((f) => ({ ...f, [key]: next }))} />
+        <FeaturePicker
+          features={features}
+          onToggle={(key, next) => setFeatures((f) => ({ ...f, [key]: next }))}
+          excludeKeys={excludedFeatureKeys(type)}
+        />
       </div>
       {type === "VIDEO" && anyAiFeatureOn && (
-        <textarea
-          placeholder="Paste the video transcript so AI Notes / Ask Me can use it"
-          value={transcript}
-          onChange={(e) => setTranscript(e.target.value)}
-          rows={5}
-          style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
-        />
+        <div>
+          <textarea
+            placeholder="Paste the video transcript so AI Notes / Summary Deck / Ask Me can use it"
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            rows={5}
+            style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical", width: "100%" }}
+          />
+          <div style={{ marginTop: 6, fontSize: 12, color: "var(--ink3)" }}>
+            Or upload a .srt subtitle file to fill this in automatically:{" "}
+            <input
+              type="file"
+              accept=".srt"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (f) setTranscript(parseSrtToTranscript(await f.text()));
+              }}
+              style={{ fontSize: 12 }}
+            />
+          </div>
+        </div>
       )}
       <button type="submit" disabled={busy} style={{ ...btnStyle, opacity: busy ? 0.7 : 1 }}>
         {busy ? "Adding…" : "Add lesson"}
@@ -383,13 +434,27 @@ function EditLessonForm({
         <input type="datetime-local" value={liveAt} onChange={(e) => setLiveAt(e.target.value)} style={inputStyle} />
       )}
       {lesson.type === "VIDEO" && (
-        <textarea
-          placeholder="Paste the video transcript so AI Notes / Ask Me can use it"
-          value={transcript}
-          onChange={(e) => setTranscript(e.target.value)}
-          rows={5}
-          style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
-        />
+        <div>
+          <textarea
+            placeholder="Paste the video transcript so AI Notes / Summary Deck / Ask Me can use it"
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            rows={5}
+            style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical", width: "100%" }}
+          />
+          <div style={{ marginTop: 6, fontSize: 12, color: "var(--ink3)" }}>
+            Or upload a .srt subtitle file to fill this in automatically:{" "}
+            <input
+              type="file"
+              accept=".srt"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (f) setTranscript(parseSrtToTranscript(await f.text()));
+              }}
+              style={{ fontSize: 12 }}
+            />
+          </div>
+        </div>
       )}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" disabled={saving} style={{ ...btnStyle, opacity: saving ? 0.7 : 1 }}>
@@ -452,13 +517,16 @@ function LessonCard({
         {lessonContentStatus(lesson)}
       </div>
 
-      {(lesson.flashcardsEnabled || lesson.aiNotesEnabled || lesson.askMeEnabled) && (
+      {(lesson.flashcardsEnabled || (lesson.aiNotesEnabled && lesson.type === "VIDEO") || lesson.askMeEnabled || lesson.summaryDeckEnabled) && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {lesson.flashcardsEnabled && (
             <FeatureBadge label="Flashcards" href={`/faculty/courses/${courseId}/lessons/${lesson.id}/flashcards`} />
           )}
-          {lesson.aiNotesEnabled && (
+          {lesson.aiNotesEnabled && lesson.type === "VIDEO" && (
             <FeatureBadge label="AI Notes" href={`/faculty/courses/${courseId}/lessons/${lesson.id}/notes`} />
+          )}
+          {lesson.summaryDeckEnabled && (
+            <FeatureBadge label="Summary Deck" href={`/faculty/courses/${courseId}/lessons/${lesson.id}/summary-deck`} />
           )}
           {lesson.askMeEnabled && <FeatureBadge label="Ask Me" />}
         </div>
@@ -469,8 +537,10 @@ function LessonCard({
           flashcardsEnabled: lesson.flashcardsEnabled,
           aiNotesEnabled: lesson.aiNotesEnabled,
           askMeEnabled: lesson.askMeEnabled,
+          summaryDeckEnabled: lesson.summaryDeckEnabled,
         }}
         onToggle={onToggleFeature}
+        excludeKeys={excludedFeatureKeys(lesson.type)}
       />
 
       {viewing && <LessonPreview lesson={lesson} />}

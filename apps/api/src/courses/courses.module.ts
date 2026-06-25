@@ -6,6 +6,7 @@ import { LessonsController } from './lessons.controller';
 import { EnrollmentsController } from './enrollments.controller';
 import { FlashcardsController } from './flashcards.controller';
 import { NotesController } from './notes.controller';
+import { SummaryDeckController } from './summary-deck.controller';
 import { UploadsModule } from '../uploads/uploads.module';
 import { AiModule } from '../ai/ai.module';
 
@@ -18,6 +19,7 @@ import { AiModule } from '../ai/ai.module';
     EnrollmentsController,
     FlashcardsController,
     NotesController,
+    SummaryDeckController,
   ],
   providers: [CoursesService],
   exports: [CoursesService],
