@@ -41,7 +41,7 @@ const TARGET_TABS: { value: FeedbackTargetType; label: string }[] = [
 
 const TARGET_META: Record<FeedbackTargetType, { label: string; color: string; soft: string }> = {
   COURSE: { label: "Course", color: "var(--orange)", soft: "var(--orange-soft)" },
-  FACULTY: { label: "Faculty", color: "#3b6fd6", soft: "#e8eefb" },
+  FACULTY: { label: "Faculty", color: "var(--blue)", soft: "var(--blue-soft)" },
   MENTOR: { label: "Mentor", color: "var(--purple)", soft: "var(--purple-soft)" },
   SYSTEM: { label: "System", color: "var(--green)", soft: "var(--green-soft)" },
 };

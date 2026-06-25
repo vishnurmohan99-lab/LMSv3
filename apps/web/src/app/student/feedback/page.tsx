@@ -11,7 +11,7 @@ function targetName(f: FeedbackForm) {
 
 const TARGET_META: Record<string, { label: string; color: string; soft: string }> = {
   COURSE: { label: "COURSE", color: "var(--orange)", soft: "var(--orange-soft)" },
-  FACULTY: { label: "FACULTY", color: "#3b6fd6", soft: "#e8eefb" },
+  FACULTY: { label: "FACULTY", color: "var(--blue)", soft: "var(--blue-soft)" },
   MENTOR: { label: "MENTOR", color: "var(--purple)", soft: "var(--purple-soft)" },
   SYSTEM: { label: "SYSTEM", color: "var(--green)", soft: "var(--green-soft)" },
 };

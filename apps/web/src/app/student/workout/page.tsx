@@ -146,7 +146,7 @@ export default function StudentWorkoutPage() {
                         padding: "14px 16px",
                         borderRadius: 12,
                         border: showFeedback ? `1.5px solid ${correct ? "var(--green)" : "var(--red)"}` : selected ? "1.5px solid var(--orange)" : "1.5px solid var(--line)",
-                        background: showFeedback ? (correct ? "var(--green-soft)" : "#fbe9e6") : selected ? "var(--orange-soft)" : "var(--card)",
+                        background: showFeedback ? (correct ? "var(--green-soft)" : "var(--red-soft)") : selected ? "var(--orange-soft)" : "var(--card)",
                         color: showFeedback ? (correct ? "var(--green)" : "var(--red)") : selected ? "var(--orange)" : "var(--ink)",
                         fontSize: 14,
                         fontWeight: selected || showFeedback ? 700 : 500,
@@ -184,7 +184,7 @@ export default function StudentWorkoutPage() {
                 style={{
                   marginTop: 20,
                   padding: "14px 16px",
-                  background: isCorrect ? "var(--green-soft)" : "#fbe9e6",
+                  background: isCorrect ? "var(--green-soft)" : "var(--red-soft)",
                   borderRadius: 12,
                   fontSize: 13.5,
                   color: isCorrect ? "var(--green)" : "var(--red)",

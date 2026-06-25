@@ -679,9 +679,9 @@ export default function StudentCoursePlayerPage() {
             <div style={{ flex: 1, overflowY: "auto", padding: 26, display: "flex" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 {viewMode === "flashcards" ? (
-                  <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} />
+                  <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
                 ) : viewMode === "summary" ? (
-                  <SummaryDeckReview key={selectedLesson.id} lessonId={selectedLesson.id} />
+                  <SummaryDeckReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
                 ) : selectedLesson.type === "VIDEO" && (selectedChapter?.lessons.length ?? 0) > 1 ? (
                   <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
                     <div style={{ display: "grid", gap: 18, minWidth: 0 }}>

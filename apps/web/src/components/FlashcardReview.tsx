@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { flashcardsApi, ApiError, type Flashcard } from "@/lib/api";
 
-export default function FlashcardReview({ lessonId }: { lessonId: string }) {
+export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: string; lessonTitle?: string }) {
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -107,7 +107,7 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
             <div style={{ fontSize: 28, fontWeight: 800, color: "var(--orange)" }}>{gotIt}</div>
             <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>Got it</div>
           </div>
-          <div style={{ background: "#fbe9e6", borderRadius: 14, padding: "18px 26px" }}>
+          <div style={{ background: "var(--red-soft)", borderRadius: 14, padding: "18px 26px" }}>
             <div style={{ fontSize: 28, fontWeight: 800, color: "var(--red)" }}>{didntKnow}</div>
             <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>Didn&apos;t know</div>
           </div>
@@ -143,6 +143,28 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
 
   return (
     <div style={{ maxWidth: 620, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: 1,
+            color: "var(--orange)",
+            background: "var(--orange-soft)",
+            padding: "5px 11px",
+            borderRadius: 8,
+            textTransform: "uppercase",
+          }}
+        >
+          ⚡ Flashcards
+        </span>
+        {lessonTitle && (
+          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {lessonTitle}
+          </span>
+        )}
+      </div>
+
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
         <div style={{ flex: 1, height: 8, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 5, overflow: "hidden" }}>
           <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--orange)", borderRadius: 5, transition: "width .3s" }} />
@@ -151,7 +173,7 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
           <span style={{ fontSize: 12, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "5px 11px", borderRadius: 8 }}>
             ✓ {gotIt}
           </span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--red)", background: "#fbe9e6", padding: "5px 11px", borderRadius: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--red)", background: "var(--red-soft)", padding: "5px 11px", borderRadius: 8 }}>
             ✕ {didntKnow}
           </span>
           <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", background: "var(--bg)", padding: "5px 11px", borderRadius: 8 }}>
@@ -172,30 +194,82 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
               background: "var(--card)",
               border: "1px solid var(--line)",
               borderRadius: "var(--rl)",
-              boxShadow: "0 12px 40px rgba(0,0,0,.07)",
+              boxShadow: "0 16px 40px rgba(242,106,27,.10)",
               padding: 40,
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase", marginBottom: 18 }}>
+            <div
+              style={{
+                position: "absolute",
+                top: -60,
+                right: -60,
+                width: 160,
+                height: 160,
+                borderRadius: "50%",
+                background: "radial-gradient(circle, var(--orange-soft), transparent 70%)",
+              }}
+            />
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: 1,
+                color: "var(--orange)",
+                background: "var(--orange-soft)",
+                display: "inline-block",
+                padding: "5px 12px",
+                borderRadius: 8,
+                textTransform: "uppercase",
+                marginBottom: 18,
+              }}
+            >
               Question
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.4, letterSpacing: -0.3 }}>{card.front}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.4, letterSpacing: -0.3, position: "relative" }}>{card.front}</div>
             <div style={{ position: "absolute", bottom: 22, fontSize: 12, color: "var(--ink3)" }}>Tap to flip ↺</div>
           </div>
           <div
             className="flip-card-face flip-card-back"
             style={{
-              background: "#1a1a1a",
+              background: "linear-gradient(135deg, var(--ink) 0%, #2b1608 100%)",
               color: "#fff",
               borderRadius: "var(--rl)",
-              boxShadow: "0 12px 40px rgba(0,0,0,.18)",
+              boxShadow: "0 16px 40px rgba(242,106,27,.22)",
               padding: 40,
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#f7a878", textTransform: "uppercase", marginBottom: 18 }}>
+            <div
+              style={{
+                position: "absolute",
+                top: -60,
+                left: -60,
+                width: 160,
+                height: 160,
+                borderRadius: "50%",
+                background: "radial-gradient(circle, rgba(242,106,27,.28), transparent 70%)",
+              }}
+            />
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: 1,
+                color: "var(--orange)",
+                background: "rgba(242,106,27,.16)",
+                display: "inline-block",
+                padding: "5px 12px",
+                borderRadius: 8,
+                textTransform: "uppercase",
+                marginBottom: 18,
+              }}
+            >
               Answer
             </div>
-            <div style={{ fontSize: 19, fontWeight: 600, lineHeight: 1.6 }}>{card.back}</div>
+            <div style={{ fontSize: 19, fontWeight: 600, lineHeight: 1.6, position: "relative" }}>{card.back}</div>
           </div>
         </div>
       </div>
@@ -206,8 +280,8 @@ export default function FlashcardReview({ lessonId }: { lessonId: string }) {
             onClick={onWrong}
             style={{
               padding: 14,
-              background: "var(--card)",
-              border: "1.5px solid #f0c9c2",
+              background: "var(--red-soft)",
+              border: "1.5px solid var(--red-line)",
               color: "var(--red)",
               borderRadius: 13,
               fontSize: 14,

@@ -371,7 +371,7 @@ export default function StudentMentorPage() {
                   style={{
                     padding: "9px 16px",
                     background: "var(--card)",
-                    border: "1px solid #f0c9c2",
+                    border: "1px solid var(--red-line)",
                     color: "var(--red)",
                     borderRadius: 10,
                     fontSize: 12.5,
