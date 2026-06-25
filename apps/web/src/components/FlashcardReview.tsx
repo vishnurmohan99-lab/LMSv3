@@ -200,7 +200,6 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
               borderRadius: "var(--rl)",
               boxShadow: "0 16px 40px rgba(242,106,27,.10)",
               padding: 40,
-              position: "relative",
               overflow: "hidden",
             }}
           >
@@ -242,7 +241,6 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
               borderRadius: "var(--rl)",
               boxShadow: "0 16px 40px rgba(242,106,27,.22)",
               padding: 40,
-              position: "relative",
               overflow: "hidden",
             }}
           >
