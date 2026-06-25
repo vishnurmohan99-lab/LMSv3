@@ -42,21 +42,33 @@ function UnlockIcon() {
   );
 }
 
+function TestIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2">
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  );
+}
+
 function eventColor(type: CalendarEvent["type"]) {
   if (type === "LIVE_LESSON") return "var(--orange)";
   if (type === "CHAPTER_UNLOCK") return "var(--green)";
+  if (type === "TEST") return "var(--orange)";
   return "var(--purple)";
 }
 
 function eventBg(type: CalendarEvent["type"]) {
   if (type === "LIVE_LESSON") return "var(--orange-soft)";
   if (type === "CHAPTER_UNLOCK") return "var(--green-soft)";
+  if (type === "TEST") return "var(--orange-soft)";
   return "var(--purple-soft)";
 }
 
 function eventLabel(type: CalendarEvent["type"]) {
   if (type === "LIVE_LESSON") return "Live class";
   if (type === "CHAPTER_UNLOCK") return "Course unlock";
+  if (type === "TEST") return "Test";
   return "Mentor session";
 }
 
@@ -79,7 +91,15 @@ function EventRow({ event, role }: { event: CalendarEvent; role: "student" | "fa
       }}
     >
       <span style={{ display: "flex" }}>
-        {event.type === "LIVE_LESSON" ? <LiveIcon /> : event.type === "CHAPTER_UNLOCK" ? <UnlockIcon /> : <MentorIcon />}
+        {event.type === "LIVE_LESSON" ? (
+          <LiveIcon />
+        ) : event.type === "CHAPTER_UNLOCK" ? (
+          <UnlockIcon />
+        ) : event.type === "TEST" ? (
+          <TestIcon />
+        ) : (
+          <MentorIcon />
+        )}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -96,6 +116,10 @@ function EventRow({ event, role }: { event: CalendarEvent; role: "student" | "fa
     </div>
   );
 
+  if (event.type === "TEST" && event.testId) {
+    const href = role === "student" ? `/student/mock-test/${event.testId}` : `/faculty/tests/${event.testId}`;
+    return <Link href={href} style={{ textDecoration: "none", display: "block" }}>{content}</Link>;
+  }
   if ((event.type === "LIVE_LESSON" || event.type === "CHAPTER_UNLOCK") && event.courseId) {
     const href = role === "student" ? `/student/courses/${event.courseId}` : `/faculty/courses/${event.courseId}`;
     return <Link href={href} style={{ textDecoration: "none", display: "block" }}>{content}</Link>;

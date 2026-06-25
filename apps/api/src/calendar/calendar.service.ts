@@ -5,12 +5,13 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 
 export interface CalendarEvent {
   id: string;
-  type: 'LIVE_LESSON' | 'MENTOR_SESSION' | 'CHAPTER_UNLOCK';
+  type: 'LIVE_LESSON' | 'MENTOR_SESSION' | 'CHAPTER_UNLOCK' | 'TEST';
   title: string;
   date: string;
   courseId?: string;
   courseTitle?: string;
   lessonId?: string;
+  testId?: string;
   otherPartyName?: string;
 }
 
@@ -87,7 +88,67 @@ export class CalendarService {
       courseTitle: chapter.course.title,
     }));
 
-    return [...liveEvents, ...mentorEvents, ...unlockEvents].sort((a, b) => a.date.localeCompare(b.date));
+    const testEvents = await this.getTestEventsForStudent(user);
+
+    return [...liveEvents, ...mentorEvents, ...unlockEvents, ...testEvents].sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /** Scheduled (TIMED, dated) tests a student has access to — course-linked, chapter-linked, or standalone-by-segment. */
+  private async getTestEventsForStudent(user: JwtPayload): Promise<CalendarEvent[]> {
+    const baseFilter = { published: true, publishMode: 'TIMED' as const, availableFrom: { not: null } };
+
+    const courseTests = await this.prisma.test.findMany({
+      where: { ...baseFilter, courseId: { not: null }, course: { enrollments: { some: { studentId: user.sub } } } },
+      include: { course: { select: { id: true, title: true } } },
+    });
+
+    const chapterTestsRaw = await this.prisma.test.findMany({
+      where: { ...baseFilter, chapterId: { not: null }, chapter: { course: { enrollments: { some: { studentId: user.sub } } } } },
+      include: { chapter: { include: { course: { select: { id: true, title: true } } } } },
+    });
+    const chapterTests = await Promise.all(
+      chapterTestsRaw.map(async (t) => ({ t, unlocked: await this.courses.isChapterUnlockedForUser(t.chapterId!, user) })),
+    );
+
+    const me = await this.prisma.user.findUnique({ where: { id: user.sub }, select: { segmentId: true, subsegmentId: true } });
+    const segmentMatch = me?.subsegmentId
+      ? { subsegmentId: me.subsegmentId }
+      : me?.segmentId
+        ? { segmentId: me.segmentId, subsegmentId: null }
+        : {};
+    const standaloneTests = await this.prisma.test.findMany({
+      where: { ...baseFilter, courseId: null, chapterId: null, ...segmentMatch },
+    });
+
+    return [
+      ...courseTests.map((t) => ({
+        id: `test_${t.id}`,
+        type: 'TEST' as const,
+        title: t.title,
+        date: t.availableFrom!.toISOString(),
+        testId: t.id,
+        courseId: t.course!.id,
+        courseTitle: t.course!.title,
+      })),
+      ...chapterTests
+        .filter((x) => x.unlocked)
+        .map(({ t }) => ({
+          id: `test_${t.id}`,
+          type: 'TEST' as const,
+          title: t.title,
+          date: t.availableFrom!.toISOString(),
+          testId: t.id,
+          courseId: t.chapter!.course.id,
+          courseTitle: t.chapter!.course.title,
+        })),
+      ...standaloneTests.map((t) => ({
+        id: `test_${t.id}`,
+        type: 'TEST' as const,
+        title: t.title,
+        date: t.availableFrom!.toISOString(),
+        testId: t.id,
+      })),
+    ];
   }
 
   async getEventsForFaculty(user: JwtPayload): Promise<CalendarEvent[]> {
@@ -123,6 +184,20 @@ export class CalendarService {
       otherPartyName: b.student.fullName,
     }));
 
-    return [...liveEvents, ...mentorEvents].sort((a, b) => a.date.localeCompare(b.date));
+    const ownTests = await this.prisma.test.findMany({
+      where: { facultyId: user.sub, publishMode: 'TIMED', availableFrom: { not: null } },
+      include: { course: { select: { id: true, title: true } } },
+    });
+    const testEvents: CalendarEvent[] = ownTests.map((t) => ({
+      id: `test_${t.id}`,
+      type: 'TEST' as const,
+      title: t.title,
+      date: t.availableFrom!.toISOString(),
+      testId: t.id,
+      courseId: t.course?.id,
+      courseTitle: t.course?.title,
+    }));
+
+    return [...liveEvents, ...mentorEvents, ...testEvents].sort((a, b) => a.date.localeCompare(b.date));
   }
 }

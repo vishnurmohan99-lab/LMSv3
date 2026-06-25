@@ -846,7 +846,7 @@ export const mentorApi = {
   cancelBooking: (id: string) => request<{ success: boolean }>(`/mentor/bookings/${id}`, { method: 'DELETE' }),
 };
 
-export type CalendarEventType = 'LIVE_LESSON' | 'MENTOR_SESSION' | 'CHAPTER_UNLOCK';
+export type CalendarEventType = 'LIVE_LESSON' | 'MENTOR_SESSION' | 'CHAPTER_UNLOCK' | 'TEST';
 
 export interface CalendarEvent {
   id: string;
@@ -856,6 +856,7 @@ export interface CalendarEvent {
   courseId?: string;
   courseTitle?: string;
   lessonId?: string;
+  testId?: string;
   otherPartyName?: string;
 }
 
