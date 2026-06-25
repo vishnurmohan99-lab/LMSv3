@@ -520,7 +520,7 @@ export default function AdminFeedbackPage() {
                 <input
                   value={targetSystemArea}
                   onChange={(e) => setTargetSystemArea(e.target.value)}
-                  placeholder="e.g. Paperlms App"
+                  placeholder="e.g. Elearning App"
                   style={{ ...inputStyle, margin: "8px 0 22px" }}
                 />
               </>

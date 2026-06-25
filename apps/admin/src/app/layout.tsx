@@ -9,8 +9,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Paperlms Admin",
-  description: "Paperlms platform administration.",
+  title: "Elearning Admin",
+  description: "Elearning platform administration.",
 };
 
 export default function RootLayout({

@@ -231,7 +231,7 @@ export default function StudentShell({ children }: { children: React.ReactNode }
               flex: "none",
             }}
           />
-          <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.5 }}>Paperlms</span>
+          <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.5 }}>Elearning</span>
         </div>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>{sectionTitle}</div>
 

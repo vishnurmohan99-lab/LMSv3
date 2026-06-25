@@ -114,7 +114,10 @@ export class CoursesService {
       include: {
         chapters: {
           orderBy: { order: 'asc' },
-          include: { lessons: { orderBy: { order: 'asc' } }, tests: { select: { id: true } } },
+          include: {
+            lessons: { orderBy: { order: 'asc' } },
+            tests: { select: { id: true, title: true, published: true }, orderBy: { createdAt: 'desc' } },
+          },
         },
       },
     });

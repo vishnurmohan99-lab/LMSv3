@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesson, type LessonType } from "@/lib/api";
+import { coursesApi, uploadsApi, testsApi, ApiError, type CourseTree, type Lesson, type LessonType, type Test } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
@@ -489,6 +489,77 @@ function LessonCard({
   );
 }
 
+function AttachTestPanel({
+  courseId,
+  chapterId,
+  onAttached,
+}: {
+  courseId: string;
+  chapterId: string;
+  onAttached: () => void;
+}) {
+  const [tests, setTests] = useState<Test[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [attachingId, setAttachingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    testsApi
+      .list()
+      .then((all) => setTests(all.filter((t) => !t.chapterId && (!t.courseId || t.courseId === courseId))))
+      .catch(() => setError("Failed to load tests"))
+      .finally(() => setLoading(false));
+  }, [courseId]);
+
+  const filtered = tests.filter((t) => t.title.toLowerCase().includes(query.toLowerCase()));
+
+  async function onAttach(testId: string) {
+    setAttachingId(testId);
+    setError(null);
+    try {
+      await testsApi.update(testId, { chapterId });
+      onAttached();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to attach test");
+    } finally {
+      setAttachingId(null);
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 10, marginTop: 10, marginBottom: 16, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 16 }}>
+      <input placeholder="Search tests…" value={query} onChange={(e) => setQuery(e.target.value)} style={inputStyle} />
+      {loading ? (
+        <p style={{ color: "var(--ink2)", fontSize: 13 }}>Loading tests…</p>
+      ) : filtered.length === 0 ? (
+        <p style={{ color: "var(--ink2)", fontSize: 13 }}>No unattached tests found. Create one instead, or detach it from its current chapter/course first.</p>
+      ) : (
+        <div style={{ display: "grid", gap: 8, maxHeight: 280, overflowY: "auto" }}>
+          {filtered.map((t) => (
+            <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: "var(--bg)", borderRadius: 10 }}>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700 }}>{t.title}</div>
+                <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+                  {t._count?.testQuestions ?? 0} question{(t._count?.testQuestions ?? 0) === 1 ? "" : "s"} · {t.published ? "Published" : "Draft"}
+                </div>
+              </div>
+              <button
+                onClick={() => onAttach(t.id)}
+                disabled={attachingId === t.id}
+                style={{ ...btnStyle, background: "var(--card)", color: "var(--ink2)", border: "1px solid var(--line)", opacity: attachingId === t.id ? 0.6 : 1 }}
+              >
+                {attachingId === t.id ? "Attaching…" : "Attach"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {error && <span style={{ color: "var(--red)", fontSize: 12 }}>{error}</span>}
+    </div>
+  );
+}
+
 export default function FacultyChapterDetailPage() {
   const params = useParams<{ id: string; chapterId: string }>();
   const router = useRouter();
@@ -502,6 +573,7 @@ export default function FacultyChapterDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [showAddTest, setShowAddTest] = useState(false);
+  const [showAttachTest, setShowAttachTest] = useState(false);
   const [newTestTitle, setNewTestTitle] = useState("");
   const [addingTest, setAddingTest] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -535,6 +607,12 @@ export default function FacultyChapterDetailPage() {
 
   async function onUpdateLesson(lessonId: string, data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) {
     await coursesApi.updateLesson(lessonId, data);
+    load();
+  }
+
+  async function onDetachTest(testId: string) {
+    if (!(await confirm({ message: "Remove this test from the chapter? The test itself won't be deleted." }))) return;
+    await testsApi.update(testId, { chapterId: null });
     load();
   }
 
@@ -624,8 +702,11 @@ export default function FacultyChapterDetailPage() {
           <button onClick={onDeleteChapter} style={{ ...btnStyle, background: "var(--red)", display: "flex", alignItems: "center", gap: 6 }}>
             <TrashIcon /> Delete chapter
           </button>
+          <button onClick={() => setShowAttachTest((s) => !s)} style={{ ...btnStyle, background: "var(--bg)", color: "var(--ink2)" }}>
+            {showAttachTest ? "Close" : "+ Attach existing test"}
+          </button>
           <button onClick={() => setShowAddTest((s) => !s)} style={{ ...btnStyle, background: "var(--bg)", color: "var(--ink2)" }}>
-            {showAddTest ? "Close" : "+ Add test"}
+            {showAddTest ? "Close" : "+ Create new test"}
           </button>
           <button onClick={() => setShowAddLesson((s) => !s)} style={btnStyle}>
             {showAddLesson ? "Close" : "+ Add lesson"}
@@ -661,6 +742,17 @@ export default function FacultyChapterDetailPage() {
         </form>
       )}
 
+      {showAttachTest && (
+        <AttachTestPanel
+          courseId={courseId}
+          chapterId={chapterId}
+          onAttached={() => {
+            setShowAttachTest(false);
+            load();
+          }}
+        />
+      )}
+
       {showAddLesson && (
         <NewLessonForm
           chapterId={chapterId}
@@ -669,6 +761,40 @@ export default function FacultyChapterDetailPage() {
             load();
           }}
         />
+      )}
+
+      {chapter.tests.length > 0 && (
+        <div style={{ marginBottom: 26 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>
+            Tests ({chapter.tests.length})
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {chapter.tests.map((t) => (
+              <div key={t.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 7,
+                      background: t.published ? "var(--green-soft)" : "var(--amber-soft)",
+                      color: t.published ? "var(--green)" : "var(--amber)",
+                    }}
+                  >
+                    {t.published ? "Published" : "Draft"}
+                  </span>
+                  <button onClick={() => onDetachTest(t.id)} title="Detach from chapter" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    <TrashIcon />
+                  </button>
+                </div>
+                <Link href={`/faculty/tests/${t.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
+                  {t.title}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {chapter.lessons.length === 0 ? (

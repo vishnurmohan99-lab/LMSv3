@@ -236,7 +236,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               flex: "none",
             }}
           />
-          <span style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5 }}>Paperlms</span>
+          <span style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5 }}>Elearning</span>
         </div>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Admin</div>
         <div style={{ flex: 1 }} />

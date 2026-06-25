@@ -109,6 +109,7 @@ export interface Chapter {
   unlocksAt?: string | null;
   finished?: boolean;
   lessons: Lesson[];
+  tests: { id: string; title: string; published: boolean }[];
 }
 
 export type CourseType = 'FREE' | 'PAID' | 'PRIVATE';
