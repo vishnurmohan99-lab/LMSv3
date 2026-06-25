@@ -855,11 +855,30 @@ export default function ChapterDetailPage() {
               </span>
             );
 
+            const orderBadge = (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  background: "var(--bg)",
+                  color: "var(--ink3)",
+                  flex: "none",
+                }}
+              >
+                {i + 1}
+              </span>
+            );
+
             return item.kind === "lesson" ? (
               <div key={item.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>{item.data.title}</div>
+                    <div style={{ fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+                      {orderBadge}
+                      {item.data.title}
+                    </div>
                     <LessonTypeBadge type={item.data.type} />
                   </div>
                   <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -936,7 +955,8 @@ export default function ChapterDetailPage() {
                     </button>
                   </span>
                 </div>
-                <Link href={`/admin/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
+                <Link href={`/admin/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+                  {orderBadge}
                   {item.data.title}
                 </Link>
                 <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>

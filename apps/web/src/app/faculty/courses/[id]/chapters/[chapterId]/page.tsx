@@ -476,6 +476,7 @@ function LessonCard({
   onToggleFeature,
   onUpdate,
   moveControls,
+  order,
 }: {
   lesson: Lesson;
   courseId: string;
@@ -483,6 +484,7 @@ function LessonCard({
   onToggleFeature: (key: FeatureKey, next: boolean) => void;
   onUpdate: (data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) => Promise<void>;
   moveControls?: React.ReactNode;
+  order?: number;
 }) {
   const [viewing, setViewing] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -491,7 +493,14 @@ function LessonCard({
     <div className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 15 }}>{lesson.title}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+            {order !== undefined && (
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: "var(--bg)", color: "var(--ink3)", flex: "none" }}>
+                {order}
+              </span>
+            )}
+            {lesson.title}
+          </div>
           <span style={{ color: "var(--ink3)", fontSize: 12 }}>{lesson.type}</span>
         </div>
         <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -903,6 +912,7 @@ export default function FacultyChapterDetailPage() {
                 onToggleFeature={(key, next) => onToggleLessonFeature(item.data, key, next)}
                 onUpdate={(data) => onUpdateLesson(item.data.id, data)}
                 moveControls={moveControls}
+                order={i + 1}
               />
             ) : (
               <div key={item.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
@@ -926,7 +936,10 @@ export default function FacultyChapterDetailPage() {
                     </button>
                   </span>
                 </div>
-                <Link href={`/faculty/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
+                <Link href={`/faculty/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: "var(--bg)", color: "var(--ink3)", flex: "none" }}>
+                    {i + 1}
+                  </span>
                   {item.data.title}
                 </Link>
                 <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>

@@ -610,7 +610,22 @@ export default function AdminCourseAuthoringPage() {
             <div key={chapter.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 20, overflow: "hidden" }}>
               <ChapterBanner url={chapter.bannerUrl} name={chapter.title} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h2 style={{ fontSize: 16, fontWeight: 700 }}>{chapter.title}</h2>
+                <h2 style={{ fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      background: "var(--bg)",
+                      color: "var(--ink3)",
+                      flex: "none",
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  {chapter.title}
+                </h2>
                 <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
                   <span style={{ display: "flex", gap: 2 }}>
                     <button
