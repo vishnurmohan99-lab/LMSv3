@@ -27,16 +27,18 @@ export class TestAttemptsService {
         });
         if (!enrolled) throw new ForbiddenException('You are not enrolled in this course');
       }
-    } else {
+    } else if (test.type === 'PAID') {
+      // Standalone paid test — must be linked to a subscription plan the student has paid into.
       const subTest = await this.prisma.subscriptionTest.findFirst({ where: { testId } });
-      if (!subTest) throw new BadRequestException('This test is not a mock test and cannot be attempted directly');
+      if (!subTest) throw new BadRequestException('This test is paid but not yet linked to a subscription plan — contact admin');
       if (user.role === 'STUDENT') {
         const subEnrolled = await this.prisma.subscriptionEnrollment.findUnique({
           where: { subscriptionId_studentId: { subscriptionId: subTest.subscriptionId, studentId: user.sub } },
         });
-        if (!subEnrolled) throw new ForbiddenException('You are not subscribed to access this test');
+        if (!subEnrolled) throw new ForbiddenException('You need an active subscription to attempt this test');
       }
     }
+    // Standalone FREE tests need no further gate — visibility is already governed by segment/subsegment matching.
 
     if (test.publishMode === 'TIMED') {
       const now = new Date();

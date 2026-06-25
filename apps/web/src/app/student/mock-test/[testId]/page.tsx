@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { testsApi, testAttemptsApi, ApiError, type TestTree, type TestAttempt, type TestAttemptResult, type Leaderboard } from "@/lib/api";
 import ProgressRing from "@/components/ProgressRing";
 
@@ -229,7 +230,16 @@ export default function StudentMockTestTakePage() {
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase" }}>Mock Test</div>
           <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: -0.4, margin: "6px 0 4px" }}>{test.title}</div>
 
-          {error && <p style={{ color: "var(--red)", fontSize: 13, margin: "10px 0" }}>{error}</p>}
+          {error && (
+            <div style={{ margin: "10px 0" }}>
+              <p style={{ color: "var(--red)", fontSize: 13 }}>{error}</p>
+              {error.toLowerCase().includes("subscription") && (
+                <Link href="/student/subscription" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
+                  View subscription plans →
+                </Link>
+              )}
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: 14, margin: "20px 0", flexWrap: "wrap" }}>
             <div style={{ background: "var(--bg)", borderRadius: 12, padding: "14px 20px", flex: 1 }}>

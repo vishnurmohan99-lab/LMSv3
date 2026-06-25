@@ -24,19 +24,42 @@ export class TestsService {
 
   async listTests(user: JwtPayload, courseId?: string) {
     const courseFilter = courseId ? { courseId } : {};
+    // Tests created inside a chapter are exercises local to that chapter — they never
+    // appear in the standalone Tests tab/listing, only on the chapter itself.
+    const chapterFilter = { chapterId: null };
+
+    if (user.role === 'STUDENT' && !courseId) {
+      const me = await this.prisma.user.findUnique({ where: { id: user.sub }, select: { segmentId: true, subsegmentId: true } });
+      const segmentMatch = me?.subsegmentId
+        ? { subsegmentId: me.subsegmentId }
+        : me?.segmentId
+          ? { segmentId: me.segmentId, subsegmentId: null }
+          : {};
+      const tests = await this.prisma.test.findMany({
+        where: { AND: [chapterFilter, { courseId: null }, segmentMatch, { published: true }] },
+        orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { testQuestions: true } } },
+      });
+      return this.presignTests(tests);
+    }
+
     const tests =
       user.role === 'ADMIN'
         ? await this.prisma.test.findMany({
-            where: courseFilter,
+            where: { AND: [courseFilter, chapterFilter] },
             orderBy: { createdAt: 'desc' },
             include: { _count: { select: { testQuestions: true } } },
           })
         : await this.prisma.test.findMany({
-            where: { AND: [courseFilter, { OR: [{ published: true }, { facultyId: user.sub }] }] },
+            where: { AND: [courseFilter, chapterFilter, { OR: [{ published: true }, { facultyId: user.sub }] }] },
             orderBy: { createdAt: 'desc' },
             include: { _count: { select: { testQuestions: true } } },
           });
 
+    return this.presignTests(tests);
+  }
+
+  private async presignTests<T extends { bannerUrl: string | null }>(tests: T[]): Promise<T[]> {
     return Promise.all(
       tests.map(async (test) => ({
         ...test,
@@ -81,6 +104,9 @@ export class TestsService {
       const course = await this.requireCourse(dto.courseId);
       this.assertOwnership(user, course.facultyId);
     }
+    if (dto.segmentId) {
+      await this.validateSegmentation(dto.segmentId, dto.subsegmentId);
+    }
     return withUniqueNameCheck(
       () =>
         this.prisma.test.create({
@@ -89,8 +115,11 @@ export class TestsService {
             description: dto.description ?? '',
             bannerUrl: dto.bannerUrl,
             order: dto.order ?? 0,
+            type: dto.type,
             chapterId: dto.chapterId,
             courseId: dto.courseId,
+            segmentId: dto.segmentId,
+            subsegmentId: dto.subsegmentId,
             facultyId: user.sub,
           },
         }),
@@ -108,6 +137,22 @@ export class TestsService {
       const course = await this.requireCourse(dto.courseId);
       this.assertOwnership(user, course.facultyId);
     }
+
+    if (dto.segmentId === null) {
+      // explicit clear: a test without a segment can't keep a subsegment either
+      return withUniqueNameCheck(
+        () => this.prisma.test.update({ where: { id }, data: { ...dto, segmentId: null, subsegmentId: null } }),
+        'test',
+      );
+    }
+    if (dto.segmentId !== undefined || dto.subsegmentId !== undefined) {
+      const segmentId = dto.segmentId ?? test.segmentId;
+      const subsegmentId = dto.subsegmentId !== undefined ? dto.subsegmentId : test.subsegmentId;
+      if (segmentId) {
+        await this.validateSegmentation(segmentId, subsegmentId ?? undefined);
+      }
+    }
+
     return withUniqueNameCheck(
       () =>
         this.prisma.test.update({
@@ -120,6 +165,18 @@ export class TestsService {
         }),
       'test',
     );
+  }
+
+  private async validateSegmentation(segmentId: string, subsegmentId?: string | null) {
+    const segment = await this.prisma.segment.findUnique({ where: { id: segmentId } });
+    if (!segment) throw new BadRequestException('Segment not found');
+    if (subsegmentId) {
+      const subsegment = await this.prisma.subsegment.findUnique({ where: { id: subsegmentId } });
+      if (!subsegment) throw new BadRequestException('Subsegment not found');
+      if (subsegment.segmentId !== segmentId) {
+        throw new BadRequestException('Subsegment does not belong to the selected segment');
+      }
+    }
   }
 
   async deleteTest(id: string, user: JwtPayload) {

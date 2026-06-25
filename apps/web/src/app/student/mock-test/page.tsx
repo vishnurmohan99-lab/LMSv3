@@ -6,7 +6,7 @@ import { enrollmentsApi, testsApi, testAttemptsApi, ApiError, type Test } from "
 
 interface MockTestRow {
   test: Test;
-  courseTitle: string;
+  courseTitle: string | null;
   bestScore: number | null;
   maxScore: number | null;
 }
@@ -22,16 +22,16 @@ export default function StudentMockTestListPage() {
 
   useEffect(() => {
     setLoading(true);
-    enrollmentsApi
-      .mine()
-      .then(async (enrollments) => {
+    Promise.all([enrollmentsApi.mine(), testsApi.list()])
+      .then(async ([enrollments, standaloneTests]) => {
         const perCourse = await Promise.all(
           enrollments.map(async (e) => {
             const tests = await testsApi.list({ courseId: e.courseId });
-            return tests.filter((t) => t.published).map((t) => ({ test: t, courseTitle: e.course.title }));
+            return tests.filter((t) => t.published).map((t) => ({ test: t, courseTitle: e.course.title as string | null }));
           }),
         );
-        const flat = perCourse.flat();
+        const standalone = standaloneTests.map((t) => ({ test: t, courseTitle: null as string | null }));
+        const flat = [...perCourse.flat(), ...standalone];
         const withScores = await Promise.all(
           flat.map(async ({ test, courseTitle }) => {
             const attempts = await testAttemptsApi.mine(test.id).catch(() => []);
@@ -55,7 +55,7 @@ export default function StudentMockTestListPage() {
       {loading ? (
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
       ) : rows.length === 0 ? (
-        <p style={{ color: "var(--ink2)" }}>No mock tests are available for your enrolled courses yet.</p>
+        <p style={{ color: "var(--ink2)" }}>No mock tests are available yet.</p>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
           {rows.map(({ test, courseTitle, bestScore, maxScore }, i) => (
@@ -91,11 +91,29 @@ export default function StudentMockTestListPage() {
                 </div>
               </div>
               <div style={{ padding: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", textTransform: "uppercase", marginBottom: 4 }}>{courseTitle}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", textTransform: "uppercase", marginBottom: 4 }}>
+                  {courseTitle ?? "Mock Test"}
+                </div>
                 <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>{test.title}</div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "var(--purple-soft)", color: "var(--purple)" }}>
-                    {test.publishMode === "TIMED" ? "Timed" : "Untimed"}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ display: "flex", gap: 6 }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 7, background: "var(--purple-soft)", color: "var(--purple)" }}>
+                      {test.publishMode === "TIMED" ? "Timed" : "Untimed"}
+                    </span>
+                    {!courseTitle && (
+                      <span
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          padding: "3px 9px",
+                          borderRadius: 7,
+                          background: test.type === "PAID" ? "var(--orange-soft)" : "var(--green-soft)",
+                          color: test.type === "PAID" ? "var(--orange)" : "var(--green)",
+                        }}
+                      >
+                        {test.type === "PAID" ? "Paid" : "Free"}
+                      </span>
+                    )}
                   </span>
                   {bestScore !== null ? (
                     <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--green)" }}>

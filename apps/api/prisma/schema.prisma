@@ -154,6 +154,7 @@ model Segment {
 
   subsegments Subsegment[]
   courses     Course[]
+  tests       Test[]
   students    User[]
   batches     Batch[]
 }
@@ -169,6 +170,7 @@ model Subsegment {
   segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
 
   courses  Course[]
+  tests    Test[]
   students User[]
   batches  Batch[]
 
@@ -505,6 +507,7 @@ model Test {
   description     String          @default("")
   bannerUrl       String?
   order           Int             @default(0)
+  type            TestType        @default(FREE)
   published       Boolean         @default(false)
   publishMode     TestPublishMode @default(MANUAL)
   availableFrom   DateTime?
@@ -522,11 +525,24 @@ model Test {
   courseId String?
   course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
+  segmentId String?
+  segment   Segment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+
+  subsegmentId String?
+  subsegment   Subsegment? @relation(fields: [subsegmentId], references: [id], onDelete: SetNull)
+
   testQuestions TestQuestion[]
   attempts      TestAttempt[]
   subscriptions SubscriptionTest[]
 
   @@index([courseId])
+  @@index([segmentId])
+  @@index([subsegmentId])
+}
+
+enum TestType {
+  FREE
+  PAID
 }
 
 model TestQuestion {

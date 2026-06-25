@@ -1,5 +1,5 @@
 import { IsBoolean, IsDateString, IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
-import { TestPublishMode } from '../../../generated/prisma/client';
+import { TestPublishMode, TestType } from '../../../generated/prisma/client';
 
 export class UpdateTestDto {
   @IsOptional()
@@ -18,6 +18,10 @@ export class UpdateTestDto {
   @IsOptional()
   @IsInt()
   order?: number;
+
+  @IsOptional()
+  @IsEnum(TestType)
+  type?: TestType;
 
   @IsOptional()
   @IsBoolean()
@@ -46,4 +50,12 @@ export class UpdateTestDto {
   @IsOptional()
   @IsString()
   courseId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  segmentId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  subsegmentId?: string | null;
 }

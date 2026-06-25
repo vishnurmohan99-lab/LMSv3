@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { coursesApi, segmentsApi, ApiError, type Course, type Segment } from "@/lib/api";
+import { coursesApi, testsApi, segmentsApi, ApiError, type Course, type Segment, type Test } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
@@ -178,6 +178,126 @@ function AddCoursePicker({ allCourses, onPick }: { allCourses: Course[]; onPick:
   );
 }
 
+function TestRow({ test, onRemove }: { test: Test; onRemove: () => void }) {
+  return (
+    <div className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden" }}>
+      <div className="banner-gradient-dark" style={{ position: "relative", height: 80, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          className="banner-gradient-orange"
+          style={{ width: 34, height: 34, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13 }}
+        >
+          {courseInitials(test.title)}
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px", fontSize: 13 }}>
+        <span style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}>
+          <Link href={`/admin/tests/${test.id}`} style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {test.title}
+          </Link>
+          <StatusBadge published={test.published} />
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              padding: "2px 7px",
+              borderRadius: 6,
+              background: test.type === "PAID" ? "var(--orange-soft)" : "var(--green-soft)",
+              color: test.type === "PAID" ? "var(--orange)" : "var(--green)",
+            }}
+          >
+            {test.type === "PAID" ? "Paid" : "Free"}
+          </span>
+        </span>
+        <button onClick={onRemove} title="Remove from this category" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0, flex: "none" }}>
+          <TrashIcon />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AddTestPicker({ allTests, onPick }: { allTests: Test[]; onPick: (testId: string) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+
+  const matches = useMemo(
+    () => allTests.filter((t) => t.title.toLowerCase().includes(search.toLowerCase())).slice(0, 8),
+    [allTests, search],
+  );
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} style={{ ...smallBtn, marginTop: 10 }}>
+        + Add existing test
+      </button>
+    );
+  }
+
+  async function handlePick(testId: string) {
+    setAssigningId(testId);
+    try {
+      await onPick(testId);
+      setOpen(false);
+      setSearch("");
+    } finally {
+      setAssigningId(null);
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 10, border: "1px solid var(--line)", borderRadius: 10, padding: 12, background: "var(--card)" }}>
+      <input
+        autoFocus
+        placeholder="Search tests by title…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ ...inputStyle, width: "100%", marginBottom: 8 }}
+      />
+      {matches.length === 0 ? (
+        <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>No matching tests.</p>
+      ) : (
+        <div style={{ display: "grid", gap: 4, maxHeight: 200, overflowY: "auto" }}>
+          {matches.map((t) => (
+            <button
+              key={t.id}
+              disabled={assigningId !== null}
+              onClick={() => handlePick(t.id)}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "8px 10px",
+                background: "var(--bg)",
+                border: "none",
+                borderRadius: 7,
+                fontSize: 13,
+                fontFamily: "inherit",
+                cursor: assigningId !== null ? "default" : "pointer",
+                textAlign: "left",
+                opacity: assigningId !== null && assigningId !== t.id ? 0.5 : 1,
+              }}
+            >
+              <span>{t.title}</span>
+              {assigningId === t.id ? (
+                <Spinner size={13} color="var(--orange)" />
+              ) : (
+                <span style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12 }}>Add</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      <button
+        onClick={() => setOpen(false)}
+        style={{ marginTop: 8, background: "none", border: "none", color: "var(--ink3)", fontSize: 12, cursor: "pointer" }}
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 export default function SegmentDetailPage() {
   const params = useParams<{ id: string }>();
   const segmentId = params.id;
@@ -185,6 +305,7 @@ export default function SegmentDetailPage() {
 
   const [segment, setSegment] = useState<Segment | null>(null);
   const [allCourses, setAllCourses] = useState<Course[]>([]);
+  const [allTests, setAllTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,13 +313,15 @@ export default function SegmentDetailPage() {
   const [newSubName, setNewSubName] = useState("");
   const [addingSub, setAddingSub] = useState(false);
   const [expandedSub, setExpandedSub] = useState<string | null>(null);
+  const [expandedSubTests, setExpandedSubTests] = useState<string | null>(null);
 
   function load() {
     setLoading(true);
-    Promise.all([segmentsApi.get(segmentId), coursesApi.list()])
-      .then(([s, c]) => {
+    Promise.all([segmentsApi.get(segmentId), coursesApi.list(), testsApi.list()])
+      .then(([s, c, t]) => {
         setSegment(s);
         setAllCourses(c);
+        setAllTests(t.filter((test) => !test.courseId));
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load segment"))
       .finally(() => setLoading(false));
@@ -242,10 +365,26 @@ export default function SegmentDetailPage() {
     load();
   }
 
+  async function onAssignTestToSegment(testId: string) {
+    await testsApi.update(testId, { segmentId, subsegmentId: undefined });
+    await load();
+  }
+
+  async function onAssignTestToSubsegment(testId: string, subsegmentId: string) {
+    await testsApi.update(testId, { segmentId, subsegmentId });
+    await load();
+  }
+
+  async function onRemoveTestFromCategory(testId: string) {
+    await testsApi.update(testId, { segmentId: null, subsegmentId: null });
+    load();
+  }
+
   if (loading) return <div style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></div>;
   if (error || !segment) return <div style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Segment not found"}</p></div>;
 
   const directCourses = allCourses.filter((c) => c.segmentId === segmentId && !c.subsegmentId);
+  const directTests = allTests.filter((t) => t.segmentId === segmentId && !t.subsegmentId);
 
   return (
     <div className="fade-in" style={{ padding: "30px 40px 60px" }}>
@@ -312,12 +451,17 @@ export default function SegmentDetailPage() {
           <div style={{ display: "grid", gap: 10 }}>
             {segment.subsegments.map((sub) => {
               const subCourses = allCourses.filter((c) => c.subsegmentId === sub.id);
+              const subTests = allTests.filter((t) => t.subsegmentId === sub.id);
               const expanded = expandedSub === sub.id;
+              const expandedTests = expandedSubTests === sub.id;
               return (
                 <div key={sub.id} style={{ border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 14 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>
-                      {sub.name} <span style={{ color: "var(--ink3)", fontWeight: 500, fontSize: 12.5 }}>· {subCourses.length} courses</span>
+                      {sub.name}{" "}
+                      <span style={{ color: "var(--ink3)", fontWeight: 500, fontSize: 12.5 }}>
+                        · {subCourses.length} courses · {subTests.length} tests
+                      </span>
                     </span>
                     <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
                       <button
@@ -325,6 +469,12 @@ export default function SegmentDetailPage() {
                         style={{ background: "none", border: "none", color: "var(--orange)", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
                       >
                         {expanded ? "Hide courses" : "Manage courses"}
+                      </button>
+                      <button
+                        onClick={() => setExpandedSubTests(expandedTests ? null : sub.id)}
+                        style={{ background: "none", border: "none", color: "var(--purple)", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
+                      >
+                        {expandedTests ? "Hide tests" : "Manage tests"}
                       </button>
                       <button onClick={() => onDeleteSubsegment(sub.id)} title="Delete" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                         <TrashIcon />
@@ -342,6 +492,19 @@ export default function SegmentDetailPage() {
                         </div>
                       )}
                       <AddCoursePicker allCourses={allCourses} onPick={(courseId) => onAssignToSubsegment(courseId, sub.id)} />
+                    </div>
+                  )}
+
+                  {expandedTests && (
+                    <div style={{ marginTop: 12 }}>
+                      {subTests.length > 0 && (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginBottom: 12 }}>
+                          {subTests.map((t) => (
+                            <TestRow key={t.id} test={t} onRemove={() => onRemoveTestFromCategory(t.id)} />
+                          ))}
+                        </div>
+                      )}
+                      <AddTestPicker allTests={allTests} onPick={(testId) => onAssignTestToSubsegment(testId, sub.id)} />
                     </div>
                   )}
                 </div>
@@ -396,6 +559,53 @@ export default function SegmentDetailPage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 }}>
             {directCourses.map((c) => (
               <CourseRow key={c.id} course={c} onRemove={() => onRemoveFromCategory(c.id)} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Standalone tests — same direct-vs-subsegment rule as courses above. */}
+      {segment.subsegments.length === 0 ? (
+        <section
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--rl)",
+            padding: 20,
+            marginTop: 18,
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Tests in {segment.name}</div>
+
+          {directTests.length === 0 ? (
+            <p style={{ color: "var(--ink2)", fontSize: 13.5, marginBottom: 4 }}>No tests assigned yet.</p>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginBottom: 12 }}>
+              {directTests.map((t) => (
+                <TestRow key={t.id} test={t} onRemove={() => onRemoveTestFromCategory(t.id)} />
+              ))}
+            </div>
+          )}
+
+          <AddTestPicker allTests={allTests} onPick={onAssignTestToSegment} />
+        </section>
+      ) : directTests.length > 0 ? (
+        <section
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--rl)",
+            padding: 20,
+            marginTop: 18,
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Tests directly in {segment.name}</div>
+          <p style={{ color: "var(--ink3)", fontSize: 12.5, marginBottom: 14 }}>
+            This segment now has sub-segments — move these into a sub-segment above. New tests can only be added to a sub-segment.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 }}>
+            {directTests.map((t) => (
+              <TestRow key={t.id} test={t} onRemove={() => onRemoveTestFromCategory(t.id)} />
             ))}
           </div>
         </section>

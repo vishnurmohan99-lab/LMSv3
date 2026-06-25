@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { testsApi, uploadsApi, ApiError, type Test } from "@/lib/api";
+import { testsApi, uploadsApi, ApiError, type Test, type TestType } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
@@ -130,6 +130,7 @@ export default function AdminTestsPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState("");
+  const [newType, setNewType] = useState<TestType>("FREE");
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -158,8 +159,9 @@ export default function AdminTestsPage() {
     setCreating(true);
     try {
       const bannerUrl = bannerFile ? await uploadsApi.uploadFile(bannerFile) : undefined;
-      await testsApi.create({ title, bannerUrl });
+      await testsApi.create({ title, bannerUrl, type: newType });
       setTitle("");
+      setNewType("FREE");
       setBannerFile(null);
       setShowAddModal(false);
       load();
@@ -220,6 +222,13 @@ export default function AdminTestsPage() {
         <Modal title="Add test" onClose={() => setShowAddModal(false)}>
           <form onSubmit={onCreate} style={{ display: "grid", gap: 14 }}>
             <input required autoFocus placeholder="Test title" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Type</div>
+              <select value={newType} onChange={(e) => setNewType(e.target.value as TestType)} style={{ ...inputStyle, width: "100%" }}>
+                <option value="FREE">Free</option>
+                <option value="PAID">Paid — part of a subscription plan</option>
+              </select>
+            </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>
                 Banner image (optional)
@@ -294,6 +303,18 @@ export default function AdminTestsPage() {
                 )}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                   <StatusBadge published={test.published} />
+                  <span
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 7,
+                      background: test.type === "PAID" ? "var(--orange-soft)" : "var(--green-soft)",
+                      color: test.type === "PAID" ? "var(--orange)" : "var(--green)",
+                    }}
+                  >
+                    {test.type === "PAID" ? "Paid" : "Free"}
+                  </span>
                   <span
                     style={{
                       fontSize: 11.5,

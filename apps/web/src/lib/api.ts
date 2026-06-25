@@ -421,6 +421,7 @@ export const questionBanksApi = {
 };
 
 export type TestPublishMode = 'MANUAL' | 'TIMED';
+export type TestType = 'FREE' | 'PAID';
 
 export interface TestQuestion {
   id: string;
@@ -441,6 +442,7 @@ export interface Test {
   description: string;
   bannerUrl: string | null;
   order: number;
+  type: TestType;
   published: boolean;
   publishMode: TestPublishMode;
   availableFrom: string | null;
@@ -449,6 +451,8 @@ export interface Test {
   facultyId: string;
   chapterId: string | null;
   courseId: string | null;
+  segmentId: string | null;
+  subsegmentId: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: { testQuestions: number };
@@ -466,8 +470,17 @@ export const testsApi = {
     return request<Test[]>(`/tests${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<TestTree>(`/tests/${id}`),
-  create: (data: { title: string; description?: string; bannerUrl?: string; order?: number; chapterId?: string; courseId?: string }) =>
-    request<Test>('/tests', { method: 'POST', body: JSON.stringify(data) }),
+  create: (data: {
+    title: string;
+    description?: string;
+    bannerUrl?: string;
+    order?: number;
+    type?: TestType;
+    chapterId?: string;
+    courseId?: string;
+    segmentId?: string;
+    subsegmentId?: string;
+  }) => request<Test>('/tests', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
     data: Partial<
@@ -477,6 +490,7 @@ export const testsApi = {
         | 'description'
         | 'bannerUrl'
         | 'order'
+        | 'type'
         | 'published'
         | 'publishMode'
         | 'availableFrom'
@@ -484,6 +498,8 @@ export const testsApi = {
         | 'durationMinutes'
         | 'chapterId'
         | 'courseId'
+        | 'segmentId'
+        | 'subsegmentId'
       >
     >,
   ) => request<Test>(`/tests/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),

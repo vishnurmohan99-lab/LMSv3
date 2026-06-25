@@ -2,16 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   testsApi,
   questionBanksApi,
   uploadsApi,
+  segmentsApi,
   ApiError,
   type TestTree,
   type TestQuestion,
   type QuestionType,
   type QuestionBank,
   type Question,
+  type TestType,
+  type Segment,
 } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
@@ -590,6 +594,7 @@ export default function AdminTestDetailPage() {
   const confirm = useConfirm();
 
   const [test, setTest] = useState<TestTree | null>(null);
+  const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -611,11 +616,20 @@ export default function AdminTestDetailPage() {
   }
 
   useEffect(load, [testId]);
+  useEffect(() => {
+    segmentsApi.list().then(setSegments).catch(() => {});
+  }, []);
 
   async function onTogglePublished() {
     if (!test) return;
     const updated = await testsApi.update(test.id, { published: !test.published });
     setTest({ ...test, published: updated.published });
+  }
+
+  async function onChangeType(type: TestType) {
+    if (!test) return;
+    const updated = await testsApi.update(test.id, { type });
+    setTest({ ...test, type: updated.type });
   }
 
   async function onSaveTitle() {
@@ -722,6 +736,61 @@ export default function AdminTestDetailPage() {
           </button>
         </span>
       </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          marginBottom: 10,
+          padding: "12px 16px",
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rm)",
+          alignItems: "center",
+          fontSize: 13,
+        }}
+      >
+        <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Type:</span>
+        <select value={test.type} onChange={(e) => onChangeType(e.target.value as TestType)} style={{ ...inputStyle, width: 160 }}>
+          <option value="FREE">Free</option>
+          <option value="PAID">Paid</option>
+        </select>
+        <span style={{ color: "var(--ink3)" }}>
+          {test.type === "FREE"
+            ? "Visible to students in this test's segment — anyone can attempt it."
+            : "Visible to students in this test's segment, but attempting it requires an active subscription that includes this test."}
+        </span>
+      </div>
+
+      {(() => {
+        const testSegment = segments.find((s) => s.id === test.segmentId);
+        const testSubsegment = testSegment?.subsegments.find((sub) => sub.id === test.subsegmentId);
+        const categoryLabel = testSegment ? (testSubsegment ? `${testSegment.name} / ${testSubsegment.name}` : testSegment.name) : "Uncategorized";
+        return (
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              marginBottom: 20,
+              padding: "12px 16px",
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--rm)",
+              alignItems: "center",
+              fontSize: 13,
+            }}
+          >
+            <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Category:</span>
+            <span style={{ color: testSegment ? "var(--ink)" : "var(--ink3)" }}>{categoryLabel}</span>
+            <span style={{ color: "var(--ink3)", marginLeft: "auto" }}>
+              Assign this test to a segment from the{" "}
+              <Link href="/admin/segments" style={{ color: "var(--orange)", fontWeight: 700 }}>
+                Segments page
+              </Link>
+            </span>
+          </div>
+        );
+      })()}
 
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 16, marginBottom: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showSchedule ? 12 : 0 }}>
