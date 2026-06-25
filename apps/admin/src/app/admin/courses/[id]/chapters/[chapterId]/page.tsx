@@ -251,6 +251,9 @@ function lessonContentReady(lesson: Lesson): boolean {
   return true;
 }
 
+type ChapterTest = CourseTree["chapters"][number]["tests"][number];
+type ContentItem = { kind: "lesson"; id: string; order: number; data: Lesson } | { kind: "test"; id: string; order: number; data: ChapterTest };
+
 function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () => void }) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<LessonType>("VIDEO");
@@ -630,6 +633,19 @@ export default function ChapterDetailPage() {
     load();
   }
 
+  async function onMoveContentItem(items: ContentItem[], index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= items.length) return;
+    const reordered = [...items];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    await Promise.all(
+      reordered.map((item, i) =>
+        item.order === i ? Promise.resolve() : item.kind === "lesson" ? coursesApi.updateLesson(item.id, { order: i }) : testsApi.update(item.id, { order: i }),
+      ),
+    );
+    load();
+  }
+
   async function onDeleteChapter() {
     if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(chapterId);
@@ -658,6 +674,11 @@ export default function ChapterDetailPage() {
 
   if (loading) return <div style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></div>;
   if (error || !course || !chapter) return <div style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Chapter not found"}</p></div>;
+
+  const combinedItems: ContentItem[] = [
+    ...chapter.lessons.map((l): ContentItem => ({ kind: "lesson", id: l.id, order: l.order, data: l })),
+    ...chapter.tests.map((t): ContentItem => ({ kind: "test", id: t.id, order: t.order, data: t })),
+  ].sort((a, b) => a.order - b.order);
 
   return (
     <div className="fade-in" style={{ padding: "30px 40px 60px" }}>
@@ -785,40 +806,6 @@ export default function ChapterDetailPage() {
         />
       )}
 
-      {chapter.tests.length > 0 && (
-        <div style={{ marginBottom: 26 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>
-            Tests ({chapter.tests.length})
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
-            {chapter.tests.map((t) => (
-              <div key={t.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: "3px 9px",
-                      borderRadius: 7,
-                      background: t.published ? "var(--green-soft)" : "var(--amber-soft)",
-                      color: t.published ? "var(--green)" : "var(--amber)",
-                    }}
-                  >
-                    {t.published ? "Published" : "Draft"}
-                  </span>
-                  <button onClick={() => onDetachTest(t.id)} title="Detach from chapter" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <TrashIcon />
-                  </button>
-                </div>
-                <Link href={`/admin/tests/${t.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
-                  {t.title}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {viewingLesson && (
         <Modal title={viewingLesson.title} onClose={() => setViewingLesson(null)} maxWidth={680}>
           <LessonPreview lesson={viewingLesson} />
@@ -831,67 +818,126 @@ export default function ChapterDetailPage() {
         </Modal>
       )}
 
-      {chapter.lessons.length === 0 ? (
-        <p style={{ color: "var(--ink2)" }}>No lessons yet — add the first one above.</p>
+      {combinedItems.length === 0 ? (
+        <p style={{ color: "var(--ink2)" }}>No lessons or tests yet — add one above.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
-          {chapter.lessons.map((lesson) => (
-            <div key={lesson.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{lesson.title}</div>
-                  <LessonTypeBadge type={lesson.type} />
+        <div style={{ display: "grid", gap: 14 }}>
+          {combinedItems.map((item, i) => (
+            <div key={item.id} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 18, flex: "none" }}>
+                <button
+                  onClick={() => onMoveContentItem(combinedItems, i, -1)}
+                  disabled={i === 0}
+                  title="Move up"
+                  style={{ display: "flex", background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 7, cursor: i === 0 ? "default" : "pointer", padding: 4, opacity: i === 0 ? 0.4 : 1 }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                    <path d="M12 19V5M5 12l7-7 7 7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => onMoveContentItem(combinedItems, i, 1)}
+                  disabled={i === combinedItems.length - 1}
+                  title="Move down"
+                  style={{
+                    display: "flex",
+                    background: "var(--bg)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 7,
+                    cursor: i === combinedItems.length - 1 ? "default" : "pointer",
+                    padding: 4,
+                    opacity: i === combinedItems.length - 1 ? 0.4 : 1,
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                    <path d="M12 5v14M5 12l7 7 7-7" />
+                  </svg>
+                </button>
+              </div>
+
+              {item.kind === "lesson" ? (
+                <div className="entity-card" style={{ flex: 1, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{item.data.title}</div>
+                      <LessonTypeBadge type={item.data.type} />
+                    </div>
+                    <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                      <button
+                        onClick={() => setViewingLesson(item.data)}
+                        title="View lesson"
+                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        <EyeIcon />
+                      </button>
+                      <button
+                        onClick={() => setEditingLesson(item.data)}
+                        title="Edit lesson"
+                        style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button onClick={() => onDeleteLesson(item.data.id)} title="Delete lesson" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                        <TrashIcon />
+                      </button>
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: 12, color: lessonContentReady(item.data) ? "var(--ink2)" : "var(--amber)" }}>
+                    {lessonContentStatus(item.data)}
+                  </div>
+
+                  {(item.data.flashcardsEnabled || (item.data.aiNotesEnabled && item.data.type === "VIDEO") || item.data.askMeEnabled || item.data.summaryDeckEnabled) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {item.data.flashcardsEnabled && (
+                        <FeatureBadge label="Flashcards" href={`/admin/courses/${courseId}/lessons/${item.data.id}/flashcards`} />
+                      )}
+                      {item.data.aiNotesEnabled && item.data.type === "VIDEO" && (
+                        <FeatureBadge label="AI Notes" href={`/admin/courses/${courseId}/lessons/${item.data.id}/notes`} />
+                      )}
+                      {item.data.summaryDeckEnabled && (
+                        <FeatureBadge label="Summary Deck" href={`/admin/courses/${courseId}/lessons/${item.data.id}/summary-deck`} />
+                      )}
+                      {item.data.askMeEnabled && <FeatureBadge label="Ask Me" />}
+                    </div>
+                  )}
+
+                  <FeaturePicker
+                    features={{
+                      flashcardsEnabled: item.data.flashcardsEnabled,
+                      aiNotesEnabled: item.data.aiNotesEnabled,
+                      askMeEnabled: item.data.askMeEnabled,
+                      summaryDeckEnabled: item.data.summaryDeckEnabled,
+                    }}
+                    onToggle={(key, next) => onToggleLessonFeature(item.data, key, next)}
+                    excludeKeys={excludedFeatureKeys(item.data.type)}
+                  />
                 </div>
-                <span style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <button
-                    onClick={() => setViewingLesson(lesson)}
-                    title="View lesson"
-                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                  >
-                    <EyeIcon />
-                  </button>
-                  <button
-                    onClick={() => setEditingLesson(lesson)}
-                    title="Edit lesson"
-                    style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                  >
-                    <EditIcon />
-                  </button>
-                  <button onClick={() => onDeleteLesson(lesson.id)} title="Delete lesson" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <TrashIcon />
-                  </button>
-                </span>
-              </div>
-
-              <div style={{ fontSize: 12, color: lessonContentReady(lesson) ? "var(--ink2)" : "var(--amber)" }}>
-                {lessonContentStatus(lesson)}
-              </div>
-
-              {(lesson.flashcardsEnabled || (lesson.aiNotesEnabled && lesson.type === "VIDEO") || lesson.askMeEnabled || lesson.summaryDeckEnabled) && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {lesson.flashcardsEnabled && (
-                    <FeatureBadge label="Flashcards" href={`/admin/courses/${courseId}/lessons/${lesson.id}/flashcards`} />
-                  )}
-                  {lesson.aiNotesEnabled && lesson.type === "VIDEO" && (
-                    <FeatureBadge label="AI Notes" href={`/admin/courses/${courseId}/lessons/${lesson.id}/notes`} />
-                  )}
-                  {lesson.summaryDeckEnabled && (
-                    <FeatureBadge label="Summary Deck" href={`/admin/courses/${courseId}/lessons/${lesson.id}/summary-deck`} />
-                  )}
-                  {lesson.askMeEnabled && <FeatureBadge label="Ask Me" />}
+              ) : (
+                <div className="entity-card" style={{ flex: 1, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "3px 9px",
+                        borderRadius: 7,
+                        background: item.data.published ? "var(--green-soft)" : "var(--amber-soft)",
+                        color: item.data.published ? "var(--green)" : "var(--amber)",
+                      }}
+                    >
+                      {item.data.published ? "Published" : "Draft"}
+                    </span>
+                    <button onClick={() => onDetachTest(item.data.id)} title="Detach from chapter" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <TrashIcon />
+                    </button>
+                  </div>
+                  <Link href={`/admin/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
+                    {item.data.title}
+                  </Link>
+                  <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>
                 </div>
               )}
-
-              <FeaturePicker
-                features={{
-                  flashcardsEnabled: lesson.flashcardsEnabled,
-                  aiNotesEnabled: lesson.aiNotesEnabled,
-                  askMeEnabled: lesson.askMeEnabled,
-                  summaryDeckEnabled: lesson.summaryDeckEnabled,
-                }}
-                onToggle={(key, next) => onToggleLessonFeature(lesson, key, next)}
-                excludeKeys={excludedFeatureKeys(lesson.type)}
-              />
             </div>
           ))}
         </div>

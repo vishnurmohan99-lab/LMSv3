@@ -36,6 +36,102 @@ function LessonIcon({ type, color }: { type: Lesson["type"]; color: string }) {
   );
 }
 
+type ChapterTest = Chapter["tests"][number];
+
+function LessonNavItem({ lesson, active, onSelect }: { lesson: Lesson; active: boolean; onSelect: (id: string) => void }) {
+  const lessonLocked = lesson.unlocked === false;
+  const color = lessonLocked ? "var(--ink3)" : active ? "var(--orange)" : "var(--ink3)";
+  return (
+    <button
+      onClick={() => !lessonLocked && onSelect(lesson.id)}
+      disabled={lessonLocked}
+      style={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 11,
+        padding: "10px 18px 10px 30px",
+        border: "none",
+        background: active ? "var(--orange-soft)" : "transparent",
+        cursor: lessonLocked ? "default" : "pointer",
+        fontFamily: "inherit",
+        textAlign: "left",
+        borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
+        opacity: lessonLocked ? 0.55 : 1,
+      }}
+    >
+      <span style={{ color, display: "flex" }}>
+        {lessonLocked ? (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <rect x="5" y="11" width="14" height="9" rx="2" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+        ) : (
+          <LessonIcon type={lesson.type} color={color} />
+        )}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 12.5,
+            fontWeight: active ? 700 : 500,
+            color: active ? "var(--ink)" : "var(--ink2)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {lesson.title}
+        </div>
+        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
+          {lessonLocked ? "Complete the previous lesson to unlock" : lesson.type}
+        </div>
+      </div>
+      <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
+    </button>
+  );
+}
+
+function TestNavItem({ test }: { test: ChapterTest }) {
+  const testLocked = test.unlocked === false;
+  return (
+    <Link
+      href={testLocked ? "#" : `/student/mock-test/${test.id}`}
+      onClick={(e) => testLocked && e.preventDefault()}
+      style={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 11,
+        padding: "10px 18px 10px 30px",
+        cursor: testLocked ? "default" : "pointer",
+        textAlign: "left",
+        opacity: testLocked ? 0.55 : 1,
+      }}
+    >
+      <span style={{ color: "var(--purple)", display: "flex" }}>
+        {testLocked ? (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <rect x="5" y="11" width="14" height="9" rx="2" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+        ) : (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+        )}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink2)" }}>{test.title}</div>
+        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
+          {testLocked ? "Complete the lessons above to unlock" : "Test"}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function lessonMeta(lesson: Lesson, chapterTitle: string) {
   if (lesson.type === "VIDEO") return `Video Lesson · ${chapterTitle}`;
   if (lesson.type === "PDF") return `PDF Notes · ${chapterTitle}`;
@@ -428,101 +524,23 @@ export default function StudentCoursePlayerPage() {
                     </div>
                   ) : (
                     <>
-                      {chapter.lessons.map((lesson) => {
-                        const lessonLocked = lesson.unlocked === false;
-                        const active = lesson.id === selectedLessonId;
-                        const color = lessonLocked ? "var(--ink3)" : active ? "var(--orange)" : "var(--ink3)";
-                        return (
-                          <button
-                            key={lesson.id}
-                            onClick={() => !lessonLocked && setSelectedLessonId(lesson.id)}
-                            disabled={lessonLocked}
-                            style={{
-                              width: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 11,
-                              padding: "10px 18px 10px 30px",
-                              border: "none",
-                              background: active ? "var(--orange-soft)" : "transparent",
-                              cursor: lessonLocked ? "default" : "pointer",
-                              fontFamily: "inherit",
-                              textAlign: "left",
-                              borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
-                              opacity: lessonLocked ? 0.55 : 1,
-                            }}
-                          >
-                            <span style={{ color, display: "flex" }}>
-                              {lessonLocked ? (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                  <rect x="5" y="11" width="14" height="9" rx="2" />
-                                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                                </svg>
-                              ) : (
-                                <LessonIcon type={lesson.type} color={color} />
-                              )}
-                            </span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div
-                                style={{
-                                  fontSize: 12.5,
-                                  fontWeight: active ? 700 : 500,
-                                  color: active ? "var(--ink)" : "var(--ink2)",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                {lesson.title}
-                              </div>
-                              <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
-                                {lessonLocked ? "Complete the previous lesson to unlock" : lesson.type}
-                              </div>
-                            </div>
-                            <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
-                          </button>
-                        );
-                      })}
-                      {chapter.tests.map((test) => {
-                        const testLocked = test.unlocked === false;
-                        return (
-                          <Link
-                            key={test.id}
-                            href={testLocked ? "#" : `/student/mock-test/${test.id}`}
-                            onClick={(e) => testLocked && e.preventDefault()}
-                            style={{
-                              width: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 11,
-                              padding: "10px 18px 10px 30px",
-                              cursor: testLocked ? "default" : "pointer",
-                              textAlign: "left",
-                              opacity: testLocked ? 0.55 : 1,
-                            }}
-                          >
-                            <span style={{ color: "var(--purple)", display: "flex" }}>
-                              {testLocked ? (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                  <rect x="5" y="11" width="14" height="9" rx="2" />
-                                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                                </svg>
-                              ) : (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                  <path d="M9 11l3 3L22 4" />
-                                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                                </svg>
-                              )}
-                            </span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink2)" }}>{test.title}</div>
-                              <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
-                                {testLocked ? "Complete the lessons above to unlock" : "Test"}
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
+                      {[
+                        ...chapter.lessons.map((l) => ({ kind: "lesson" as const, order: l.order, data: l })),
+                        ...chapter.tests.map((t) => ({ kind: "test" as const, order: t.order, data: t })),
+                      ]
+                        .sort((a, b) => a.order - b.order)
+                        .map((item) =>
+                          item.kind === "lesson" ? (
+                            <LessonNavItem
+                              key={item.data.id}
+                              lesson={item.data}
+                              active={item.data.id === selectedLessonId}
+                              onSelect={setSelectedLessonId}
+                            />
+                          ) : (
+                            <TestNavItem key={item.data.id} test={item.data} />
+                          ),
+                        )}
                     </>
                   )}
                   {!locked && course.dripType === "SEQUENTIAL" && course.completionRule === "MANUAL" && (

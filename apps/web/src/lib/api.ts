@@ -111,7 +111,7 @@ export interface Chapter {
   unlocksAt?: string | null;
   finished?: boolean;
   lessons: Lesson[];
-  tests: { id: string; title: string; published: boolean; unlocked?: boolean }[];
+  tests: { id: string; title: string; published: boolean; order: number; unlocked?: boolean }[];
 }
 
 export type CourseType = 'FREE' | 'PAID' | 'PRIVATE';
@@ -440,6 +440,7 @@ export interface Test {
   title: string;
   description: string;
   bannerUrl: string | null;
+  order: number;
   published: boolean;
   publishMode: TestPublishMode;
   availableFrom: string | null;
@@ -465,7 +466,7 @@ export const testsApi = {
     return request<Test[]>(`/tests${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<TestTree>(`/tests/${id}`),
-  create: (data: { title: string; description?: string; bannerUrl?: string; chapterId?: string; courseId?: string }) =>
+  create: (data: { title: string; description?: string; bannerUrl?: string; order?: number; chapterId?: string; courseId?: string }) =>
     request<Test>('/tests', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
@@ -475,6 +476,7 @@ export const testsApi = {
         | 'title'
         | 'description'
         | 'bannerUrl'
+        | 'order'
         | 'published'
         | 'publishMode'
         | 'availableFrom'

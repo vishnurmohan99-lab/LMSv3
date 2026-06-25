@@ -504,6 +504,7 @@ model Test {
   title           String          @unique
   description     String          @default("")
   bannerUrl       String?
+  order           Int             @default(0)
   published       Boolean         @default(false)
   publishMode     TestPublishMode @default(MANUAL)
   availableFrom   DateTime?

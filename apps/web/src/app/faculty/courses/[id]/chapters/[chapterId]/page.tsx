@@ -559,6 +559,9 @@ function LessonCard({
   );
 }
 
+type ChapterTest = CourseTree["chapters"][number]["tests"][number];
+type ContentItem = { kind: "lesson"; id: string; order: number; data: Lesson } | { kind: "test"; id: string; order: number; data: ChapterTest };
+
 function AttachTestPanel({
   courseId,
   chapterId,
@@ -686,6 +689,19 @@ export default function FacultyChapterDetailPage() {
     load();
   }
 
+  async function onMoveContentItem(items: ContentItem[], index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= items.length) return;
+    const reordered = [...items];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    await Promise.all(
+      reordered.map((item, i) =>
+        item.order === i ? Promise.resolve() : item.kind === "lesson" ? coursesApi.updateLesson(item.id, { order: i }) : testsApi.update(item.id, { order: i }),
+      ),
+    );
+    load();
+  }
+
   async function onDeleteChapter() {
     if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(chapterId);
@@ -714,6 +730,11 @@ export default function FacultyChapterDetailPage() {
 
   if (loading) return <main style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></main>;
   if (error || !course || !chapter) return <main style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error ?? "Chapter not found"}</p></main>;
+
+  const combinedItems: ContentItem[] = [
+    ...chapter.lessons.map((l): ContentItem => ({ kind: "lesson", id: l.id, order: l.order, data: l })),
+    ...chapter.tests.map((t): ContentItem => ({ kind: "test", id: t.id, order: t.order, data: t })),
+  ].sort((a, b) => a.order - b.order);
 
   return (
     <main className="fade-in" style={{ padding: "30px 40px 60px" }}>
@@ -833,53 +854,79 @@ export default function FacultyChapterDetailPage() {
         />
       )}
 
-      {chapter.tests.length > 0 && (
-        <div style={{ marginBottom: 26 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>
-            Tests ({chapter.tests.length})
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
-            {chapter.tests.map((t) => (
-              <div key={t.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: "3px 9px",
-                      borderRadius: 7,
-                      background: t.published ? "var(--green-soft)" : "var(--amber-soft)",
-                      color: t.published ? "var(--green)" : "var(--amber)",
-                    }}
-                  >
-                    {t.published ? "Published" : "Draft"}
-                  </span>
-                  <button onClick={() => onDetachTest(t.id)} title="Detach from chapter" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <TrashIcon />
-                  </button>
-                </div>
-                <Link href={`/faculty/tests/${t.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
-                  {t.title}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {chapter.lessons.length === 0 ? (
-        <p style={{ color: "var(--ink2)" }}>No lessons yet — add the first one above.</p>
+      {combinedItems.length === 0 ? (
+        <p style={{ color: "var(--ink2)" }}>No lessons or tests yet — add one above.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
-          {chapter.lessons.map((lesson) => (
-            <LessonCard
-              key={lesson.id}
-              lesson={lesson}
-              courseId={courseId}
-              onDelete={() => onDeleteLesson(lesson.id)}
-              onToggleFeature={(key, next) => onToggleLessonFeature(lesson, key, next)}
-              onUpdate={(data) => onUpdateLesson(lesson.id, data)}
-            />
+        <div style={{ display: "grid", gap: 14 }}>
+          {combinedItems.map((item, i) => (
+            <div key={item.id} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 18, flex: "none" }}>
+                <button
+                  onClick={() => onMoveContentItem(combinedItems, i, -1)}
+                  disabled={i === 0}
+                  title="Move up"
+                  style={{ display: "flex", background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 7, cursor: i === 0 ? "default" : "pointer", padding: 4, opacity: i === 0 ? 0.4 : 1 }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                    <path d="M12 19V5M5 12l7-7 7 7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => onMoveContentItem(combinedItems, i, 1)}
+                  disabled={i === combinedItems.length - 1}
+                  title="Move down"
+                  style={{
+                    display: "flex",
+                    background: "var(--bg)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 7,
+                    cursor: i === combinedItems.length - 1 ? "default" : "pointer",
+                    padding: 4,
+                    opacity: i === combinedItems.length - 1 ? 0.4 : 1,
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2">
+                    <path d="M12 5v14M5 12l7 7 7-7" />
+                  </svg>
+                </button>
+              </div>
+
+              {item.kind === "lesson" ? (
+                <div style={{ flex: 1 }}>
+                  <LessonCard
+                    lesson={item.data}
+                    courseId={courseId}
+                    onDelete={() => onDeleteLesson(item.data.id)}
+                    onToggleFeature={(key, next) => onToggleLessonFeature(item.data, key, next)}
+                    onUpdate={(data) => onUpdateLesson(item.data.id, data)}
+                  />
+                </div>
+              ) : (
+                <div className="entity-card" style={{ flex: 1, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "3px 9px",
+                        borderRadius: 7,
+                        background: item.data.published ? "var(--green-soft)" : "var(--amber-soft)",
+                        color: item.data.published ? "var(--green)" : "var(--amber)",
+                      }}
+                    >
+                      {item.data.published ? "Published" : "Draft"}
+                    </span>
+                    <button onClick={() => onDetachTest(item.data.id)} title="Detach from chapter" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <TrashIcon />
+                    </button>
+                  </div>
+                  <Link href={`/faculty/tests/${item.data.id}`} style={{ fontSize: 14.5, fontWeight: 700, color: "var(--ink)" }}>
+                    {item.data.title}
+                  </Link>
+                  <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 4 }}>Test</div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

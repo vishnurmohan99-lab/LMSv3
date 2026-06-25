@@ -16,6 +16,10 @@ export class UpdateTestDto {
   bannerUrl?: string;
 
   @IsOptional()
+  @IsInt()
+  order?: number;
+
+  @IsOptional()
   @IsBoolean()
   published?: boolean;
 

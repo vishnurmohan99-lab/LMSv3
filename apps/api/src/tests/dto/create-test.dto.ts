@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateTestDto {
   @IsString()
@@ -12,6 +12,10 @@ export class CreateTestDto {
   @IsOptional()
   @IsString()
   bannerUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  order?: number;
 
   @IsOptional()
   @IsString()

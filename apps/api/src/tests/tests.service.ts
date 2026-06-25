@@ -88,6 +88,7 @@ export class TestsService {
             title: dto.title,
             description: dto.description ?? '',
             bannerUrl: dto.bannerUrl,
+            order: dto.order ?? 0,
             chapterId: dto.chapterId,
             courseId: dto.courseId,
             facultyId: user.sub,
