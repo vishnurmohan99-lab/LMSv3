@@ -189,7 +189,7 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
       <div
         className="flip-card-scene"
         onClick={() => setFlipped((f) => !f)}
-        style={{ width: 380, height: 380, margin: "0 auto" }}
+        style={{ width: "100%", height: 320 }}
       >
         <div className="flip-card-inner" style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>
           <div
