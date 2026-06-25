@@ -186,11 +186,10 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
         Card {index + 1} of {cards.length} — tap to reveal
       </div>
 
-      <div style={{ width: "min(420px, 100%)", margin: "0 auto", position: "relative", paddingTop: "min(420px, 100%)" }}>
       <div
         className="flip-card-scene"
         onClick={() => setFlipped((f) => !f)}
-        style={{ position: "absolute", inset: 0 }}
+        style={{ width: 380, height: 380, margin: "0 auto" }}
       >
         <div className="flip-card-inner" style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>
           <div
@@ -277,7 +276,6 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
             <div style={{ fontSize: 19, fontWeight: 600, lineHeight: 1.6, position: "relative" }}>{card.back}</div>
           </div>
         </div>
-      </div>
       </div>
 
       {flipped && (
