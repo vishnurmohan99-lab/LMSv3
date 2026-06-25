@@ -96,6 +96,7 @@ export interface Lesson {
   aiNotesEnabled: boolean;
   askMeEnabled: boolean;
   transcript: string | null;
+  unlocked?: boolean;
 }
 
 export interface Chapter {
@@ -109,7 +110,7 @@ export interface Chapter {
   unlocksAt?: string | null;
   finished?: boolean;
   lessons: Lesson[];
-  tests: { id: string; title: string; published: boolean }[];
+  tests: { id: string; title: string; published: boolean; unlocked?: boolean }[];
 }
 
 export type CourseType = 'FREE' | 'PAID' | 'PRIVATE';
@@ -803,7 +804,7 @@ export const mentorApi = {
   cancelBooking: (id: string) => request<{ success: boolean }>(`/mentor/bookings/${id}`, { method: 'DELETE' }),
 };
 
-export type CalendarEventType = 'LIVE_LESSON' | 'MENTOR_SESSION';
+export type CalendarEventType = 'LIVE_LESSON' | 'MENTOR_SESSION' | 'CHAPTER_UNLOCK';
 
 export interface CalendarEvent {
   id: string;
@@ -819,6 +820,29 @@ export interface CalendarEvent {
 export const calendarApi = {
   student: () => request<CalendarEvent[]>('/calendar/student'),
   faculty: () => request<CalendarEvent[]>('/calendar/faculty'),
+};
+
+export interface Todo {
+  id: string;
+  date: string;
+  text: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+}
+
+export const todosApi = {
+  list: (params?: { from?: string; to?: string }) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>,
+    ).toString();
+    return request<Todo[]>(`/todos${qs ? `?${qs}` : ''}`);
+  },
+  create: (data: { date: string; text: string }) => request<Todo>('/todos', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Pick<Todo, 'text' | 'completed'>>) =>
+    request<Todo>(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/todos/${id}`, { method: 'DELETE' }),
 };
 
 export type FeedbackTargetType = 'COURSE' | 'FACULTY' | 'MENTOR' | 'SYSTEM';

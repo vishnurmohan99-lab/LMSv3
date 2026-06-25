@@ -426,49 +426,103 @@ export default function StudentCoursePlayerPage() {
                       {chapter.unlocksAt ? ` until ${new Date(chapter.unlocksAt).toLocaleString()}` : ""}.
                     </div>
                   ) : (
-                    chapter.lessons.map((lesson) => {
-                      const active = lesson.id === selectedLessonId;
-                      const color = active ? "var(--orange)" : "var(--ink3)";
-                      return (
-                        <button
-                          key={lesson.id}
-                          onClick={() => setSelectedLessonId(lesson.id)}
-                          style={{
-                            width: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 11,
-                            padding: "10px 18px 10px 30px",
-                            border: "none",
-                            background: active ? "var(--orange-soft)" : "transparent",
-                            cursor: "pointer",
-                            fontFamily: "inherit",
-                            textAlign: "left",
-                            borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
-                          }}
-                        >
-                          <span style={{ color, display: "flex" }}>
-                            <LessonIcon type={lesson.type} color={color} />
-                          </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontSize: 12.5,
-                                fontWeight: active ? 700 : 500,
-                                color: active ? "var(--ink)" : "var(--ink2)",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {lesson.title}
+                    <>
+                      {chapter.lessons.map((lesson) => {
+                        const lessonLocked = lesson.unlocked === false;
+                        const active = lesson.id === selectedLessonId;
+                        const color = lessonLocked ? "var(--ink3)" : active ? "var(--orange)" : "var(--ink3)";
+                        return (
+                          <button
+                            key={lesson.id}
+                            onClick={() => !lessonLocked && setSelectedLessonId(lesson.id)}
+                            disabled={lessonLocked}
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 11,
+                              padding: "10px 18px 10px 30px",
+                              border: "none",
+                              background: active ? "var(--orange-soft)" : "transparent",
+                              cursor: lessonLocked ? "default" : "pointer",
+                              fontFamily: "inherit",
+                              textAlign: "left",
+                              borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
+                              opacity: lessonLocked ? 0.55 : 1,
+                            }}
+                          >
+                            <span style={{ color, display: "flex" }}>
+                              {lessonLocked ? (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                  <rect x="5" y="11" width="14" height="9" rx="2" />
+                                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                                </svg>
+                              ) : (
+                                <LessonIcon type={lesson.type} color={color} />
+                              )}
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: active ? 700 : 500,
+                                  color: active ? "var(--ink)" : "var(--ink2)",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                {lesson.title}
+                              </div>
+                              <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
+                                {lessonLocked ? "Complete the previous lesson to unlock" : lesson.type}
+                              </div>
                             </div>
-                            <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>{lesson.type}</div>
-                          </div>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
-                        </button>
-                      );
-                    })
+                            <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
+                          </button>
+                        );
+                      })}
+                      {chapter.tests.map((test) => {
+                        const testLocked = test.unlocked === false;
+                        return (
+                          <Link
+                            key={test.id}
+                            href={testLocked ? "#" : `/student/mock-test/${test.id}`}
+                            onClick={(e) => testLocked && e.preventDefault()}
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 11,
+                              padding: "10px 18px 10px 30px",
+                              cursor: testLocked ? "default" : "pointer",
+                              textAlign: "left",
+                              opacity: testLocked ? 0.55 : 1,
+                            }}
+                          >
+                            <span style={{ color: "var(--purple)", display: "flex" }}>
+                              {testLocked ? (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                  <rect x="5" y="11" width="14" height="9" rx="2" />
+                                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                                </svg>
+                              ) : (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                  <path d="M9 11l3 3L22 4" />
+                                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                                </svg>
+                              )}
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink2)" }}>{test.title}</div>
+                              <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
+                                {testLocked ? "Complete the lessons above to unlock" : "Test"}
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </>
                   )}
                   {!locked && course.dripType === "SEQUENTIAL" && course.completionRule === "MANUAL" && (
                     <div style={{ padding: "8px 18px 12px 30px" }}>
@@ -594,11 +648,13 @@ export default function StudentCoursePlayerPage() {
                       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>{selectedChapter?.title}</div>
                       <div style={{ display: "grid", gap: 4 }}>
                         {selectedChapter?.lessons.map((l) => {
+                          const lLocked = l.unlocked === false;
                           const active = l.id === selectedLessonId;
                           return (
                             <button
                               key={l.id}
-                              onClick={() => setSelectedLessonId(l.id)}
+                              onClick={() => !lLocked && setSelectedLessonId(l.id)}
+                              disabled={lLocked}
                               style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -607,14 +663,22 @@ export default function StudentCoursePlayerPage() {
                                 border: "none",
                                 background: active ? "var(--bg)" : "transparent",
                                 borderRadius: 9,
-                                cursor: "pointer",
+                                cursor: lLocked ? "default" : "pointer",
                                 fontFamily: "inherit",
                                 textAlign: "left",
                                 width: "100%",
+                                opacity: lLocked ? 0.55 : 1,
                               }}
                             >
                               <span style={{ color: active ? "var(--orange)" : "var(--ink3)", display: "flex" }}>
-                                <LessonIcon type={l.type} color={active ? "var(--orange)" : "var(--ink3)"} />
+                                {lLocked ? (
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                    <rect x="5" y="11" width="14" height="9" rx="2" />
+                                    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                                  </svg>
+                                ) : (
+                                  <LessonIcon type={l.type} color={active ? "var(--orange)" : "var(--ink3)"} />
+                                )}
                               </span>
                               <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "var(--ink)" : "var(--ink2)" }}>{l.title}</span>
                             </button>

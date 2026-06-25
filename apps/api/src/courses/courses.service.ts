@@ -134,10 +134,42 @@ export class CoursesService {
     const finishedMap =
       !bypassDripping && course.dripType === 'SEQUENTIAL' ? await this.computeFinishedMap(course, course.chapters, user.sub) : null;
 
+    const sequentialLessons = !bypassDripping && course.dripType === 'SEQUENTIAL';
+    const viewedLessonIds = sequentialLessons
+      ? new Set(
+          (
+            await this.prisma.lessonView.findMany({
+              where: { studentId: user.sub, lessonId: { in: course.chapters.flatMap((c) => c.lessons.map((l) => l.id)) } },
+              select: { lessonId: true },
+            })
+          ).map((v) => v.lessonId),
+        )
+      : null;
+
     const chapters = await Promise.all(
       course.chapters.map(async (chapter) => {
         const { unlocked, unlocksAt } = bypassDripping ? { unlocked: true, unlocksAt: null as Date | null } : unlockMap!.get(chapter.id)!;
         const finished = finishedMap?.get(chapter.id) ?? false;
+
+        // Within a SEQUENTIAL course, a lesson only unlocks once every earlier lesson in the same
+        // chapter has been viewed — chained the same way chapter-to-chapter unlocking works above.
+        let lessonChainUnlocked = unlocked;
+        const lessons = await Promise.all(
+          chapter.lessons.map(async (lesson) => {
+            const lessonUnlocked = sequentialLessons ? lessonChainUnlocked : unlocked;
+            if (sequentialLessons) lessonChainUnlocked = lessonChainUnlocked && viewedLessonIds!.has(lesson.id);
+            return {
+              ...lesson,
+              unlocked: lessonUnlocked,
+              contentUrl:
+                lessonUnlocked && lesson.contentUrl && (lesson.type === LessonType.VIDEO || lesson.type === LessonType.PDF)
+                  ? await this.uploads.presignDownload(lesson.contentUrl)
+                  : null,
+            };
+          }),
+        );
+        // The chapter's own test(s) only unlock once all of its lessons are unlocked/viewed.
+        const testsUnlocked = sequentialLessons ? lessonChainUnlocked : unlocked;
 
         return {
           ...chapter,
@@ -145,15 +177,8 @@ export class CoursesService {
           unlocksAt,
           finished,
           bannerUrl: chapter.bannerUrl ? await this.uploads.presignDownload(chapter.bannerUrl) : null,
-          lessons: await Promise.all(
-            chapter.lessons.map(async (lesson) => ({
-              ...lesson,
-              contentUrl:
-                unlocked && lesson.contentUrl && (lesson.type === LessonType.VIDEO || lesson.type === LessonType.PDF)
-                  ? await this.uploads.presignDownload(lesson.contentUrl)
-                  : null,
-            })),
-          ),
+          lessons,
+          tests: chapter.tests.map((t) => ({ ...t, unlocked: testsUnlocked })),
         };
       }),
     );
@@ -315,6 +340,23 @@ export class CoursesService {
     const lesson = await this.requireLessonWithCourse(lessonId);
     const canView = await this.canViewCourseContent(lesson.chapter.course, user);
     if (!canView) return { success: true };
+
+    if (lesson.chapter.course.dripType === 'SEQUENTIAL') {
+      const chapterUnlocked = await this.isChapterUnlockedForUser(lesson.chapterId, user);
+      if (!chapterUnlocked) throw new ForbiddenException('This chapter is not unlocked yet');
+      const siblings = await this.prisma.lesson.findMany({
+        where: { chapterId: lesson.chapterId },
+        orderBy: { order: 'asc' },
+        select: { id: true },
+      });
+      const idx = siblings.findIndex((l) => l.id === lessonId);
+      if (idx > 0) {
+        const priorIds = siblings.slice(0, idx).map((l) => l.id);
+        const viewedCount = await this.prisma.lessonView.count({ where: { studentId: user.sub, lessonId: { in: priorIds } } });
+        if (viewedCount < priorIds.length) throw new ForbiddenException('Complete the previous lesson first');
+      }
+    }
+
     await this.prisma.lessonView.upsert({
       where: { lessonId_studentId: { lessonId, studentId: user.sub } },
       create: { lessonId, studentId: user.sub },

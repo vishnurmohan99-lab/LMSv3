@@ -5,7 +5,7 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 
 export interface CalendarEvent {
   id: string;
-  type: 'LIVE_LESSON' | 'MENTOR_SESSION';
+  type: 'LIVE_LESSON' | 'MENTOR_SESSION' | 'CHAPTER_UNLOCK';
   title: string;
   date: string;
   courseId?: string;
@@ -70,7 +70,24 @@ export class CalendarService {
       otherPartyName: b.mentor.fullName,
     }));
 
-    return [...liveEvents, ...mentorEvents].sort((a, b) => a.date.localeCompare(b.date));
+    const calendarChapters = await this.prisma.chapter.findMany({
+      where: {
+        unlockAt: { not: null },
+        course: { dripType: 'CALENDAR', enrollments: { some: { studentId: user.sub } } },
+      },
+      include: { course: { select: { id: true, title: true } } },
+    });
+
+    const unlockEvents: CalendarEvent[] = calendarChapters.map((chapter) => ({
+      id: `chapter_unlock_${chapter.id}`,
+      type: 'CHAPTER_UNLOCK' as const,
+      title: `${chapter.title} unlocks`,
+      date: chapter.unlockAt!.toISOString(),
+      courseId: chapter.course.id,
+      courseTitle: chapter.course.title,
+    }));
+
+    return [...liveEvents, ...mentorEvents, ...unlockEvents].sort((a, b) => a.date.localeCompare(b.date));
   }
 
   async getEventsForFaculty(user: JwtPayload): Promise<CalendarEvent[]> {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { calendarApi, ApiError, type CalendarEvent } from "@/lib/api";
+import { calendarApi, todosApi, ApiError, type CalendarEvent, type Todo } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   padding: "8px 12px",
@@ -33,12 +33,31 @@ function MentorIcon() {
   );
 }
 
+function UnlockIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 7.5-2" />
+    </svg>
+  );
+}
+
 function eventColor(type: CalendarEvent["type"]) {
-  return type === "LIVE_LESSON" ? "var(--orange)" : "var(--purple)";
+  if (type === "LIVE_LESSON") return "var(--orange)";
+  if (type === "CHAPTER_UNLOCK") return "var(--green)";
+  return "var(--purple)";
 }
 
 function eventBg(type: CalendarEvent["type"]) {
-  return type === "LIVE_LESSON" ? "var(--orange-soft)" : "var(--purple-soft)";
+  if (type === "LIVE_LESSON") return "var(--orange-soft)";
+  if (type === "CHAPTER_UNLOCK") return "var(--green-soft)";
+  return "var(--purple-soft)";
+}
+
+function eventLabel(type: CalendarEvent["type"]) {
+  if (type === "LIVE_LESSON") return "Live class";
+  if (type === "CHAPTER_UNLOCK") return "Course unlock";
+  return "Mentor session";
 }
 
 function sameDay(a: Date, b: Date) {
@@ -59,7 +78,9 @@ function EventRow({ event, role }: { event: CalendarEvent; role: "student" | "fa
         fontSize: 12.5,
       }}
     >
-      <span style={{ display: "flex" }}>{event.type === "LIVE_LESSON" ? <LiveIcon /> : <MentorIcon />}</span>
+      <span style={{ display: "flex" }}>
+        {event.type === "LIVE_LESSON" ? <LiveIcon /> : event.type === "CHAPTER_UNLOCK" ? <UnlockIcon /> : <MentorIcon />}
+      </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {event.title}
@@ -70,16 +91,127 @@ function EventRow({ event, role }: { event: CalendarEvent; role: "student" | "fa
         </div>
       </div>
       <span style={{ fontWeight: 700, fontSize: 10.5, color: eventColor(event.type), whiteSpace: "nowrap" }}>
-        {event.type === "LIVE_LESSON" ? "Live class" : "Mentor session"}
+        {eventLabel(event.type)}
       </span>
     </div>
   );
 
-  if (event.type === "LIVE_LESSON" && event.courseId) {
+  if ((event.type === "LIVE_LESSON" || event.type === "CHAPTER_UNLOCK") && event.courseId) {
     const href = role === "student" ? `/student/courses/${event.courseId}` : `/faculty/courses/${event.courseId}`;
     return <Link href={href} style={{ textDecoration: "none", display: "block" }}>{content}</Link>;
   }
   return content;
+}
+
+function dayKey(d: Date) {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function TodoPanel({ selectedDate }: { selectedDate: Date }) {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [text, setText] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  function load() {
+    setLoading(true);
+    todosApi
+      .list()
+      .then(setTodos)
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(load, []);
+
+  const dayTodos = todos.filter((t) => dayKey(new Date(t.date)) === dayKey(selectedDate));
+
+  async function onAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!text.trim()) return;
+    setAdding(true);
+    try {
+      const isoMidnight = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).toISOString();
+      await todosApi.create({ date: isoMidnight, text: text.trim() });
+      setText("");
+      load();
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function onToggle(todo: Todo) {
+    await todosApi.update(todo.id, { completed: !todo.completed });
+    load();
+  }
+
+  async function onDelete(id: string) {
+    await todosApi.remove(id);
+    load();
+  }
+
+  return (
+    <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>To-do</div>
+      <form onSubmit={onAdd} style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Add a task for this day…"
+          style={{ ...inputStyle, flex: 1, cursor: "text" }}
+        />
+        <button
+          type="submit"
+          disabled={adding || !text.trim()}
+          style={{
+            padding: "8px 14px",
+            background: "var(--orange)",
+            color: "#fff",
+            border: "none",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            opacity: adding || !text.trim() ? 0.6 : 1,
+          }}
+        >
+          Add
+        </button>
+      </form>
+      {loading ? (
+        <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>Loading…</p>
+      ) : dayTodos.length === 0 ? (
+        <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>No to-dos for this day yet.</p>
+      ) : (
+        <div style={{ display: "grid", gap: 6 }}>
+          {dayTodos.map((t) => (
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--bg)", borderRadius: 9 }}>
+              <input type="checkbox" checked={t.completed} onChange={() => onToggle(t)} style={{ flex: "none" }} />
+              <span
+                style={{
+                  flex: 1,
+                  fontSize: 13,
+                  color: t.completed ? "var(--ink3)" : "var(--ink)",
+                  textDecoration: t.completed ? "line-through" : "none",
+                }}
+              >
+                {t.text}
+              </span>
+              <button
+                onClick={() => onDelete(t.id)}
+                title="Delete"
+                style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--red)" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
@@ -229,6 +361,8 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
             </div>
           )}
         </div>
+
+        <TodoPanel selectedDate={selectedDate} />
 
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18 }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Upcoming</div>

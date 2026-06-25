@@ -60,6 +60,8 @@ model User {
   mentorBookingsAsStudent MentorBooking[]      @relation("MentorBookingsAsStudent")
   mentorBookingsAsMentor  MentorBooking[]      @relation("MentorBookingsAsMentor")
 
+  todos Todo[] @relation("Todos")
+
   feedbackFormsCreated  FeedbackForm[]     @relation("FeedbackFormCreatedBy")
   feedbackFormsAsTarget FeedbackForm[]     @relation("FeedbackFormTargetFaculty")
   feedbackRecipient     FeedbackRecipient[]
@@ -696,6 +698,20 @@ model MentorBooking {
   @@unique([availabilityId, date])
   @@index([studentId])
   @@index([mentorId])
+}
+
+model Todo {
+  id        String   @id @default(uuid())
+  date      DateTime
+  text      String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation("Todos", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
 }
 
 enum FeedbackTargetType {
