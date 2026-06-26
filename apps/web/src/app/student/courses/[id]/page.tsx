@@ -431,7 +431,10 @@ export default function StudentCoursePlayerPage() {
   return (
     <div style={{ display: "flex", margin: 0, height: "100%", background: "var(--bg)" }}>
       {/* chapter sidebar */}
-      <div style={{ width: 286, flex: "none", background: "var(--card)", borderRight: "1px solid var(--line)", overflowY: "auto" }}>
+      <div
+        className={`course-pane-list${selectedLesson ? " has-selection" : ""}`}
+        style={{ width: 286, flex: "none", background: "var(--card)", borderRight: "1px solid var(--line)", overflowY: "auto" }}
+      >
         <div style={{ padding: "18px 18px 14px", borderBottom: "1px solid var(--line)" }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--orange)", textTransform: "uppercase" }}>
             Course
@@ -577,14 +580,29 @@ export default function StudentCoursePlayerPage() {
       </div>
 
       {/* lesson area */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "relative" }}>
+      <div
+        className={`course-pane-detail${selectedLesson ? " has-selection" : ""}`}
+        style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "relative" }}
+      >
         {selectedLesson ? (
           <>
             <div style={{ flex: "none", background: "var(--card)", borderBottom: "1px solid var(--line)", padding: "16px 26px" }}>
-              <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 6 }}>
-                {course.title} <span style={{ color: "var(--line)" }}>/</span> {selectedChapter?.title}{" "}
-                <span style={{ color: "var(--line)" }}>/</span>{" "}
-                <span style={{ color: "var(--ink2)", fontWeight: 600 }}>{selectedLesson.title}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <button
+                  className="mobile-back-btn"
+                  onClick={() => setSelectedLessonId(null)}
+                  aria-label="Back to chapters"
+                  style={{ width: 30, height: 30, flex: "none", border: "1px solid var(--line)", borderRadius: 9, background: "var(--bg)", cursor: "pointer", alignItems: "center", justifyContent: "center" }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.2">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+                <div style={{ fontSize: 12, color: "var(--ink3)" }}>
+                  {course.title} <span style={{ color: "var(--line)" }}>/</span> {selectedChapter?.title}{" "}
+                  <span style={{ color: "var(--line)" }}>/</span>{" "}
+                  <span style={{ color: "var(--ink2)", fontWeight: 600 }}>{selectedLesson.title}</span>
+                </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 200px", minWidth: 160 }}>
@@ -593,7 +611,7 @@ export default function StudentCoursePlayerPage() {
                     {lessonMeta(selectedLesson, selectedChapter?.title ?? "")}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 10, flex: "none", flexWrap: "wrap", marginLeft: "auto" }}>
+                <div className="lesson-action-row" style={{ display: "flex", gap: 10, flex: "none", flexWrap: "wrap", marginLeft: "auto" }}>
                   {selectedLesson.flashcardsEnabled && (
                     <button
                       onClick={() => setViewMode(viewMode === "flashcards" ? "lesson" : "flashcards")}
@@ -676,14 +694,14 @@ export default function StudentCoursePlayerPage() {
               </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: "auto", padding: 26, display: "flex" }}>
+            <div className="mobile-page-pad" style={{ flex: 1, overflowY: "auto", padding: 26, display: "flex" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 {viewMode === "flashcards" ? (
                   <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
                 ) : viewMode === "summary" ? (
                   <SummaryDeckReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
                 ) : selectedLesson.type === "VIDEO" && (selectedChapter?.lessons.length ?? 0) > 1 ? (
-                  <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
+                  <div className="lesson-video-grid" style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
                     <div style={{ display: "grid", gap: 18, minWidth: 0 }}>
                       <LessonViewer lesson={selectedLesson} />
                       {selectedLesson.aiNotesEnabled && <LessonNotes lessonId={selectedLesson.id} />}
@@ -743,7 +761,7 @@ export default function StudentCoursePlayerPage() {
               </div>
 
               {showChat && selectedLesson.askMeEnabled && (
-                <div style={{ width: 360, flex: "none", marginLeft: 18, height: "calc(100% - 24px)", position: "sticky", top: 0 }}>
+                <div className="askme-panel" style={{ width: 360, flex: "none", marginLeft: 18, height: "calc(100% - 24px)", position: "sticky", top: 0 }}>
                   <AskMeChat lessonId={selectedLesson.id} onClose={() => setShowChat(false)} />
                 </div>
               )}

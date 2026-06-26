@@ -228,3 +228,66 @@ button:active, a:active {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ===================== Mobile page utilities =====================
+   Applied module-by-module to student pages to match the design-reference
+   mobile mockup's 16px side-padding rhythm and stacked headers. */
+
+@media (max-width: 560px) {
+  .mobile-page-pad {
+    padding: 16px 16px 32px !important;
+  }
+  .mobile-stack-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .mobile-full-width {
+    max-width: 100% !important;
+    flex-basis: 100% !important;
+  }
+  .mobile-hide {
+    display: none !important;
+  }
+}
+
+/* Course detail: mobile drill-down (chapter list <-> lesson player), mirrors the
+   mockup's separate Course/Lesson screens instead of the desktop split-pane. */
+.mobile-back-btn {
+  display: none;
+}
+@media (max-width: 860px) {
+  .course-pane-list {
+    width: 100% !important;
+    border-right: none !important;
+  }
+  .course-pane-list.has-selection {
+    display: none !important;
+  }
+  .course-pane-detail {
+    display: none !important;
+  }
+  .course-pane-detail.has-selection {
+    display: flex !important;
+  }
+  .mobile-back-btn {
+    display: flex !important;
+  }
+  .lesson-video-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .lesson-action-row {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+  .lesson-action-row button {
+    flex: 1 1 auto !important;
+  }
+  .askme-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin-left: 0 !important;
+    z-index: 250;
+  }
+}
