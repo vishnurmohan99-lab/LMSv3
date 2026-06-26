@@ -143,6 +143,13 @@ function SearchIcon() {
     </svg>
   );
 }
+function MenuIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2">
+      <path d="M3 6h18M3 12h18M3 18h18" />
+    </svg>
+  );
+}
 
 const navItems = [
   { href: "/student/dashboard", label: "Overview", Icon: OverviewIcon, enabled: true },
@@ -186,6 +193,11 @@ export default function StudentShell({ children }: { children: React.ReactNode }
   const [profile, setProfile] = useState<Profile | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [search, setSearch] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     usersApi.me().then(setProfile).catch(() => {});
@@ -219,6 +231,63 @@ export default function StudentShell({ children }: { children: React.ReactNode }
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <header
+        className="student-topbar-mobile"
+        style={{
+          height: 60,
+          flex: "none",
+          background: "var(--card)",
+          alignItems: "center",
+          gap: 12,
+          padding: "0 14px",
+          borderBottom: "1px solid var(--line)",
+          zIndex: 30,
+        }}
+      >
+        <button
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Menu"
+          style={{ width: 42, height: 42, flex: "none", border: "none", background: "transparent", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <MenuIcon />
+        </button>
+        <div style={{ flex: 1, minWidth: 0, fontSize: 18, fontWeight: 800, letterSpacing: -0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {sectionTitle}
+        </div>
+        <Link
+          href="/student/messages"
+          aria-label="Notifications"
+          style={{ position: "relative", width: 42, height: 42, flex: "none", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <BellIcon />
+          {unreadCount > 0 && (
+            <span style={{ position: "absolute", top: 6, right: 7, width: 8, height: 8, borderRadius: "50%", background: "var(--orange)", border: "2px solid var(--card)" }} />
+          )}
+        </Link>
+        {profile && (
+          <Link
+            href="/student/profile"
+            aria-label="Profile"
+            style={{
+              width: 36,
+              height: 36,
+              flex: "none",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg,#f7902b,#f24d1b)",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: 12.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {profile.fullName.slice(0, 2).toUpperCase()}
+          </Link>
+        )}
+      </header>
+
+      <header
+        className="student-topbar-desktop"
         style={{
           height: 72,
           flex: "none",
@@ -340,8 +409,10 @@ export default function StudentShell({ children }: { children: React.ReactNode }
         )}
       </header>
 
-      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+      <div style={{ flex: 1, display: "flex", minHeight: 0, position: "relative" }}>
+        {drawerOpen && <div className="student-drawer-overlay" onClick={() => setDrawerOpen(false)} />}
         <aside
+          className={`student-sidebar${drawerOpen ? " open" : ""}`}
           style={{
             width: 188,
             flex: "none",
