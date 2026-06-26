@@ -414,6 +414,189 @@ export const questionBanksApi = {
   ) => request<Passage & { questions: Question[] }>(`/question-banks/${bankId}/comprehension`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
+// ===================== Answer Correction =====================
+
+export type AnswerForbiddenPenaltyType = 'NUMERIC' | 'FLAG_HARD';
+
+export interface AnswerQuestionTypePart {
+  id: string;
+  partKey: string;
+  name: string;
+  order: number;
+  defaultWeight: number;
+}
+export interface AnswerQuestionType {
+  id: string;
+  name: string;
+  parts: AnswerQuestionTypePart[];
+  _count?: { questions: number };
+}
+
+export interface AnswerQuestionPoint {
+  id: string;
+  text: string;
+  marks: number;
+}
+export interface AnswerQuestionPointGroup {
+  id: string;
+  minRequired: number;
+  marks: number;
+  points: AnswerQuestionPoint[];
+}
+export interface AnswerQuestionPart {
+  id: string;
+  partKey: string;
+  name: string;
+  order: number;
+  marks: number;
+  mustIncludePoints: AnswerQuestionPoint[];
+  groups: AnswerQuestionPointGroup[];
+}
+export interface AnswerQuestionForbiddenPoint {
+  id: string;
+  text: string;
+  category: string;
+  penaltyType: AnswerForbiddenPenaltyType;
+  penalty: number;
+}
+export interface AnswerQuestion {
+  id: string;
+  text: string;
+  directive: string | null;
+  maxMarks: number;
+  modelAnswer: string | null;
+  published: boolean;
+  typeId: string;
+  type?: AnswerQuestionType;
+  parts: AnswerQuestionPart[];
+  forbiddenPoints: AnswerQuestionForbiddenPoint[];
+  _count?: { submissions: number };
+}
+
+export interface AnswerTranscriptLine {
+  lineId: number;
+  text: string;
+}
+export interface AnswerPresentPoint {
+  pointId: string;
+  text: string;
+  credit: 'full' | 'partial';
+  learnerPhrasing: string;
+  lineIds: number[];
+}
+export interface AnswerMissingPoint {
+  pointId: string;
+  text: string;
+  marksLost: number;
+  whyItMatters: string;
+  suggestedAddition: string;
+}
+export interface AnswerPartResult {
+  partId: string;
+  partKey: string;
+  name: string;
+  marksAwarded: number;
+  marksMax: number;
+  detected: boolean;
+  presentPoints: AnswerPresentPoint[];
+  missingPoints: AnswerMissingPoint[];
+  partComment: string;
+}
+export interface AnswerForbiddenHit {
+  forbiddenPointId: string;
+  text: string;
+  category: string;
+  penaltyType: AnswerForbiddenPenaltyType;
+  penalty: number;
+  lineIds: number[];
+  whyItCosts: string;
+}
+export interface AnswerBonusPoint {
+  text: string;
+  lineIds: number[];
+}
+export interface AnswerManualGrade {
+  marksAwarded: number;
+  comment: string | null;
+  gradedByName: string;
+  gradedAt: string;
+}
+export interface AnswerGradingResult {
+  submissionId: string;
+  questionId: string;
+  typeId: string;
+  transcript: AnswerTranscriptLine[];
+  overall: { marks: number; max: number; verdict: string };
+  parts: AnswerPartResult[];
+  forbiddenFound: AnswerForbiddenHit[];
+  bonusPoints: AnswerBonusPoint[];
+  modelAnswerRef: string;
+  upgradedAnswer: string;
+  manualGrade: AnswerManualGrade | null;
+}
+export interface AnswerSubmissionSummary {
+  id: string;
+  questionId: string;
+  questionText: string;
+  studentName?: string;
+  status: string;
+  marksAwarded?: number;
+  marksMax?: number;
+  manualGradedAt?: string | null;
+  createdAt: string;
+}
+
+export const answerQuestionTypesApi = {
+  list: () => request<AnswerQuestionType[]>('/answer-question-types'),
+  get: (id: string) => request<AnswerQuestionType>(`/answer-question-types/${id}`),
+  create: (data: { name: string; parts: Omit<AnswerQuestionTypePart, 'id'>[] }) =>
+    request<AnswerQuestionType>('/answer-question-types', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { name?: string; parts?: Omit<AnswerQuestionTypePart, 'id'>[] }) =>
+    request<AnswerQuestionType>(`/answer-question-types/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/answer-question-types/${id}`, { method: 'DELETE' }),
+};
+
+export interface AnswerQuestionInput {
+  text: string;
+  directive?: string;
+  maxMarks: number;
+  typeId: string;
+  modelAnswer: string;
+  published?: boolean;
+  parts: {
+    partKey: string;
+    name: string;
+    order?: number;
+    marks: number;
+    mustInclude: { text: string; marks: number }[];
+    groups: { minRequired: number; marks: number; points: { text: string }[] }[];
+  }[];
+  forbiddenPoints: { text: string; category: string; penaltyType: AnswerForbiddenPenaltyType; penalty?: number }[];
+}
+
+export const answerQuestionsApi = {
+  list: (params?: { published?: boolean }) => request<AnswerQuestion[]>(`/answer-questions${params?.published ? '?published=true' : ''}`),
+  get: (id: string) => request<AnswerQuestion>(`/answer-questions/${id}`),
+  create: (data: AnswerQuestionInput) => request<AnswerQuestion>('/answer-questions', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<AnswerQuestionInput>) =>
+    request<AnswerQuestion>(`/answer-questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/answer-questions/${id}`, { method: 'DELETE' }),
+};
+
+export const answerSubmissionsApi = {
+  submit: (data: { questionId: string; fileKey: string; fileType: string }) =>
+    request<{ status: 'GRADED' | 'FAILED'; result?: AnswerGradingResult; errorMessage?: string }>('/answer-submissions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  mine: () => request<AnswerSubmissionSummary[]>('/answer-submissions/mine'),
+  list: (params?: { questionId?: string }) =>
+    request<AnswerSubmissionSummary[]>(`/answer-submissions${params?.questionId ? `?questionId=${params.questionId}` : ''}`),
+  get: (id: string) => request<AnswerGradingResult>(`/answer-submissions/${id}`),
+  grade: (id: string, data: { marksAwarded: number; comment?: string }) =>
+    request<AnswerGradingResult>(`/answer-submissions/${id}/grade`, { method: 'PATCH', body: JSON.stringify(data) }),
+};
+
 export type TestPublishMode = 'MANUAL' | 'TIMED';
 export type TestType = 'FREE' | 'PAID';
 

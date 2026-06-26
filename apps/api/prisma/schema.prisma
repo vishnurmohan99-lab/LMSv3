@@ -75,6 +75,11 @@ model User {
 
   chapterCompletions ChapterCompletion[]
   lessonViews        LessonView[]
+
+  answerQuestionTypes     AnswerQuestionType[] @relation("FacultyAnswerQuestionTypes")
+  answerQuestions         AnswerQuestion[]     @relation("FacultyAnswerQuestions")
+  answerSubmissions       AnswerSubmission[]   @relation("AnswerSubmissions")
+  gradedAnswerEvaluations AnswerEvaluation[]   @relation("AnswerEvaluationGradedBy")
 }
 
 enum CourseType {
@@ -964,4 +969,173 @@ model SubscriptionEnrollment {
   enrolledAt DateTime @default(now())
 
   @@unique([subscriptionId, studentId])
+}
+
+// ===================== Answer Correction =====================
+
+model AnswerQuestionType {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  facultyId String
+  faculty   User   @relation("FacultyAnswerQuestionTypes", fields: [facultyId], references: [id])
+
+  parts     AnswerQuestionTypePart[]
+  questions AnswerQuestion[]
+}
+
+model AnswerQuestionTypePart {
+  id            String @id @default(uuid())
+  partKey       String // stable slug, e.g. "intro" -- referenced by AnswerQuestionPart.partKey
+  name          String
+  order         Int    @default(0)
+  defaultWeight Float  @default(0) // 0..1, defaults should sum to 1.0 across a type (UI-validated, not DB-enforced)
+
+  typeId String
+  type   AnswerQuestionType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+
+  @@unique([typeId, partKey])
+}
+
+model AnswerQuestion {
+  id          String   @id @default(uuid())
+  text        String   @db.Text
+  directive   String?
+  maxMarks    Float
+  modelAnswer String   @db.Text
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  facultyId String
+  faculty   User   @relation("FacultyAnswerQuestions", fields: [facultyId], references: [id])
+
+  typeId String
+  type   AnswerQuestionType @relation(fields: [typeId], references: [id])
+
+  parts           AnswerQuestionPart[]
+  forbiddenPoints AnswerQuestionForbiddenPoint[]
+  submissions     AnswerSubmission[]
+
+  @@index([typeId])
+}
+
+model AnswerQuestionPart {
+  id      String @id @default(uuid())
+  partKey String // matches AnswerQuestionTypePart.partKey for this question's type
+  name    String
+  order   Int    @default(0)
+  marks   Float  // this part's share of maxMarks; sum of all parts' marks must == question.maxMarks
+
+  questionId String
+  question   AnswerQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  mustIncludePoints AnswerQuestionPoint[]      @relation("PartMustInclude")
+  groups            AnswerQuestionPointGroup[]
+
+  @@unique([questionId, partKey])
+}
+
+/// Standalone must_include points directly under a part (outside any "any N of M" group).
+model AnswerQuestionPoint {
+  id    String @id @default(uuid())
+  text  String @db.Text
+  marks Float
+
+  partId String?
+  part   AnswerQuestionPart? @relation("PartMustInclude", fields: [partId], references: [id], onDelete: Cascade)
+
+  groupId String?
+  group   AnswerQuestionPointGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([partId])
+  @@index([groupId])
+}
+
+/// "Any N of M" group: minRequired points (out of points.length) must be present; marks = group's pool.
+model AnswerQuestionPointGroup {
+  id          String @id @default(uuid())
+  minRequired Int
+  marks       Float // total marks available for satisfying minRequired points in this group
+
+  partId String
+  part   AnswerQuestionPart @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  points AnswerQuestionPoint[]
+}
+
+enum ForbiddenPointPenaltyType {
+  NUMERIC
+  FLAG_HARD
+}
+
+model AnswerQuestionForbiddenPoint {
+  id          String                    @id @default(uuid())
+  text        String                    @db.Text
+  category    String
+  penaltyType ForbiddenPointPenaltyType @default(NUMERIC)
+  penalty     Float                     @default(0) // ignored/0 when penaltyType = FLAG_HARD
+
+  questionId String
+  question   AnswerQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+enum AnswerSubmissionStatus {
+  PROCESSING
+  GRADED
+  FAILED
+}
+
+model AnswerSubmission {
+  id           String                 @id @default(uuid())
+  fileKey      String // R2 key of the uploaded photo/PDF (private bucket, presigned GET)
+  fileType     String // mime type, e.g. "image/jpeg" | "application/pdf"
+  status       AnswerSubmissionStatus @default(PROCESSING)
+  errorMessage String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  questionId String
+  question   AnswerQuestion @relation(fields: [questionId], references: [id])
+
+  studentId String
+  student   User   @relation("AnswerSubmissions", fields: [studentId], references: [id])
+
+  evaluation AnswerEvaluation?
+
+  @@index([questionId])
+  @@index([studentId])
+}
+
+model AnswerEvaluation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  submissionId String           @unique
+  submission   AnswerSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  // Transcript: ordered lines, kept for evidence/quoting (no bbox/page-geometry -- v1 is single-file, text only)
+  transcript Json // TranscriptLine[] = { lineId: number; text: string }[]
+
+  marksAwarded Float
+  marksMax     Float
+  verdict      String @db.Text
+
+  parts          Json // PartResult[]
+  forbiddenFound Json // ForbiddenHit[]
+  bonusPoints    Json // BonusPoint[]
+
+  modelAnswerRef String @db.Text // copy of the question's modelAnswer at grading time
+  upgradedAnswer String @db.Text
+
+  rawModelOutput Json? // full parsed LLM JSON, kept for debugging/audit -- nullable
+
+  // Manual override layer -- FACULTY/ADMIN only. Null = AI result stands as-is.
+  manualMarksAwarded Float?
+  manualComment      String?   @db.Text
+  manualGradedById   String?
+  manualGradedBy     User?     @relation("AnswerEvaluationGradedBy", fields: [manualGradedById], references: [id])
+  manualGradedAt     DateTime?
 }

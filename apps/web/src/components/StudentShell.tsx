@@ -70,6 +70,15 @@ function MockTestIcon({ c }: { c: string }) {
     </svg>
   );
 }
+function AnswerCorrectionIcon({ c }: { c: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+      <path d="M14 3v6h6" />
+      <path d="m9 14 2 2 4-4" />
+    </svg>
+  );
+}
 function MentorIcon({ c }: { c: string }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
@@ -144,6 +153,7 @@ const navItems = [
   { href: "/student/feedback", label: "Feedback", Icon: FeedbackIcon, enabled: true },
   { href: "/student/workout", label: "Workout", Icon: WorkoutIcon, enabled: true },
   { href: "/student/mock-test", label: "Mock Test", Icon: MockTestIcon, enabled: true },
+  { href: "/student/answer-correction", label: "Answer Correction", Icon: AnswerCorrectionIcon, enabled: true },
   { href: "/student/mentor", label: "Mentor", Icon: MentorIcon, enabled: true },
   { href: "/student/planner", label: "Planner", Icon: PlannerIcon, enabled: false },
   { href: "/student/subscription", label: "Subscription", Icon: SubscriptionIcon, enabled: true },

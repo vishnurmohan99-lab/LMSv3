@@ -20,4 +20,10 @@ export class UploadsController {
   presignQuestionImage(@Body() dto: PresignUploadDto) {
     return this.uploadsService.presignPublicImageUpload(dto.fileName, dto.contentType);
   }
+
+  @Roles('STUDENT', 'FACULTY', 'ADMIN')
+  @Post('answer-submission-presign')
+  presignAnswerSubmission(@Body() dto: PresignUploadDto) {
+    return this.uploadsService.presignAnswerSubmissionUpload(dto.fileName, dto.contentType);
+  }
 }

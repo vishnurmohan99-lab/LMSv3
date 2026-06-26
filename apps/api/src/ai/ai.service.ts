@@ -72,4 +72,41 @@ export class AiService {
     const data = await res.json();
     return data.choices?.[0]?.message?.content ?? '';
   }
+
+  /** Multimodal call: text prompt + one image, for the Answer Correction vision grading pipeline. */
+  async completeVision(prompt: string, imageDataUri: string, opts?: { model?: string }): Promise<string> {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
+    }
+    const model = opts?.model ?? process.env.OPENROUTER_VISION_MODEL ?? 'nvidia/nemotron-nano-12b-v2-vl:free';
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: imageDataUri } },
+            ],
+          },
+        ],
+        provider: { require_parameters: true },
+      }),
+    });
+
+    if (!res.ok) {
+      throw new BadRequestException(`AI vision request failed (${res.status})`);
+    }
+
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content ?? '';
+  }
 }

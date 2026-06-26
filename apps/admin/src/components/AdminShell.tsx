@@ -140,6 +140,17 @@ function ReportsIcon({ active }: { active: boolean }) {
   );
 }
 
+function AnswerCorrectionIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+      <path d="M14 3v6h6" />
+      <path d="m9 14 2 2 4-4" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
@@ -155,6 +166,7 @@ const navItems = [
   { href: "/admin/courses", label: "Courses", Icon: CoursesIcon },
   { href: "/admin/question-banks", label: "Question Banks", Icon: QuestionBankIcon },
   { href: "/admin/tests", label: "Tests", Icon: TestsIcon },
+  { href: "/admin/answer-correction", label: "Answer Correction", Icon: AnswerCorrectionIcon },
   { href: "/admin/batches", label: "Batches", Icon: BatchStatusIcon },
   { href: "/admin/batch-statuses", label: "Batch Statuses", Icon: BatchStatusIcon },
   { href: "/admin/subscriptions", label: "Subscriptions", Icon: SubscriptionsIcon },

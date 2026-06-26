@@ -32,6 +32,20 @@ export class UploadsService {
     return { uploadUrl, key };
   }
 
+  /** Private-bucket upload for handwritten answer photos -- student PII, must stay private (not the public question-images bucket path). */
+  async presignAnswerSubmissionUpload(fileName: string, contentType: string) {
+    const safeName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const key = `answer-submissions/${randomUUID()}-${safeName}`;
+
+    const uploadUrl = await getSignedUrl(
+      this.client,
+      new PutObjectCommand({ Bucket: this.bucket, Key: key, ContentType: contentType }),
+      { expiresIn: UPLOAD_URL_TTL_SECONDS },
+    );
+
+    return { uploadUrl, key };
+  }
+
   async presignPublicImageUpload(fileName: string, contentType: string) {
     const safeName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
     const key = `question-images/${randomUUID()}-${safeName}`;

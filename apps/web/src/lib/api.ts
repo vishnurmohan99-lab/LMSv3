@@ -359,6 +359,23 @@ export const uploadsApi = {
     }
     return publicUrl;
   },
+
+  /** STUDENT/FACULTY/ADMIN can use this one (unlike `presign`, which is FACULTY/ADMIN only). */
+  async uploadAnswerSubmission(file: File): Promise<string> {
+    const { uploadUrl, key } = await request<{ uploadUrl: string; key: string }>('/uploads/answer-submission-presign', {
+      method: 'POST',
+      body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+    });
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, 'Upload to storage failed');
+    }
+    return key;
+  },
 };
 
 export type QuestionType = 'MCQ' | 'FILL_BLANK' | 'ESSAY' | 'TRUE_FALSE';
@@ -418,6 +435,130 @@ export const questionBanksApi = {
     bankId: string,
     data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] },
   ) => request<Passage & { questions: Question[] }>(`/question-banks/${bankId}/comprehension`, { method: 'POST', body: JSON.stringify(data) }),
+};
+
+// ===================== Answer Correction =====================
+
+export type AnswerForbiddenPenaltyType = 'NUMERIC' | 'FLAG_HARD';
+
+export interface AnswerQuestionTypePart {
+  id: string;
+  partKey: string;
+  name: string;
+  order: number;
+  defaultWeight: number;
+}
+export interface AnswerQuestionType {
+  id: string;
+  name: string;
+  parts: AnswerQuestionTypePart[];
+}
+
+/** Trimmed view returned to non-ADMIN callers -- modelAnswer/parts/forbiddenPoints withheld until graded. */
+export interface AnswerQuestion {
+  id: string;
+  text: string;
+  directive: string | null;
+  maxMarks: number;
+  typeId: string;
+  published: boolean;
+}
+
+export interface AnswerTranscriptLine {
+  lineId: number;
+  text: string;
+}
+export interface AnswerPresentPoint {
+  pointId: string;
+  text: string;
+  credit: 'full' | 'partial';
+  learnerPhrasing: string;
+  lineIds: number[];
+}
+export interface AnswerMissingPoint {
+  pointId: string;
+  text: string;
+  marksLost: number;
+  whyItMatters: string;
+  suggestedAddition: string;
+}
+export interface AnswerPartResult {
+  partId: string;
+  partKey: string;
+  name: string;
+  marksAwarded: number;
+  marksMax: number;
+  detected: boolean;
+  presentPoints: AnswerPresentPoint[];
+  missingPoints: AnswerMissingPoint[];
+  partComment: string;
+}
+export interface AnswerForbiddenHit {
+  forbiddenPointId: string;
+  text: string;
+  category: string;
+  penaltyType: AnswerForbiddenPenaltyType;
+  penalty: number;
+  lineIds: number[];
+  whyItCosts: string;
+}
+export interface AnswerBonusPoint {
+  text: string;
+  lineIds: number[];
+}
+export interface AnswerManualGrade {
+  marksAwarded: number;
+  comment: string | null;
+  gradedByName: string;
+  gradedAt: string;
+}
+export interface AnswerGradingResult {
+  submissionId: string;
+  questionId: string;
+  typeId: string;
+  transcript: AnswerTranscriptLine[];
+  overall: { marks: number; max: number; verdict: string };
+  parts: AnswerPartResult[];
+  forbiddenFound: AnswerForbiddenHit[];
+  bonusPoints: AnswerBonusPoint[];
+  modelAnswerRef: string;
+  upgradedAnswer: string;
+  manualGrade: AnswerManualGrade | null;
+}
+export interface AnswerSubmissionSummary {
+  id: string;
+  questionId: string;
+  questionText: string;
+  studentName?: string;
+  status: string;
+  marksAwarded?: number;
+  marksMax?: number;
+  manualGradedAt?: string | null;
+  createdAt: string;
+}
+
+export const answerQuestionTypesApi = {
+  list: () => request<AnswerQuestionType[]>('/answer-question-types'),
+  get: (id: string) => request<AnswerQuestionType>(`/answer-question-types/${id}`),
+};
+
+export const answerQuestionsApi = {
+  list: (params?: { published?: boolean }) => request<AnswerQuestion[]>(`/answer-questions${params?.published ? '?published=true' : ''}`),
+  get: (id: string) => request<AnswerQuestion>(`/answer-questions/${id}`),
+};
+
+export const answerSubmissionsApi = {
+  submit: (data: { questionId: string; fileKey: string; fileType: string }) =>
+    request<{ status: 'GRADED' | 'FAILED'; result?: AnswerGradingResult; errorMessage?: string }>('/answer-submissions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  mine: () => request<AnswerSubmissionSummary[]>('/answer-submissions/mine'),
+  list: (params?: { questionId?: string }) =>
+    request<AnswerSubmissionSummary[]>(`/answer-submissions${params?.questionId ? `?questionId=${params.questionId}` : ''}`),
+  get: (id: string) => request<AnswerGradingResult>(`/answer-submissions/${id}`),
+  grade: (id: string, data: { marksAwarded: number; comment?: string }) =>
+    request<AnswerGradingResult>(`/answer-submissions/${id}/grade`, { method: 'PATCH', body: JSON.stringify(data) }),
 };
 
 export type TestPublishMode = 'MANUAL' | 'TIMED';

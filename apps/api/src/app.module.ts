@@ -26,6 +26,7 @@ import { ReportsModule } from './reports/reports.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { TodosModule } from './todos/todos.module';
+import { AnswerCorrectionModule } from './answer-correction/answer-correction.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { TodosModule } from './todos/todos.module';
     SubscriptionsModule,
     CalendarModule,
     TodosModule,
+    AnswerCorrectionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
