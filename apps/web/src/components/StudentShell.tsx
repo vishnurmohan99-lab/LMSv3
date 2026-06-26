@@ -150,6 +150,38 @@ function MenuIcon() {
     </svg>
   );
 }
+function HomeIcon({ c }: { c: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="m3 11 9-8 9 8" />
+      <path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10" />
+    </svg>
+  );
+}
+function LearnIcon({ c }: { c: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+    </svg>
+  );
+}
+function MoreIcon({ c }: { c: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <circle cx="5" cy="12" r="1.6" fill={c} />
+      <circle cx="12" cy="12" r="1.6" fill={c} />
+      <circle cx="19" cy="12" r="1.6" fill={c} />
+    </svg>
+  );
+}
+
+const bottomNavItems = [
+  { href: "/student/dashboard", label: "Home", Icon: HomeIcon },
+  { href: "/student/courses", label: "Learn", Icon: LearnIcon },
+  { href: "/student/calendar", label: "Calendar", Icon: CalendarIcon },
+  { href: "/student/messages", label: "Inbox", Icon: MessagesIcon },
+];
 
 const navItems = [
   { href: "/student/dashboard", label: "Overview", Icon: OverviewIcon, enabled: true },
@@ -497,8 +529,28 @@ export default function StudentShell({ children }: { children: React.ReactNode }
           </button>
         </aside>
 
-        <main style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>{children}</main>
+        <main className="student-mainarea" style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>{children}</main>
       </div>
+
+      <nav className="student-bottomnav-mobile">
+        {bottomNavItems.map(({ href, label, Icon: ItemIcon }) => {
+          const active = isActive(href);
+          const c = active ? "var(--orange)" : "var(--ink3)";
+          return (
+            <Link key={href} href={href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, flex: 1, padding: "6px 0", color: c }}>
+              <ItemIcon c={c} />
+              <span style={{ fontSize: 10.5, fontWeight: active ? 700 : 600 }}>{label}</span>
+            </Link>
+          );
+        })}
+        <button
+          onClick={() => setDrawerOpen(true)}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, flex: 1, padding: "6px 0", border: "none", background: "transparent", cursor: "pointer", color: "var(--ink3)", fontFamily: "inherit" }}
+        >
+          <MoreIcon c="var(--ink3)" />
+          <span style={{ fontSize: 10.5, fontWeight: 600 }}>More</span>
+        </button>
+      </nav>
     </div>
   );
 }

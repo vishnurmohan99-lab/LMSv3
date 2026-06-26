@@ -54,6 +54,7 @@ function LessonNavItem({ lesson, active, onSelect }: { lesson: Lesson; active: b
         padding: "10px 18px 10px 30px",
         border: "none",
         background: active ? "var(--orange-soft)" : "transparent",
+        position: "relative",
         cursor: lessonLocked ? "default" : "pointer",
         fontFamily: "inherit",
         textAlign: "left",
@@ -88,7 +89,11 @@ function LessonNavItem({ lesson, active, onSelect }: { lesson: Lesson; active: b
           {lessonLocked ? "Complete the previous lesson to unlock" : lesson.type}
         </div>
       </div>
-      <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
+      {active ? (
+        <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 0.5, color: "var(--orange)", flex: "none" }}>NOW</span>
+      ) : (
+        <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
+      )}
     </button>
   );
 }
@@ -436,34 +441,61 @@ export default function StudentCoursePlayerPage() {
         className={`course-pane-list${selectedLesson ? " has-selection" : ""}`}
         style={{ width: 286, flex: "none", background: "var(--card)", borderRight: "1px solid var(--line)", overflowY: "auto" }}
       >
-        <div style={{ padding: "18px 18px 14px", borderBottom: "1px solid var(--line)" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--orange)", textTransform: "uppercase" }}>
-            Course
+        <div
+          className="fade-in-up"
+          style={{
+            margin: 14,
+            padding: "20px 18px",
+            borderRadius: "var(--rm)",
+            background: "linear-gradient(135deg,#1c1c1c,#2c2620)",
+            color: "#fff",
+          }}
+        >
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1, color: "#f7b274", textTransform: "uppercase" }}>
+            Enrolled Course
           </div>
-          <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: -0.3, marginTop: 3 }}>{course.title}</div>
+          <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.3, marginTop: 6 }}>{course.title}</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,.65)", marginTop: 4 }}>
+            {course.chapters.length} chapters · {allLessons.length} lessons
+          </div>
           {allLessons.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-              <div style={{ flex: 1, height: 6, background: "var(--bg)", borderRadius: 3 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
+              <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,.18)", borderRadius: 3 }}>
                 <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--orange)", borderRadius: 3, transition: "width .4s ease" }} />
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink2)" }}>{progressPct}%</span>
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)", flex: "none" }}>{progressPct}% complete</span>
             </div>
           )}
         </div>
 
-        {course.chapters.map((chapter: Chapter) => {
+        <div style={{ padding: "4px 18px 8px", fontSize: 13.5, fontWeight: 800 }}>Chapters</div>
+
+        {course.chapters.map((chapter: Chapter, chapterIdx: number) => {
           const open = expandedChapterId === chapter.id;
           const locked = chapter.unlocked === false;
+          const isActiveChapter = chapter.id === selectedChapter?.id;
+          const lessonItems = chapter.lessons.filter((l) => l.id);
+          const activeLessonPos = lessonItems.findIndex((l) => l.id === selectedLessonId);
           return (
-            <div key={chapter.id} style={{ borderBottom: "1px solid var(--line2)" }}>
+            <div
+              key={chapter.id}
+              className="fade-in-up"
+              style={{
+                margin: "0 14px 10px",
+                borderRadius: "var(--rm)",
+                border: isActiveChapter ? "1.5px solid var(--orange)" : "1px solid var(--line)",
+                background: "var(--card)",
+                overflow: "hidden",
+              }}
+            >
               <button
                 onClick={() => setExpandedChapterId(open ? null : chapter.id)}
                 style={{
                   width: "100%",
                   display: "flex",
                   alignItems: "center",
-                  gap: 11,
-                  padding: "14px 18px",
+                  gap: 12,
+                  padding: "14px 16px",
                   border: "none",
                   background: "transparent",
                   cursor: "pointer",
@@ -474,35 +506,43 @@ export default function StudentCoursePlayerPage() {
               >
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    background: open ? "var(--orange-soft)" : "var(--bg)",
-                    color: open ? "var(--orange)" : "var(--ink2)",
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    background: chapter.finished ? "var(--green-soft)" : isActiveChapter ? "var(--orange)" : "var(--bg)",
+                    color: chapter.finished ? "var(--green)" : isActiveChapter ? "#fff" : "var(--ink2)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flex: "none",
+                    fontSize: 13,
+                    fontWeight: 800,
                   }}
                 >
                   {locked ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                       <rect x="5" y="11" width="14" height="9" rx="2" />
                       <path d="M8 11V7a4 4 0 0 1 8 0v4" />
                     </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="M2 7h20M2 12h20M2 17h12" />
+                  ) : chapter.finished ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                      <path d="M5 13l4 4L19 7" />
                     </svg>
+                  ) : (
+                    chapterIdx + 1
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{chapter.title}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 1 }}>
+                  <div style={{ fontSize: 11.5, color: locked ? "var(--ink3)" : isActiveChapter ? "var(--orange)" : "var(--ink3)", marginTop: 1, fontWeight: isActiveChapter ? 700 : 400 }}>
                     {locked
                       ? chapter.unlocksAt
                         ? `Unlocks ${new Date(chapter.unlocksAt).toLocaleDateString()}`
                         : "Locked"
+                      : chapter.finished
+                      ? "Completed"
+                      : isActiveChapter && activeLessonPos >= 0
+                      ? `In progress · ${activeLessonPos + 1}/${lessonItems.length}`
                       : `${chapter.lessons.length} lessons`}
                   </div>
                 </div>
@@ -520,7 +560,7 @@ export default function StudentCoursePlayerPage() {
               </button>
 
               {open && (
-                <div className="fade-in-up" style={{ paddingBottom: 6 }}>
+                <div className="fade-in-up" style={{ paddingBottom: 6, borderTop: "1px solid var(--line2)" }}>
                   {locked ? (
                     <div style={{ padding: "8px 18px 14px 30px", fontSize: 12, color: "var(--ink3)" }}>
                       This chapter is locked

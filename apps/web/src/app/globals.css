@@ -216,6 +216,28 @@ button:active, a:active {
   }
 }
 
+.student-bottomnav-mobile {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .student-bottomnav-mobile {
+    display: flex !important;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    z-index: 30;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .student-mainarea {
+    padding-bottom: 60px;
+  }
+}
+
 .student-drawer-overlay {
   position: fixed;
   inset: 0;
