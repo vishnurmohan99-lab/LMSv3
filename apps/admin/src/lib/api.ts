@@ -432,7 +432,11 @@ export const questionBanksApi = {
   removeQuestion: (id: string) => request<{ success: boolean }>(`/questions/${id}`, { method: 'DELETE' }),
   createComprehension: (
     bankId: string,
-    data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] },
+    data: {
+      passageText: string;
+      passageImageUrl?: string;
+      questions: { type?: QuestionType; prompt: string; options?: string[]; correctOption: string; imageUrl?: string }[];
+    },
   ) => request<Passage & { questions: Question[] }>(`/question-banks/${bankId}/comprehension`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
@@ -716,7 +720,11 @@ export const testsApi = {
     request<TestQuestion[]>(`/tests/${testId}/import-questions`, { method: 'POST', body: JSON.stringify(data) }),
   createComprehension: (
     testId: string,
-    data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] },
+    data: {
+      passageText: string;
+      passageImageUrl?: string;
+      questions: { type?: QuestionType; prompt: string; options?: string[]; correctOption: string; imageUrl?: string }[];
+    },
   ) => request<Passage & { testQuestions: TestQuestion[] }>(`/tests/${testId}/comprehension`, { method: 'POST', body: JSON.stringify(data) }),
 };
 

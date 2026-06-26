@@ -109,7 +109,7 @@ export class QuestionBanksService {
     });
   }
 
-  /** Creates one Passage plus a batch of MCQ questions that all reference it — a "Comprehension" set. */
+  /** Creates one Passage plus a batch of questions (MCQ/FILL_BLANK/TRUE_FALSE) that all reference it — a "Comprehension" set. */
   async createComprehension(bankId: string, user: JwtPayload, dto: CreateComprehensionDto) {
     const bank = await this.requireQuestionBank(bankId);
     this.assertOwnership(user, bank.facultyId);
@@ -122,9 +122,9 @@ export class QuestionBanksService {
         imageUrl: dto.passageImageUrl,
         questions: {
           create: dto.questions.map((q) => ({
-            type: 'MCQ',
+            type: q.type ?? 'MCQ',
             prompt: sanitizePrompt(q.prompt),
-            options: q.options,
+            options: q.options ?? [],
             correctOption: q.correctOption,
             imageUrl: q.imageUrl,
             order: order++,

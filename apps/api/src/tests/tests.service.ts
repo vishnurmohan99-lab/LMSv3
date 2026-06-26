@@ -206,7 +206,7 @@ export class TestsService {
     });
   }
 
-  /** Creates one Passage plus a batch of MCQ test questions that all reference it — a "Comprehension" set. */
+  /** Creates one Passage plus a batch of test questions (MCQ/FILL_BLANK/TRUE_FALSE) that all reference it — a "Comprehension" set. */
   async createComprehension(testId: string, user: JwtPayload, dto: CreateComprehensionDto) {
     const test = await this.requireTest(testId);
     this.assertOwnership(user, test.facultyId);
@@ -219,9 +219,9 @@ export class TestsService {
         imageUrl: dto.passageImageUrl,
         testQuestions: {
           create: dto.questions.map((q) => ({
-            type: 'MCQ',
+            type: q.type ?? 'MCQ',
             prompt: sanitizePrompt(q.prompt),
-            options: q.options,
+            options: q.options ?? [],
             correctOption: q.correctOption,
             imageUrl: q.imageUrl,
             order: order++,

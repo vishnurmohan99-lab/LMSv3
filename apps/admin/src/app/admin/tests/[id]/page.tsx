@@ -269,12 +269,19 @@ function groupQuestions(questions: TestQuestion[]): QuestionGroup[] {
   return groups;
 }
 
+/** Letters a comprehension sub-question relative to its passage, e.g. passage 1's 3rd question -> "1-c". */
+function subQuestionLabel(passageNumber: number, index: number): string {
+  return `${passageNumber}-${String.fromCharCode(97 + index)}`;
+}
+
 function ComprehensionGroupCard({
+  passageNumber,
   passage,
   questions,
   onEdit,
   onDelete,
 }: {
+  passageNumber: number;
   passage: NonNullable<TestQuestion["passage"]>;
   questions: TestQuestion[];
   onEdit: (q: TestQuestion) => void;
@@ -286,7 +293,7 @@ function ComprehensionGroupCard({
       style={{ gridColumn: "1 / -1", background: "var(--card)", border: "1px solid var(--purple)", borderRadius: "var(--rl)", padding: 20 }}
     >
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--purple)", textTransform: "uppercase", marginBottom: 10 }}>
-        📖 Comprehension passage · {questions.length} question{questions.length === 1 ? "" : "s"}
+        📖 Comprehension passage {passageNumber} · {questions.length} question{questions.length === 1 ? "" : "s"}
       </div>
       {passage.imageUrl && <img src={passage.imageUrl} alt="" style={{ width: "100%", maxHeight: 180, objectFit: "cover", borderRadius: 10, marginBottom: 12 }} />}
       <div style={{ fontSize: 13.5, lineHeight: 1.7, color: "var(--ink2)", background: "var(--bg)", borderRadius: 10, padding: 14, marginBottom: 16, whiteSpace: "pre-wrap" }}>
@@ -296,7 +303,7 @@ function ComprehensionGroupCard({
         {questions.map((question, i) => (
           <div key={question.id} style={{ background: "var(--bg)", borderRadius: 12, padding: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink3)" }}>Sub-question {i + 1}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink3)" }}>Question {subQuestionLabel(passageNumber, i)}</span>
               <span style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => onEdit(question)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                   <EditIcon />
@@ -340,20 +347,42 @@ function QuestionAnswerSummary({ question }: { question: TestQuestion }) {
   return <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Freeform answer — ungraded</div>;
 }
 
-type ComprehensionQuestionDraft = { prompt: string; options: string[]; correctIndex: number; imageFile: File | null };
+type ComprehensionQuestionType = "MCQ" | "FILL_BLANK" | "TRUE_FALSE";
+
+const COMPREHENSION_TYPE_LABEL: Record<ComprehensionQuestionType, string> = {
+  MCQ: "Multiple choice",
+  FILL_BLANK: "Fill in the blank",
+  TRUE_FALSE: "True / False",
+};
+
+type ComprehensionQuestionDraft = {
+  type: ComprehensionQuestionType;
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+  blankAnswer: string;
+  trueFalseAnswer: "true" | "false";
+  imageFile: File | null;
+};
+
+function newComprehensionDraft(): ComprehensionQuestionDraft {
+  return { type: "MCQ", prompt: "", options: ["", "", "", ""], correctIndex: 0, blankAnswer: "", trueFalseAnswer: "true", imageFile: null };
+}
 
 function ComprehensionForm({
   onSubmit,
   onCancel,
 }: {
-  onSubmit: (data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] }) => Promise<void>;
+  onSubmit: (data: {
+    passageText: string;
+    passageImageUrl?: string;
+    questions: { type: ComprehensionQuestionType; prompt: string; options?: string[]; correctOption: string; imageUrl?: string }[];
+  }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [passageText, setPassageText] = useState("");
   const [passageImageFile, setPassageImageFile] = useState<File | null>(null);
-  const [questions, setQuestions] = useState<ComprehensionQuestionDraft[]>(
-    Array.from({ length: 6 }, () => ({ prompt: "", options: ["", "", "", ""], correctIndex: 0, imageFile: null })),
-  );
+  const [questions, setQuestions] = useState<ComprehensionQuestionDraft[]>(Array.from({ length: 6 }, newComprehensionDraft));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -364,7 +393,7 @@ function ComprehensionForm({
     setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, options: q.options.map((o, j) => (j === oi ? value : o)) } : q)));
   }
   function addQuestionDraft() {
-    setQuestions((qs) => [...qs, { prompt: "", options: ["", "", "", ""], correctIndex: 0, imageFile: null }]);
+    setQuestions((qs) => [...qs, newComprehensionDraft()]);
   }
   function removeQuestionDraft(i: number) {
     setQuestions((qs) => qs.filter((_, idx) => idx !== i));
@@ -379,14 +408,25 @@ function ComprehensionForm({
       const cleanQuestions = questions.filter((q) => q.prompt.trim());
       if (cleanQuestions.length === 0) throw new Error("Add at least one question");
       for (const q of cleanQuestions) {
-        if (q.options.filter((o) => o.trim()).length < 2) throw new Error("Each question needs at least 2 options");
+        if (q.type === "MCQ" && q.options.filter((o) => o.trim()).length < 2) {
+          throw new Error("Each multiple-choice question needs at least 2 options");
+        }
+        if (q.type === "FILL_BLANK" && !q.blankAnswer.trim()) {
+          throw new Error("Each fill-in-the-blank question needs an accepted answer");
+        }
       }
       const passageImageUrl = passageImageFile ? await uploadsApi.uploadFile(passageImageFile) : undefined;
       const builtQuestions = await Promise.all(
         cleanQuestions.map(async (q) => {
-          const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
           const imageUrl = q.imageFile ? await uploadsApi.uploadFile(q.imageFile) : undefined;
-          return { prompt: q.prompt, options: cleanOptions, correctOption: cleanOptions[q.correctIndex] ?? cleanOptions[0], imageUrl };
+          if (q.type === "MCQ") {
+            const cleanOptions = q.options.map((o) => o.trim()).filter(Boolean);
+            return { type: q.type, prompt: q.prompt, options: cleanOptions, correctOption: cleanOptions[q.correctIndex] ?? cleanOptions[0], imageUrl };
+          }
+          if (q.type === "TRUE_FALSE") {
+            return { type: q.type, prompt: q.prompt, correctOption: q.trueFalseAnswer, imageUrl };
+          }
+          return { type: q.type, prompt: q.prompt, correctOption: q.blankAnswer.trim(), imageUrl };
         }),
       );
       await onSubmit({ passageText, passageImageUrl, questions: builtQuestions });
@@ -427,23 +467,75 @@ function ComprehensionForm({
                   placeholder="Question prompt"
                   style={{ ...inputStyle, flex: 1 }}
                 />
+                <select
+                  value={q.type}
+                  onChange={(e) => updateQuestion(i, { type: e.target.value as ComprehensionQuestionType })}
+                  style={{ ...inputStyle, flex: "none", width: 150, padding: "7px 8px", fontSize: 12.5 }}
+                >
+                  {Object.entries(COMPREHENSION_TYPE_LABEL).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
                 <button type="button" onClick={() => removeQuestionDraft(i)} style={{ background: "none", border: "none", color: "var(--red)", fontSize: 12, cursor: "pointer", flex: "none" }}>
                   Remove
                 </button>
               </div>
-              <div style={{ display: "grid", gap: 6, paddingLeft: 20 }}>
-                {q.options.map((opt, oi) => (
-                  <div key={oi} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input type="radio" name={`correct-${i}`} checked={q.correctIndex === oi} onChange={() => updateQuestion(i, { correctIndex: oi })} />
-                    <input
-                      value={opt}
-                      onChange={(e) => updateOption(i, oi, e.target.value)}
-                      placeholder={`Option ${oi + 1}`}
-                      style={{ ...inputStyle, flex: 1, padding: "7px 10px", fontSize: 13 }}
-                    />
-                  </div>
-                ))}
-              </div>
+
+              {q.type === "MCQ" && (
+                <div style={{ display: "grid", gap: 6, paddingLeft: 20 }}>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <input type="radio" name={`correct-${i}`} checked={q.correctIndex === oi} onChange={() => updateQuestion(i, { correctIndex: oi })} />
+                      <input
+                        value={opt}
+                        onChange={(e) => updateOption(i, oi, e.target.value)}
+                        placeholder={`Option ${oi + 1}`}
+                        style={{ ...inputStyle, flex: 1, padding: "7px 10px", fontSize: 13 }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {q.type === "TRUE_FALSE" && (
+                <div style={{ display: "flex", gap: 10, paddingLeft: 20 }}>
+                  {(["true", "false"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => updateQuestion(i, { trueFalseAnswer: v })}
+                      style={{
+                        flex: 1,
+                        padding: "8px 12px",
+                        borderRadius: 9,
+                        border: q.trueFalseAnswer === v ? "1px solid var(--ink)" : "1px solid var(--line)",
+                        background: q.trueFalseAnswer === v ? "var(--ink)" : "var(--card)",
+                        color: q.trueFalseAnswer === v ? "#fff" : "var(--ink2)",
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {v === "true" ? "True" : "False"}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {q.type === "FILL_BLANK" && (
+                <div style={{ paddingLeft: 20 }}>
+                  <input
+                    value={q.blankAnswer}
+                    onChange={(e) => updateQuestion(i, { blankAnswer: e.target.value })}
+                    placeholder="Accepted answer"
+                    style={{ ...inputStyle, width: "100%", padding: "7px 10px", fontSize: 13 }}
+                  />
+                </div>
+              )}
+
               <div style={{ marginTop: 8, paddingLeft: 20 }}>
                 <input type="file" accept="image/*" onChange={(e) => updateQuestion(i, { imageFile: e.target.files?.[0] ?? null })} style={{ fontSize: 12 }} title="Attach image (optional)" />
               </div>
@@ -670,7 +762,11 @@ export default function AdminTestDetailPage() {
     load();
   }
 
-  async function onAddComprehension(data: { passageText: string; passageImageUrl?: string; questions: { prompt: string; options: string[]; correctOption: string; imageUrl?: string }[] }) {
+  async function onAddComprehension(data: {
+    passageText: string;
+    passageImageUrl?: string;
+    questions: { type: ComprehensionQuestionType; prompt: string; options?: string[]; correctOption: string; imageUrl?: string }[];
+  }) {
     await testsApi.createComprehension(testId, data);
     setShowComprehensionModal(false);
     load();
@@ -916,16 +1012,19 @@ export default function AdminTestDetailPage() {
         <p style={{ color: "var(--ink2)" }}>No questions yet — add some above.</p>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
-          {groupQuestions(test.testQuestions).map((group) =>
-            group.kind === "comprehension" ? (
-              <ComprehensionGroupCard
-                key={group.passage.id}
-                passage={group.passage}
-                questions={group.questions}
-                onEdit={setEditingQuestion}
-                onDelete={onDeleteQuestion}
-              />
-            ) : (
+          {(() => {
+            let passageCounter = 0;
+            return groupQuestions(test.testQuestions).map((group) =>
+              group.kind === "comprehension" ? (
+                <ComprehensionGroupCard
+                  key={group.passage.id}
+                  passageNumber={++passageCounter}
+                  passage={group.passage}
+                  questions={group.questions}
+                  onEdit={setEditingQuestion}
+                  onDelete={onDeleteQuestion}
+                />
+              ) : (
               <div key={group.question.id} className="entity-card" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                   <span
@@ -958,8 +1057,9 @@ export default function AdminTestDetailPage() {
                 />
                 <QuestionAnswerSummary question={group.question} />
               </div>
-            ),
-          )}
+              ),
+            );
+          })()}
         </div>
       )}
     </div>

@@ -165,6 +165,30 @@ export default function StudentMockTestTakePage() {
 
   const questions = attempt?.testQuestions ?? [];
 
+  /** "1", "2", "3-a", "3-b", ... -- comprehension sub-questions are lettered relative to their passage instead of getting their own flat number. */
+  const questionLabels = useMemo(() => {
+    const labels: string[] = [];
+    const passageNumbers = new Map<string, number>();
+    const passageLetterIndex = new Map<string, number>();
+    let flatNumber = 0;
+    let nextPassageNumber = 0;
+    for (const q of questions) {
+      if (q.passage) {
+        let passageNumber = passageNumbers.get(q.passage.id);
+        if (passageNumber === undefined) {
+          passageNumber = ++nextPassageNumber;
+          passageNumbers.set(q.passage.id, passageNumber);
+        }
+        const letterIndex = passageLetterIndex.get(q.passage.id) ?? 0;
+        passageLetterIndex.set(q.passage.id, letterIndex + 1);
+        labels.push(`${passageNumber}-${String.fromCharCode(97 + letterIndex)}`);
+      } else {
+        labels.push(`${++flatNumber}`);
+      }
+    }
+    return labels;
+  }, [questions]);
+
   async function onStart() {
     try {
       const a = await testAttemptsApi.start(testId);
@@ -292,7 +316,7 @@ export default function StudentMockTestTakePage() {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>
-                Question {current + 1} of {questions.length}
+                Question {questionLabels[current]} of {questions.length}
               </div>
               {secondsLeft !== null && (
                 <div style={{ background: "var(--ink)", color: "#fff", padding: "9px 16px", borderRadius: 11, fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 7 }}>
@@ -388,13 +412,13 @@ export default function StudentMockTestTakePage() {
                       border: active ? "2px solid var(--ink)" : "1px solid var(--line)",
                       background: answered ? "var(--green-soft)" : "var(--card)",
                       color: answered ? "var(--green)" : "var(--ink2)",
-                      fontSize: 12.5,
+                      fontSize: qq.passage ? 10.5 : 12.5,
                       fontWeight: 700,
                       fontFamily: "inherit",
                       cursor: "pointer",
                     }}
                   >
-                    {i + 1}
+                    {questionLabels[i]}
                   </button>
                 );
               })}

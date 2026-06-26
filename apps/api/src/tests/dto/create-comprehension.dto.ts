@@ -1,14 +1,20 @@
-import { ArrayMinSize, IsArray, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsEnum, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { QuestionType } from '../../../generated/prisma/client';
 
 class ComprehensionQuestionDto {
+  @IsOptional()
+  @IsEnum(QuestionType)
+  type?: QuestionType;
+
   @IsString()
   @MinLength(1)
   prompt: string;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  options: string[];
+  options?: string[];
 
   @IsString()
   correctOption: string;
