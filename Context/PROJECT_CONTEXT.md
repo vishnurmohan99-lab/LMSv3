@@ -96,6 +96,14 @@ each; any API client change must be made in both files.
   silently changed even though nothing touched it. Fixed in
   `getCourseTree()` and the SEQUENTIAL-drip sibling queries in
   `courses.service.ts`; apply the same pattern to any new ordered query.
+- **`load()` vs `refresh()` pattern (admin/faculty course + chapter pages):**
+  `load()` is mount-only and sets `loading=true` (which renders a full
+  "Loading…" page, blanking everything). Every mutation handler (move
+  chapter/lesson/test, toggle an AI feature, save/delete, attach a test)
+  must call the silent `refresh()` instead — same fetch, but never touches
+  `loading`, so the existing UI stays on screen while data swaps in
+  underneath it. Don't reintroduce `load()` calls inside mutation handlers;
+  it brings back the full-page blink on every reorder/toggle.
 - **This codebase is ~100% inline-style, zero CSS Modules.** Inline styles
   can't express `@media` queries. Established pattern: add named utility
   classes (`mobile-page-pad`, `mobile-stack-header`, `course-pane-list`, etc.)
@@ -364,4 +372,5 @@ full context dump.
 *Last updated: 2026-06-26, after the mobile UI rollout commits (shell, course
 list, course detail/lesson player, flashcards+AI deck, dashboard), the
 Answer Correction feature, the AI Cheat Sheet Generator, the lesson/test/
-chapter order-tiebreak fix, and diagnosing the Cheat Sheet image 402.*
+chapter order-tiebreak fix, diagnosing the Cheat Sheet image 402, and the
+load()/refresh() no-blink fix for reorder/feature-toggle actions.*
