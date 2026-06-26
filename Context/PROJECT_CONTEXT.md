@@ -253,6 +253,35 @@ which DO have free tiers, so only image generation is blocked) — not
 something fixable in code. Alternative: switch to OpenAI's image API via the
 same `OPENROUTER_IMAGE_MODEL`-style env-var swap pattern, if asked.
 
+**Comprehension: mixed question types + passage-relative numbering** —
+Comprehension sets (one shared `Passage` + N child questions via
+`Question.passageId`/`TestQuestion.passageId`) were MCQ-only since their
+introduction. Two independent fixes, both in `QuestionBank` and `Test`
+domains (4 frontend files mirror each other: admin question-banks, admin
+tests, faculty question-banks, faculty tests):
+- **Mixed types**: `ComprehensionQuestionDto` gained an optional `type`
+  field (defaults to `MCQ`); `createComprehension()` in both
+  `question-banks.service.ts` and `tests.service.ts` now honors it. No
+  migration needed — `options[]`/`correctOption` were already nullable on
+  `Question`/`TestQuestion`, generic across all 4 `QuestionType` values. The
+  creation form's per-question row now has a type dropdown
+  (MCQ/FILL_BLANK/TRUE_FALSE) with conditional fields (MCQ: options+radio;
+  TRUE_FALSE: True/False toggle; FILL_BLANK: single accepted-answer input).
+- **Numbering**: comprehension sub-questions now show as `1-a, 1-b, 1-c`
+  (passage-relative letters via a shared `subQuestionLabel(passageNumber,
+  index)` helper) instead of a `Sub-question N` counter that reset per
+  passage in a confusing way. Applied to the same 4 editor pages' card
+  rendering AND the student `mock-test` attempt view (main question header +
+  question palette), via a `questionLabels` array computed once per
+  question list (`useMemo`, walks the flat list assigning flat numbers to
+  standalone questions and `passageNumber-letter` to passage-grouped ones).
+- Verified end-to-end via curl: one passage with MCQ + FILL_BLANK +
+  TRUE_FALSE + MCQ sub-questions, each persisted with correct shape.
+- **Not done**: the student-facing `workout` practice page doesn't fetch or
+  render passages/comprehension at all (flat single-question mode) — no
+  numbering fix was needed there since the feature doesn't exist on that
+  page; flagged as a gap if comprehension support is ever wanted there.
+
 **Mobile UI rollout** (in progress, module-by-module, user-paced) — sourced
 from `design-reference/Mobile user page UI/elearning-mobile.dc.html` (top app
 bar + slide-out drawer + bottom sheets mockup covering Home/Course/Lesson/
@@ -372,5 +401,6 @@ full context dump.
 *Last updated: 2026-06-26, after the mobile UI rollout commits (shell, course
 list, course detail/lesson player, flashcards+AI deck, dashboard), the
 Answer Correction feature, the AI Cheat Sheet Generator, the lesson/test/
-chapter order-tiebreak fix, diagnosing the Cheat Sheet image 402, and the
-load()/refresh() no-blink fix for reorder/feature-toggle actions.*
+chapter order-tiebreak fix, diagnosing the Cheat Sheet image 402, the
+load()/refresh() no-blink fix for reorder/feature-toggle actions, and
+Comprehension mixed question types + passage-relative numbering.*
