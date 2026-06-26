@@ -357,6 +357,21 @@ app only (`apps/web /student`) for now.
   the override (no permanent code change from this step). This forced-CSS
   technique is the new standard fallback for visually verifying mobile-only
   styles in this environment — prefer it over relying on code review alone.
+- **Follow-up fix (commit `0e1f15b`):** the above shipped with a bug —
+  course load auto-selects the first lesson (`coursesApi.get()` effect), and
+  the mobile drill-down's pane-switch CSS (`.has-selection`) was driven by
+  "is a lesson selected at all," so mobile users landed straight in the
+  lesson player instead of the chapter list on every course open. Fixed by
+  separating "a lesson is selected" from "the user explicitly opened a
+  lesson": added `lessonOpenedByUser` state, an `openLesson(id)` wrapper
+  (sets both the id and the flag — used by `LessonNavItem.onSelect` and the
+  video-page chapter-sidebar mini-list) and a `closeLesson()` wrapper (clears
+  both — used by the mobile back button). The `.has-selection` className on
+  both panes now reads `lessonOpenedByUser` instead of `selectedLesson`.
+  Desktop is unaffected (both panes always render there regardless of
+  `.has-selection`, media-query gated). Initial auto-selection (course load,
+  post-enroll) still uses the raw `setSelectedLessonId` so it never flips
+  `lessonOpenedByUser` to true.
 
 ## Current Prisma data model (key models)
 
@@ -444,10 +459,13 @@ full context dump.
 
 ---
 *Last updated: 2026-06-27, after the bottom tab nav + chapter-list mockup
-redesign (commit `f4334ee`, pushed to main + deployed via `vercel --prod
---yes`), on top of the 2026-06-26 work: the mobile UI rollout commits
-(shell, course list, course detail/lesson player, flashcards+AI deck,
-dashboard), the Answer Correction feature, the AI Cheat Sheet Generator, the
-lesson/test/chapter order-tiebreak fix, diagnosing the Cheat Sheet image 402,
-the load()/refresh() no-blink fix for reorder/feature-toggle actions, and
-Comprehension mixed question types + passage-relative numbering.*
+redesign (commit `f4334ee`) and its mobile-drilldown follow-up fix (commit
+`0e1f15b`, course-open now lands on the chapter list instead of jumping into
+the lesson player) — both pushed to main and deployed via `vercel --prod
+--yes`. On top of the rest of 2026-06-26's work: the mobile UI rollout
+commits (shell, course list, course detail/lesson player, flashcards+AI
+deck, dashboard), the Answer Correction feature, the AI Cheat Sheet
+Generator, the lesson/test/chapter order-tiebreak fix, diagnosing the Cheat
+Sheet image 402, the load()/refresh() no-blink fix for reorder/feature-toggle
+actions, and Comprehension mixed question types + passage-relative
+numbering.*
