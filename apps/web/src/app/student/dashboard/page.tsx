@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { enrollmentsApi, testsApi, testAttemptsApi, mentorApi, calendarApi, ApiError, type MentorBooking, type CalendarEvent } from "@/lib/api";
+import { enrollmentsApi, testsApi, testAttemptsApi, mentorApi, calendarApi, usersApi, ApiError, type MentorBooking, type CalendarEvent, type Profile } from "@/lib/api";
 
 interface ScoredAttempt {
   pct: number;
@@ -68,6 +68,23 @@ function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+const LIVE_WINDOW_BEFORE_MIN = 10;
+const LIVE_WINDOW_AFTER_MIN = 90;
+
+function isCurrentlyLive(event: CalendarEvent, now: Date) {
+  if (event.type !== "LIVE_LESSON") return false;
+  const diffMin = (now.getTime() - new Date(event.date).getTime()) / 60000;
+  return diffMin >= -LIVE_WINDOW_BEFORE_MIN && diffMin <= LIVE_WINDOW_AFTER_MIN;
+}
+
+function PlayIcon({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill={color} stroke="none">
+      <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+
 function LiveIcon({ color }: { color: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
@@ -125,6 +142,11 @@ export default function StudentDashboardPage() {
   const [attempts, setAttempts] = useState<ScoredAttempt[]>([]);
   const [bookings, setBookings] = useState<MentorBooking[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    usersApi.me().then(setProfile).catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -186,10 +208,61 @@ export default function StudentDashboardPage() {
     .filter((e) => new Date(e.date).getTime() >= now.getTime() && !sameDay(new Date(e.date), now))
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
+  const liveNowEvents = events.filter((e) => isCurrentlyLive(e, now));
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 18, marginBottom: 18 }}>
+    <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px" }}>
+      {profile && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 13, color: "var(--ink3)", fontWeight: 600 }}>
+            {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+          </div>
+          <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: -0.6, marginTop: 2 }}>
+            Hi, {profile.fullName.split(" ")[0]} 👋
+          </div>
+        </div>
+      )}
+
+      {liveNowEvents.length > 0 && (
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 9 }}>
+              <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--red)", boxShadow: "0 0 0 4px rgba(224,83,61,.16)" }} />
+              Live now
+            </div>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--red)", background: "var(--red-soft)", padding: "4px 10px", borderRadius: 8 }}>
+              {liveNowEvents.length} live
+            </span>
+          </div>
+          <div style={{ display: "grid", gap: 12 }}>
+            {liveNowEvents.map((e) => {
+              const content = (
+                <div style={{ border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 14, display: "flex", gap: 13, alignItems: "center" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--orange-soft)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                    <PlayIcon color="var(--orange)" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
+                    <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>{e.courseTitle}</div>
+                  </div>
+                  <span style={{ padding: "8px 18px", background: "var(--ink)", color: "#fff", border: "none", borderRadius: 10, fontSize: 12.5, fontWeight: 700, flex: "none" }}>
+                    Join
+                  </span>
+                </div>
+              );
+              return e.courseId ? (
+                <Link key={e.id} href={`/student/courses/${e.courseId}`} style={{ textDecoration: "none", color: "inherit" }}>
+                  {content}
+                </Link>
+              ) : (
+                <div key={e.id}>{content}</div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 18, marginBottom: 18 }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink2)" }}>Performance</div>
@@ -221,7 +294,7 @@ export default function StudentDashboardPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 64px", gap: 18, marginBottom: 18 }}>
+      <div className="mobile-stat-strip" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 64px", gap: 18, marginBottom: 18 }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
@@ -290,7 +363,7 @@ export default function StudentDashboardPage() {
 
       <div style={{ marginTop: 18 }}>
         <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3, marginBottom: 14 }}>Performance analytics</div>
-        <div style={{ display: "grid", gridTemplateColumns: attempts.length ? "1.3fr 1fr" : "1fr", gap: 18 }}>
+        <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: attempts.length ? "1.3fr 1fr" : "1fr", gap: 18 }}>
           {attempts.length > 0 && (
             <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Exam scores</div>

@@ -282,6 +282,15 @@ button:active, a:active {
   .lesson-action-row button {
     flex: 1 1 auto !important;
   }
+  .mobile-stack-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .mobile-stat-strip {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .mobile-stat-strip > button {
+    grid-column: span 2;
+  }
   .askme-panel {
     position: fixed !important;
     inset: 0 !important;
