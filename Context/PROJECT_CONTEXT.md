@@ -216,6 +216,17 @@ app only (`apps/web /student`) for now.
      becomes a full-screen overlay on mobile.
   4. **Flashcards + AI Deck** components — were already largely responsive;
      added minor mobile padding/font-size trims.
+  5. **Dashboard** (`/student/dashboard`) — already closely mirrored the
+     desktop reference's `isDashboard` section (Performance ring/Today's
+     Schedule/stat-strip/analytics). Added a greeting header ("Hi, {name} 👋"
+     + date, using `usersApi.me()`) and a "Live Now" card (real
+     `LIVE_LESSON` calendar events within a ±10/90 min window of now — only
+     rendered when something is actually live), then made the existing grids
+     responsive (`mobile-stack-grid`, `mobile-stat-strip` utility classes).
+     **Deliberately skipped:** the reference's "Time Spent" hours card,
+     attendance-trend chart, mentorship engagement-score ring, and promo
+     banner carousel — none have a real backing data source in this app, and
+     the project avoids fabricated metrics.
 - **Not yet started:** Calendar, Messages/Forum/Feedback, and the unread back
   half of the mockup (Workout/Mock Test/Mentor/Planner/Profile). Faculty and
   Admin apps explicitly excluded from this rollout's scope for now.
@@ -291,5 +302,5 @@ full context dump.
 
 ---
 *Last updated: 2026-06-26, after the mobile UI rollout commits (shell, course
-list, course detail/lesson player, flashcards+AI deck) and the Answer
-Correction feature.*
+list, course detail/lesson player, flashcards+AI deck, dashboard) and the
+Answer Correction feature.*
