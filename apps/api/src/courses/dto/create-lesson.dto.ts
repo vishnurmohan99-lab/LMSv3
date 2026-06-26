@@ -38,6 +38,10 @@ export class CreateLessonDto {
   summaryDeckEnabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  cheatSheetEnabled?: boolean;
+
+  @IsOptional()
   @IsString()
   transcript?: string;
 }

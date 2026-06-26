@@ -6,6 +6,7 @@ import Link from "next/link";
 import { coursesApi, flashcardsApi, ApiError, type Chapter, type CourseTree, type Lesson } from "@/lib/api";
 import FlashcardReview from "@/components/FlashcardReview";
 import SummaryDeckReview from "@/components/SummaryDeckReview";
+import CheatSheetReview from "@/components/CheatSheetReview";
 import LessonNotes from "@/components/LessonNotes";
 import AskMeChat from "@/components/AskMeChat";
 
@@ -309,7 +310,7 @@ export default function StudentCoursePlayerPage() {
   const [error, setError] = useState<string | null>(null);
   const [notEnrolled, setNotEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [viewMode, setViewMode] = useState<"lesson" | "flashcards" | "summary">("lesson");
+  const [viewMode, setViewMode] = useState<"lesson" | "flashcards" | "summary" | "cheatsheet">("lesson");
   const [showChat, setShowChat] = useState(false);
   const [flashcardCount, setFlashcardCount] = useState<number | null>(null);
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
@@ -664,6 +665,32 @@ export default function StudentCoursePlayerPage() {
                       Summary Deck
                     </button>
                   )}
+                  {selectedLesson.cheatSheetEnabled && (
+                    <button
+                      onClick={() => setViewMode(viewMode === "cheatsheet" ? "lesson" : "cheatsheet")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 7,
+                        padding: "10px 14px",
+                        background: viewMode === "cheatsheet" ? "var(--orange)" : "var(--orange-soft)",
+                        color: viewMode === "cheatsheet" ? "#fff" : "var(--orange)",
+                        border: "none",
+                        borderRadius: 11,
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                      </svg>
+                      Cheat Sheet
+                    </button>
+                  )}
                   {selectedLesson.askMeEnabled && (
                     <button
                       onClick={() => setShowChat((s) => !s)}
@@ -700,6 +727,8 @@ export default function StudentCoursePlayerPage() {
                   <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
                 ) : viewMode === "summary" ? (
                   <SummaryDeckReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
+                ) : viewMode === "cheatsheet" ? (
+                  <CheatSheetReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
                 ) : selectedLesson.type === "VIDEO" && (selectedChapter?.lessons.length ?? 0) > 1 ? (
                   <div className="lesson-video-grid" style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
                     <div style={{ display: "grid", gap: 18, minWidth: 0 }}>

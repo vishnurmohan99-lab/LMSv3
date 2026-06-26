@@ -96,6 +96,7 @@ export interface Lesson {
   aiNotesEnabled: boolean;
   askMeEnabled: boolean;
   summaryDeckEnabled: boolean;
+  cheatSheetEnabled: boolean;
   transcript: string | null;
   unlocked?: boolean;
 }
@@ -230,6 +231,7 @@ export const coursesApi = {
       aiNotesEnabled?: boolean;
       askMeEnabled?: boolean;
       summaryDeckEnabled?: boolean;
+      cheatSheetEnabled?: boolean;
       transcript?: string;
     },
   ) => request<Lesson>(`/chapters/${chapterId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
@@ -247,6 +249,7 @@ export const coursesApi = {
         | 'aiNotesEnabled'
         | 'askMeEnabled'
         | 'summaryDeckEnabled'
+        | 'cheatSheetEnabled'
         | 'transcript'
       >
     >,
@@ -304,6 +307,25 @@ export const summaryDeckApi = {
   get: (lessonId: string) => request<SummaryDeck | null>(`/lessons/${lessonId}/summary-deck`),
   generate: (lessonId: string, count?: number) =>
     request<SummaryDeck>(`/lessons/${lessonId}/summary-deck/generate`, { method: 'POST', body: JSON.stringify({ count }) }),
+};
+
+export interface CheatSheetPage {
+  title: string;
+  bullets: string[];
+  table?: { headers: string[]; rows: string[][] };
+  examTip?: string;
+  illustrationUrl?: string | null;
+}
+export interface CheatSheet {
+  id: string;
+  pages: CheatSheetPage[];
+  lessonId: string;
+  updatedAt: string;
+}
+
+export const cheatSheetApi = {
+  get: (lessonId: string) => request<CheatSheet | null>(`/lessons/${lessonId}/cheat-sheet`),
+  generate: (lessonId: string) => request<CheatSheet>(`/lessons/${lessonId}/cheat-sheet/generate`, { method: 'POST' }),
 };
 
 export type ChatRole = 'USER' | 'ASSISTANT';

@@ -109,4 +109,49 @@ export class AiService {
     const data = await res.json();
     return data.choices?.[0]?.message?.content ?? '';
   }
+
+  /**
+   * Generates one image from a text prompt, for the Cheat Sheet illustration pipeline.
+   * Returns the raw image bytes + detected content type. OpenRouter has no $0 image model at
+   * time of writing -- defaults to the cheapest available (fractions of a cent/image), kept
+   * swappable via OPENROUTER_IMAGE_MODEL so this can move to OpenAI's image API later without
+   * touching the calling code.
+   */
+  async generateImage(prompt: string, opts?: { model?: string }): Promise<{ buffer: Buffer; contentType: string }> {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
+    }
+    const model = opts?.model ?? process.env.OPENROUTER_IMAGE_MODEL ?? 'google/gemini-2.5-flash-image';
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        modalities: ['image', 'text'],
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!res.ok) {
+      throw new BadRequestException(`AI image generation failed (${res.status})`);
+    }
+
+    const data = await res.json();
+    const imageUrl: string | undefined = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!imageUrl || !imageUrl.startsWith('data:')) {
+      throw new BadRequestException('AI image generation did not return an image');
+    }
+
+    const match = imageUrl.match(/^data:(.+?);base64,(.+)$/);
+    if (!match) {
+      throw new BadRequestException('AI image generation returned an unexpected format');
+    }
+    const [, contentType, base64] = match;
+    return { buffer: Buffer.from(base64, 'base64'), contentType };
+  }
 }

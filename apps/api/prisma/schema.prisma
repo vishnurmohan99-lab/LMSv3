@@ -244,6 +244,7 @@ model Lesson {
   aiNotesEnabled     Boolean    @default(false)
   askMeEnabled       Boolean    @default(false)
   summaryDeckEnabled Boolean    @default(false)
+  cheatSheetEnabled  Boolean    @default(false)
   transcript         String?    @db.Text
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
@@ -254,6 +255,7 @@ model Lesson {
   flashcards   Flashcard[]
   note         LessonNote?
   summaryDeck  SummaryDeck?
+  cheatSheet   CheatSheet?
   chatMessages ChatMessage[]
   sessions     Session[]
   views        LessonView[]
@@ -262,6 +264,15 @@ model Lesson {
 model SummaryDeck {
   id        String   @id @default(uuid())
   cards     String[] @default([])
+  updatedAt DateTime @updatedAt
+
+  lessonId String @unique
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model CheatSheet {
+  id        String   @id @default(uuid())
+  pages     Json // CheatSheetPage[] -- { title, bullets[], table?, examTip?, illustrationKey? }
   updatedAt DateTime @updatedAt
 
   lessonId String @unique

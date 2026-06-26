@@ -66,6 +66,14 @@ export class UploadsService {
     });
   }
 
+  /** Direct server-side upload (no presigned URL round-trip) for AI-generated images, e.g. Cheat Sheet illustrations. */
+  async uploadGeneratedImage(buffer: Buffer, contentType: string): Promise<string> {
+    const ext = contentType.split('/')[1] ?? 'png';
+    const key = `cheat-sheet-images/${randomUUID()}.${ext}`;
+    await this.client.send(new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: buffer, ContentType: contentType }));
+    return key;
+  }
+
   async getObjectBuffer(key: string): Promise<Buffer> {
     const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
     const chunks: Buffer[] = [];

@@ -40,6 +40,10 @@ export class UpdateLessonDto {
   summaryDeckEnabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  cheatSheetEnabled?: boolean;
+
+  @IsOptional()
   @IsString()
   transcript?: string;
 }

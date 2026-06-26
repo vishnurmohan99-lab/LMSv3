@@ -17,6 +17,14 @@ import { FlashcardStatus } from '../../generated/prisma/client';
 
 const LESSON_CONTEXT_CHAR_LIMIT = 15000;
 
+export interface CheatSheetPage {
+  title: string;
+  bullets: string[];
+  table?: { headers: string[]; rows: string[][] };
+  examTip?: string;
+  illustrationKey?: string;
+}
+
 function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
   return user.role === 'ADMIN' || user.sub === facultyId;
 }
@@ -497,6 +505,7 @@ export class CoursesService {
         aiNotesEnabled: dto.aiNotesEnabled ?? false,
         askMeEnabled: dto.askMeEnabled ?? false,
         summaryDeckEnabled: dto.summaryDeckEnabled ?? false,
+        cheatSheetEnabled: dto.cheatSheetEnabled ?? false,
         transcript: dto.transcript,
         chapterId,
       },
@@ -691,6 +700,92 @@ export class CoursesService {
     }
 
     return parsed.filter((c): c is string => typeof c === 'string' && c.trim().length > 0).slice(0, count);
+  }
+
+  async generateCheatSheet(lessonId: string, user: JwtPayload) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    this.assertOwnership(user, lesson.chapter.course.facultyId);
+
+    if (!lesson.cheatSheetEnabled) {
+      throw new BadRequestException('Cheat Sheet is not enabled for this lesson');
+    }
+    if (lesson.type !== LessonType.PDF) {
+      throw new BadRequestException('Cheat Sheet is currently only available for PDF lessons');
+    }
+
+    const content = await this.getLessonContext(lesson);
+    const pageCount = Math.max(3, Math.min(8, Math.ceil(content.length / 2000)));
+    const draftPages = await this.callAiForCheatSheet(content, pageCount);
+
+    const pages: CheatSheetPage[] = [];
+    for (const draft of draftPages) {
+      let illustrationKey: string | undefined;
+      try {
+        const { buffer, contentType } = await this.ai.generateImage(
+          `Simple, clean, flat-style educational illustration (no text, no words, no letters in the image) representing: ${draft.title}. Minimal, portrait orientation, friendly study-material aesthetic.`,
+        );
+        illustrationKey = await this.uploads.uploadGeneratedImage(buffer, contentType);
+      } catch {
+        // Illustration is a nice-to-have -- a failed/quota-limited image call must not fail the whole cheat sheet.
+      }
+      pages.push({ ...draft, illustrationKey });
+    }
+
+    return this.prisma.cheatSheet.upsert({
+      where: { lessonId },
+      create: { lessonId, pages: pages as object },
+      update: { pages: pages as object },
+    });
+  }
+
+  async getCheatSheet(lessonId: string, user: JwtPayload) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    const canView = await this.canViewCourseContent(lesson.chapter.course, user);
+    if (!canView) throw new ForbiddenException('You do not have access to this lesson');
+    if (!(await this.isChapterUnlockedForUser(lesson.chapterId, user))) {
+      throw new ForbiddenException('This chapter is not unlocked yet');
+    }
+
+    const sheet = await this.prisma.cheatSheet.findUnique({ where: { lessonId } });
+    if (!sheet) return null;
+
+    const pages = (sheet.pages as unknown as CheatSheetPage[]) ?? [];
+    const presignedPages = await Promise.all(
+      pages.map(async (p) => ({ ...p, illustrationUrl: p.illustrationKey ? await this.uploads.presignDownload(p.illustrationKey) : null })),
+    );
+    return { ...sheet, pages: presignedPages };
+  }
+
+  private async callAiForCheatSheet(content: string, count: number): Promise<CheatSheetPage[]> {
+    const jsonText = await this.completeJsonText(
+      `You are creating an exam-revision cheat sheet from the following lesson content. Split it into exactly ${count} portrait-oriented pages that together cover the ENTIRE content from start to finish, in order. Do NOT copy sentences verbatim -- rewrite everything into concise, easy-to-understand bullet points. Each page covers one coherent topic/sub-topic and should include a short, punchy "examTip" (a high-yield exam tip or key thing to remember). Include a "table" only when the content has genuinely tabular/comparison data (otherwise omit it). Respond with ONLY a JSON array, no markdown, no commentary, in this exact shape: [{"title": "Topic name", "bullets": ["concise rewritten point", "..."], "table": {"headers": ["Col A", "Col B"], "rows": [["a1", "b1"]]}, "examTip": "short high-yield tip"}]. Omit "table" entirely for pages with no tabular content.\n\nLesson content:\n${content}`,
+      '[',
+      ']',
+    );
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch {
+      throw new BadRequestException('AI response was not valid JSON');
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new BadRequestException('AI response was not a list of cheat sheet pages');
+    }
+
+    return parsed
+      .filter((p): p is CheatSheetPage => !!p && typeof p.title === 'string' && Array.isArray(p.bullets))
+      .slice(0, count)
+      .map((p) => ({
+        title: p.title,
+        bullets: p.bullets.filter((b): b is string => typeof b === 'string'),
+        table:
+          p.table && Array.isArray(p.table.headers) && Array.isArray(p.table.rows)
+            ? { headers: p.table.headers, rows: p.table.rows }
+            : undefined,
+        examTip: typeof p.examTip === 'string' ? p.examTip : undefined,
+      }));
   }
 
   /** Used by the chat module: verifies access and returns the lesson's grounding text. */

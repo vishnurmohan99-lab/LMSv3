@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  :root{
+    --bg:#f4f3f1; --card:#ffffff; --ink:#1a1a1a; --ink2:#6b6b6b; --ink3:#9a9a9a;
+    --line:#ececea; --line2:#f1f0ee; --orange:#f26a1b; --orange-soft:#fdeede;
+    --green:#1f7a4d; --green-soft:#e7f3ec; --purple:#7c5cfc; --purple-soft:#efeaff;
+    --amber:#f59e0b; --amber-soft:#fdf1dd; --red:#e0533d; --blue:#3b6fd4;
+    --rl:22px; --rm:16px; --rs:11px;
+  }
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);background:#cfccc6;-webkit-font-smoothing:antialiased}
+  ::-webkit-scrollbar{width:0;height:0}
+  .scroll-x::-webkit-scrollbar{height:0}
+  @keyframes mfadeUp{from{transform:translateY(9px)}to{transform:none}}
+  @keyframes msheet{from{transform:translateY(100%)}to{transform:none}}
+  @keyframes mdrawer{from{transform:translateX(-100%)}to{transform:none}}
+  @keyframes mscrim{from{opacity:0}to{opacity:1}}
+  @keyframes mflip{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+
+<div style="width:100%;min-height:100dvh;display:flex;justify-content:center;background:#cfccc6">
+<div style="width:100%;max-width:440px;height:100dvh;background:var(--bg);position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(0,0,0,.14)">
+
+  <!-- ===== TOP APP BAR ===== -->
+  <header style="flex:none;height:60px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 14px;z-index:30">
+    <button onClick="{{ openDrawer }}" aria-label="Menu" style="width:42px;height:42px;flex:none;border:none;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+    </button>
+    <div style="flex:1;min-width:0;font-size:18px;font-weight:800;letter-spacing:-.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ screenTitle }}</div>
+    <button aria-label="Notifications" style="position:relative;width:42px;height:42px;flex:none;border:none;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.9"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+      <span style="position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--orange);border:2px solid var(--card)"></span>
+    </button>
+    <button onClick="{{ goProfile }}" aria-label="Profile" style="width:38px;height:38px;flex:none;border-radius:50%;border:none;background:linear-gradient(135deg,#f7902b,#f24d1b);color:#fff;font-weight:800;font-size:13px;cursor:pointer">RR</button>
+  </header>
+
+  <!-- ===== SCROLLABLE CONTENT ===== -->
+  <main id="mscroll" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch">
+
+    <!-- ========= HOME ========= -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:18px 16px 28px;animation:mfadeUp .3s ease both">
+
+        <!-- greeting -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:13px;color:var(--ink3);font-weight:600">{{ todayLong }}</div>
+            <div style="font-size:23px;font-weight:800;letter-spacing:-.6px;margin-top:2px">Hi, Ronal 👋</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;background:var(--orange-soft);color:var(--orange);padding:8px 13px;border-radius:999px;font-size:13px;font-weight:800">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a2 2 0 0 0 4 0c0-1 1-2 1-2 2 2 3 4 3 6a6 6 0 0 1-12 0c0-4 4-6 6-12z"></path></svg>
+            12
+          </div>
+        </div>
+
+        <!-- continue learning -->
+        <button onClick="{{ goLesson }}" style="width:100%;text-align:left;border:none;cursor:pointer;background:linear-gradient(125deg,#1f1c19,#3a2f25);color:#fff;border-radius:var(--rl);padding:20px;margin-bottom:16px;font-family:inherit;position:relative;overflow:hidden">
+          <div style="position:absolute;right:-50px;bottom:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(242,106,27,.4),transparent 70%)"></div>
+          <div style="position:relative">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#f7a878">Continue learning</div>
+            <div style="font-size:19px;font-weight:800;letter-spacing:-.4px;margin:8px 0 3px">The CSS Box Model</div>
+            <div style="font-size:13px;color:#bdb4ab">Basic HTML &amp; CSS · Chapter 2 · Lesson 4</div>
+            <div style="display:flex;align-items:center;gap:11px;margin-top:16px">
+              <div style="flex:1;height:6px;background:rgba(255,255,255,.18);border-radius:3px"><div style="width:47%;height:100%;background:var(--orange);border-radius:3px"></div></div>
+              <span style="font-size:12px;font-weight:700;color:#f7a878">47%</span>
+              <span style="display:flex;align-items:center;gap:6px;background:var(--orange);color:#fff;padding:9px 16px;border-radius:11px;font-size:13px;font-weight:800">Resume
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+              </span>
+            </div>
+          </div>
+        </button>
+
+        <!-- stat tiles -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12.5px;color:var(--ink3);font-weight:600">Time spent</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.4"><path d="M7 17 17 7M7 7h10v10"></path></svg></div>
+            <div style="font-size:24px;font-weight:800;letter-spacing:-.8px;margin-top:8px">13.6h</div>
+            <div style="font-size:11.5px;color:var(--green);font-weight:700;margin-top:2px">▲ 8% this week</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12.5px;color:var(--ink3);font-weight:600">Performance</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.4"><path d="M7 17 17 7M7 7h10v10"></path></svg></div>
+            <div style="font-size:24px;font-weight:800;letter-spacing:-.8px;margin-top:8px">80%</div>
+            <div style="font-size:11.5px;color:var(--ink2);font-weight:700;margin-top:2px">Great job!</div>
+          </div>
+        </div>
+
+        <!-- today's schedule -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:800;letter-spacing:-.3px">Today's schedule</div>
+          <span onClick="{{ goCalendar }}" style="font-size:13px;font-weight:700;color:var(--orange);cursor:pointer">Calendar</span>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:6px 16px;margin-bottom:18px">
+          <div style="display:flex;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="width:52px;flex:none;text-align:center"><div style="font-size:10px;font-weight:800;color:var(--red);text-transform:uppercase">Live</div><div style="font-size:14px;font-weight:800;letter-spacing:-.3px">5:30</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">Responsive Layouts — Q&amp;A</div><div style="font-size:12px;color:var(--ink3);margin-top:1px">Priya Menon · 30 min</div></div>
+            <button onClick="{{ goLesson }}" style="padding:9px 16px;background:var(--ink);color:#fff;border:none;border-radius:10px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;flex:none">Join</button>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center;padding:13px 0">
+            <div style="width:52px;flex:none;text-align:center"><div style="font-size:10px;font-weight:800;color:var(--orange);text-transform:uppercase">Test</div><div style="font-size:14px;font-weight:800;letter-spacing:-.3px">7:00</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">Full Syllabus Mock · 01</div><div style="font-size:12px;color:var(--ink3);margin-top:1px">40 questions · 60 min</div></div>
+            <button onClick="{{ goMock }}" style="padding:9px 16px;background:var(--orange-soft);color:var(--orange);border:none;border-radius:10px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;flex:none">Open</button>
+          </div>
+        </div>
+
+        <!-- live now -->
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+          <span style="width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px rgba(229,72,77,.16)"></span>
+          <div style="font-size:16px;font-weight:800;letter-spacing:-.3px">Live now</div>
+          <span style="font-size:11.5px;font-weight:800;color:var(--red);background:rgba(229,72,77,.1);padding:3px 9px;border-radius:7px">2 live</span>
+        </div>
+        <div class="scroll-x" style="display:flex;gap:12px;overflow-x:auto;margin:0 -16px 18px;padding:0 16px;scroll-snap-type:x mandatory">
+          <div style="flex:none;width:230px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden">
+            <div style="height:96px;background:linear-gradient(135deg,#1c1c1c,#2c2620);position:relative;display:flex;align-items:center;justify-content:center">
+              <div style="width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--ink)"><path d="M8 5v14l11-7z"></path></svg></div>
+              <span style="position:absolute;top:9px;left:9px;font-size:10px;font-weight:800;color:#fff;background:var(--red);padding:2px 8px;border-radius:6px">● LIVE</span>
+            </div>
+            <div style="padding:13px 14px"><div style="font-size:13.5px;font-weight:700">Calculus — Definite Integrals</div><div style="font-size:11.5px;color:var(--ink3);margin-top:3px">Arjun Rao · 142 watching</div></div>
+          </div>
+          <div style="flex:none;width:230px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden">
+            <div style="height:96px;background:linear-gradient(135deg,#241f1a,#37291c);position:relative;display:flex;align-items:center;justify-content:center">
+              <div style="width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--ink)"><path d="M8 5v14l11-7z"></path></svg></div>
+              <span style="position:absolute;top:9px;left:9px;font-size:10px;font-weight:800;color:#fff;background:var(--red);padding:2px 8px;border-radius:6px">● LIVE</span>
+            </div>
+            <div style="padding:13px 14px"><div style="font-size:13.5px;font-weight:700">Rotational Dynamics</div><div style="font-size:11.5px;color:var(--ink3);margin-top:3px">Dr. S. Iyer · 96 watching</div></div>
+          </div>
+        </div>
+
+        <!-- upcoming -->
+        <div style="font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:12px">Upcoming classes</div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:6px 16px">
+          <div style="display:flex;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="width:48px;flex:none;text-align:center"><div style="font-size:10px;font-weight:800;color:var(--orange);text-transform:uppercase">Fri</div><div style="font-size:13px;font-weight:800">4:00</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">Flexbox Deep Dive</div><div style="font-size:12px;color:var(--ink3)">Priya Menon</div></div>
+            <span style="font-size:11px;font-weight:800;color:var(--ink2);background:var(--bg);padding:5px 10px;border-radius:8px">Class</span>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="width:48px;flex:none;text-align:center"><div style="font-size:10px;font-weight:800;color:var(--orange);text-transform:uppercase">Sat</div><div style="font-size:13px;font-weight:800">11:00</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">Grid Layout Workshop</div><div style="font-size:12px;color:var(--ink3)">Sara Khan</div></div>
+            <span style="font-size:11px;font-weight:800;color:var(--ink2);background:var(--bg);padding:5px 10px;border-radius:8px">Lab</span>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center;padding:13px 0">
+            <div style="width:48px;flex:none;text-align:center"><div style="font-size:10px;font-weight:800;color:var(--orange);text-transform:uppercase">Mon</div><div style="font-size:13px;font-weight:800">6:30</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">Mentor 1:1 — Portfolio</div><div style="font-size:12px;color:var(--ink3)">Aditi Sharma</div></div>
+            <span style="font-size:11px;font-weight:800;color:var(--orange);background:var(--orange-soft);padding:5px 10px;border-radius:8px">1:1</span>
+          </div>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <!-- ========= COURSE ========= -->
+    <sc-if value="{{ isCourse }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px 16px 28px;animation:mfadeUp .3s ease both">
+        <div style="background:linear-gradient(125deg,#1f1c19,#3a2f25);color:#fff;border-radius:var(--rl);padding:20px;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#f7a878">Enrolled course</div>
+          <div style="font-size:21px;font-weight:800;letter-spacing:-.4px;margin:7px 0 3px">Basic HTML &amp; CSS</div>
+          <div style="font-size:13px;color:#bdb4ab">10 chapters · 42 lessons · Priya Menon</div>
+          <div style="display:flex;align-items:center;gap:11px;margin-top:16px">
+            <div style="flex:1;height:6px;background:rgba(255,255,255,.18);border-radius:3px"><div style="width:47%;height:100%;background:var(--orange);border-radius:3px"></div></div>
+            <span style="font-size:12px;font-weight:800;color:#f7a878">47% complete</span>
+          </div>
+        </div>
+
+        <div style="font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:12px">Chapters</div>
+        <div style="display:grid;gap:11px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);overflow:hidden">
+            <div style="display:flex;align-items:center;gap:13px;padding:15px 16px">
+              <div style="width:34px;height:34px;border-radius:11px;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"></path></svg></div>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700">1 · Getting Started</div><div style="font-size:12px;color:var(--ink3);margin-top:1px">4 lessons · Completed</div></div>
+            </div>
+          </div>
+
+          <div style="background:var(--card);border:1.5px solid var(--orange);border-radius:var(--rm);overflow:hidden">
+            <div style="display:flex;align-items:center;gap:13px;padding:15px 16px;border-bottom:1px solid var(--line)">
+              <div style="width:34px;height:34px;border-radius:11px;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;font-weight:800;font-size:14px">2</div>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700">CSS Fundamentals</div><div style="font-size:12px;color:var(--orange);font-weight:700;margin-top:1px">In progress · 2 / 5</div></div>
+            </div>
+            <button onClick="{{ goLesson }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:none;background:var(--orange-soft);font-family:inherit;cursor:pointer;text-align:left">
+              <span style="width:30px;height:30px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="var(--orange)"><path d="M8 5v14l11-7z"></path></svg></span>
+              <span style="flex:1"><span style="display:block;font-size:13.5px;font-weight:700">The CSS Box Model</span><span style="display:block;font-size:11.5px;color:var(--ink3)">Video · 12:30 · Resume at 4:12</span></span>
+              <span style="font-size:11px;font-weight:800;color:var(--orange)">NOW</span>
+            </button>
+            <button onClick="{{ goLesson }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:none;border-top:1px solid var(--line);background:transparent;font-family:inherit;cursor:pointer;text-align:left">
+              <span style="width:30px;height:30px;border-radius:9px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 9h6v6H9z"></path></svg></span>
+              <span style="flex:1"><span style="display:block;font-size:13.5px;font-weight:700">Selectors &amp; Specificity</span><span style="display:block;font-size:11.5px;color:var(--ink3)">PDF notes · 12 pages</span></span>
+            </button>
+            <button style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:none;border-top:1px solid var(--line);background:transparent;font-family:inherit;cursor:pointer;text-align:left;opacity:.55">
+              <span style="width:30px;height:30px;border-radius:9px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+              <span style="flex:1"><span style="display:block;font-size:13.5px;font-weight:700">The Cascade</span><span style="display:block;font-size:11.5px;color:var(--ink3)">Locked · finish previous lesson</span></span>
+            </button>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm)">
+            <div style="display:flex;align-items:center;gap:13px;padding:15px 16px">
+              <div style="width:34px;height:34px;border-radius:11px;background:var(--bg);color:var(--ink3);display:flex;align-items:center;justify-content:center;flex:none;font-weight:800;font-size:14px">3</div>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700">Layout — Flexbox</div><div style="font-size:12px;color:var(--ink3);margin-top:1px">6 lessons · Locked</div></div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm)">
+            <div style="display:flex;align-items:center;gap:13px;padding:15px 16px">
+              <div style="width:34px;height:34px;border-radius:11px;background:var(--bg);color:var(--ink3);display:flex;align-items:center;justify-content:center;flex:none;font-weight:800;font-size:14px">4</div>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700">Layout — Grid</div><div style="font-size:12px;color:var(--ink3);margin-top:1px">7 lessons · Locked</div></div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ========= LESSON ========= -->
+    <sc-if value="{{ isLesson }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:mfadeUp .3s ease both">
+        <!-- sub header -->
+        <div style="position:sticky;top:0;background:var(--bg);z-index:5;padding:14px 16px 10px;display:flex;align-items:center;gap:12px">
+          <button onClick="{{ goCourse }}" style="width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--ink3);font-weight:600">Chapter 2 · Lesson 4</div><div style="font-size:16px;font-weight:800;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">The CSS Box Model</div></div>
+        </div>
+
+        <div style="padding:4px 16px 28px">
+          <!-- video -->
+          <div style="position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,#1c1c1c,#2c2620);border-radius:var(--rm);overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+            <div style="width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.3)"><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--ink)"><path d="M8 5v14l11-7z"></path></svg></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 14px;background:linear-gradient(transparent,rgba(0,0,0,.7))">
+              <div style="height:4px;background:rgba(255,255,255,.25);border-radius:2px;margin-bottom:8px"><div style="width:34%;height:100%;background:var(--orange);border-radius:2px"></div></div>
+              <div style="display:flex;align-items:center;gap:10px;color:#fff;font-size:12px"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg><span>4:12 / 12:30</span><div style="flex:1"></div><span>HD</span><span>⛶</span></div>
+            </div>
+          </div>
+
+          <!-- action chips -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <button onClick="{{ goFlashcards }}" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--orange-soft);color:var(--orange);border:none;border-radius:13px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="14" height="16" rx="2"></rect><path d="M7 5V3h14v16h-2"></path></svg>Flashcards (8)</button>
+            <button onClick="{{ goDeck }}" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>AI Deck (6)</button>
+          </div>
+          <button onClick="{{ toggleChat }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:13px;font-size:14.5px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 6px 16px rgba(242,106,27,.3);margin-bottom:18px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Ask the AI a doubt</button>
+
+          <!-- AI notes -->
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:18px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px"><div style="width:24px;height:24px;border-radius:7px;background:var(--orange-soft);display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 2 9 9l-7 1 5 5-1 7 6-3 6 3-1-7 5-5-7-1z"></path></svg></div><span style="font-size:14px;font-weight:800">AI Notes</span><span style="font-size:9.5px;font-weight:800;color:var(--orange);background:var(--orange-soft);padding:2px 7px;border-radius:6px">AUTO</span></div>
+            <p style="font-size:13.5px;line-height:1.7;color:var(--ink2);margin:0">The box model wraps every element in <b style="color:var(--ink)">content</b>, <b style="color:var(--ink)">padding</b>, <b style="color:var(--ink)">border</b> and <b style="color:var(--ink)">margin</b>. Setting <code style="background:var(--bg);padding:1px 6px;border-radius:5px;font-size:12px">box-sizing: border-box</code> makes width include padding and border — the most predictable model for layout.</p>
+          </div>
+
+          <!-- timeline -->
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:18px">
+            <div style="font-size:13px;font-weight:800;margin-bottom:12px">Topic timeline</div>
+            <div style="display:grid;gap:2px">
+              <div style="display:flex;align-items:center;gap:12px;padding:9px 0"><span style="font-size:12px;font-weight:700;color:var(--orange);width:42px">0:00</span><span style="width:8px;height:8px;border-radius:50%;background:var(--orange);flex:none"></span><span style="font-size:13px;font-weight:600">Intro to boxes</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:9px 0"><span style="font-size:12px;font-weight:700;color:var(--ink3);width:42px">3:20</span><span style="width:8px;height:8px;border-radius:50%;background:var(--line);flex:none"></span><span style="font-size:13px;font-weight:600;color:var(--ink2)">Padding &amp; border</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:9px 0"><span style="font-size:12px;font-weight:700;color:var(--ink3);width:42px">7:45</span><span style="width:8px;height:8px;border-radius:50%;background:var(--line);flex:none"></span><span style="font-size:13px;font-weight:600;color:var(--ink2)">box-sizing</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:9px 0"><span style="font-size:12px;font-weight:700;color:var(--ink3);width:42px">10:10</span><span style="width:8px;height:8px;border-radius:50%;background:var(--line);flex:none"></span><span style="font-size:13px;font-weight:600;color:var(--ink2)">Margin collapsing</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- chat bottom sheet -->
+        <sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;z-index:80">
+            <div onClick="{{ toggleChat }}" style="position:absolute;inset:0;background:rgba(20,18,16,.5);animation:mscrim .25s ease both"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;height:82%;background:var(--card);border-radius:24px 24px 0 0;display:flex;flex-direction:column;animation:msheet .32s cubic-bezier(.3,.1,.2,1) both;overflow:hidden">
+              <div style="background:#1a1a1a;color:#fff;padding:16px 18px;display:flex;align-items:center;gap:11px">
+                <div style="width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex:none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#f7a878" stroke-width="2"><path d="M12 2 9 9l-7 1 5 5-1 7 6-3 6 3-1-7 5-5-7-1z"></path></svg></div>
+                <div style="flex:1"><div style="font-size:15px;font-weight:800">AI Doubt Solver</div><div style="font-size:11.5px;color:#bda99c">On: The CSS Box Model</div></div>
+                <button onClick="{{ toggleChat }}" style="width:32px;height:32px;border-radius:9px;border:none;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:16px">✕</button>
+              </div>
+              <div style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:13px;background:var(--bg)">{{ chatBubbles }}</div>
+              <div style="padding:14px 16px;border-top:1px solid var(--line);background:var(--card)">
+                <sc-if value="{{ chatEmpty }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">{{ chatChips }}</div>
+                </sc-if>
+                <div style="display:flex;gap:10px;align-items:center">
+                  <input value="{{ chatInput }}" onInput="{{ setChatInput }}" onKeyDown="{{ chatKey }}" placeholder="Ask anything about this lesson…" style="flex:1;padding:13px 16px;border:1px solid var(--line);border-radius:12px;font-size:13.5px;font-family:inherit;outline:none;background:var(--bg)">
+                  <button onClick="{{ sendChatBtn }}" style="width:46px;height:46px;flex:none;border-radius:12px;border:none;background:var(--orange);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4 20-7z"></path></svg></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= FLASHCARDS ========= -->
+    <sc-if value="{{ isFlashcards }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <button onClick="{{ goLesson }}" style="width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div style="font-size:16px;font-weight:800">Flashcards</div>
+        </div>
+
+        <sc-if value="{{ fcRunning }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="flex:1;height:8px;background:var(--card);border:1px solid var(--line);border-radius:5px;overflow:hidden"><div style="width:{{ fcProgress }};height:100%;background:var(--orange);border-radius:5px;transition:width .3s"></div></div>
+              <span style="font-size:12px;font-weight:800;color:var(--orange);background:var(--orange-soft);padding:4px 9px;border-radius:8px">✓{{ fcC }}</span>
+              <span style="font-size:12px;font-weight:800;color:var(--red);background:#fbe9e6;padding:4px 9px;border-radius:8px">✕{{ fcW }}</span>
+            </div>
+            <div style="font-size:12px;color:var(--ink3);text-align:center;margin-bottom:12px">Card {{ fcNum }} of 8 — tap to reveal</div>
+            <div onClick="{{ flipCard }}" style="perspective:1600px;cursor:pointer;height:340px">
+              <div style="position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;transform:{{ fcTransform }}">
+                <div style="position:absolute;inset:0;backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:var(--rl);box-shadow:0 12px 40px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+                  <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--orange);text-transform:uppercase;margin-bottom:18px">Question</div>
+                  <div style="font-size:22px;font-weight:700;line-height:1.4;letter-spacing:-.3px">{{ fcQuestion }}</div>
+                  <div style="position:absolute;bottom:20px;font-size:12px;color:var(--ink3)">Tap to flip ↺</div>
+                </div>
+                <div style="position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);background:#1a1a1a;color:#fff;border-radius:var(--rl);box-shadow:0 12px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center">
+                  <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:#f7a878;text-transform:uppercase;margin-bottom:18px">Answer</div>
+                  <div style="font-size:18px;font-weight:600;line-height:1.6">{{ fcAnswer }}</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:22px">
+              <button onClick="{{ fcWrong }}" style="padding:15px 8px;background:var(--card);border:1.5px solid #f0c9c2;color:var(--red);border-radius:13px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">Missed</button>
+              <button onClick="{{ fcSkip }}" style="padding:15px 8px;background:var(--card);border:1.5px solid var(--line);color:var(--ink2);border-radius:13px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">Skip</button>
+              <button onClick="{{ fcRight }}" style="padding:15px 8px;background:var(--orange);border:none;color:#fff;border-radius:13px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">Got it</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ fcDone }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:38px 26px;margin-top:14px">
+            <div style="width:68px;height:68px;border-radius:50%;background:var(--orange-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px">🎉</div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:-.4px">Deck complete!</div>
+            <p style="color:var(--ink3);font-size:13.5px;margin:8px 0 24px">You reviewed all 8 flashcards.</p>
+            <div style="display:flex;gap:10px;justify-content:center;margin-bottom:24px">
+              <div style="background:var(--orange-soft);border-radius:14px;padding:16px 20px"><div style="font-size:26px;font-weight:800;color:var(--orange)">{{ fcC }}</div><div style="font-size:11.5px;color:var(--ink2);font-weight:700">Got it</div></div>
+              <div style="background:#fbe9e6;border-radius:14px;padding:16px 20px"><div style="font-size:26px;font-weight:800;color:var(--red)">{{ fcW }}</div><div style="font-size:11.5px;color:var(--ink2);font-weight:700">Missed</div></div>
+              <div style="background:var(--bg);border-radius:14px;padding:16px 20px"><div style="font-size:26px;font-weight:800;color:var(--ink2)">{{ fcS }}</div><div style="font-size:11.5px;color:var(--ink2);font-weight:700">Skipped</div></div>
+            </div>
+            <button onClick="{{ fcRestart }}" style="width:100%;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:13px;font-size:14.5px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:10px">Practice again</button>
+            <button onClick="{{ goLesson }}" style="width:100%;padding:13px;background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">Back to lesson</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= AI DECK ========= -->
+    <sc-if value="{{ isDeck }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <button onClick="{{ goLesson }}" style="width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div style="font-size:16px;font-weight:800">AI Narrated Deck</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.06)">
+          <div style="background:linear-gradient(120deg,#f26a1b,#f7902b);color:#fff;padding:22px 22px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.85">AI Deck</div><div style="font-size:12px;font-weight:700;opacity:.85">{{ deckNum }} / 6</div></div>
+            <div style="font-size:21px;font-weight:800;letter-spacing:-.4px;margin-top:10px">{{ deckTitle }}</div>
+            <div style="font-size:13px;opacity:.9;margin-top:3px">{{ deckSub }}</div>
+          </div>
+          <div style="padding:26px 22px;min-height:200px;font-size:15px;line-height:1.7;color:var(--ink2)">{{ deckBody }}</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:7px;padding:0 0 20px">{{ deckDots }}</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:18px">
+          <button onClick="{{ deckPrev }}" style="flex:1;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">Previous</button>
+          <button onClick="{{ deckNext }}" style="flex:1;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">Next</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ========= CALENDAR ========= -->
+    <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:mfadeUp .3s ease both">
+        <div style="position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:12px">
+            <div>
+              <div style="font-size:18px;font-weight:800;letter-spacing:-.4px">June 2026</div>
+              <div style="font-size:12px;color:var(--ink3);display:flex;align-items:center;gap:6px;margin-top:2px"><span style="width:7px;height:7px;border-radius:50%;background:var(--green)"></span>Synced in real time</div>
+            </div>
+            <button style="width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.9"><circle cx="12" cy="12" r="3"></circle><path d="M3 12h4M17 12h4M12 3v4M12 17v4"></path></svg></button>
+          </div>
+          <div class="scroll-x" style="display:flex;gap:9px;overflow-x:auto;padding:0 16px">{{ calStrip }}</div>
+        </div>
+
+        <div style="padding:6px 16px 28px">
+          <div style="font-size:13px;font-weight:800;color:var(--ink2);margin:6px 0 12px">{{ calDayLabel }}</div>
+          <div style="display:grid;gap:10px;margin-bottom:22px">{{ calAgenda }}</div>
+
+          <div style="font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:12px">Upcoming reminders</div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:6px 16px">
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)"><div style="width:36px;height:36px;border-radius:11px;background:var(--orange-soft);display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></div><div style="flex:1"><div style="font-size:13.5px;font-weight:700">Submit CSS assignment</div><div style="font-size:12px;color:var(--ink3)">Tomorrow · 11:59 PM</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 0"><div style="width:36px;height:36px;border-radius:11px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M20 6 9 17l-5-5"></path></svg></div><div style="flex:1"><div style="font-size:13.5px;font-weight:700">Revise Flexbox notes</div><div style="font-size:12px;color:var(--ink3)">Fri · 9:00 AM</div></div></div>
+          </div>
+        </div>
+
+        <!-- session sheet -->
+        <sc-if value="{{ calSheetOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;z-index:80">
+            <div onClick="{{ closeCalSheet }}" style="position:absolute;inset:0;background:rgba(20,18,16,.5);animation:mscrim .25s ease both"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:24px 24px 0 0;padding:8px 20px 26px;animation:msheet .32s cubic-bezier(.3,.1,.2,1) both">
+              <div style="width:40px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 18px"></div>
+              <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--orange);text-transform:uppercase">{{ calSheetType }}</div>
+              <div style="font-size:22px;font-weight:800;letter-spacing:-.4px;margin:8px 0 4px">{{ calSheetTitle }}</div>
+              <div style="font-size:14px;color:var(--ink2);font-weight:600">{{ calSheetTime }} · {{ calSheetSub }}</div>
+              <div style="display:flex;gap:12px;margin-top:22px">
+                <button style="flex:1;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-size:14.5px;font-weight:800;font-family:inherit;cursor:pointer">{{ calSheetCta }}</button>
+                <button style="flex:none;padding:14px 20px;background:var(--orange-soft);color:var(--orange);border:none;border-radius:13px;font-size:14.5px;font-weight:800;font-family:inherit;cursor:pointer">Remind me</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= MESSAGES ========= -->
+    <sc-if value="{{ isMessages }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:mfadeUp .3s ease both">
+        <div style="padding:14px 16px 10px">
+          <div style="position:relative">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2" style="position:absolute;left:14px;top:13px"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3-3"></path></svg>
+            <input placeholder="Search conversations" style="width:100%;padding:12px 14px 12px 40px;border:1px solid var(--line);border-radius:13px;font-size:14px;font-family:inherit;outline:none;background:var(--card)">
+          </div>
+        </div>
+        <div>{{ threadList }}</div>
+      </div>
+    </sc-if>
+
+    <!-- ========= THREAD CHAT ========= -->
+    <sc-if value="{{ isThread }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;display:flex;flex-direction:column;animation:mfadeUp .25s ease both">
+        <div style="flex:none;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--card);display:flex;align-items:center;gap:11px">
+          <button onClick="{{ goMessages }}" style="width:38px;height:38px;flex:none;border:none;background:transparent;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;background:linear-gradient(135deg,#f7902b,#f24d1b)">{{ threadInit }}</div>
+          <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ threadName }}</div><div style="font-size:11.5px;color:var(--green);font-weight:600">● online</div></div>
+          <button style="width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.9"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></button>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:18px 16px;background:var(--bg);display:flex;flex-direction:column;gap:10px">
+          <div style="text-align:center;font-size:11px;color:var(--ink3);font-weight:700;margin-bottom:4px">Today</div>
+          {{ msgBubbles }}
+        </div>
+        <div style="flex:none;padding:12px 14px;border-top:1px solid var(--line);background:var(--card);display:flex;align-items:center;gap:10px">
+          <button style="width:42px;height:42px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.9"><path d="M21.4 11 12.3 20.1a5.5 5.5 0 0 1-7.8-7.8l9.2-9.1a3.7 3.7 0 0 1 5.2 5.1l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"></path></svg></button>
+          <input value="{{ msgInput }}" onInput="{{ setMsgInput }}" onKeyDown="{{ msgKey }}" placeholder="Write a message…" style="flex:1;padding:13px 16px;border:1px solid var(--line);border-radius:12px;font-size:13.5px;font-family:inherit;outline:none;background:var(--bg)">
+          <button onClick="{{ sendMsgBtn }}" style="width:46px;height:46px;flex:none;border-radius:12px;border:none;background:var(--orange);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4 20-7z"></path></svg></button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ========= FORUM ========= -->
+    <sc-if value="{{ isForum }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:mfadeUp .3s ease both">
+        <sc-if value="{{ forumThreadOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 16px 28px">
+            <button onClick="{{ closeForumThread }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;background:var(--card);border:1px solid var(--line);border-radius:11px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:16px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg>All threads</button>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px">
+              <div style="font-size:20px;font-weight:800;letter-spacing:-.4px;line-height:1.3">Why use box-sizing: border-box everywhere?</div>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:10px;font-size:12px;color:var(--ink3);font-weight:600"><span>Rahul S.</span><span>12 replies</span><span>▲ 34</span></div>
+              <div style="margin-top:16px;display:grid;gap:14px">
+                <div style="display:flex;gap:11px"><div style="width:34px;height:34px;border-radius:11px;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:none">RS</div><div style="flex:1;background:var(--bg);border-radius:14px;padding:12px 14px"><div style="font-size:12.5px;font-weight:800;margin-bottom:3px">Rahul S.</div><div style="font-size:13.5px;line-height:1.6;color:var(--ink2)">I keep seeing <code style="background:var(--card);padding:1px 5px;border-radius:5px">* { box-sizing: border-box }</code> at the top of stylesheets. What problem does it actually solve?</div></div></div>
+                <div style="display:flex;gap:11px"><div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#f7902b,#f24d1b);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:none">PM</div><div style="flex:1;background:var(--orange-soft);border-radius:14px;padding:12px 14px"><div style="font-size:12.5px;font-weight:800;margin-bottom:3px;color:var(--orange)">Priya Menon · Mentor</div><div style="font-size:13.5px;line-height:1.6;color:var(--ink2)">It makes width predictable — padding and border are included inside the declared width, so a 200px box stays 200px no matter the padding. Saves endless layout math.</div></div></div>
+              </div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:12px 14px;margin-top:14px;display:flex;gap:10px;align-items:center">
+              <input placeholder="Write a reply…" style="flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:12px;font-size:13.5px;font-family:inherit;outline:none;background:var(--bg)">
+              <button style="width:46px;height:46px;flex:none;border-radius:12px;border:none;background:var(--orange);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4 20-7z"></path></svg></button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ forumListShown }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:14px 16px 28px">
+            <div style="display:flex;gap:10px;margin-bottom:14px">
+              <div style="position:relative;flex:1">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2" style="position:absolute;left:13px;top:13px"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3-3"></path></svg>
+                <input placeholder="Search threads…" style="width:100%;padding:12px 14px 12px 38px;border:1px solid var(--line);border-radius:12px;font-size:13.5px;font-family:inherit;outline:none;background:var(--card)">
+              </div>
+              <button style="width:46px;height:46px;flex:none;border-radius:12px;border:none;background:var(--ink);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"></path></svg></button>
+            </div>
+            <div class="scroll-x" style="display:flex;gap:8px;overflow-x:auto;margin:0 -16px 16px;padding:0 16px">
+              <span style="flex:none;padding:8px 14px;background:var(--ink);color:#fff;border-radius:999px;font-size:12.5px;font-weight:700">All</span>
+              <span style="flex:none;padding:8px 14px;background:var(--card);color:var(--ink2);border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:inset 0 0 0 1px var(--line)">CSS</span>
+              <span style="flex:none;padding:8px 14px;background:var(--card);color:var(--ink2);border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:inset 0 0 0 1px var(--line)">JavaScript</span>
+              <span style="flex:none;padding:8px 14px;background:var(--card);color:var(--ink2);border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:inset 0 0 0 1px var(--line)">Careers</span>
+              <span style="flex:none;padding:8px 14px;background:var(--card);color:var(--ink2);border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:inset 0 0 0 1px var(--line)">General</span>
+            </div>
+            <div style="display:grid;gap:11px">
+              <button onClick="{{ openForumThread }}" style="text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px;cursor:pointer;font-family:inherit">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="font-size:10px;font-weight:800;color:var(--orange);background:var(--orange-soft);padding:2px 8px;border-radius:6px">CSS</span><span style="font-size:10px;font-weight:800;color:var(--green);background:var(--green-soft);padding:2px 8px;border-radius:6px">📌 Pinned</span></div>
+                <div style="font-size:15px;font-weight:700;line-height:1.35">Why use box-sizing: border-box everywhere?</div>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:9px;font-size:12px;color:var(--ink3);font-weight:600"><span>Rahul S.</span><span>12 replies</span><span>▲ 34</span></div>
+              </button>
+              <button onClick="{{ openForumThread }}" style="text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px;cursor:pointer;font-family:inherit">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="font-size:10px;font-weight:800;color:var(--orange);background:var(--orange-soft);padding:2px 8px;border-radius:6px">CSS</span></div>
+                <div style="font-size:15px;font-weight:700;line-height:1.35">Flexbox vs Grid — when do you reach for which?</div>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:9px;font-size:12px;color:var(--ink3);font-weight:600"><span>Meera K.</span><span>8 replies</span><span>▲ 21</span></div>
+              </button>
+              <button onClick="{{ openForumThread }}" style="text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px;cursor:pointer;font-family:inherit">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="font-size:10px;font-weight:800;color:var(--blue);background:#e8eefb;padding:2px 8px;border-radius:6px">Careers</span></div>
+                <div style="font-size:15px;font-weight:700;line-height:1.35">Portfolio review thread — drop your links!</div>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:9px;font-size:12px;color:var(--ink3);font-weight:600"><span>Aditi (Mentor)</span><span>26 replies</span><span>▲ 58</span></div>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= FEEDBACK ========= -->
+    <sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both">
+        <sc-if value="{{ fbListShown }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:5px;margin-bottom:16px">
+              <button onClick="{{ setFbAllotted }}" style="{{ fbAllottedStyle }}">Allotted</button>
+              <button onClick="{{ setFbSubmitted }}" style="{{ fbSubmittedStyle }}">Submitted</button>
+            </div>
+            <sc-if value="{{ fbAllotted }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--orange-soft);border-radius:var(--rm);margin-bottom:14px">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+                  <span style="font-size:13px;font-weight:600;color:var(--ink2)"><b style="color:var(--orange)">2 pending</b> feedback forms assigned to you.</span>
+                </div>
+                <div style="display:grid;gap:11px">
+                  <button onClick="{{ openFbForm }}" style="text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px;cursor:pointer;font-family:inherit">
+                    <div style="font-size:10px;font-weight:800;color:var(--orange);letter-spacing:.5px;text-transform:uppercase">Course feedback</div>
+                    <div style="font-size:15px;font-weight:700;margin-top:5px">CSS Fundamentals — Chapter 2</div>
+                    <div style="font-size:12px;color:var(--ink3);margin-top:3px">Due in 2 days · 5 questions</div>
+                  </button>
+                  <button onClick="{{ openFbForm }}" style="text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px;cursor:pointer;font-family:inherit">
+                    <div style="font-size:10px;font-weight:800;color:var(--orange);letter-spacing:.5px;text-transform:uppercase">Mentor feedback</div>
+                    <div style="font-size:15px;font-weight:700;margin-top:5px">Session with Aditi Sharma</div>
+                    <div style="font-size:12px;color:var(--ink3);margin-top:3px">Due in 4 days · 4 questions</div>
+                  </button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ fbSubmitted }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;gap:11px">
+                <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px"><div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:15px;font-weight:700">Platform experience · June</div><span style="font-size:11px;font-weight:800;color:var(--green);background:var(--green-soft);padding:4px 9px;border-radius:7px">✓ Submitted</span></div><div style="font-size:12px;color:var(--ink3);margin-top:4px">Submitted 3 days ago</div></div>
+                <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:16px"><div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:15px;font-weight:700">Faculty — Priya Menon</div><span style="font-size:11px;font-weight:800;color:var(--green);background:var(--green-soft);padding:4px 9px;border-radius:7px">✓ Submitted</span></div><div style="font-size:12px;color:var(--ink3);margin-top:4px">Submitted last week</div></div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ fbFormOpen }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <button onClick="{{ closeFbForm }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;background:var(--card);border:1px solid var(--line);border-radius:11px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:16px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg>Back</button>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:22px">
+              <div style="font-size:19px;font-weight:800;letter-spacing:-.4px">CSS Fundamentals — Chapter 2</div>
+              <p style="font-size:13px;color:var(--ink3);margin:6px 0 22px">Your honest feedback helps us improve this course.</p>
+              <div style="font-size:13.5px;font-weight:700;margin-bottom:10px">How clear was the teaching?</div>
+              <div style="display:flex;gap:8px;margin-bottom:22px;font-size:30px;color:var(--amber);letter-spacing:4px">★★★★<span style="color:var(--line)">★</span></div>
+              <div style="font-size:13.5px;font-weight:700;margin-bottom:10px">Pace of the lessons</div>
+              <div style="display:flex;gap:8px;margin-bottom:22px">
+                <span style="flex:1;text-align:center;padding:11px;border-radius:11px;background:var(--bg);font-size:13px;font-weight:700;color:var(--ink2)">Too slow</span>
+                <span style="flex:1;text-align:center;padding:11px;border-radius:11px;background:var(--ink);color:#fff;font-size:13px;font-weight:700">Just right</span>
+                <span style="flex:1;text-align:center;padding:11px;border-radius:11px;background:var(--bg);font-size:13px;font-weight:700;color:var(--ink2)">Too fast</span>
+              </div>
+              <div style="font-size:13.5px;font-weight:700;margin-bottom:10px">Anything else?</div>
+              <textarea placeholder="Share your thoughts…" style="width:100%;min-height:100px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;font-family:inherit;font-size:13.5px;line-height:1.6;outline:none;resize:vertical;background:var(--bg);margin-bottom:18px"></textarea>
+              <sc-if value="{{ fbNotDone }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ submitFb }}" style="width:100%;padding:15px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">Submit feedback</button>
+              </sc-if>
+              <sc-if value="{{ fbDone }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px;background:var(--green-soft);border-radius:12px;font-size:13.5px;color:var(--green);font-weight:800;text-align:center">✓ Thanks! Your feedback was submitted.</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= PRACTICE ========= -->
+    <sc-if value="{{ isPractice }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both">
+        <sc-if value="{{ woBuild }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+              <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:14px"><div style="font-size:11px;color:var(--ink3);font-weight:700">Total</div><div style="font-size:22px;font-weight:800;letter-spacing:-.7px;margin-top:4px">1,240</div></div>
+              <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:14px"><div style="font-size:11px;color:var(--ink3);font-weight:700">Done</div><div style="font-size:22px;font-weight:800;letter-spacing:-.7px;margin-top:4px;color:var(--green)">812</div></div>
+              <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:14px"><div style="font-size:11px;color:var(--ink3);font-weight:700">Left</div><div style="font-size:22px;font-weight:800;letter-spacing:-.7px;margin-top:4px;color:var(--orange)">428</div></div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px">
+              <div style="font-size:17px;font-weight:800;letter-spacing:-.3px">Create a workout</div>
+              <p style="font-size:12.5px;color:var(--ink3);margin:4px 0 18px">A personalised practice set from your syllabus.</p>
+              <label style="font-size:12px;font-weight:800;color:var(--ink2)">Course</label>
+              <select style="width:100%;margin:7px 0 16px;padding:13px 14px;border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:14px;background:var(--bg);color:var(--ink)"><option>Basic HTML &amp; CSS</option><option>JavaScript Essentials</option></select>
+              <label style="font-size:12px;font-weight:800;color:var(--ink2)">Question format</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px">
+                <span style="padding:9px 14px;background:var(--ink);color:#fff;border-radius:999px;font-size:12.5px;font-weight:700">MCQ</span>
+                <span style="padding:9px 14px;background:var(--bg);color:var(--ink2);border-radius:999px;font-size:12.5px;font-weight:700">True / False</span>
+                <span style="padding:9px 14px;background:var(--bg);color:var(--ink2);border-radius:999px;font-size:12.5px;font-weight:700">Fill blank</span>
+                <span style="padding:9px 14px;background:var(--bg);color:var(--ink2);border-radius:999px;font-size:12.5px;font-weight:700">Short answer</span>
+              </div>
+              <label style="font-size:12px;font-weight:800;color:var(--ink2)">Number of questions — <b style="color:var(--orange)">{{ woCount }}</b></label>
+              <input type="range" min="5" max="30" value="{{ woCount }}" onInput="{{ setWoCount }}" style="width:100%;margin:12px 0 20px;accent-color:var(--orange)">
+              <button onClick="{{ startWorkout }}" style="width:100%;padding:15px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">Generate workout</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ woSession }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:800;color:var(--ink2)">Question {{ woNum }} of {{ woCount }}</div>
+              <button style="width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.9"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></button>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:22px">
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:1px;color:var(--orange);text-transform:uppercase;margin-bottom:11px">Multiple choice</div>
+              <div style="font-size:17px;font-weight:700;line-height:1.45;margin-bottom:20px">Which CSS property controls the space <i>inside</i> an element, between its content and border?</div>
+              <div style="display:grid;gap:11px">{{ woOptionEls }}</div>
+              <sc-if value="{{ woAnswered }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:16px;padding:13px 15px;background:var(--green-soft);border-radius:12px;font-size:13px;color:var(--green);font-weight:700">✓ Correct! <code>padding</code> adds space inside the element.</div>
+              </sc-if>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:16px">
+              <button onClick="{{ exitWorkout }}" style="flex:none;padding:14px 22px;background:var(--card);border:1px solid var(--line);border-radius:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">Exit</button>
+              <button onClick="{{ woNext }}" style="flex:1;padding:14px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">Next question</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= MOCK TESTS ========= -->
+    <sc-if value="{{ isMock }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:mfadeUp .3s ease both">
+        <sc-if value="{{ mtList }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:14px 16px 28px;display:grid;gap:12px">
+            <button onClick="{{ openMock }}" style="text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px;cursor:pointer;font-family:inherit">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;font-weight:800;color:var(--orange);background:var(--orange-soft);padding:3px 9px;border-radius:7px">FULL SYLLABUS</span><span style="font-size:11px;font-weight:800;color:var(--ink2)">60 min</span></div>
+              <div style="font-size:17px;font-weight:800;letter-spacing:-.3px">Full Syllabus Mock · 01</div>
+              <div style="font-size:12.5px;color:var(--ink3);margin-top:3px">40 questions · 120 marks</div>
+              <div style="display:flex;align-items:center;gap:9px;margin-top:14px"><span style="flex:1;padding:11px;background:var(--ink);color:#fff;border-radius:11px;text-align:center;font-size:13px;font-weight:800">Start test</span></div>
+            </button>
+            <button onClick="{{ openMock }}" style="text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px;cursor:pointer;font-family:inherit">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;font-weight:800;color:var(--purple);background:var(--purple-soft);padding:3px 9px;border-radius:7px">CHAPTER</span><span style="font-size:11px;font-weight:800;color:var(--ink2)">30 min</span></div>
+              <div style="font-size:17px;font-weight:800;letter-spacing:-.3px">CSS Box Model Quiz</div>
+              <div style="font-size:12.5px;color:var(--ink3);margin-top:3px">20 questions · 60 marks</div>
+              <div style="display:flex;align-items:center;gap:9px;margin-top:14px"><span style="flex:1;padding:11px;background:var(--bg);color:var(--ink);border-radius:11px;text-align:center;font-size:13px;font-weight:800">Start test</span></div>
+            </button>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px;opacity:.75">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;font-weight:800;color:var(--ink3);background:var(--bg);padding:3px 9px;border-radius:7px">SCHEDULED</span><span style="font-size:11px;font-weight:800;color:var(--ink3)">Jun 25</span></div>
+              <div style="font-size:17px;font-weight:800;letter-spacing:-.3px">Grand Test · 02</div>
+              <div style="font-size:12.5px;color:var(--ink3);margin-top:3px">Unlocks in 4 days</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ mtInstr }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 16px 28px">
+            <button onClick="{{ mtBackList }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;background:var(--card);border:1px solid var(--line);border-radius:11px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:16px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg>Back</button>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:22px">
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:1px;color:var(--orange);text-transform:uppercase">Instructions</div>
+              <div style="font-size:21px;font-weight:800;letter-spacing:-.4px;margin:6px 0 16px">Full Syllabus Mock · 01</div>
+              <div style="display:flex;gap:10px;margin-bottom:18px">
+                <div style="flex:1;background:var(--bg);border-radius:12px;padding:13px;text-align:center"><div style="font-size:10px;color:var(--ink3);font-weight:700">DURATION</div><div style="font-size:16px;font-weight:800">60m</div></div>
+                <div style="flex:1;background:var(--bg);border-radius:12px;padding:13px;text-align:center"><div style="font-size:10px;color:var(--ink3);font-weight:700">QUESTIONS</div><div style="font-size:16px;font-weight:800">40</div></div>
+                <div style="flex:1;background:var(--bg);border-radius:12px;padding:13px;text-align:center"><div style="font-size:10px;color:var(--ink3);font-weight:700">MARKS</div><div style="font-size:16px;font-weight:800">120</div></div>
+              </div>
+              <ul style="font-size:13px;line-height:1.8;color:var(--ink2);padding-left:18px;margin:0 0 20px">
+                <li>+3 for correct, −1 for wrong answers.</li>
+                <li>Flag questions and revisit via the palette.</li>
+                <li>Auto-submits when the timer hits zero.</li>
+              </ul>
+              <button onClick="{{ mtStart }}" style="width:100%;padding:15px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">Start test</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ mtTest }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 16px 28px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <button onClick="{{ togglePalette }}" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:11px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Q1 / 40</button>
+              <div style="display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;padding:9px 15px;border-radius:11px;font-size:14px;font-weight:800"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>42:18</div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:22px">
+              <div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:10px">Question 1</div>
+              <div style="font-size:17px;font-weight:700;line-height:1.45;margin-bottom:20px">Which value of <code>box-sizing</code> includes padding and border within the element's set width?</div>
+              <div style="display:grid;gap:11px">{{ mtOptionEls }}</div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:16px">
+              <button style="flex:1;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">Save &amp; next</button>
+              <button onClick="{{ mtSubmit }}" style="flex:1;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">Submit</button>
+            </div>
+            <!-- palette sheet -->
+            <sc-if value="{{ mtPaletteOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;z-index:80">
+                <div onClick="{{ togglePalette }}" style="position:absolute;inset:0;background:rgba(20,18,16,.5);animation:mscrim .25s ease both"></div>
+                <div style="position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:24px 24px 0 0;padding:8px 18px 26px;animation:msheet .32s cubic-bezier(.3,.1,.2,1) both">
+                  <div style="width:40px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 16px"></div>
+                  <div style="font-size:16px;font-weight:800;margin-bottom:14px">Question palette</div>
+                  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px">{{ palette }}</div>
+                  <div style="display:flex;gap:16px;margin-top:18px;font-size:11.5px;color:var(--ink2);flex-wrap:wrap"><span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:4px;background:var(--green)"></span>Answered</span><span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:4px;background:var(--amber)"></span>Flagged</span><span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border-radius:4px;background:var(--bg);border:1px solid var(--line)"></span>Not visited</span></div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ mtResult }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 16px 28px">
+            <div style="background:linear-gradient(120deg,#15281d,#1f3b2a);color:#fff;border-radius:var(--rl);padding:24px;text-align:center;margin-bottom:14px">
+              <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;opacity:.7">Full Syllabus Mock · 01</div>
+              <div style="font-size:48px;font-weight:800;letter-spacing:-1.5px;margin:6px 0 0">86<span style="font-size:20px;opacity:.6">/120</span></div>
+              <div style="font-size:15px;font-weight:700;margin-top:2px">Well done, Ronal! 🎉</div>
+              <div style="display:flex;gap:10px;margin-top:18px">
+                <div style="flex:1;background:rgba(255,255,255,.1);border-radius:12px;padding:12px"><div style="font-size:20px;font-weight:800">78%</div><div style="font-size:11px;opacity:.7">Accuracy</div></div>
+                <div style="flex:1;background:rgba(255,255,255,.1);border-radius:12px;padding:12px"><div style="font-size:20px;font-weight:800">#142</div><div style="font-size:11px;opacity:.7">Rank</div></div>
+                <div style="flex:1;background:rgba(255,255,255,.1);border-radius:12px;padding:12px"><div style="font-size:20px;font-weight:800">31/40</div><div style="font-size:11px;opacity:.7">Correct</div></div>
+              </div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px;margin-bottom:16px">
+              <div style="font-size:15px;font-weight:800;margin-bottom:12px">Leaderboard</div>
+              <div style="display:grid;gap:2px">
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)"><span style="width:22px;font-weight:800;color:var(--amber)">1</span><div style="flex:1;font-size:13.5px;font-weight:700">Ishaan G.</div><span style="font-size:13px;font-weight:800">118</span></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)"><span style="width:22px;font-weight:800;color:var(--ink3)">2</span><div style="flex:1;font-size:13.5px;font-weight:700">Sara K.</div><span style="font-size:13px;font-weight:800">112</span></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;background:var(--orange-soft);margin:0 -18px;padding-left:18px;padding-right:18px"><span style="width:22px;font-weight:800;color:var(--orange)">142</span><div style="flex:1;font-size:13.5px;font-weight:800;color:var(--orange)">You</div><span style="font-size:13px;font-weight:800;color:var(--orange)">86</span></div>
+              </div>
+            </div>
+            <button onClick="{{ mtBackList }}" style="width:100%;padding:15px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">Back to tests</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= MENTOR ========= -->
+    <sc-if value="{{ isMentor }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both">
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px;margin-bottom:16px">
+          <div style="font-size:17px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px">Choose a mentor</div>
+          <div style="display:grid;gap:10px;margin-bottom:20px">{{ mentorChips }}</div>
+          <div style="font-size:12px;font-weight:800;color:var(--ink2);margin-bottom:9px">Pick a date</div>
+          <div style="display:flex;gap:9px;margin-bottom:20px">{{ menDayChips }}</div>
+          <div style="font-size:12px;font-weight:800;color:var(--ink2);margin-bottom:9px">Pick a time</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">{{ menSlotChips }}</div>
+        </div>
+        <div style="background:#1a1a1a;color:#fff;border-radius:var(--rl);padding:20px;margin-bottom:16px">
+          <div style="font-size:11px;opacity:.6;letter-spacing:.5px;text-transform:uppercase">Booking summary</div>
+          <div style="display:flex;align-items:center;gap:12px;margin:14px 0">
+            <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#f7902b,#f24d1b);display:flex;align-items:center;justify-content:center;font-weight:800;flex:none">{{ menInit }}</div>
+            <div style="min-width:0"><div style="font-size:15px;font-weight:800">{{ menName }}</div><div style="font-size:12px;opacity:.6">{{ menRole }}</div></div>
+          </div>
+          <div style="display:grid;gap:9px;font-size:13px;padding:14px 0;border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12)">
+            <div style="display:flex;justify-content:space-between"><span style="opacity:.6">Date</span><span style="font-weight:700">{{ menDateLabel }}</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="opacity:.6">Time</span><span style="font-weight:700">{{ menTimeLabel }}</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="opacity:.6">Duration</span><span style="font-weight:700">30 min</span></div>
+          </div>
+          <button onClick="{{ menConfirm }}" style="width:100%;margin-top:16px;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">Confirm booking</button>
+        </div>
+        <sc-if value="{{ hasBookings }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px">
+            <div style="font-size:15px;font-weight:800;margin-bottom:14px">Your booked sessions</div>
+            <div style="display:grid;gap:11px">
+              <sc-for list="{{ bookings }}" as="b" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:var(--rm);padding:13px">
+                  <div style="width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#f7902b,#f24d1b);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none">{{ b.init }}</div>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">{{ b.name }}</div><div style="font-size:12px;color:var(--ink3)">{{ b.date }} · {{ b.time }}</div></div>
+                  <button onClick="{{ b.cancel }}" style="padding:9px 14px;background:var(--card);border:1px solid #f0c9c2;color:var(--red);border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;flex:none">Cancel</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= PLANNER ========= -->
+    <sc-if value="{{ isPlanner }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both">
+        <div style="display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:5px;margin-bottom:16px">
+          <button onClick="{{ setPlanWeek }}" style="{{ planWeekStyle }}">Weekly</button>
+          <button onClick="{{ setPlanReflect }}" style="{{ planReflectStyle }}">Reflection</button>
+          <button onClick="{{ setPlanTasks }}" style="{{ planTasksStyle }}">Tasks</button>
+        </div>
+        <sc-if value="{{ planWeek }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px;margin-bottom:14px">
+              <div style="font-size:16px;font-weight:800;letter-spacing:-.3px">Plan vs actual</div>
+              <p style="font-size:12.5px;color:var(--ink3);margin:4px 0 16px">How your progress compares with the plan.</p>
+              <div style="display:grid;gap:16px">
+                <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px"><span>Chapter 1</span><span style="color:var(--green)">100%</span></div><div style="height:8px;background:var(--bg);border-radius:5px"><div style="width:100%;height:100%;background:var(--orange);border-radius:5px"></div></div></div>
+                <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px"><span>Chapter 2</span><span style="color:var(--orange)">47%</span></div><div style="height:8px;background:var(--bg);border-radius:5px"><div style="width:47%;height:100%;background:var(--orange);border-radius:5px"></div></div></div>
+                <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px"><span>Chapter 3</span><span style="color:var(--ink3)">0%</span></div><div style="height:8px;background:var(--bg);border-radius:5px"><div style="width:0;height:100%;background:var(--orange);border-radius:5px"></div></div></div>
+              </div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px">
+              <div style="font-size:15px;font-weight:800;margin-bottom:14px">Achievements</div>
+              <div style="display:flex;gap:14px">
+                <div style="flex:1;text-align:center"><div style="width:52px;height:52px;border-radius:16px;background:var(--orange-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 7px;font-size:24px">🔥</div><div style="font-size:11.5px;font-weight:700">12-day streak</div></div>
+                <div style="flex:1;text-align:center"><div style="width:52px;height:52px;border-radius:16px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 7px;font-size:24px">🎯</div><div style="font-size:11.5px;font-weight:700">Goal hit</div></div>
+                <div style="flex:1;text-align:center;opacity:.45"><div style="width:52px;height:52px;border-radius:16px;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 7px;font-size:24px">🏆</div><div style="font-size:11.5px;font-weight:700">Top 100</div></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ planReflect }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;gap:12px">
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:18px"><div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:7px">What went well 🌱</div><p style="font-size:13.5px;line-height:1.6;color:var(--ink2);margin:0">Finished the box model lesson and nailed the flashcards on the first try.</p></div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rm);padding:18px"><div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:7px">To improve 🎯</div><p style="font-size:13.5px;line-height:1.6;color:var(--ink2);margin:0">Spend more time on margin collapsing — still tripping me up.</p></div>
+            <textarea placeholder="Add a reflection for today…" style="width:100%;min-height:90px;padding:14px;border:1px solid var(--line);border-radius:var(--rm);font-family:inherit;font-size:13.5px;line-height:1.6;outline:none;resize:vertical;background:var(--card)"></textarea>
+          </div>
+        </sc-if>
+        <sc-if value="{{ planTasks }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:18px">
+            <div style="font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px">Today's plan</div>
+            <div style="display:grid;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--bg);border-radius:13px"><span style="width:24px;height:24px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"></path></svg></span><span style="flex:1;font-size:14px;font-weight:600;color:var(--ink3);text-decoration:line-through">Watch box model lesson</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--bg);border-radius:13px"><span style="width:24px;height:24px;border-radius:8px;border:2px solid var(--line);background:var(--card);flex:none"></span><span style="flex:1;font-size:14px;font-weight:600">Practice 15 MCQs</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--bg);border-radius:13px"><span style="width:24px;height:24px;border-radius:8px;border:2px solid var(--line);background:var(--card);flex:none"></span><span style="flex:1;font-size:14px;font-weight:600">Revise Flexbox notes</span></div>
+            </div>
+            <button style="width:100%;margin-top:14px;padding:13px;border:1.5px dashed var(--line);background:var(--card);color:var(--ink2);border-radius:12px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">+ Add task</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= SUBSCRIPTION ========= -->
+    <sc-if value="{{ isSubscription }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both">
+        <sc-if value="{{ subPlans }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="text-align:center;margin-bottom:18px"><div style="font-size:21px;font-weight:800;letter-spacing:-.5px">Choose your plan</div><p style="color:var(--ink3);font-size:13px;margin-top:5px">Unlock courses, mock tests &amp; AI tools.</p></div>
+            <div style="display:grid;gap:12px">
+              <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px"><div style="display:flex;align-items:baseline;justify-content:space-between"><div style="font-size:16px;font-weight:800">Free</div><div style="font-size:22px;font-weight:800;letter-spacing:-.5px">₹0</div></div><div style="font-size:12.5px;color:var(--ink3);margin:8px 0 14px">Basic lessons &amp; limited practice.</div><button style="width:100%;padding:12px;background:var(--bg);color:var(--ink);border:none;border-radius:12px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">Current plan</button></div>
+              <div style="background:#1a1a1a;color:#fff;border-radius:var(--rl);padding:20px;position:relative;overflow:hidden">
+                <span style="position:absolute;top:16px;right:16px;font-size:10px;font-weight:800;background:var(--orange);padding:4px 10px;border-radius:7px">POPULAR</span>
+                <div style="font-size:16px;font-weight:800">Pro · Annual</div>
+                <div style="font-size:30px;font-weight:800;letter-spacing:-1px;margin:6px 0 2px">₹4,999<span style="font-size:13px;opacity:.6;font-weight:600">/yr</span></div>
+                <div style="display:grid;gap:8px;margin:14px 0 16px;font-size:13px;opacity:.85">
+                  <div style="display:flex;align-items:center;gap:9px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f7a878" stroke-width="2.6"><path d="M20 6 9 17l-5-5"></path></svg>All courses &amp; live classes</div>
+                  <div style="display:flex;align-items:center;gap:9px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f7a878" stroke-width="2.6"><path d="M20 6 9 17l-5-5"></path></svg>Unlimited mock tests</div>
+                  <div style="display:flex;align-items:center;gap:9px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f7a878" stroke-width="2.6"><path d="M20 6 9 17l-5-5"></path></svg>AI tutor &amp; 1:1 mentors</div>
+                </div>
+                <button onClick="{{ choosePlan }}" style="width:100%;padding:13px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14.5px;font-weight:800;font-family:inherit;cursor:pointer">Upgrade to Pro</button>
+              </div>
+              <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px"><div style="display:flex;align-items:baseline;justify-content:space-between"><div style="font-size:16px;font-weight:800">Pro · Monthly</div><div style="font-size:22px;font-weight:800;letter-spacing:-.5px">₹599<span style="font-size:12px;color:var(--ink3);font-weight:600">/mo</span></div></div><div style="font-size:12.5px;color:var(--ink3);margin:8px 0 14px">Everything in Pro, billed monthly.</div><button onClick="{{ choosePlan }}" style="width:100%;padding:12px;background:var(--card);color:var(--ink);border:1px solid var(--ink);border-radius:12px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">Choose monthly</button></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ subCheckout }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <button onClick="{{ subBack }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;background:var(--card);border:1px solid var(--line);border-radius:11px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:16px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"></path></svg>Plans</button>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px;margin-bottom:14px">
+              <div style="font-size:17px;font-weight:800;margin-bottom:16px">Checkout</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--bg);border-radius:12px;margin-bottom:16px"><div><div style="font-size:14px;font-weight:700">Pro Plan · Annual</div><div style="font-size:11.5px;color:var(--ink3)">Renews Jun 2027</div></div><div style="font-size:17px;font-weight:800">₹4,999</div></div>
+              <div style="display:flex;gap:9px;margin-bottom:16px"><input placeholder="Coupon code" style="flex:1;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font-family:inherit;font-size:13.5px;outline:none;background:var(--bg)"><button style="padding:12px 18px;background:var(--ink);color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer">Apply</button></div>
+              <div style="display:grid;gap:9px;font-size:13.5px;padding-top:14px;border-top:1px solid var(--line)">
+                <div style="display:flex;justify-content:space-between;color:var(--ink2)"><span>Subtotal</span><span>₹4,999</span></div>
+                <div style="display:flex;justify-content:space-between;color:var(--green)"><span>Discount (WELCOME20)</span><span>−₹1,000</span></div>
+                <div style="display:flex;justify-content:space-between;color:var(--ink2)"><span>GST (18%)</span><span>₹720</span></div>
+                <div style="display:flex;justify-content:space-between;font-weight:800;font-size:15px;padding-top:9px;border-top:1px solid var(--line)"><span>Total</span><span>₹4,719</span></div>
+              </div>
+            </div>
+            <button style="width:100%;padding:15px;background:var(--orange);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">Pay ₹4,719</button>
+            <div style="font-size:11.5px;color:var(--ink3);text-align:center;margin-top:12px">🔒 Secure payment · 7-day refund guarantee</div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ========= PROFILE ========= -->
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:14px 16px 28px;animation:mfadeUp .3s ease both;display:grid;gap:14px">
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:22px;text-align:center">
+          <div style="width:80px;height:80px;border-radius:26px;background:linear-gradient(135deg,#f7902b,#f24d1b);display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;font-weight:800;margin:0 auto 14px">RR</div>
+          <div style="font-size:20px;font-weight:800;letter-spacing:-.3px">Ronal Richards</div>
+          <div style="font-size:13px;color:var(--ink3);margin-top:3px">Year 12 · JEE aspirant · Mumbai</div>
+          <button style="margin-top:16px;padding:11px 24px;background:var(--ink);color:#fff;border:none;border-radius:12px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">Edit profile</button>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px"><div style="font-size:15px;font-weight:800">Learning segment</div><span style="font-size:11.5px;font-weight:800;color:var(--orange);background:var(--orange-soft);padding:4px 10px;border-radius:8px">{{ hSeg }} · {{ hSub }}</span></div>
+          <div style="font-size:12.5px;color:var(--ink3);margin-bottom:14px">Tailors classes &amp; content across the app.</div>
+          <div style="font-size:11px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">Segment</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">{{ profSegItems }}</div>
+          <div style="font-size:11px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">Sub-segment</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">{{ profSubItems }}</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:20px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:14px">My plan</div>
+          <div style="display:flex;align-items:center;gap:13px;padding:14px;background:var(--bg);border-radius:13px"><div style="width:42px;height:42px;border-radius:13px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 2 3 7 7 .5-5.5 4.5L18 21l-6-3.7L6 21l1.5-7L2 9.5 9 9z"></path></svg></div><div style="flex:1"><div style="font-size:14px;font-weight:700">Free plan</div><div style="font-size:12px;color:var(--ink3)">Upgrade for unlimited access</div></div><button onClick="{{ goSubscription }}" style="padding:9px 14px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer">Upgrade</button></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--rl);padding:8px 20px">
+          <div style="display:flex;align-items:center;gap:13px;padding:14px 0;border-bottom:1px solid var(--line)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5M12 15V3"></path></svg><span style="flex:1;font-size:14px;font-weight:700">Downloads</span><span style="font-size:12px;color:var(--ink3);font-weight:600">3 files</span></div>
+          <div style="display:flex;align-items:center;gap:13px;padding:14px 0;border-bottom:1px solid var(--line)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg><span style="flex:1;font-size:14px;font-weight:700">Notifications</span><span style="width:40px;height:24px;border-radius:12px;background:var(--orange);position:relative"><span style="position:absolute;right:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff"></span></span></div>
+          <div style="display:flex;align-items:center;gap:13px;padding:14px 0"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5M21 12H9"></path></svg><span style="flex:1;font-size:14px;font-weight:800;color:var(--orange)">Logout</span></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!--SCREENS-->
+
+  </main>
+
+  <!-- ===== BOTTOM TAB BAR ===== -->
+  <nav style="flex:none;height:62px;background:var(--card);border-top:1px solid var(--line);display:flex;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);z-index:30">
+    <button onClick="{{ goHome }}" style="flex:1;border:none;background:transparent;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:{{ cHome }};font-size:10.5px;font-weight:700">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>
+      Home
+    </button>
+    <button onClick="{{ goCourse }}" style="flex:1;border:none;background:transparent;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:{{ cCourse }};font-size:10.5px;font-weight:700">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a2 2 0 0 1 2 2v15l-4-2-4 2V6a2 2 0 0 0-2-2H4z"></path><path d="M4 4v13a2 2 0 0 0 2 2h3"></path></svg>
+      Learn
+    </button>
+    <button onClick="{{ goCalendar }}" style="flex:1;border:none;background:transparent;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:{{ cCal }};font-size:10.5px;font-weight:700">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+      Calendar
+    </button>
+    <button onClick="{{ goMessages }}" style="flex:1;border:none;background:transparent;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:{{ cMsg }};font-size:10.5px;font-weight:700;position:relative">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      Inbox
+    </button>
+    <button onClick="{{ openDrawer }}" style="flex:1;border:none;background:transparent;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--ink3);font-size:10.5px;font-weight:700">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+      More
+    </button>
+  </nav>
+
+  <!-- ===== HAMBURGER DRAWER ===== -->
+  <sc-if value="{{ drawer }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:100">
+      <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(20,18,16,.5);animation:mscrim .25s ease both"></div>
+      <div style="position:absolute;top:0;left:0;bottom:0;width:300px;max-width:84%;background:var(--card);display:flex;flex-direction:column;animation:mdrawer .3s cubic-bezier(.3,.1,.2,1) both;box-shadow:8px 0 40px rgba(0,0,0,.2)">
+        <div style="padding:20px 18px 16px;border-bottom:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <div style="width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#f7902b,#f24d1b);transform:rotate(45deg)"></div>
+            <span style="font-size:20px;font-weight:800;letter-spacing:-.5px">Paperlms</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#f7902b,#f24d1b);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none">RR</div>
+            <div style="min-width:0"><div style="font-size:15px;font-weight:800">Ronal Richards</div><div style="font-size:12px;color:var(--ink3)">Year 12 · JEE</div></div>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px 12px 4px">
+          <sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="11">
+            <button onClick="{{ m.go }}" style="{{ m.style }}">
+              <span style="display:flex;width:20px;justify-content:center">{{ m.iconEl }}</span>
+              <span style="flex:1;text-align:left">{{ m.label }}</span>
+              <sc-if value="{{ m.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:800;color:#fff;background:var(--orange);padding:2px 8px;border-radius:8px">{{ m.badge }}</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        <div style="padding:10px 12px 18px;border-top:1px solid var(--line);display:grid;gap:2px">
+          <button onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:13px;padding:12px 14px;border:none;background:transparent;color:var(--ink2);font-size:14.5px;font-weight:700;border-radius:12px;font-family:inherit;cursor:pointer;text-align:left">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>Profile
+          </button>
+          <button style="display:flex;align-items:center;gap:13px;padding:12px 14px;border:none;background:transparent;color:var(--ink2);font-size:14.5px;font-weight:700;border-radius:12px;font-family:inherit;cursor:pointer;text-align:left">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-2.7H4a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 5.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-.3H11a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 2.7V11a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.4 1z"></path></svg>Settings
+          </button>
+          <button style="display:flex;align-items:center;gap:13px;padding:12px 14px;border:none;background:transparent;color:var(--orange);font-size:14.5px;font-weight:800;border-radius:12px;font-family:inherit;cursor:pointer;text-align:left">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5M21 12H9"></path></svg>Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:440,&quot;height&quot;:880}}">
+class Component extends DCLogic {
+  state = {
+    screen:'home', drawer:false,
+    // course / lesson
+    activeChapter:1, lessonTab:'video',
+    // flashcards
+    fc:0, fcFlip:false, fcC:0, fcW:0, fcS:0, fcDone:false,
+    // ai deck
+    deck:0,
+    // chat
+    chatOpen:false, chatInput:'', chatMsgs:[],
+    // calendar
+    calDay:3, calSheet:null,
+    // messages
+    thread:null, msgInput:'',
+    // forum
+    forumCat:'all', forumThread:null,
+    // feedback
+    fbTab:'allotted', fbForm:null, fbDone:false,
+    // practice
+    woView:'build', woCount:12, woFmt:'mcq', woAns:null, woNum:1,
+    // mock
+    mtView:'list', mtPalette:false, mtAns:null,
+    tmsgs:[],
+    // mentor
+    menSel:0, menDay:0, menSlot:null, menBookings:[],
+    // planner
+    planTab:'week',
+    // subscription
+    subView:'plans',
+    // profile
+    hSeg:'Year 12', hSub:'JEE',
+  };
+
+  go(screen){ this.setState({ screen, drawer:false, chatOpen:false }); const el=document.getElementById('mscroll'); if(el) el.scrollTop=0; }
+
+  sendMsg(){ const t=(this.state.msgInput||'').trim(); if(!t) return; this.setState(st=>({tmsgs:[...st.tmsgs,{role:'me',text:t}],msgInput:''})); }
+
+  segStyle(on){ return 'flex:1;padding:11px 8px;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;'+(on?'background:var(--ink);color:#fff':'background:transparent;color:var(--ink3)'); }
+
+  fcAdvance(kind){ this.setState(st=>{ const n=st.fc+1; const next={ [kind]:st[kind]+1, fcFlip:false }; if(n>=8){ next.fcDone=true; } else { next.fc=n; } return next; }); }
+
+  renderVals(){
+    const s = this.state;
+    const R = React.createElement;
+    const ic = (paths,opts={}) => R('svg',{width:opts.w||19,height:opts.w||19,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:opts.sw||1.8,strokeLinecap:'round',strokeLinejoin:'round'}, paths.map((d,i)=>R('path',{key:i,d})));
+
+    const titles = { home:'Overview', course:'My Course', lesson:'Lesson', flashcards:'Flashcards', deck:'AI Deck', calendar:'Calendar', messages:'Messages', thread:'Chat', forum:'Forum', feedback:'Feedback', practice:'Practice', mock:'Mock Tests', mentor:'Book a Mentor', planner:'Study Planner', subscription:'Subscription', profile:'Profile' };
+
+    // ---- drawer menu ----
+    const menuDefs = [
+      ['home','Overview',['M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],null],
+      ['course','My Course',['M4 4h11a2 2 0 0 1 2 2v15l-4-2-4 2V6a2 2 0 0 0-2-2H4z','M4 4v13a2 2 0 0 0 2 2h3'],null],
+      ['calendar','Calendar',['M3 4h18v18H3zM16 2v4M8 2v4M3 10h18'],null],
+      ['messages','Messages',['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],'3'],
+      ['forum','Forum',['M17 8h2a2 2 0 0 1 2 2v11l-4-4H9a2 2 0 0 1-2-2v-1','M3 3h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7l-4 4z'],null],
+      ['practice','Practice',['M9 11l3 3 8-8','M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'],null],
+      ['mock','Mock Tests',['M9 2h6v4H9zM9 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-4','M9 14l2 2 4-4'],null],
+      ['mentor','Book a Mentor',['M12 8a4 4 0 1 0 0-0.01','M4 21c0-4 4-6 8-6s8 2 8 6'],null],
+      ['planner','Study Planner',['M3 4h18v18H3zM16 2v4M8 2v4M3 10h18','M8 14h2M8 18h2'],null],
+      ['feedback','Feedback',['M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9','M13.7 21a2 2 0 0 1-3.4 0'],'2'],
+      ['subscription','Subscription',['M2 8h20v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zM2 8l2-4h16l2 4M2 12h20'],null],
+    ];
+    const menuItems = menuDefs.map(([key,label,paths,badge]) => {
+      const active = s.screen===key || (key==='course' && (s.screen==='lesson'||s.screen==='flashcards')) || (key==='messages' && s.screen==='thread') || (key==='forum' && s.screen==='forumThread');
+      return {
+        label, go:()=>this.go(key),
+        iconEl: ic(paths,{w:19,sw:1.85}),
+        hasBadge: !!badge, badge,
+        style: 'display:flex;align-items:center;gap:13px;padding:12px 14px;border:none;font-family:inherit;cursor:pointer;border-radius:12px;font-size:14.5px;font-weight:700;width:100%;'+(active?'background:var(--ink);color:#fff':'background:transparent;color:var(--ink2)')
+      };
+    });
+
+    const tabColor = (on)=> on ? 'var(--orange)' : 'var(--ink3)';
+
+    // ---- flashcards ----
+    const cards = [
+      ['What does the CSS box model consist of?','Content, padding, border, and margin — four layers wrapping every element.'],
+      ['What does box-sizing: border-box do?','Makes the declared width/height include padding and border.'],
+      ['Which property adds space inside an element?','padding — between the content and the border.'],
+      ['What is margin collapsing?','When vertical margins of adjacent blocks combine into one.'],
+      ['Default value of box-sizing?','content-box.'],
+      ['Which layer is outside the border?','margin.'],
+      ['Does padding have a background?','Yes — the element background extends through padding.'],
+      ['Shorthand for all four margins?','margin: top right bottom left;'],
+    ];
+    const card = cards[s.fc] || cards[0];
+
+    // ---- ai deck ----
+    const deckSlides = [
+      ['What is the box model?','The foundation of CSS layout','Every element is a rectangular box made of content, padding, border and margin. Understanding these layers is the key to predictable layouts.'],
+      ['Content & padding','The inner layers','Content holds text and images. Padding is transparent space inside the border — it shares the element\u2019s background colour.'],
+      ['Border & margin','The outer layers','The border wraps padding and content. Margin is the transparent gap pushing other elements away.'],
+      ['box-sizing','Two sizing models','content-box (default) adds padding+border to your width. border-box keeps width fixed and fits padding+border inside.'],
+      ['Margin collapsing','A common gotcha','Adjacent vertical margins merge into the larger of the two — not their sum. Horizontal margins never collapse.'],
+      ['Recap','You\u2019ve got this','content \u2192 padding \u2192 border \u2192 margin. Set box-sizing: border-box globally for sane, predictable layouts.'],
+    ];
+    const dk = deckSlides[s.deck] || deckSlides[0];
+
+    // ---- chat ----
+    const baseMsgs = s.chatMsgs.length ? s.chatMsgs : [{role:'ai',text:"Hi! I'm your AI tutor for The CSS Box Model. Ask me anything, or pick a suggestion below."}];
+    const chatBubbles = baseMsgs.map((m,i)=>{
+      if(m.role==='ai') return R('div',{key:i,style:{display:'flex',gap:9,maxWidth:'90%'}},
+        R('div',{style:{width:26,height:26,borderRadius:8,background:'#1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',flex:'none'}}, R('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'#f7a878',strokeWidth:2},R('path',{d:'M12 2 9 9l-7 1 5 5-1 7 6-3 6 3-1-7 5-5-7-1z'}))),
+        R('div',{style:{background:'var(--card)',border:'1px solid var(--line)',borderRadius:'4px 14px 14px 14px',padding:'11px 13px',fontSize:13,lineHeight:1.6,color:'var(--ink2)'}},m.text));
+      return R('div',{key:i,style:{alignSelf:'flex-end',maxWidth:'85%',background:'var(--ink)',color:'#fff',borderRadius:'14px 14px 4px 14px',padding:'11px 14px',fontSize:13,lineHeight:1.6}},m.text);
+    });
+    const chatChips = ['Explain like I\u2019m 5','Give an example','Why border-box?'].map((t,i)=>R('button',{key:i,onClick:()=>this.sendChat(t),style:{padding:'8px 13px',background:'var(--orange-soft)',color:'var(--orange)',border:'none',borderRadius:999,fontSize:12.5,fontWeight:700,fontFamily:'inherit',cursor:'pointer'}},t));
+
+    // ---- calendar ----
+    const days = [['Mon','17'],['Tue','18'],['Wed','19'],['Thu','20'],['Fri','21'],['Sat','22'],['Sun','23']];
+    const calStrip = days.map((d,i)=>{ const on=i===s.calDay; return R('button',{key:i,onClick:()=>this.setState({calDay:i,calSheet:null}),style:{flex:'none',width:50,padding:'10px 0',borderRadius:14,border:'none',cursor:'pointer',fontFamily:'inherit',background:on?'var(--ink)':'var(--card)',color:on?'#fff':'var(--ink)',boxShadow:on?'none':'inset 0 0 0 1px var(--line)'}},
+      R('div',{style:{fontSize:11,fontWeight:700,opacity:on?.7:.5}},d[0]), R('div',{style:{fontSize:18,fontWeight:800,marginTop:2}},d[1])); });
+
+    const calEvents = [
+      {type:'Live class', tc:'var(--red)', time:'5:30 PM', title:'Responsive Layouts — Live Q&A', sub:'Priya Menon · 30 min', cta:'Join'},
+      {type:'Class', tc:'var(--orange)', time:'4:00 PM', title:'Flexbox Deep Dive', sub:'Priya Menon · 45 min', cta:'Open'},
+      {type:'Mock test', tc:'var(--purple)', time:'7:00 PM', title:'Full Syllabus Mock · 01', sub:'40 questions · 60 min', cta:'Start'},
+      {type:'Mentor', tc:'var(--green)', time:'8:30 PM', title:'1:1 — Portfolio review', sub:'Aditi Sharma · 30 min', cta:'Join'},
+    ];
+    const calAgenda = calEvents.map((ev,i)=>R('button',{key:i,onClick:()=>this.setState({calSheet:ev}),style:{display:'flex',gap:13,alignItems:'center',width:'100%',textAlign:'left',background:'var(--card)',border:'1px solid var(--line)',borderRadius:14,padding:'13px 14px',cursor:'pointer',fontFamily:'inherit'}},
+      R('div',{style:{width:4,alignSelf:'stretch',borderRadius:4,background:ev.tc,flex:'none'}}),
+      R('div',{style:{width:54,flex:'none'}}, R('div',{style:{fontSize:13,fontWeight:800,letterSpacing:'-.3px'}},ev.time.replace(' PM','').replace(' AM','')), R('div',{style:{fontSize:10,color:'var(--ink3)',fontWeight:700}},ev.time.slice(-2))),
+      R('div',{style:{flex:1,minWidth:0}}, R('div',{style:{fontSize:10.5,fontWeight:800,textTransform:'uppercase',letterSpacing:'.4px',color:ev.tc}},ev.type), R('div',{style:{fontSize:14,fontWeight:700,marginTop:2}},ev.title), R('div',{style:{fontSize:12,color:'var(--ink3)',marginTop:1}},ev.sub)),
+      R('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'var(--ink3)',strokeWidth:2},R('path',{d:'m9 18 6-6-6-6'}))));
+
+    // ---- messages ----
+    const threads = [
+      {name:'Priya Menon', role:'Front-end Mentor', last:'Sure — let\u2019s cover box-sizing tomorrow.', time:'2m', unread:2, init:'PM', grad:true},
+      {name:'CSS Batch A', role:'Group · 42 members', last:'Sara: anyone got the assignment link?', time:'18m', unread:0, init:'CA', grad:false},
+      {name:'Aditi Sharma', role:'Mentor', last:'Great progress on your portfolio! 🎉', time:'1h', unread:0, init:'AS', grad:true},
+      {name:'Paperlms Support', role:'Support team', last:'Your invoice for June is ready.', time:'3h', unread:0, init:'PL', grad:false},
+    ];
+    const threadList = threads.map((t,i)=>R('button',{key:i,onClick:()=>{this.setState({thread:i});this.go('thread');},style:{display:'flex',gap:12,alignItems:'center',width:'100%',textAlign:'left',background:'transparent',border:'none',borderBottom:'1px solid var(--line)',padding:'14px 16px',cursor:'pointer',fontFamily:'inherit'}},
+      R('div',{style:{width:46,height:46,borderRadius:14,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:14,background:t.grad?'linear-gradient(135deg,#f7902b,#f24d1b)':'#1a1a1a'}},t.init),
+      R('div',{style:{flex:1,minWidth:0}}, R('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}}, R('span',{style:{fontSize:14.5,fontWeight:700}},t.name), R('span',{style:{fontSize:11,color:'var(--ink3)',fontWeight:600,flex:'none',marginLeft:8}},t.time)), R('div',{style:{fontSize:12.5,color:'var(--ink3)',marginTop:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},t.last)),
+      t.unread?R('span',{style:{flex:'none',minWidth:20,height:20,borderRadius:10,background:'var(--orange)',color:'#fff',fontSize:11,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 6px'}},t.unread):null));
+    const at = threads[s.thread] || threads[0];
+    const convoBase = [
+      {role:'them',text:'Hi Ronal! How\u2019s the box model lesson going?'},
+      {role:'me',text:'Pretty good — but border-box vs content-box still confuses me a bit.'},
+      {role:'them',text:'Totally normal. border-box keeps the declared width fixed and fits padding + border inside. Want to go over it 1:1 tomorrow?'},
+      {role:'me',text:'Yes please 🙏'},
+      {role:'them',text:'Sure — let\u2019s cover box-sizing tomorrow at 5:30.'},
+    ];
+    const convo = [...convoBase, ...s.tmsgs];
+    const msgBubbles = convo.map((m,i)=> m.role==='them'
+      ? R('div',{key:i,style:{alignSelf:'flex-start',maxWidth:'82%',background:'var(--card)',border:'1px solid var(--line)',borderRadius:'4px 16px 16px 16px',padding:'11px 14px',fontSize:13.5,lineHeight:1.55,color:'var(--ink)'}},m.text)
+      : R('div',{key:i,style:{alignSelf:'flex-end',maxWidth:'82%',background:'var(--ink)',color:'#fff',borderRadius:'16px 16px 4px 16px',padding:'11px 14px',fontSize:13.5,lineHeight:1.55}},m.text));
+
+    // ---- mentors ----
+    const mentorData = [['Aditi Sharma','AS','Front-end Mentor · 6y'],['Rohan Verma','RV','Full-stack · 8y'],['Neha Kapoor','NK','UI/UX Mentor · 5y']];
+    const ment = mentorData[s.menSel] || mentorData[0];
+    const menDayDefs = [['Thu','20'],['Fri','21'],['Sat','22'],['Sun','23']];
+    const menSlots = ['10:00','11:30','2:00','3:30','5:00','6:30'];
+    const mentorChips = mentorData.map((m,i)=>{ const on=i===s.menSel; return R('button',{key:i,onClick:()=>this.setState({menSel:i}),style:{display:'flex',alignItems:'center',gap:11,width:'100%',padding:'12px 14px',borderRadius:14,cursor:'pointer',fontFamily:'inherit',textAlign:'left',border:'none',background:on?'var(--orange-soft)':'var(--card)',boxShadow:on?'inset 0 0 0 1.5px var(--orange)':'inset 0 0 0 1px var(--line)'}},
+      R('div',{style:{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,#f7902b,#f24d1b)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:13,flex:'none'}},m[1]),
+      R('div',{style:{minWidth:0,flex:1}},R('div',{style:{fontSize:14,fontWeight:700}},m[0]),R('div',{style:{fontSize:12,color:'var(--ink3)'}},m[2])),
+      on?R('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'var(--orange)',strokeWidth:2.4},R('path',{d:'M20 6 9 17l-5-5'})):null); });
+    const menDayChips = menDayDefs.map((d,i)=>{ const on=i===s.menDay; return R('button',{key:i,onClick:()=>this.setState({menDay:i}),style:{flex:1,padding:'11px 0',borderRadius:13,border:'none',cursor:'pointer',fontFamily:'inherit',background:on?'var(--ink)':'var(--card)',color:on?'#fff':'var(--ink)',boxShadow:on?'none':'inset 0 0 0 1px var(--line)'}},
+      R('div',{style:{fontSize:11,fontWeight:700,opacity:on?.7:.5}},d[0]),R('div',{style:{fontSize:16,fontWeight:800,marginTop:2}},d[1])); });
+    const menSlotChips = menSlots.map((t,i)=>{ const on=i===s.menSlot; return R('button',{key:i,onClick:()=>this.setState({menSlot:i}),style:{padding:'11px 0',borderRadius:11,border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:700,background:on?'var(--orange)':'var(--card)',color:on?'#fff':'var(--ink2)',boxShadow:on?'none':'inset 0 0 0 1px var(--line)'}},t); });
+    const bookings = s.menBookings.map((b,i)=>({...b, cancel:()=>this.setState(st=>({menBookings:st.menBookings.filter((_,x)=>x!==i)}))}));
+
+    // ---- practice options ----
+    const woOpts = ['margin','padding','border','gap'];
+    const woOptionEls = woOpts.map((o,i)=>{ const ans=s.woAns!==null; const correct=i===1; const sel=s.woAns===i; let bg='var(--card)',bd='1px solid var(--line)',col='var(--ink)';
+      if(ans&&correct){bg='var(--green-soft)';bd='1.5px solid var(--green)';col='var(--green)';} else if(ans&&sel&&!correct){bg='#fbe9e6';bd='1.5px solid var(--red)';col='var(--red)';}
+      return R('button',{key:i,onClick:()=>this.setState({woAns:i}),style:{display:'flex',alignItems:'center',gap:12,padding:'15px 16px',borderRadius:13,border:bd,background:bg,color:col,cursor:'pointer',fontFamily:'inherit',fontSize:15,fontWeight:700,textAlign:'left'}},
+        R('span',{style:{width:26,height:26,borderRadius:8,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:800,background:'var(--bg)'}},String.fromCharCode(65+i)), o); });
+
+    // ---- mock palette ----
+    const palette = Array.from({length:20},(_,i)=>{ const st=i<7?'a':i===8?'f':'n'; const bg=st==='a'?'var(--green)':st==='f'?'var(--amber)':'var(--bg)'; const col=st==='n'?'var(--ink2)':'#fff'; const bd=st==='n'?'1px solid var(--line)':'none';
+      return R('button',{key:i,style:{aspectRatio:'1',borderRadius:9,border:bd,background:bg,color:col,fontFamily:'inherit',fontSize:13,fontWeight:700,cursor:'pointer'}},i+1); });
+    const mtOptList=['content-box','border-box','padding-box','inherit'];
+    const mtOptionEls = mtOptList.map((o,i)=>{ const sel=s.mtAns===i; return R('button',{key:i,onClick:()=>this.setState({mtAns:i}),style:{display:'flex',alignItems:'center',gap:12,padding:'15px 16px',borderRadius:13,border:sel?'1.5px solid var(--orange)':'1px solid var(--line)',background:sel?'var(--orange-soft)':'var(--card)',color:'var(--ink)',cursor:'pointer',fontFamily:'inherit',fontSize:15,fontWeight:700,textAlign:'left'}},
+      R('span',{style:{width:24,height:24,borderRadius:'50%',flex:'none',border:sel?'7px solid var(--orange)':'2px solid var(--line)'}}), o); });
+
+    // ---- profile segments ----
+    const segDefs = ['Year 11','Year 12','Dropper','University'];
+    const subBy = {'Year 11':['JEE','NEET','Foundation'],'Year 12':['JEE','NEET','Boards'],'Dropper':['JEE','NEET'],'University':['GATE','Placements']};
+    const pill = (on)=>({padding:'9px 15px',borderRadius:999,border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:700,background:on?'var(--ink)':'var(--bg)',color:on?'#fff':'var(--ink2)',boxShadow:on?'none':'inset 0 0 0 1px var(--line)'});
+    const profSegItems = segDefs.map((o,i)=>R('button',{key:i,onClick:()=>this.setState({hSeg:o,hSub:(subBy[o]||[])[0]}),style:pill(o===s.hSeg)},o));
+    const profSubItems = (subBy[s.hSeg]||[]).map((o,i)=>R('button',{key:i,onClick:()=>this.setState({hSub:o}),style:pill(o===s.hSub)},o));
+
+    // ---- flashcards computed ----
+    const fcAnswered = s.fcC + s.fcW + s.fcS;
+    const deckDots = deckSlides.map((_,i)=>R('span',{key:i,style:{width:i===s.deck?20:7,height:7,borderRadius:4,background:i===s.deck?'var(--orange)':'var(--line)',transition:'all .2s'}}));
+
+    return {
+      screenTitle: titles[s.screen]||'Overview',
+      isDeck:s.screen==='deck', goDeck:()=>this.go('deck'),
+      // chat
+      chatOpen:s.chatOpen, chatBubbles, chatChips, chatEmpty:s.chatMsgs.length===0, chatInput:s.chatInput,
+      toggleChat:()=>this.setState(st=>({chatOpen:!st.chatOpen})),
+      setChatInput:(e)=>this.setState({chatInput:e.target.value}),
+      chatKey:(e)=>{ if(e.key==='Enter') this.sendChat(); },
+      sendChatBtn:()=>this.sendChat(),
+      // flashcards
+      fcRunning:!s.fcDone, fcDone:s.fcDone, fcProgress:(s.fc/8*100)+'%', fcNum:s.fc+1,
+      fcQuestion:card[0], fcAnswer:card[1], fcTransform:s.fcFlip?'rotateY(180deg)':'none',
+      fcC:s.fcC, fcW:s.fcW, fcS:s.fcS,
+      flipCard:()=>this.setState(st=>({fcFlip:!st.fcFlip})),
+      fcRight:()=>this.fcAdvance('fcC'), fcWrong:()=>this.fcAdvance('fcW'), fcSkip:()=>this.fcAdvance('fcS'),
+      fcRestart:()=>this.setState({fc:0,fcFlip:false,fcC:0,fcW:0,fcS:0,fcDone:false}),
+      // deck
+      deckNum:s.deck+1, deckTitle:dk[0], deckSub:dk[1], deckBody:dk[2], deckDots,
+      deckPrev:()=>this.setState(st=>({deck:Math.max(0,st.deck-1)})),
+      deckNext:()=>this.setState(st=>({deck:Math.min(5,st.deck+1)})),
+      // messages
+      threadList, threadName:at.name, threadMeta:at.role+' · online', threadInit:at.init, threadGrad:at.grad, msgBubbles, msgInput:s.msgInput,
+      setMsgInput:(e)=>this.setState({msgInput:e.target.value}),
+      msgKey:(e)=>{ if(e.key==='Enter') this.sendMsg(); },
+      sendMsgBtn:()=>this.sendMsg(),
+      // calendar
+      calStrip, calAgenda, calDayLabel:'Thursday, 20 June',
+      calSheetOpen:!!s.calSheet, closeCalSheet:()=>this.setState({calSheet:null}),
+      calSheetTitle:(s.calSheet||{}).title, calSheetTime:(s.calSheet||{}).time, calSheetType:(s.calSheet||{}).type, calSheetSub:(s.calSheet||{}).sub, calSheetCta:(s.calSheet||{}).cta,
+      isHome:s.screen==='home', isCourse:s.screen==='course', isLesson:s.screen==='lesson', isFlashcards:s.screen==='flashcards',
+      isCalendar:s.screen==='calendar', isMessages:s.screen==='messages', isThread:s.screen==='thread',
+      isForum:s.screen==='forum', isForumThread:s.screen==='forumThread', isFeedback:s.screen==='feedback',
+      isPractice:s.screen==='practice', isMock:s.screen==='mock', isMentor:s.screen==='mentor',
+      isPlanner:s.screen==='planner', isSubscription:s.screen==='subscription', isProfile:s.screen==='profile',
+      drawer:s.drawer, menuItems,
+      todayLong:'Saturday, 21 June', todayShort:'Jun 21',
+      // nav colors
+      cHome:tabColor(s.screen==='home'), cCourse:tabColor(s.screen==='course'||s.screen==='lesson'||s.screen==='flashcards'||s.screen==='deck'), cCal:tabColor(s.screen==='calendar'), cMsg:tabColor(s.screen==='messages'||s.screen==='thread'),
+      // handlers
+      openDrawer:()=>this.setState({drawer:true}), closeDrawer:()=>this.setState({drawer:false}),
+      goHome:()=>this.go('home'), goCourse:()=>this.go('course'), goLesson:()=>this.go('lesson'), goCalendar:()=>this.go('calendar'),
+      goMessages:()=>this.go('messages'), goForum:()=>this.go('forum'), goFeedback:()=>this.go('feedback'),
+      goPractice:()=>this.go('practice'), goMock:()=>this.go('mock'), goMentor:()=>this.go('mentor'),
+      goPlanner:()=>this.go('planner'), goSubscription:()=>this.go('subscription'), goProfile:()=>this.go('profile'), goFlashcards:()=>this.go('flashcards'),
+      // mentor
+      mentorChips, menDayChips, menSlotChips, bookings, hasBookings:s.menBookings.length>0,
+      menName:ment[0], menInit:ment[1], menRole:ment[2],
+      menDateLabel:menDayDefs[s.menDay][0]+' '+menDayDefs[s.menDay][1]+' Jun', menTimeLabel:s.menSlot!==null?menSlots[s.menSlot]+' PM':'—',
+      menConfirm:()=>{ if(s.menSlot===null) return; this.setState(st=>({menBookings:[...st.menBookings,{init:ment[1],name:ment[0],role:ment[2],date:menDayDefs[st.menDay][0]+' '+menDayDefs[st.menDay][1]+' Jun',time:menSlots[st.menSlot]+' PM'}],menSlot:null})); },
+      // practice
+      woBuild:s.woView==='build', woSession:s.woView==='session', woCount:s.woCount, woNum:s.woNum, woOptionEls, woAnswered:s.woAns!==null,
+      setWoCount:(e)=>this.setState({woCount:+e.target.value}),
+      startWorkout:()=>this.setState({woView:'session',woAns:null,woNum:1}),
+      exitWorkout:()=>this.setState({woView:'build'}),
+      woNext:()=>this.setState(st=>({woNum:Math.min(st.woCount,st.woNum+1),woAns:null})),
+      // mock
+      mtList:s.mtView==='list', mtInstr:s.mtView==='instr', mtTest:s.mtView==='test', mtResult:s.mtView==='result',
+      mtPaletteOpen:s.mtPalette, palette, mtOptionEls,
+      openMock:()=>this.setState({mtView:'instr'}), mtStart:()=>this.setState({mtView:'test',mtAns:null}),
+      mtSubmit:()=>this.setState({mtView:'result'}), mtBackList:()=>this.setState({mtView:'list'}),
+      togglePalette:()=>this.setState(st=>({mtPalette:!st.mtPalette})),
+      // planner
+      planWeek:s.planTab==='week', planReflect:s.planTab==='reflect', planTasks:s.planTab==='tasks',
+      setPlanWeek:()=>this.setState({planTab:'week'}), setPlanReflect:()=>this.setState({planTab:'reflect'}), setPlanTasks:()=>this.setState({planTab:'tasks'}),
+      planWeekStyle:this.segStyle(s.planTab==='week'), planReflectStyle:this.segStyle(s.planTab==='reflect'), planTasksStyle:this.segStyle(s.planTab==='tasks'),
+      // subscription
+      subPlans:s.subView==='plans', subCheckout:s.subView==='checkout',
+      choosePlan:()=>this.setState({subView:'checkout'}), subBack:()=>this.setState({subView:'plans'}),
+      // feedback
+      fbAllotted:s.fbTab==='allotted', fbSubmitted:s.fbTab==='submitted', fbFormOpen:s.fbForm!==null, fbListShown:s.fbForm===null, fbDone:s.fbDone, fbNotDone:!s.fbDone,
+      setFbAllotted:()=>this.setState({fbTab:'allotted'}), setFbSubmitted:()=>this.setState({fbTab:'submitted'}),
+      fbAllottedStyle:this.segStyle(s.fbTab==='allotted'), fbSubmittedStyle:this.segStyle(s.fbTab==='submitted'),
+      openFbForm:()=>this.setState({fbForm:0,fbDone:false}), closeFbForm:()=>this.setState({fbForm:null}),
+      submitFb:()=>this.setState({fbDone:true}),
+      // forum
+      forumThreadOpen:s.forumThread!==null, forumListShown:s.forumThread===null,
+      openForumThread:()=>this.setState({forumThread:0}), closeForumThread:()=>this.setState({forumThread:null}),
+      // profile
+      profSegItems, profSubItems, hSeg:s.hSeg, hSub:s.hSub,
+    };
+  }
+
+  sendChat(text){
+    text = (text||this.state.chatInput||'').trim(); if(!text) return;
+    const reply = "Great question! The box model wraps every element in content, padding, border and margin. Set box-sizing: border-box so width includes padding and border \u2014 the most predictable model for layout.";
+    this.setState(st=>({ chatMsgs:[...(st.chatMsgs.length?st.chatMsgs:[{role:'ai',text:"Hi! I'm your AI tutor for The CSS Box Model. Ask me anything, or pick a suggestion below."}]), {role:'me',text}, {role:'ai',text:reply}], chatInput:'' }));
+  }
+}
+</script>
+</body>
+</html>

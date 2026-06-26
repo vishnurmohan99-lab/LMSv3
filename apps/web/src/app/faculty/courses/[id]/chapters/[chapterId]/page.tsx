@@ -63,18 +63,20 @@ function SparkleIcon() {
   );
 }
 
-type FeatureKey = "flashcardsEnabled" | "aiNotesEnabled" | "askMeEnabled" | "summaryDeckEnabled";
+type FeatureKey = "flashcardsEnabled" | "aiNotesEnabled" | "askMeEnabled" | "summaryDeckEnabled" | "cheatSheetEnabled";
 
 const AVAILABLE_FEATURES: { key: FeatureKey; label: string }[] = [
   { key: "flashcardsEnabled", label: "Flashcards" },
   { key: "aiNotesEnabled", label: "AI Notes" },
   { key: "summaryDeckEnabled", label: "Summary Deck" },
+  { key: "cheatSheetEnabled", label: "Cheat Sheet" },
   { key: "askMeEnabled", label: "Ask Me" },
 ];
 
-/** AI Notes is a video-only feature — every other feature works for both video and PDF lessons. */
+/** AI Notes is video-only; Cheat Sheet is currently PDF-only -- every other feature works for both. */
 function excludedFeatureKeys(type: LessonType): FeatureKey[] {
-  return type === "VIDEO" ? [] : ["aiNotesEnabled"];
+  if (type === "VIDEO") return ["cheatSheetEnabled"];
+  return ["aiNotesEnabled", ...(type === "PDF" ? [] : ["cheatSheetEnabled" as const])];
 }
 
 /** Parses a .srt subtitle file into plain transcript text (strips indices and timestamps). */
@@ -249,16 +251,20 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
     aiNotesEnabled: false,
     askMeEnabled: false,
     summaryDeckEnabled: false,
+    cheatSheetEnabled: false,
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const anyAiFeatureOn = features.aiNotesEnabled || features.askMeEnabled || features.summaryDeckEnabled;
+  const anyAiFeatureOn = features.aiNotesEnabled || features.askMeEnabled || features.summaryDeckEnabled || features.cheatSheetEnabled;
 
   function onChangeType(next: LessonType) {
     setType(next);
     if (next !== "VIDEO" && features.aiNotesEnabled) {
       setFeatures((f) => ({ ...f, aiNotesEnabled: false }));
+    }
+    if (next !== "PDF" && features.cheatSheetEnabled) {
+      setFeatures((f) => ({ ...f, cheatSheetEnabled: false }));
     }
   }
 
@@ -529,7 +535,7 @@ function LessonCard({
         {lessonContentStatus(lesson)}
       </div>
 
-      {(lesson.flashcardsEnabled || (lesson.aiNotesEnabled && lesson.type === "VIDEO") || lesson.askMeEnabled || lesson.summaryDeckEnabled) && (
+      {(lesson.flashcardsEnabled || (lesson.aiNotesEnabled && lesson.type === "VIDEO") || lesson.askMeEnabled || lesson.summaryDeckEnabled || lesson.cheatSheetEnabled) && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {lesson.flashcardsEnabled && (
             <FeatureBadge label="Flashcards" href={`/faculty/courses/${courseId}/lessons/${lesson.id}/flashcards`} />
@@ -539,6 +545,9 @@ function LessonCard({
           )}
           {lesson.summaryDeckEnabled && (
             <FeatureBadge label="Summary Deck" href={`/faculty/courses/${courseId}/lessons/${lesson.id}/summary-deck`} />
+          )}
+          {lesson.cheatSheetEnabled && (
+            <FeatureBadge label="Cheat Sheet" href={`/faculty/courses/${courseId}/lessons/${lesson.id}/cheat-sheet`} />
           )}
           {lesson.askMeEnabled && <FeatureBadge label="Ask Me" />}
         </div>
@@ -550,6 +559,7 @@ function LessonCard({
           aiNotesEnabled: lesson.aiNotesEnabled,
           askMeEnabled: lesson.askMeEnabled,
           summaryDeckEnabled: lesson.summaryDeckEnabled,
+          cheatSheetEnabled: lesson.cheatSheetEnabled,
         }}
         onToggle={onToggleFeature}
         excludeKeys={excludedFeatureKeys(lesson.type)}
