@@ -87,6 +87,15 @@ each; any API client change must be made in both files.
 - A student with no segmentId/subsegmentId sees ALL segment-scoped content
   unfiltered — intentional, mirrored across Course/Test/Answer-Correction
   question visibility.
+- **Always give `orderBy: { order: 'asc' }` a secondary tiebreaker**
+  (`createdAt`/`id`) wherever lessons/tests/chapters are queried. Many rows
+  share `order: 0` until a user explicitly reorders them, and Postgres
+  doesn't guarantee tie order without a secondary sort key — without one, an
+  unrelated update (e.g. toggling a feature flag on a lesson) can make a
+  fresh fetch return ties in a different sequence, looking like the order
+  silently changed even though nothing touched it. Fixed in
+  `getCourseTree()` and the SEQUENTIAL-drip sibling queries in
+  `courses.service.ts`; apply the same pattern to any new ordered query.
 - **This codebase is ~100% inline-style, zero CSS Modules.** Inline styles
   can't express `@media` queries. Established pattern: add named utility
   classes (`mobile-page-pad`, `mobile-stack-header`, `course-pane-list`, etc.)
@@ -220,7 +229,21 @@ management page (portrait-card preview grid) at
 `.../lessons/[lessonId]/cheat-sheet`; students get `CheatSheetReview.tsx`
 (swipeable pages, mirrors `SummaryDeckReview`) via a new lesson-player view
 mode. Verified end-to-end against a real PDF (ICSE physics notes) — produced
-3 well-structured pages with real, topically-correct illustrations.
+3 well-structured pages with real, topically-correct illustrations on the
+first test run.
+
+**Known issue (live, unresolved):** illustrations stopped generating shortly
+after — confirmed via added error logging that `AiService.generateImage()`
+gets **402 Payment Required** from OpenRouter. There is no real $0
+image-generation tier on OpenRouter; the first successful run likely used a
+one-time trial allowance, and the account now has no credit balance for
+image calls. The bullets/table/exam-tip text generation is unaffected (image
+failure is caught per-page and logged, never fails the whole sheet) — pages
+just render with no illustration. **Fix requires the user to add credit at
+openrouter.ai/credits** (this account is shared with the text/vision models,
+which DO have free tiers, so only image generation is blocked) — not
+something fixable in code. Alternative: switch to OpenAI's image API via the
+same `OPENROUTER_IMAGE_MODEL`-style env-var swap pattern, if asked.
 
 **Mobile UI rollout** (in progress, module-by-module, user-paced) — sourced
 from `design-reference/Mobile user page UI/elearning-mobile.dc.html` (top app
@@ -279,11 +302,15 @@ hand-written, applied via `migrate deploy` (see gotcha above).
   no "My submissions" history page; multi-page answers not supported.
 - Cheat Sheet: PDF-only (no video support yet, despite the original feature
   request describing video too — explicitly deferred); no extraction of
-  images/diagrams from the source PDF (AI-generated illustrations only); no
-  literal $0 image model exists on OpenRouter so each generation has a real
-  (tiny) per-image cost; one orphaned test `CheatSheet` row + 3 R2 images
-  remain attached to the real "Test Lesson" PDF lesson in Physics from
-  end-to-end verification (harmless, but not cleaned up).
+  images/diagrams from the source PDF (AI-generated illustrations only).
+  **Illustrations are currently blocked**: OpenRouter returns 402 Payment
+  Required on every image call (no $0 image tier exists; confirmed live via
+  added error logging) — text/bullets/table/exam-tip generation works fine,
+  pages just render with no picture until the OpenRouter account has a
+  credit balance added at openrouter.ai/credits. Flagged to the user as a
+  billing action, not a code fix. One orphaned test `CheatSheet` row + a few
+  R2 images remain attached to the real "Test Lesson" PDF lesson in Physics
+  from end-to-end verification (harmless, but not cleaned up).
 - Mobile UI rollout partial — see above. Faculty/Admin apps not in scope yet.
 - Prior-session gaps still open: no DB-level "comprehension group" beyond
   shared `passageId`, PASS_TEST 50% threshold hardcoded, sequential
@@ -336,4 +363,5 @@ full context dump.
 ---
 *Last updated: 2026-06-26, after the mobile UI rollout commits (shell, course
 list, course detail/lesson player, flashcards+AI deck, dashboard), the
-Answer Correction feature, and the AI Cheat Sheet Generator.*
+Answer Correction feature, the AI Cheat Sheet Generator, the lesson/test/
+chapter order-tiebreak fix, and diagnosing the Cheat Sheet image 402.*
