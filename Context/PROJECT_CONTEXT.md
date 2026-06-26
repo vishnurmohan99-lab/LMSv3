@@ -112,12 +112,17 @@ each; any API client change must be made in both files.
   carry all non-breakpoint-dependent values; only responsive deltas live in
   CSS classes.
 - **Browser automation in this environment cannot shrink the real browser
-  viewport** (`window.innerWidth` stays 1920 despite `resize_window` calls —
-  the browser runs maximized in a remote/virtual display). Mobile CSS changes
-  are verified by (a) build success, (b) inspecting the deployed stylesheet
-  text directly via `document.styleSheets`, (c) code review of media-query
-  logic — **not** by an actual mobile-width screenshot. Flag this limitation
-  if true visual verification is ever required.
+  viewport** (`window.innerWidth` stays 1920 despite `resize_window` calls,
+  and browser-level shortcuts like `F12`/`ctrl+shift+m`/`ctrl+=` are no-ops
+  since the extension's key dispatch only reaches the page, not Chrome's own
+  UI — the browser runs maximized in a remote/virtual display). **Working
+  fallback (used successfully):** inject a `<style>` tag that duplicates the
+  target `@media (max-width: 860px)` rules without the media-query gate
+  (forces the mobile classes on regardless of width), optionally set
+  `document.body.style.zoom` to shrink the frame for a clean screenshot,
+  verify visually, then remove the injected style/zoom — no permanent code
+  change. Prefer this over code-review-only verification when mobile-only
+  styles need visual confirmation.
 
 ## Established code patterns (mirror these)
 
@@ -312,6 +317,46 @@ app only (`apps/web /student`) for now.
 - **Not yet started:** Calendar, Messages/Forum/Feedback, and the unread back
   half of the mockup (Workout/Mock Test/Mentor/Planner/Profile). Faculty and
   Admin apps explicitly excluded from this rollout's scope for now.
+- **Bottom tab nav + chapter-list redesign** (new mockup screenshots supplied
+  directly in-chat, not from the `design-reference/` dir — a course-overview
+  + lesson mobile pair showing a bottom tab bar). Decisions confirmed via
+  `AskUserQuestion` up front: (1) bottom nav (Home/Learn/Calendar/Inbox/More)
+  is **global** across all student mobile pages, added to `StudentShell.tsx`
+  alongside the existing hamburger/drawer (both coexist — hamburger top-left
+  still opens the drawer for the long tail of nav items; bottom "More" opens
+  the same drawer); (2) chapter list: only the chapter containing the
+  selected lesson auto-expands, others stay tappable (existing accordion
+  behavior kept); (3) "AI Deck" in the mockup is just the existing Summary
+  Deck button, no new feature. Implementation: `.student-bottomnav-mobile`
+  CSS class (fixed bottom bar, `display:none` by default, `flex` below
+  860px, matches the existing `.student-topbar-mobile` pattern) +
+  `.student-mainarea { padding-bottom: 60px }` at the same breakpoint so
+  content doesn't sit under the bar. Course detail page
+  (`/student/courses/[id]/page.tsx`) chapter sidebar restyled: dark
+  gradient "ENROLLED COURSE" hero banner (title, chapter/lesson counts,
+  progress bar — applies at all widths, not just mobile, since it's a
+  straightforward visual upgrade), numbered circular chapter badges
+  (number → checkmark when `chapter.finished`, orange-filled when it's the
+  active chapter, lock icon when locked), "In progress · X/Y" status text
+  computed from the active lesson's position within its chapter (no new
+  backend field — derived client-side), and an orange "NOW" badge on the
+  active lesson row in `LessonNavItem` (replaces the plain dot indicator
+  when `active`). No backend/Prisma changes.
+- **Verified via a discovered workaround for the viewport-resize limitation**
+  (see gotcha above): logged in as `vishnu@test.com` in the actual Chrome
+  extension session, confirmed the new banner/chapter/NOW-badge design
+  renders correctly against live enrollment/progress data at desktop width
+  (those styles aren't gated by the media query). For the genuinely
+  mobile-only pieces (bottom nav bar, top app bar, drill-down screens),
+  since `resize_window` and browser-shortcut key dispatch (`F12`,
+  `ctrl+shift+m`, `ctrl+=`) are all no-ops in this environment, injected a
+  temporary `<style>` tag duplicating the same `@media (max-width: 860px)`
+  rules without the media-query gate, plus `document.body.style.zoom` to
+  shrink the rendered frame for a clean screenshot, then removed both —
+  confirmed all pieces render as intended against live data, then reverted
+  the override (no permanent code change from this step). This forced-CSS
+  technique is the new standard fallback for visually verifying mobile-only
+  styles in this environment — prefer it over relying on code review alone.
 
 ## Current Prisma data model (key models)
 
@@ -398,9 +443,11 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-26, after the mobile UI rollout commits (shell, course
-list, course detail/lesson player, flashcards+AI deck, dashboard), the
-Answer Correction feature, the AI Cheat Sheet Generator, the lesson/test/
-chapter order-tiebreak fix, diagnosing the Cheat Sheet image 402, the
-load()/refresh() no-blink fix for reorder/feature-toggle actions, and
+*Last updated: 2026-06-27, after the bottom tab nav + chapter-list mockup
+redesign (commit `f4334ee`, pushed to main + deployed via `vercel --prod
+--yes`), on top of the 2026-06-26 work: the mobile UI rollout commits
+(shell, course list, course detail/lesson player, flashcards+AI deck,
+dashboard), the Answer Correction feature, the AI Cheat Sheet Generator, the
+lesson/test/chapter order-tiebreak fix, diagnosing the Cheat Sheet image 402,
+the load()/refresh() no-blink fix for reorder/feature-toggle actions, and
 Comprehension mixed question types + passage-relative numbering.*
