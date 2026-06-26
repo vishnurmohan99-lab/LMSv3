@@ -320,6 +320,17 @@ export default function StudentCoursePlayerPage() {
   const [flashcardCount, setFlashcardCount] = useState<number | null>(null);
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [completingChapterId, setCompletingChapterId] = useState<string | null>(null);
+  const [lessonOpenedByUser, setLessonOpenedByUser] = useState(false);
+
+  function openLesson(id: string) {
+    setSelectedLessonId(id);
+    setLessonOpenedByUser(true);
+  }
+
+  function closeLesson() {
+    setSelectedLessonId(null);
+    setLessonOpenedByUser(false);
+  }
 
   useEffect(() => {
     coursesApi
@@ -438,7 +449,7 @@ export default function StudentCoursePlayerPage() {
     <div style={{ display: "flex", margin: 0, height: "100%", background: "var(--bg)" }}>
       {/* chapter sidebar */}
       <div
-        className={`course-pane-list${selectedLesson ? " has-selection" : ""}`}
+        className={`course-pane-list${lessonOpenedByUser ? " has-selection" : ""}`}
         style={{ width: 286, flex: "none", background: "var(--card)", borderRight: "1px solid var(--line)", overflowY: "auto" }}
       >
         <div
@@ -579,7 +590,7 @@ export default function StudentCoursePlayerPage() {
                               key={item.data.id}
                               lesson={item.data}
                               active={item.data.id === selectedLessonId}
-                              onSelect={setSelectedLessonId}
+                              onSelect={openLesson}
                             />
                           ) : (
                             <TestNavItem key={item.data.id} test={item.data} />
@@ -622,7 +633,7 @@ export default function StudentCoursePlayerPage() {
 
       {/* lesson area */}
       <div
-        className={`course-pane-detail${selectedLesson ? " has-selection" : ""}`}
+        className={`course-pane-detail${lessonOpenedByUser ? " has-selection" : ""}`}
         style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "relative" }}
       >
         {selectedLesson ? (
@@ -631,7 +642,7 @@ export default function StudentCoursePlayerPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                 <button
                   className="mobile-back-btn"
-                  onClick={() => setSelectedLessonId(null)}
+                  onClick={closeLesson}
                   aria-label="Back to chapters"
                   style={{ width: 30, height: 30, flex: "none", border: "1px solid var(--line)", borderRadius: 9, background: "var(--bg)", cursor: "pointer", alignItems: "center", justifyContent: "center" }}
                 >
@@ -787,7 +798,7 @@ export default function StudentCoursePlayerPage() {
                           return (
                             <button
                               key={l.id}
-                              onClick={() => !lLocked && setSelectedLessonId(l.id)}
+                              onClick={() => !lLocked && openLesson(l.id)}
                               disabled={lLocked}
                               style={{
                                 display: "flex",
