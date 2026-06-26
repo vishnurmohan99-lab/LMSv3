@@ -96,15 +96,19 @@ export default function CourseAuthoringPage() {
   const [grantStudentId, setGrantStudentId] = useState("");
   const [grantingAccess, setGrantingAccess] = useState(false);
 
-  function load() {
-    setLoading(true);
-    Promise.all([coursesApi.get(courseId), segmentsApi.list()])
+  /** Silent background refetch -- updates data in place without ever showing the loading screen, so reorders/toggles don't blink. */
+  function refresh() {
+    return Promise.all([coursesApi.get(courseId), segmentsApi.list()])
       .then(([c, s]) => {
         setCourse(c);
         setSegments(s);
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load course"))
-      .finally(() => setLoading(false));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load course"));
+  }
+
+  function load() {
+    setLoading(true);
+    refresh().finally(() => setLoading(false));
   }
 
   useEffect(load, [courseId]);
@@ -170,13 +174,13 @@ export default function CourseAuthoringPage() {
     await coursesApi.createChapter(courseId, { title: newChapterTitle, bannerUrl });
     setNewChapterTitle("");
     setNewChapterBanner(null);
-    load();
+    refresh();
   }
 
   async function onDeleteChapter(id: string) {
     if (!(await confirm({ message: "Delete this chapter and all its lessons? This cannot be undone." }))) return;
     await coursesApi.removeChapter(id);
-    load();
+    refresh();
   }
 
   async function onMoveChapter(index: number, direction: -1 | 1) {
@@ -188,7 +192,7 @@ export default function CourseAuthoringPage() {
     await Promise.all(
       reordered.map((chapter, i) => (chapter.order === i ? Promise.resolve() : coursesApi.updateChapter(chapter.id, { order: i }))),
     );
-    load();
+    refresh();
   }
 
   function openEditChapter(id: string, title: string, unlockAt: string | null, unlockAfterDays: number | null) {
@@ -212,7 +216,7 @@ export default function CourseAuthoringPage() {
         unlockAfterDays: editUnlockAfterDays ? Number(editUnlockAfterDays) : null,
       });
       setEditingChapterId(null);
-      load();
+      refresh();
     } finally {
       setSavingChapter(false);
     }

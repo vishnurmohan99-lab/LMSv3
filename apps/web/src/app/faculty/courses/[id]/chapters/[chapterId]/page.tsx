@@ -676,13 +676,14 @@ export default function FacultyChapterDetailPage() {
   const [editBanner, setEditBanner] = useState<File | null>(null);
   const [savingChapter, setSavingChapter] = useState(false);
 
+  /** Silent background refetch -- updates data in place without ever showing the loading screen, so reorders/toggles don't blink. */
+  function refresh() {
+    return coursesApi.get(courseId).then(setCourse).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load chapter"));
+  }
+
   function load() {
     setLoading(true);
-    coursesApi
-      .get(courseId)
-      .then(setCourse)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load chapter"))
-      .finally(() => setLoading(false));
+    refresh().finally(() => setLoading(false));
   }
 
   useEffect(load, [courseId]);
@@ -692,23 +693,23 @@ export default function FacultyChapterDetailPage() {
   async function onDeleteLesson(id: string) {
     if (!(await confirm({ message: "Delete this lesson? This cannot be undone." }))) return;
     await coursesApi.removeLesson(id);
-    load();
+    refresh();
   }
 
   async function onToggleLessonFeature(lesson: Lesson, key: FeatureKey, next: boolean) {
     await coursesApi.updateLesson(lesson.id, { [key]: next });
-    load();
+    refresh();
   }
 
   async function onUpdateLesson(lessonId: string, data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) {
     await coursesApi.updateLesson(lessonId, data);
-    load();
+    refresh();
   }
 
   async function onDetachTest(testId: string) {
     if (!(await confirm({ message: "Remove this test from the chapter? The test itself won't be deleted." }))) return;
     await testsApi.update(testId, { chapterId: null });
-    load();
+    refresh();
   }
 
   async function onMoveContentItem(items: ContentItem[], index: number, direction: -1 | 1) {
@@ -721,7 +722,7 @@ export default function FacultyChapterDetailPage() {
         item.order === i ? Promise.resolve() : item.kind === "lesson" ? coursesApi.updateLesson(item.id, { order: i }) : testsApi.update(item.id, { order: i }),
       ),
     );
-    load();
+    refresh();
   }
 
   async function onDeleteChapter() {
@@ -744,7 +745,7 @@ export default function FacultyChapterDetailPage() {
       const bannerUrl = editBanner ? await uploadsApi.uploadFile(editBanner) : undefined;
       await coursesApi.updateChapter(chapterId, { title: editTitle, bannerUrl });
       setEditing(false);
-      load();
+      refresh();
     } finally {
       setSavingChapter(false);
     }
@@ -861,7 +862,7 @@ export default function FacultyChapterDetailPage() {
           chapterId={chapterId}
           onAttached={() => {
             setShowAttachTest(false);
-            load();
+            refresh();
           }}
         />
       )}
@@ -871,7 +872,7 @@ export default function FacultyChapterDetailPage() {
           chapterId={chapterId}
           onDone={() => {
             setShowAddLesson(false);
-            load();
+            refresh();
           }}
         />
       )}
