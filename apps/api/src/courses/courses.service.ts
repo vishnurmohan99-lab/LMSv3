@@ -121,10 +121,13 @@ export class CoursesService {
       where: { id },
       include: {
         chapters: {
-          orderBy: { order: 'asc' },
+          orderBy: [{ order: 'asc' }, { id: 'asc' }],
           include: {
-            lessons: { orderBy: { order: 'asc' } },
-            tests: { select: { id: true, title: true, published: true, order: true }, orderBy: { order: 'asc' } },
+            lessons: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
+            tests: {
+              select: { id: true, title: true, published: true, order: true, createdAt: true },
+              orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+            },
           },
         },
       },
@@ -320,7 +323,7 @@ export class CoursesService {
     }
     const siblings = await this.prisma.chapter.findMany({
       where: { courseId: chapter.course.id },
-      orderBy: { order: 'asc' },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
       include: { lessons: { select: { id: true } }, tests: { select: { id: true } } },
     });
     const unlockMap = await this.getChapterUnlockMap(chapter.course, siblings, null, user.sub);
@@ -354,7 +357,7 @@ export class CoursesService {
       if (!chapterUnlocked) throw new ForbiddenException('This chapter is not unlocked yet');
       const siblings = await this.prisma.lesson.findMany({
         where: { chapterId: lesson.chapterId },
-        orderBy: { order: 'asc' },
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
         select: { id: true },
       });
       const idx = siblings.findIndex((l) => l.id === lessonId);
@@ -725,8 +728,9 @@ export class CoursesService {
           `Simple, clean, flat-style educational illustration (no text, no words, no letters in the image) representing: ${draft.title}. Minimal, portrait orientation, friendly study-material aesthetic.`,
         );
         illustrationKey = await this.uploads.uploadGeneratedImage(buffer, contentType);
-      } catch {
+      } catch (err) {
         // Illustration is a nice-to-have -- a failed/quota-limited image call must not fail the whole cheat sheet.
+        console.error('[CheatSheet] illustration generation failed:', err instanceof Error ? err.message : err);
       }
       pages.push({ ...draft, illustrationKey });
     }
