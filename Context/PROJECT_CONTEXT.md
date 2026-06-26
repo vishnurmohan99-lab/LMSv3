@@ -200,6 +200,28 @@ any submission's marks.
   test with a stronger paid vision model before relying on this for real
   grades.
 
+**AI Cheat Sheet Generator** (PDF lessons, v1) — per-lesson feature mirroring
+the existing Flashcards/Summary Deck pattern exactly. Faculty/admin enable
+`Lesson.cheatSheetEnabled` (PDF-only, like AI Notes is video-only in reverse)
+and generate a `CheatSheet` (one row per lesson, `pages: Json`). Each page:
+`title`, `bullets[]` (AI-rewritten, never copied verbatim), optional `table`,
+`examTip`, and an AI-generated flat-icon `illustrationKey` (R2 key, presigned
+on read). Scope decisions: image extraction from the source PDF skipped for
+v1 (no library for it); illustrations are AI-**generated**, not extracted,
+via a new `AiService.generateImage()` OpenRouter call
+(`OPENROUTER_IMAGE_MODEL`, defaults to `google/gemini-2.5-flash-image` —
+**OpenRouter has no literal $0 image model**, this is just the cheapest
+available; swap to OpenAI's image API later via the same env var). Image
+generation failure is non-fatal (caught per-page, sheet still saves without
+that illustration). New `UploadsService.uploadGeneratedImage()` does a direct
+server-side R2 `PutObject` (no presign round-trip, since the server already
+has the bytes from the AI response). Admin + faculty get an identical
+management page (portrait-card preview grid) at
+`.../lessons/[lessonId]/cheat-sheet`; students get `CheatSheetReview.tsx`
+(swipeable pages, mirrors `SummaryDeckReview`) via a new lesson-player view
+mode. Verified end-to-end against a real PDF (ICSE physics notes) — produced
+3 well-structured pages with real, topically-correct illustrations.
+
 **Mobile UI rollout** (in progress, module-by-module, user-paced) — sourced
 from `design-reference/Mobile user page UI/elearning-mobile.dc.html` (top app
 bar + slide-out drawer + bottom sheets mockup covering Home/Course/Lesson/
@@ -244,14 +266,24 @@ New: `AnswerQuestionType`, `AnswerQuestionTypePart`, `AnswerQuestion`,
 NUMERIC|FLAG_HARD), `AnswerSubmission` (enum `AnswerSubmissionStatus`:
 PROCESSING|GRADED|FAILED), `AnswerEvaluation` (Json snapshot fields +
 `manual*` override columns). Migration:
-`prisma/migrations/20260626140000_add_answer_correction/migration.sql`
-(hand-written, applied via `migrate deploy`).
+`prisma/migrations/20260626140000_add_answer_correction/migration.sql`.
+
+Also new: `Lesson.cheatSheetEnabled`, `CheatSheet` (`pages: Json`). Migration:
+`prisma/migrations/20260626150000_add_cheat_sheet/migration.sql`. Both
+hand-written, applied via `migrate deploy` (see gotcha above).
 
 ## Outstanding / known gaps
 
 - Answer Correction: PDF upload rejected (image-only for v1); free-tier
   vision model untested on real handwriting; no rate-limiting/abuse-control;
   no "My submissions" history page; multi-page answers not supported.
+- Cheat Sheet: PDF-only (no video support yet, despite the original feature
+  request describing video too — explicitly deferred); no extraction of
+  images/diagrams from the source PDF (AI-generated illustrations only); no
+  literal $0 image model exists on OpenRouter so each generation has a real
+  (tiny) per-image cost; one orphaned test `CheatSheet` row + 3 R2 images
+  remain attached to the real "Test Lesson" PDF lesson in Physics from
+  end-to-end verification (harmless, but not cleaned up).
 - Mobile UI rollout partial — see above. Faculty/Admin apps not in scope yet.
 - Prior-session gaps still open: no DB-level "comprehension group" beyond
   shared `passageId`, PASS_TEST 50% threshold hardcoded, sequential
@@ -263,7 +295,8 @@ PROCESSING|GRADED|FAILED), `AnswerEvaluation` (Json snapshot fields +
 ## Roadmap status
 
 All original roadmap phases complete. Current work is post-roadmap: (1) the
-AI Answer-Correction feature (done, deployed), (2) the mobile-responsiveness
+AI Answer-Correction feature (done, deployed), (2) the AI Cheat Sheet
+Generator (done, deployed, PDF-only for v1), (3) the mobile-responsiveness
 initiative (in progress, picked module-by-module live in conversation, not a
 fixed backlog).
 
@@ -302,5 +335,5 @@ full context dump.
 
 ---
 *Last updated: 2026-06-26, after the mobile UI rollout commits (shell, course
-list, course detail/lesson player, flashcards+AI deck, dashboard) and the
-Answer Correction feature.*
+list, course detail/lesson player, flashcards+AI deck, dashboard), the
+Answer Correction feature, and the AI Cheat Sheet Generator.*
