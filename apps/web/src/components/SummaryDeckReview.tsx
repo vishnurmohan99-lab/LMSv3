@@ -111,7 +111,7 @@ export default function SummaryDeckReview({ lessonId, lessonTitle }: { lessonId:
           position: "relative",
           overflow: "hidden",
         }}
-        className="fade-in-up"
+        className="fade-in-up summary-deck-card"
         key={index}
       >
         <div

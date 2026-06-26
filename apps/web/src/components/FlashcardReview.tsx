@@ -230,7 +230,7 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
             >
               Question
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.4, letterSpacing: -0.3, position: "relative" }}>{card.front}</div>
+            <div className="flip-card-question-text" style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.4, letterSpacing: -0.3, position: "relative" }}>{card.front}</div>
             <div style={{ position: "absolute", bottom: 22, fontSize: 12, color: "var(--ink3)" }}>Tap to flip ↺</div>
           </div>
           <div

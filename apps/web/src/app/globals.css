@@ -290,4 +290,13 @@ button:active, a:active {
     margin-left: 0 !important;
     z-index: 250;
   }
+  .flip-card-face {
+    padding: 22px !important;
+  }
+  .flip-card-question-text {
+    font-size: 19px !important;
+  }
+  .summary-deck-card {
+    padding: 22px !important;
+  }
 }
