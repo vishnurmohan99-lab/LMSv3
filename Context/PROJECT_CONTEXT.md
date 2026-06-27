@@ -62,7 +62,13 @@ each; any API client change must be made in both files.
   Node script (cookie-jar auth as `admin@test.com`) hitting the local API
   against the real Neon DB, then PATCHed all 6 new banks to
   `published: true` to match the existing banks' convention (created
-  unpublished by default).
+  unpublished by default). Followed up same day: added 5 more separate
+  passages to "Comprehension Practice" (Photosynthesis, Human Digestive
+  System, States of Matter, Periodic Table & Atomic Structure, Electricity &
+  Circuits — 6 MCQs each), via repeated calls to the same
+  `POST /question-banks/:id/comprehension` endpoint (each call creates one
+  new `Passage` + its questions, all attached to the same bank). Bank now
+  has 6 distinct passages, 36 questions total.
 
 ## Architecture gotchas (don't regress)
 
