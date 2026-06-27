@@ -50,6 +50,19 @@ each; any API client change must be made in both files.
 - Real courses in prod: Maths, Chemistry, Physics (Class 12/JEE), Biology
   (Class 12/NEET), JEE MAINS (Cllass 10 — typo'd segment, leave as-is). Real
   segments: "Class 11", "Class 12" (sub: "NEET").
+- **Mock Tests**: all 10 pre-existing `Test` rows (Maths/Chemistry/Physics
+  Mock Tests at 10/15/20 Qs + a "MOCK" test) were deleted on 2026-06-27 at
+  the user's request — `Test` table is currently empty in prod.
+- **Question Banks**: 3 pre-existing banks kept as-is (Maths Question Bank
+  26 Q, Biology Question Bank 27 Q, Reading Comprehension - Solar System 6
+  Q). On 2026-06-27, added 5 new published 30-MCQ-question banks — "Maths",
+  "Physics", "Chemistry", "Biology", "JEE Mains" (AI-authored, topically
+  correct, factually checked) — plus a 6th new bank "Comprehension Practice"
+  (a Newton's Laws passage + 6 comprehension MCQs). Seeded via a one-off
+  Node script (cookie-jar auth as `admin@test.com`) hitting the local API
+  against the real Neon DB, then PATCHed all 6 new banks to
+  `published: true` to match the existing banks' convention (created
+  unpublished by default).
 
 ## Architecture gotchas (don't regress)
 
