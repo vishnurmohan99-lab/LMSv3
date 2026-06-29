@@ -383,12 +383,16 @@ export default function StudentDashboardPage() {
         <button
           onClick={() => router.push("/student/mentor")}
           title="Book a Mentor"
-          style={{ background: "var(--orange)", border: "none", borderRadius: "var(--rm)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(242,106,27,.32)" }}
+          className="mentor-cta-btn"
+          style={{ background: "var(--orange)", border: "none", borderRadius: "var(--rm)", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, cursor: "pointer", boxShadow: "0 4px 12px rgba(242,106,27,.32)" }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" style={{ flex: "none" }}>
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
           </svg>
+          <span className="mentor-cta-label" style={{ display: "none", color: "#fff", fontSize: 13.5, fontWeight: 700, fontFamily: "inherit", whiteSpace: "nowrap" }}>
+            Book a Mentor
+          </span>
         </button>
       </div>
 

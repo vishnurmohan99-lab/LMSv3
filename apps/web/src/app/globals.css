@@ -312,6 +312,10 @@ button:active, a:active {
   }
   .mobile-stat-strip > button {
     grid-column: span 2;
+    padding: 15px 18px !important;
+  }
+  .mobile-stat-strip > button .mentor-cta-label {
+    display: inline !important;
   }
   .askme-panel {
     position: fixed !important;
