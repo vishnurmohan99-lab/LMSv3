@@ -376,6 +376,21 @@ app only (`apps/web /student`) for now.
 - **Not yet started:** Feedback, and the unread back half of the mockup
   (Workout/Mock Test/Planner/Profile). Faculty and Admin apps explicitly
   excluded from this rollout's scope for now.
+
+**Dashboard fix + polish** (commit `3de7ace`, outside the mobile-rollout
+sequence — user reported it directly): `ScheduleRow` in
+`student/dashboard/page.tsx` only special-cased `LIVE_LESSON` and otherwise
+assumed every event was a mentor session, rendering the literal string
+"with undefined" for `CHAPTER_UNLOCK`/`TEST` events (which have no
+`otherPartyName`) and using the wrong icon. Added `eventIcon()`/
+`eventSub()`/`eventHref()` covering all 4 `CalendarEventType`s (mirrors
+`CalendarApp.tsx`'s `EventRow` logic, but dashboard keeps its own
+circular-icon visual style rather than importing that component). Also
+restyled the Enrolled/Taken/Booked stat cards with a new `StatCard`
+component using color-coded soft icon backgrounds (orange/blue/purple,
+mirroring the nicer pattern already on `faculty/dashboard/page.tsx`)
+instead of flat dark squares, and recolored the Book-a-Mentor CTA button
+orange (was flat black) to match the app's primary-action color.
 - **Bottom tab nav + chapter-list redesign** (new mockup screenshots supplied
   directly in-chat, not from the `design-reference/` dir — a course-overview
   + lesson mobile pair showing a bottom tab bar). Decisions confirmed via
@@ -517,9 +532,10 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-27, after adding mobile responsive layout to Forum
-(commit `ffc0752`, pushed + deployed). On top of the same day's earlier
-work: the Messages conversation-list ↔ thread mobile drill-down (commit
+*Last updated: 2026-06-27, after fixing the student dashboard's Today's
+Schedule "with undefined" bug and restyling its stat cards (commit
+`3de7ace`, pushed + deployed). On top of the same day's earlier work:
+mobile responsive layout for Forum (commit `ffc0752`), the Messages conversation-list ↔ thread mobile drill-down (commit
 `9103fe8`), mobile responsive layout for Calendar and Book a Mentor (commit
 `557402d`), the bottom tab nav + chapter-list
 mockup redesign (commit `f4334ee`), its mobile-drilldown follow-up fix
