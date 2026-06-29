@@ -95,6 +95,7 @@ function PassagePanel({
 
   return (
     <div
+      className="mock-test-passage"
       style={{
         position: "sticky",
         top: 20,
@@ -249,7 +250,7 @@ export default function StudentMockTestTakePage() {
 
   if (view === "instructions") {
     return (
-      <main className="fade-in-up" style={{ padding: "40px 30px", maxWidth: 680, margin: "0 auto" }}>
+      <main className="fade-in-up mobile-page-pad" style={{ padding: "40px 30px", maxWidth: 680, margin: "0 auto" }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 34 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase" }}>Mock Test</div>
           <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: -0.4, margin: "6px 0 4px" }}>{test.title}</div>
@@ -303,8 +304,8 @@ export default function StudentMockTestTakePage() {
   if (view === "taking" && attempt) {
     const q = questions[current];
     return (
-      <main className="fade-in" style={{ padding: "26px 30px", maxWidth: q?.passage ? 1480 : 1100, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: q?.passage ? "400px 1fr 260px" : "1fr 260px", gap: 20 }}>
+      <main className="fade-in mobile-page-pad" style={{ padding: "26px 30px", maxWidth: q?.passage ? 1480 : 1100, margin: "0 auto" }}>
+        <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: q?.passage ? "400px 1fr 260px" : "1fr 260px", gap: 20 }}>
           {q?.passage && (
             <PassagePanel
               passage={q.passage}
@@ -377,7 +378,7 @@ export default function StudentMockTestTakePage() {
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20, flexWrap: "wrap", gap: 10 }}>
               <button onClick={() => setCurrent((c) => Math.max(0, c - 1))} disabled={current === 0} style={{ ...btnStyle, opacity: current === 0 ? 0.5 : 1 }}>
                 Previous
               </button>
@@ -443,7 +444,7 @@ export default function StudentMockTestTakePage() {
     const wrong = result.answers.filter((a) => a.isCorrect === false).length;
     const skipped = (result.maxScore ?? 0) - result.answers.length;
     return (
-      <main className="fade-in-up" style={{ padding: "40px 30px", maxWidth: 840, margin: "0 auto" }}>
+      <main className="fade-in-up mobile-page-pad" style={{ padding: "40px 30px", maxWidth: 840, margin: "0 auto" }}>
         <div
           style={{
             background: "linear-gradient(120deg,#15281d,#1f3b2a)",

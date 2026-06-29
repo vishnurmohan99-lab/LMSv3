@@ -111,7 +111,7 @@ export default function StudentWorkoutPage() {
     const q = questions[index];
     const isCorrect = q && q.type !== "ESSAY" ? normalize(answer) === normalize(q.correctOption ?? "") : null;
     return (
-      <main className="fade-in" style={{ padding: "26px 30px", maxWidth: 720, margin: "0 auto" }}>
+      <main className="fade-in mobile-page-pad" style={{ padding: "26px 30px", maxWidth: 720, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>
             Question {index + 1} of {questions.length}
@@ -228,7 +228,7 @@ export default function StudentWorkoutPage() {
     const gradable = questions.filter((q) => q.type !== "ESSAY").length;
     const pct = gradable > 0 ? correctCount / gradable : 0;
     return (
-      <main className="fade-in-up" style={{ padding: "40px 30px", maxWidth: 620, margin: "0 auto", textAlign: "center" }}>
+      <main className="fade-in-up mobile-page-pad" style={{ padding: "40px 30px", maxWidth: 620, margin: "0 auto", textAlign: "center" }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "48px 40px" }}>
           <div style={{ position: "relative", width: 110, height: 110, margin: "0 auto 18px" }}>
             <ProgressRing pct={pct} color="var(--orange)" size={110} strokeWidth={9} />
@@ -254,14 +254,14 @@ export default function StudentWorkoutPage() {
   }
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 720, margin: "0 auto" }}>
+    <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 720, margin: "0 auto" }}>
       <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, marginBottom: 22 }}>Workout</div>
 
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 26 }}>
         <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>Create a Workout</div>
         <p style={{ fontSize: 13, color: "var(--ink3)", margin: "4px 0 22px" }}>Generate a personalised practice set from your syllabus.</p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
+        <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>Course</label>
             <select value={courseId} onChange={(e) => setCourseId(e.target.value)} style={{ ...inputStyle, marginTop: 7 }}>

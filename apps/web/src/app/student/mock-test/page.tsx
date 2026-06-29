@@ -47,7 +47,7 @@ export default function StudentMockTestListPage() {
   }, []);
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, marginBottom: 22 }}>Mock Tests</div>
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
