@@ -346,8 +346,23 @@ app only (`apps/web /student`) for now.
   pin oddly once it's stacked above/below the date pickers instead of
   beside them). Both page wrappers got `.mobile-page-pad`. No new mobile
   route/component — same pattern as the rest of this rollout.
-- **Not yet started:** Messages/Forum/Feedback, and the unread back half of
-  the mockup (Workout/Mock Test/Planner/Profile). Faculty and Admin apps
+- **Messages drill-down** (commit `9103fe8`): conversation list ↔ thread is
+  split across two route segments (`/student/messages` list-empty-state +
+  `/student/messages/[id]` thread), not local selection state, so the
+  course-detail `has-selection` pattern doesn't directly apply. Fix:
+  `student/messages/layout.tsx` checks `usePathname()` (`threadOpen =
+  pathname !== "/student/messages"`) and toggles new `.messenger-list-pane`
+  / `.messenger-thread-pane` classes (same display:none/flex swap as
+  `.course-pane-list`/`.course-pane-detail`, just separately named since
+  they're driven by route not state). `MessengerSidebar` gained an optional
+  `className` prop; `MessengerThread` gained an optional `basePath` prop
+  that — only when passed — renders a `.mobile-back-btn` Link back to the
+  list. Faculty's `MessengerThread` usage doesn't pass `basePath`, so
+  faculty (out of rollout scope) gets no back button and is otherwise
+  unaffected; the CSS pane-toggle classes only apply where a page actually
+  uses the `messenger-*-pane` classNames (student only).
+- **Not yet started:** Forum/Feedback, and the unread back half of the
+  mockup (Workout/Mock Test/Planner/Profile). Faculty and Admin apps
   explicitly excluded from this rollout's scope for now.
 - **Bottom tab nav + chapter-list redesign** (new mockup screenshots supplied
   directly in-chat, not from the `design-reference/` dir — a course-overview
@@ -490,9 +505,10 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-27, after adding mobile responsive layout to the
-Calendar and Book a Mentor pages (commit `557402d`, pushed + deployed). On
-top of the same day's earlier work: the bottom tab nav + chapter-list
+*Last updated: 2026-06-27, after adding the Messages conversation-list ↔
+thread mobile drill-down (commit `9103fe8`, pushed + deployed). On top of
+the same day's earlier work: mobile responsive layout for Calendar and Book
+a Mentor (commit `557402d`), the bottom tab nav + chapter-list
 mockup redesign (commit `f4334ee`), its mobile-drilldown follow-up fix
 (commit `0e1f15b`, course-open now lands on the chapter list instead of
 jumping into the lesson player), and the Test-data cleanup + 5 new 30-Q
