@@ -361,6 +361,36 @@ button:active, a:active {
   .messenger-thread-pane.has-selection {
     display: flex !important;
   }
+  /* Forum: the categories sidebar becomes a horizontal scrollable chip row
+     above the thread list/detail, mirroring the mobile mockup's category
+     pill strip. List <-> thread <-> new-thread switching is already local
+     state with an always-visible "All threads" back button, so no
+     drill-down classes are needed there. */
+  .forum-shell {
+    flex-direction: column !important;
+  }
+  .forum-categories {
+    width: 100% !important;
+    flex: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--line);
+    padding: 10px 12px !important;
+  }
+  .forum-categories-label {
+    display: none !important;
+  }
+  .forum-categories-list {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto;
+  }
+  .forum-categories-list > button {
+    flex: none !important;
+    width: auto !important;
+    border-radius: 999px !important;
+    padding: 9px 14px !important;
+    white-space: nowrap;
+  }
   .summary-deck-card {
     padding: 22px !important;
   }

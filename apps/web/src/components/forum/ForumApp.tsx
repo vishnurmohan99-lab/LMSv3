@@ -148,10 +148,10 @@ export default function ForumApp() {
   const postableCategories = categories.filter((c) => c.canPost);
 
   return (
-    <div style={{ display: "flex", height: "100%", minHeight: "calc(100vh - 70px)" }}>
-      <aside style={{ width: 240, flex: "none", borderRight: "1px solid var(--line)", background: "var(--card)", padding: "18px 12px", overflowY: "auto" }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink3)", textTransform: "uppercase", letterSpacing: 1, padding: "0 6px 10px" }}>Categories</div>
-        <div style={{ display: "grid", gap: 3 }}>
+    <div className="forum-shell" style={{ display: "flex", height: "100%", minHeight: "calc(100vh - 70px)" }}>
+      <aside className="forum-categories" style={{ width: 240, flex: "none", borderRight: "1px solid var(--line)", background: "var(--card)", padding: "18px 12px", overflowY: "auto" }}>
+        <div className="forum-categories-label" style={{ fontSize: 12, fontWeight: 700, color: "var(--ink3)", textTransform: "uppercase", letterSpacing: 1, padding: "0 6px 10px" }}>Categories</div>
+        <div className="forum-categories-list" style={{ display: "grid", gap: 3 }}>
           {[{ id: "all", name: "All Topics", count: categories.reduce((s, c) => s + c.count, 0) }, ...categories].map((c) => {
             const active = activeCategory === c.id;
             return (
@@ -187,7 +187,7 @@ export default function ForumApp() {
         </div>
       </aside>
 
-      <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "24px 30px" }}>
+      <div className="mobile-page-pad" style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "24px 30px" }}>
         {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
         {view === "new" && (
@@ -325,7 +325,7 @@ export default function ForumApp() {
 
         {view === "list" && (
           <div style={{ maxWidth: 820, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+            <div className="mobile-stack-header" style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
               <div style={{ position: "relative", flex: 1 }}>
                 <input
                   value={search}
