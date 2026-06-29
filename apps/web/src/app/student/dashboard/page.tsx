@@ -77,6 +77,20 @@ function isCurrentlyLive(event: CalendarEvent, now: Date) {
   return diffMin >= -LIVE_WINDOW_BEFORE_MIN && diffMin <= LIVE_WINDOW_AFTER_MIN;
 }
 
+function StatCard({ icon, value, label, color, soft }: { icon: React.ReactNode; value: string; label: string; color: string; soft: string }) {
+  return (
+    <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ width: 46, height: 46, borderRadius: 14, background: soft, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5, color }}>{value}</div>
+        <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
 function PlayIcon({ color }: { color: string }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill={color} stroke="none">
@@ -103,30 +117,63 @@ function EventMentorIcon({ color }: { color: string }) {
   );
 }
 
+function UnlockIcon({ color }: { color: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 7.5-2" />
+    </svg>
+  );
+}
+
+function TestIcon({ color }: { color: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  );
+}
+
+function eventIcon(type: CalendarEvent["type"]) {
+  if (type === "LIVE_LESSON") return <LiveIcon color="var(--orange)" />;
+  if (type === "CHAPTER_UNLOCK") return <UnlockIcon color="var(--green)" />;
+  if (type === "TEST") return <TestIcon color="var(--orange)" />;
+  return <EventMentorIcon color="var(--purple)" />;
+}
+
+function eventSub(event: CalendarEvent) {
+  if (event.type === "LIVE_LESSON" || event.type === "CHAPTER_UNLOCK") return event.courseTitle ?? "";
+  if (event.type === "TEST") return "Test";
+  return event.otherPartyName ? `with ${event.otherPartyName}` : "Mentor session";
+}
+
+function eventHref(event: CalendarEvent) {
+  if ((event.type === "LIVE_LESSON" || event.type === "CHAPTER_UNLOCK") && event.courseId) return `/student/courses/${event.courseId}`;
+  if (event.type === "TEST" && event.testId) return `/student/mock-test/${event.testId}`;
+  return null;
+}
+
 function ScheduleRow({ event }: { event: CalendarEvent }) {
   const date = new Date(event.date);
   const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  const isLive = event.type === "LIVE_LESSON";
+  const href = eventHref(event);
   const content = (
     <div style={{ display: "flex", gap: 14, alignItems: "center", padding: "13px 0", borderTop: "1px solid var(--line)" }}>
       <div style={{ width: 56, flex: "none", textAlign: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {isLive ? <LiveIcon color="var(--orange)" /> : <EventMentorIcon color="var(--purple)" />}
-        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{eventIcon(event.type)}</div>
         <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: -0.3, marginTop: 2 }}>{time}</div>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</div>
-        <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>
-          {isLive ? event.courseTitle : `with ${event.otherPartyName}`}
-        </div>
+        <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>{eventSub(event)}</div>
       </div>
     </div>
   );
 
-  if (isLive && event.courseId) {
+  if (href) {
     return (
-      <Link href={`/student/courses/${event.courseId}`} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
+      <Link href={href} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
         {content}
       </Link>
     );
@@ -295,48 +342,48 @@ export default function StudentDashboardPage() {
       </div>
 
       <div className="mobile-stat-strip" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 64px", gap: 18, marginBottom: 18 }}>
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
+        <StatCard
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
               <path d="m12 2 9 5-9 5-9-5 9-5Z" />
               <path d="m3 12 9 5 9-5M3 17l9 5 9-5" />
             </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>{enrolledCount} Enrolled</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Courses</div>
-          </div>
-        </div>
+          }
+          value={`${enrolledCount} Enrolled`}
+          label="Courses"
+          color="var(--orange)"
+          soft="var(--orange-soft)"
+        />
 
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
+        <StatCard
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="1.8">
               <path d="M9 11H3v9h6v-9ZM21 4h-6v16h6V4ZM15 9H9v11h6V9Z" />
             </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>{attempts.length} Taken</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Mock tests</div>
-          </div>
-        </div>
+          }
+          value={`${attempts.length} Taken`}
+          label="Mock tests"
+          color="var(--blue)"
+          soft="var(--blue-soft)"
+        />
 
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 14, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
+        <StatCard
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.8">
               <circle cx="12" cy="8" r="4" />
               <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
             </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>{bookings.length} Booked</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Mentor sessions</div>
-          </div>
-        </div>
+          }
+          value={`${bookings.length} Booked`}
+          label="Mentor sessions"
+          color="var(--purple)"
+          soft="var(--purple-soft)"
+        />
 
         <button
           onClick={() => router.push("/student/mentor")}
           title="Book a Mentor"
-          style={{ background: "var(--ink)", border: "none", borderRadius: "var(--rm)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+          style={{ background: "var(--orange)", border: "none", borderRadius: "var(--rm)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(242,106,27,.32)" }}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7">
             <circle cx="12" cy="8" r="4" />
