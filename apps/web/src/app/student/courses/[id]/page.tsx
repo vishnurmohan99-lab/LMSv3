@@ -233,7 +233,7 @@ function LessonViewer({ lesson }: { lesson: Lesson }) {
         className="fade-in-up"
         style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden", boxShadow: "0 8px 28px rgba(0,0,0,.06)" }}
       >
-        <iframe src={lesson.contentUrl} style={{ width: "100%", height: "70vh", border: "none", display: "block" }} />
+        <iframe src={`${lesson.contentUrl}#toolbar=0`} style={{ width: "100%", height: "70vh", border: "none", display: "block" }} />
       </div>
     ) : (
       <div className="fade-in-up" style={{ padding: 24, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", color: "var(--ink2)" }}>

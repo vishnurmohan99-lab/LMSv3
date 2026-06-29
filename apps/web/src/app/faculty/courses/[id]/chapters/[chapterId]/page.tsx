@@ -361,7 +361,7 @@ function LessonPreview({ lesson }: { lesson: Lesson }) {
   }
   if (lesson.type === "PDF") {
     return lesson.contentUrl ? (
-      <iframe src={lesson.contentUrl} style={{ width: "100%", height: 320, border: "1px solid var(--line)", borderRadius: 8 }} />
+      <iframe src={`${lesson.contentUrl}#toolbar=0`} style={{ width: "100%", height: 320, border: "1px solid var(--line)", borderRadius: 8 }} />
     ) : (
       <p style={{ fontSize: 12, color: "var(--ink3)" }}>No PDF uploaded yet.</p>
     );
