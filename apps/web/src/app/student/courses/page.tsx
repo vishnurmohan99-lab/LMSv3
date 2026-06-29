@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { coursesApi, enrollmentsApi, segmentsApi, ApiError, type Course, type Enrollment, type Segment } from "@/lib/api";
+import { coursesApi, enrollmentsApi, segmentsApi, usersApi, ApiError, type Course, type Enrollment, type Segment, type Profile } from "@/lib/api";
 import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const BANNER_HEIGHT = 130;
@@ -161,10 +161,20 @@ function CatalogCard({ course, onEnroll, enrolling, index }: { course: Course; o
   );
 }
 
+/** Mirrors the backend's per-student segment match (CoursesService.listCourses): a course tagged
+ *  with a subsegment only matches students in that exact subsegment; a course tagged with just a
+ *  segment matches students in that segment with no subsegment of their own. */
+function courseMatchesProfile(course: Course, profile: Profile | null) {
+  if (!profile?.segmentId) return true;
+  if (profile.subsegmentId) return course.subsegmentId === profile.subsegmentId;
+  return course.segmentId === profile.segmentId && !course.subsegmentId;
+}
+
 export default function StudentCoursesPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [catalog, setCatalog] = useState<Course[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
@@ -173,13 +183,14 @@ export default function StudentCoursesPage() {
   function load() {
     setLoading(true);
     setError(null);
-    Promise.allSettled([enrollmentsApi.mine(), coursesApi.list(), segmentsApi.list()])
-      .then(([enrollmentsResult, catalogResult, segmentsResult]) => {
+    Promise.allSettled([enrollmentsApi.mine(), coursesApi.list(), segmentsApi.list(), usersApi.me()])
+      .then(([enrollmentsResult, catalogResult, segmentsResult, profileResult]) => {
         if (enrollmentsResult.status === "fulfilled") setEnrollments(enrollmentsResult.value);
         if (catalogResult.status === "fulfilled") setCatalog(catalogResult.value);
         if (segmentsResult.status === "fulfilled") setSegments(segmentsResult.value);
+        if (profileResult.status === "fulfilled") setProfile(profileResult.value);
 
-        const failed = [enrollmentsResult, catalogResult, segmentsResult].find((r) => r.status === "rejected");
+        const failed = [enrollmentsResult, catalogResult, segmentsResult, profileResult].find((r) => r.status === "rejected");
         if (failed && failed.status === "rejected") {
           const err = failed.reason;
           setError(err instanceof ApiError ? err.message : "Some course data failed to load");
@@ -197,8 +208,11 @@ export default function StudentCoursesPage() {
     [browsableAll, search],
   );
   const enrolledCourses = useMemo(
-    () => enrollments.map((e) => e.course).filter((c) => c.title.toLowerCase().includes(search.toLowerCase())),
-    [enrollments, search],
+    () =>
+      enrollments
+        .map((e) => e.course)
+        .filter((c) => c.title.toLowerCase().includes(search.toLowerCase()) && courseMatchesProfile(c, profile)),
+    [enrollments, search, profile],
   );
 
   const knownSegmentIds = new Set(segments.map((s) => s.id));

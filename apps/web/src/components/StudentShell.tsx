@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authApi, usersApi, messengerApi, type Profile } from "@/lib/api";
+import SegmentOnboardingGate from "./SegmentOnboardingGate";
 
 function Icon({ children }: { children: React.ReactNode }) {
   return <span style={{ display: "flex", width: 18, justifyContent: "center", flex: "none" }}>{children}</span>;
@@ -231,9 +232,11 @@ export default function StudentShell({ children }: { children: React.ReactNode }
     setDrawerOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
+  function loadProfile() {
     usersApi.me().then(setProfile).catch(() => {});
-  }, []);
+  }
+
+  useEffect(loadProfile, []);
 
   useEffect(() => {
     function poll() {
@@ -259,6 +262,10 @@ export default function StudentShell({ children }: { children: React.ReactNode }
   }
 
   const sectionTitle = navItems.find((n) => isActive(n.href))?.label ?? "Overview";
+
+  if (profile && profile.role === "STUDENT" && !profile.segmentId) {
+    return <SegmentOnboardingGate onDone={loadProfile} />;
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
