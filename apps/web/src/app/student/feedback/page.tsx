@@ -122,7 +122,7 @@ export default function StudentFeedbackPage() {
 
   if (openFormId) {
     return (
-      <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 640, margin: "0 auto" }}>
+      <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 640, margin: "0 auto" }}>
         <button
           onClick={() => {
             setOpenFormId(null);
@@ -261,7 +261,7 @@ export default function StudentFeedbackPage() {
   }
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 760, margin: "0 auto" }}>
+    <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 760, margin: "0 auto" }}>
       <div style={{ display: "flex", gap: 8, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 13, padding: 5, width: "max-content", marginBottom: 20 }}>
         <button
           onClick={() => setTab("allotted")}
