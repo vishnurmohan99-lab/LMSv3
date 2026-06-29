@@ -42,7 +42,10 @@ each; any API client change must be made in both files.
   defaulting to `nvidia/nemotron-nano-12b-v2-vl:free` (confirmed live on
   OpenRouter). **`qwen/qwen2.5-vl-32b-instruct:free` does NOT exist — 404s.**
 - Real test accounts: `admin@test.com`/`Vishnu123@` (ADMIN),
-  `vishnu@test.com`/`Vishnu123@` (STUDENT, no segment),
+  `vishnu@test.com`/`Vishnu123@` (STUDENT, no segment — as of 2026-06-29
+  this means it now hits the mandatory SegmentOnboardingGate on next
+  login; pick one to get past it, or it'll re-appear every session until
+  you do — this is now intended app behavior, not a bug to route around),
   `testfaculty_mentor@test.com`/`Vishnu123@` (FACULTY, isMentor=false).
   `aparna@test.com` is a separate real STUDENT account.
   `aparna.mentor@test.com` is the real mentor account (FACULTY,
@@ -103,9 +106,18 @@ each; any API client change must be made in both files.
 - CSS percentage heights don't resolve against an auto-height flex parent.
 - Forum permission model (course/batch membership is a hard gate) — confirmed
   correct by design, don't "fix" again.
-- A student with no segmentId/subsegmentId sees ALL segment-scoped content
-  unfiltered — intentional, mirrored across Course/Test/Answer-Correction
-  question visibility.
+- **SUPERSEDED 2026-06-29 (commit `a91da3c`):** this used to say a student
+  with no segmentId/subsegmentId sees ALL segment-scoped content
+  unfiltered, by design. That's no longer true for new logins — see
+  "Segment onboarding gate" in feature history below. Existing students
+  who already have a segment set were never affected by this either way
+  (backend course filtering already matched their segment correctly).
+  Whether Test/Answer-Correction visibility for a (now theoretically
+  impossible going forward, but still reachable via direct API/old
+  sessions) no-segment student should also change was **not** addressed —
+  this commit only touched course catalog + "Continue learning" plus the
+  new gate forcing segment selection. Revisit if a no-segment edge case
+  resurfaces.
 - **Always give `orderBy: { order: 'asc' }` a secondary tiebreaker**
   (`createdAt`/`id`) wherever lessons/tests/chapters are queried. Many rows
   share `order: 0` until a user explicitly reorders them, and Postgres
@@ -404,6 +416,28 @@ app only (`apps/web /student`) for now.
 - **Not yet started:** Subscription, Answer Correction. Faculty and Admin
   apps explicitly excluded from this rollout's scope for now.
 
+**Segment onboarding gate + courses-page segment filtering** (commit
+`a91da3c`, outside the mobile rollout — direct user request). New
+`SegmentOnboardingGate.tsx` component, wired into `StudentShell.tsx`:
+whenever the logged-in student's `profile.segmentId` is null, the entire
+shell renders only this gate (a "select your class" form — segment, then
+a conditional subsegment dropdown if that segment has any) instead of the
+normal sidebar/topbar/page content, blocking every `/student/*` route
+until they save via `usersApi.updateMe()`. `StudentShell`'s existing
+profile-loading effect was refactored into a named `loadProfile()` so the
+gate's `onDone` callback can re-trigger it and drop the gate once segmentId
+is set. Also fixed `courses/page.tsx`: the catalog already relied on the
+backend's per-student segment filtering (already correct), but "Continue
+learning" (sourced from `enrollmentsApi.mine()`) had no segment filter at
+all. Added `courseMatchesProfile()` (mirrors `CoursesService.listCourses`'
+subsegment/segment match logic) and applied it client-side to the
+enrolled-courses list only. Verified end-to-end live: cleared
+vishnu@test.com's segment, confirmed the gate blocked every page, picked
+Class 12 → NEET, confirmed save+unblock, confirmed `/student/courses` then
+showed only the matching enrolled course (Biology) instead of all 5
+previously-visible ones — then reverted the test account back to no
+segment afterward.
+
 **Dashboard fix + polish** (commit `3de7ace`, outside the mobile-rollout
 sequence — user reported it directly): `ScheduleRow` in
 `student/dashboard/page.tsx` only special-cased `LIVE_LESSON` and otherwise
@@ -567,10 +601,11 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-27, after adding mobile responsive layout to
-Feedback and Profile (commit `640ce39`, pushed + deployed). On top of the
-same day's earlier work: Workout and Mock Test mobile layout (commit
-`54994c9`), the mobile Book-a-Mentor CTA button fix (commit
+*Last updated: 2026-06-29, after adding the mandatory segment-onboarding
+gate and fixing courses-page segment filtering (commit `a91da3c`, pushed +
+deployed). On top of 2026-06-27's work: mobile responsive layout for
+Feedback and Profile (commit `640ce39`), Workout and Mock Test mobile
+layout (commit `54994c9`), the mobile Book-a-Mentor CTA button fix (commit
 `46168b6`), the Today's Schedule "with undefined" bug fix + stat card
 restyle (commit `3de7ace`),
 mobile responsive layout for Forum (commit `ffc0752`), the Messages conversation-list ↔ thread mobile drill-down (commit
