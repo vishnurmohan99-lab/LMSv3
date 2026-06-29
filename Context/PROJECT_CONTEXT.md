@@ -593,6 +593,35 @@ endpoint by design (reflections are meant to be a permanent journal, not
 disposable like a to-do), so it remains in prod as harmless verification
 data, same precedent as the orphaned test `CheatSheet` row noted below.
 
+**Admin AI Models settings** (commit `61df750`, deployed) — new
+`/admin/settings` page lets the admin pick a provider (OpenRouter/OpenAI)
++ optional model override independently for each of the 7 distinct AI
+call sites: Flashcard generation, AI Notes generation, Summary Deck
+generation, Cheat Sheet text, Cheat Sheet illustrations, Ask-a-doubt Chat,
+Answer Correction grading. Scoped via `AskUserQuestion` up front: per-
+feature granularity (not grouped by call-type), and selecting OpenAI
+(not integrated yet) saves the preference but **errors clearly** on the
+next call to that feature rather than silently falling back to
+OpenRouter — this was an explicit choice over the alternative (silent
+fallback), so don't "fix" the error into a fallback later without
+checking with the user first.
+- New `AiFeatureSetting` model (`feature` enum as the `@id`, one row per
+  feature, upserted — no row means "use the env-var default", which the
+  service also returns so the UI can show what a never-touched feature
+  currently falls back to).
+- `AiService.complete/completeVision/generateImage` all now take a
+  required `feature: AiFeature` param and resolve the model via a new
+  private `resolveModel()` (DB override → env-var default), throwing if
+  the feature's provider is `OPENAI`. Every existing call site
+  (`courses.service.ts`'s flashcards/notes/summary-deck/cheat-sheet
+  generators, `chat.service.ts`, `answer-grading.service.ts`) was updated
+  to pass its feature literal — **any new AI call site must do the same**
+  or it won't compile (the param isn't optional).
+- Verified end-to-end via curl (OPENAI provider → real call blocked with
+  the expected message → reverted to OPENROUTER → same call succeeds) and
+  live in the admin UI (dropdown, save, persistence across reload, "Not
+  integrated yet" badge), then reverted the test change.
+
 ## Outstanding / known gaps
 
 - Answer Correction: PDF upload rejected (image-only for v1); free-tier
@@ -659,10 +688,13 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after adding the Study Planner feature —
-student Weekly/Reflection/Tasks tabs + admin reflection oversight (commit
-`787e520`, pushed + deployed to apps/web, apps/admin, and apps/api via
-Render auto-deploy + a hand-written migration). On top of 2026-06-29's
+*Last updated: 2026-06-30, after adding the admin AI Models settings
+(per-feature OpenRouter/OpenAI provider switching, commit `61df750`,
+pushed + deployed to apps/admin and apps/api via Render auto-deploy + a
+hand-written migration). On top of the same day's earlier work: the
+Study Planner feature — student Weekly/Reflection/Tasks tabs + admin
+reflection oversight (commit `787e520`, deployed to apps/web, apps/admin,
+and apps/api). On top of 2026-06-29's
 work: hiding the native PDF-viewer toolbar in lesson PDF embeds across
 student/faculty/admin (commit `fe77ae1`), the mandatory segment-onboarding
 gate and courses-page segment filtering (commit `a91da3c`). On top of
