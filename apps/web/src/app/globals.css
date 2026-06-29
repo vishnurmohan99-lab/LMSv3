@@ -344,6 +344,23 @@ button:active, a:active {
   .mentor-summary-card {
     position: static !important;
   }
+  /* Messages: mobile drill-down (conversation list <-> thread), same pattern
+     as the course detail page but driven by route (layout.tsx checks
+     pathname) since list and thread are separate route segments rather than
+     local selection state. */
+  .messenger-list-pane {
+    width: 100% !important;
+    border-right: none !important;
+  }
+  .messenger-list-pane.has-selection {
+    display: none !important;
+  }
+  .messenger-thread-pane {
+    display: none !important;
+  }
+  .messenger-thread-pane.has-selection {
+    display: flex !important;
+  }
   .summary-deck-card {
     padding: 22px !important;
   }

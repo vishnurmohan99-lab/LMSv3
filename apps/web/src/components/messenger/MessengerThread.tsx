@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { messengerApi, ApiError, type Message } from "@/lib/api";
 import { useMessenger, conversationLabel, conversationMeta } from "./MessengerContext";
 
@@ -53,7 +54,7 @@ function dateLabel(iso: string) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-export default function MessengerThread({ conversationId }: { conversationId: string }) {
+export default function MessengerThread({ conversationId, basePath }: { conversationId: string; basePath?: string }) {
   const { me, conversations } = useMessenger();
   const conversation = conversations.find((c) => c.id === conversationId) ?? null;
 
@@ -127,6 +128,18 @@ export default function MessengerThread({ conversationId }: { conversationId: st
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "none", padding: "16px 24px", borderBottom: "1px solid var(--line)", background: "var(--card)", display: "flex", alignItems: "center", gap: 12 }}>
+        {basePath && (
+          <Link
+            href={basePath}
+            className="mobile-back-btn"
+            aria-label="Back to conversations"
+            style={{ width: 30, height: 30, flex: "none", border: "1px solid var(--line)", borderRadius: 9, background: "var(--bg)", alignItems: "center", justifyContent: "center" }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.2">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </Link>
+        )}
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 15.5, fontWeight: 800 }}>{me && conversation ? conversationLabel(conversation, me.id) : "…"}</div>
           <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 1 }}>{conversation ? conversationMeta(conversation) : ""}</div>

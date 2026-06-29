@@ -32,7 +32,15 @@ function timeAgo(iso: string) {
   return `${days}d`;
 }
 
-export default function MessengerSidebar({ basePath, onNewMessage }: { basePath: string; onNewMessage: () => void }) {
+export default function MessengerSidebar({
+  basePath,
+  onNewMessage,
+  className,
+}: {
+  basePath: string;
+  onNewMessage: () => void;
+  className?: string;
+}) {
   const { me, conversations, loading } = useMessenger();
   const router = useRouter();
   const params = useParams<{ id?: string }>();
@@ -49,7 +57,10 @@ export default function MessengerSidebar({ basePath, onNewMessage }: { basePath:
   }, [conversations, search, me]);
 
   return (
-    <aside style={{ width: 330, flex: "none", borderRight: "1px solid var(--line)", background: "var(--card)", display: "flex", flexDirection: "column" }}>
+    <aside
+      className={className}
+      style={{ width: 330, flex: "none", borderRight: "1px solid var(--line)", background: "var(--card)", display: "flex", flexDirection: "column" }}
+    >
       <div style={{ padding: "18px 18px 14px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ fontSize: 17, fontWeight: 800 }}>Messages</div>
