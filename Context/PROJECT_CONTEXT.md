@@ -333,9 +333,22 @@ app only (`apps/web /student`) for now.
      attendance-trend chart, mentorship engagement-score ring, and promo
      banner carousel — none have a real backing data source in this app, and
      the project avoids fabricated metrics.
-- **Not yet started:** Calendar, Messages/Forum/Feedback, and the unread back
-  half of the mockup (Workout/Mock Test/Mentor/Planner/Profile). Faculty and
-  Admin apps explicitly excluded from this rollout's scope for now.
+- **Calendar + Book a Mentor** (commit `557402d`): responsive retrofit, not
+  a reimplementation of the mockup's day-strip layout — kept the existing
+  month-grid `CalendarApp.tsx` (shared by faculty too) and mentor
+  select/date-chips/time-slot-grid/booking-summary structure, just made them
+  stack on mobile. `CalendarApp`'s `1fr 300px` grid and the mentor page's
+  `1fr 320px` grid both get `.mobile-stack-grid` (existing utility) below
+  860px. New utilities added to `globals.css`'s mobile block: `.calendar-
+  day-cell` (shrinks month-grid cell min-height/padding/date-number font on
+  mobile), `.mentor-slot-grid` (4→3 columns), `.mentor-summary-card`
+  (drops the `position: sticky` so the dark booking-summary card doesn't
+  pin oddly once it's stacked above/below the date pickers instead of
+  beside them). Both page wrappers got `.mobile-page-pad`. No new mobile
+  route/component — same pattern as the rest of this rollout.
+- **Not yet started:** Messages/Forum/Feedback, and the unread back half of
+  the mockup (Workout/Mock Test/Planner/Profile). Faculty and Admin apps
+  explicitly excluded from this rollout's scope for now.
 - **Bottom tab nav + chapter-list redesign** (new mockup screenshots supplied
   directly in-chat, not from the `design-reference/` dir — a course-overview
   + lesson mobile pair showing a bottom tab bar). Decisions confirmed via
@@ -477,11 +490,14 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-27, after the bottom tab nav + chapter-list mockup
-redesign (commit `f4334ee`) and its mobile-drilldown follow-up fix (commit
-`0e1f15b`, course-open now lands on the chapter list instead of jumping into
-the lesson player) — both pushed to main and deployed via `vercel --prod
---yes`. On top of the rest of 2026-06-26's work: the mobile UI rollout
+*Last updated: 2026-06-27, after adding mobile responsive layout to the
+Calendar and Book a Mentor pages (commit `557402d`, pushed + deployed). On
+top of the same day's earlier work: the bottom tab nav + chapter-list
+mockup redesign (commit `f4334ee`), its mobile-drilldown follow-up fix
+(commit `0e1f15b`, course-open now lands on the chapter list instead of
+jumping into the lesson player), and the Test-data cleanup + 5 new 30-Q
+question banks + 6-passage Comprehension Practice bank (data-only, no code
+deploy). On top of the rest of 2026-06-26's work: the mobile UI rollout
 commits (shell, course list, course detail/lesson player, flashcards+AI
 deck, dashboard), the Answer Correction feature, the AI Cheat Sheet
 Generator, the lesson/test/chapter order-tiebreak fix, diagnosing the Cheat
