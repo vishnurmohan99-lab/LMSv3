@@ -202,7 +202,7 @@ You MUST include a pointDetections entry for EVERY point id listed in every part
     let lastError: unknown;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const raw = await this.ai.completeVision(prompt, imageDataUri);
+        const raw = await this.ai.completeVision(prompt, imageDataUri, 'ANSWER_GRADING');
         const jsonText = extractFirstJsonValue(raw, '{', '}');
         if (!jsonText) throw new Error('No JSON object found in AI response');
         return JSON.parse(jsonText) as LlmGradingResponse;

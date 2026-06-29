@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { AiFeature } from '../../generated/prisma/client';
 
 /**
  * Extracts the first balanced JSON array/object from raw AI text, ignoring brackets that
@@ -46,12 +48,28 @@ export function extractFirstJsonValue(raw: string, open: '[' | '{', close: ']' |
 
 @Injectable()
 export class AiService {
-  async complete(prompt: string, opts?: { model?: string }): Promise<string> {
+  constructor(private readonly prisma: PrismaService) {}
+
+  /** Resolves which model to call for a given feature, honoring an admin override (Admin →
+   *  Settings → AI Models) over the env-var default. Throws if the feature is set to a
+   *  provider that isn't wired up yet (currently only OpenAI), so the admin gets a clear
+   *  signal to switch it back rather than a silent fallback. */
+  private async resolveModel(feature: AiFeature, envDefault: string): Promise<string> {
+    const setting = await this.prisma.aiFeatureSetting.findUnique({ where: { feature } });
+    if (setting?.provider === 'OPENAI') {
+      throw new BadRequestException(
+        `OpenAI is not yet integrated for this feature — switch it back to OpenRouter in Admin → Settings → AI Models.`,
+      );
+    }
+    return setting?.model?.trim() || envDefault;
+  }
+
+  async complete(prompt: string, feature: AiFeature): Promise<string> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
     }
-    const model = opts?.model ?? process.env.OPENROUTER_MODEL ?? 'openai/gpt-oss-20b:free';
+    const model = await this.resolveModel(feature, process.env.OPENROUTER_MODEL ?? 'openai/gpt-oss-20b:free');
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -74,12 +92,12 @@ export class AiService {
   }
 
   /** Multimodal call: text prompt + one image, for the Answer Correction vision grading pipeline. */
-  async completeVision(prompt: string, imageDataUri: string, opts?: { model?: string }): Promise<string> {
+  async completeVision(prompt: string, imageDataUri: string, feature: AiFeature): Promise<string> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
     }
-    const model = opts?.model ?? process.env.OPENROUTER_VISION_MODEL ?? 'nvidia/nemotron-nano-12b-v2-vl:free';
+    const model = await this.resolveModel(feature, process.env.OPENROUTER_VISION_MODEL ?? 'nvidia/nemotron-nano-12b-v2-vl:free');
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -114,15 +132,15 @@ export class AiService {
    * Generates one image from a text prompt, for the Cheat Sheet illustration pipeline.
    * Returns the raw image bytes + detected content type. OpenRouter has no $0 image model at
    * time of writing -- defaults to the cheapest available (fractions of a cent/image), kept
-   * swappable via OPENROUTER_IMAGE_MODEL so this can move to OpenAI's image API later without
-   * touching the calling code.
+   * swappable via OPENROUTER_IMAGE_MODEL (or an admin override) so this can move to OpenAI's
+   * image API later without touching the calling code.
    */
-  async generateImage(prompt: string, opts?: { model?: string }): Promise<{ buffer: Buffer; contentType: string }> {
+  async generateImage(prompt: string, feature: AiFeature): Promise<{ buffer: Buffer; contentType: string }> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
     }
-    const model = opts?.model ?? process.env.OPENROUTER_IMAGE_MODEL ?? 'google/gemini-2.5-flash-image';
+    const model = await this.resolveModel(feature, process.env.OPENROUTER_IMAGE_MODEL ?? 'google/gemini-2.5-flash-image');
 
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

@@ -37,7 +37,7 @@ export class ChatService {
 
     const prompt = `You are a helpful tutor answering a student's question about a specific lesson. Answer only using the lesson content below. If the answer isn't in the content, say you don't have that information in this lesson.\n\nLesson content:\n${lessonContent}\n\n${historyText ? `Conversation so far:\n${historyText}\n\n` : ''}Student: ${message}\nAssistant:`;
 
-    const reply = await this.ai.complete(prompt);
+    const reply = await this.ai.complete(prompt, 'CHAT');
 
     const [userMessage, assistantMessage] = await this.prisma.$transaction([
       this.prisma.chatMessage.create({

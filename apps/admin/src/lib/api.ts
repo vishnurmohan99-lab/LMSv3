@@ -1286,3 +1286,25 @@ export interface Reflection {
 export const reflectionsApi = {
   listAll: (studentId?: string) => request<Reflection[]>(`/reflections${studentId ? `?studentId=${studentId}` : ''}`),
 };
+
+export type AiFeature = 'FLASHCARDS' | 'NOTES' | 'SUMMARY_DECK' | 'CHEAT_SHEET_TEXT' | 'CHEAT_SHEET_IMAGE' | 'CHAT' | 'ANSWER_GRADING';
+export type AiProvider = 'OPENROUTER' | 'OPENAI';
+
+export interface AiFeatureSetting {
+  feature: AiFeature;
+  label: string;
+  description: string;
+  provider: AiProvider;
+  model: string | null;
+  defaultModel: string;
+  updatedAt: string | null;
+}
+
+export const aiSettingsApi = {
+  listAll: () => request<AiFeatureSetting[]>('/ai-settings'),
+  update: (feature: AiFeature, data: { provider: AiProvider; model?: string }) =>
+    request<{ feature: AiFeature; provider: AiProvider; model: string | null; updatedAt: string }>(`/ai-settings/${feature}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+};

@@ -774,6 +774,28 @@ model Reflection {
   @@index([date])
 }
 
+enum AiFeature {
+  FLASHCARDS
+  NOTES
+  SUMMARY_DECK
+  CHEAT_SHEET_TEXT
+  CHEAT_SHEET_IMAGE
+  CHAT
+  ANSWER_GRADING
+}
+
+enum AiProvider {
+  OPENROUTER
+  OPENAI
+}
+
+model AiFeatureSetting {
+  feature   AiFeature  @id
+  provider  AiProvider @default(OPENROUTER)
+  model     String?
+  updatedAt DateTime   @updatedAt
+}
+
 enum FeedbackTargetType {
   COURSE
   FACULTY

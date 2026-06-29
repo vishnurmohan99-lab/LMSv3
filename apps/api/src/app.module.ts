@@ -28,6 +28,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { TodosModule } from './todos/todos.module';
 import { AnswerCorrectionModule } from './answer-correction/answer-correction.module';
 import { ReflectionsModule } from './reflections/reflections.module';
+import { AiSettingsModule } from './ai-settings/ai-settings.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ReflectionsModule } from './reflections/reflections.module';
     TodosModule,
     AnswerCorrectionModule,
     ReflectionsModule,
+    AiSettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

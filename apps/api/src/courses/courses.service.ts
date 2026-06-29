@@ -4,7 +4,7 @@ import { UploadsService } from '../uploads/uploads.service';
 import { AiService, extractFirstJsonValue } from '../ai/ai.service';
 import { withUniqueNameCheck } from '../common/unique-violation';
 import { JwtPayload } from '../auth/jwt-payload.interface';
-import { LessonType } from '../../generated/prisma/client';
+import { LessonType, AiFeature } from '../../generated/prisma/client';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateChapterDto } from './dto/create-chapter.dto';
@@ -593,9 +593,9 @@ export class CoursesService {
    * response doesn't contain one (the free OpenRouter model occasionally returns a plain-text
    * refusal/chitchat reply instead of the requested JSON).
    */
-  private async completeJsonText(prompt: string, open: '[' | '{', close: ']' | '}'): Promise<string> {
+  private async completeJsonText(prompt: string, open: '[' | '{', close: ']' | '}', feature: AiFeature): Promise<string> {
     for (let attempt = 0; attempt < 2; attempt++) {
-      const raw = await this.ai.complete(prompt);
+      const raw = await this.ai.complete(prompt, feature);
       const jsonText = extractFirstJsonValue(raw, open, close);
       if (jsonText) return jsonText;
     }
@@ -607,6 +607,7 @@ export class CoursesService {
       `Generate exactly ${count} study flashcards from the following lesson content. Respond with ONLY a JSON array, no markdown, no commentary, in this exact shape: [{"front": "question", "back": "answer"}]. Keep each side concise.\n\nLesson content:\n${content}`,
       '[',
       ']',
+      'FLASHCARDS',
     );
 
     let parsed: unknown;
@@ -691,6 +692,7 @@ export class CoursesService {
       `Split the following lesson content into exactly ${count} short summary cards that together cover the ENTIRE content from start to finish, in order. Each card should be 1-3 sentences, self-contained, and readable on its own. Respond with ONLY a JSON array of strings, no markdown, no commentary, in this exact shape: ["card 1 text", "card 2 text"].\n\nLesson content:\n${content}`,
       '[',
       ']',
+      'SUMMARY_DECK',
     );
 
     let parsed: unknown;
@@ -728,6 +730,7 @@ export class CoursesService {
       try {
         const { buffer, contentType } = await this.ai.generateImage(
           `Simple, clean, flat-style educational illustration (no text, no words, no letters in the image) representing: ${draft.title}. Minimal, portrait orientation, friendly study-material aesthetic.`,
+          'CHEAT_SHEET_IMAGE',
         );
         illustrationKey = await this.uploads.uploadGeneratedImage(buffer, contentType);
       } catch (err) {
@@ -767,6 +770,7 @@ export class CoursesService {
       `You are creating an exam-revision cheat sheet from the following lesson content. Split it into exactly ${count} portrait-oriented pages that together cover the ENTIRE content from start to finish, in order. Do NOT copy sentences verbatim -- rewrite everything into concise, easy-to-understand bullet points. Each page covers one coherent topic/sub-topic and should include a short, punchy "examTip" (a high-yield exam tip or key thing to remember). Include a "table" only when the content has genuinely tabular/comparison data (otherwise omit it). Respond with ONLY a JSON array, no markdown, no commentary, in this exact shape: [{"title": "Topic name", "bullets": ["concise rewritten point", "..."], "table": {"headers": ["Col A", "Col B"], "rows": [["a1", "b1"]]}, "examTip": "short high-yield tip"}]. Omit "table" entirely for pages with no tabular content.\n\nLesson content:\n${content}`,
       '[',
       ']',
+      'CHEAT_SHEET_TEXT',
     );
 
     let parsed: unknown;
@@ -813,6 +817,7 @@ export class CoursesService {
       `Write concise study notes for the following lesson content. Respond with ONLY a JSON object, no markdown, no commentary, in this exact shape: {"summary": "a short paragraph summarizing the lesson", "keyPoints": ["key point 1", "key point 2"]}.\n\nLesson content:\n${content}`,
       '{',
       '}',
+      'NOTES',
     );
 
     let parsed: unknown;
