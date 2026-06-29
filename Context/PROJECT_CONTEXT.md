@@ -142,6 +142,13 @@ each; any API client change must be made in both files.
   verify visually, then remove the injected style/zoom — no permanent code
   change. Prefer this over code-review-only verification when mobile-only
   styles need visual confirmation.
+- **Next dev server occasionally throws a spurious `Runtime Error: Jest
+  worker encountered 2 child process exceptions, exceeding retry limit`**
+  on a normal page navigation that has nothing to do with Jest/tests.
+  Reloading doesn't fix it. Fix: find the PID on port 3000 (`netstat -ano |
+  grep ":3000" | grep LISTENING`), `taskkill //PID <pid> //F`, restart
+  `npm run dev`. Not a code bug — an environment hiccup with this
+  long-running dev server.
 
 ## Established code patterns (mirror these)
 
@@ -373,9 +380,24 @@ app only (`apps/web /student`) for now.
   "Categories" heading once it's a chip strip) — mirrors the mobile
   mockup's category-pill pattern. Search+New-thread row got
   `.mobile-stack-header`, content area got `.mobile-page-pad`.
-- **Not yet started:** Feedback, and the unread back half of the mockup
-  (Workout/Mock Test/Planner/Profile). Faculty and Admin apps explicitly
-  excluded from this rollout's scope for now.
+- **Workout + Mock Test** (commit `54994c9`): Workout's Course/Chapter
+  select pair gets `.mobile-stack-grid`; all 3 of its views (setup/
+  session/done) get `.mobile-page-pad`. Mock Test list only needed
+  `.mobile-page-pad` (card grid was already responsive auto-fill). The
+  real work was the Mock Test **attempt** page's taking-view: a 3-column
+  grid (sticky+maxHeight-clamped passage panel / question / question-
+  palette sidebar) for comprehension questions, 2-column otherwise. Stacks
+  via the existing `.mobile-stack-grid` utility; new `.mock-test-passage`
+  rule strips the `position: sticky` + `max-height` clamp on mobile so the
+  passage behaves like a normal block once stacked above the question
+  instead of pinning to the scroll container's top. Previous/Save&Next/
+  Submit button row got `flex-wrap`. Verified end-to-end live against a
+  real comprehension mock test (passage + MCQ + palette + submit +
+  results) — all 4 views (instructions/taking/results, + list) confirmed
+  rendering correctly stacked on mobile.
+- **Not yet started:** Feedback, Profile, Subscription, Answer Correction.
+  Faculty and Admin apps explicitly excluded from this rollout's scope for
+  now.
 
 **Dashboard fix + polish** (commit `3de7ace`, outside the mobile-rollout
 sequence — user reported it directly): `ScheduleRow` in
@@ -540,10 +562,11 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-27, after fixing the mobile Book-a-Mentor CTA button
-on the student dashboard (commit `46168b6`, pushed + deployed). On top of
-the same day's earlier work: the Today's Schedule "with undefined" bug fix
-+ stat card restyle (commit `3de7ace`),
+*Last updated: 2026-06-27, after adding mobile responsive layout to
+Workout and Mock Test (commit `54994c9`, pushed + deployed). On top of the
+same day's earlier work: the mobile Book-a-Mentor CTA button fix (commit
+`46168b6`), the Today's Schedule "with undefined" bug fix + stat card
+restyle (commit `3de7ace`),
 mobile responsive layout for Forum (commit `ffc0752`), the Messages conversation-list ↔ thread mobile drill-down (commit
 `9103fe8`), mobile responsive layout for Calendar and Book a Mentor (commit
 `557402d`), the bottom tab nav + chapter-list
