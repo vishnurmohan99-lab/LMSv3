@@ -107,14 +107,14 @@ export default function StudentMentorPage() {
 
   if (loading) {
     return (
-      <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+      <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, marginBottom: 22 }}>Book a Mentor</div>
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
@@ -122,7 +122,7 @@ export default function StudentMentorPage() {
       {mentors.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No mentors are available for booking right now.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 20 }}>
+        <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 20 }}>
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 26 }}>
             <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.3, marginBottom: 18 }}>Book a 1:1 Mentor</div>
 
@@ -222,7 +222,7 @@ export default function StudentMentorPage() {
                 </div>
 
                 <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>Time slot</label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, margin: "8px 0 4px" }}>
+                <div className="mentor-slot-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, margin: "8px 0 4px" }}>
                   {slotsForDate.map((s) => {
                     const sel = selectedSlot?.availabilityId === s.availabilityId && selectedSlot?.date === s.date;
                     return (
@@ -253,6 +253,7 @@ export default function StudentMentorPage() {
           </div>
 
           <div
+            className="mentor-summary-card"
             style={{
               alignSelf: "start",
               background: "var(--ink)",

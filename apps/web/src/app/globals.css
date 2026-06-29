@@ -327,6 +327,23 @@ button:active, a:active {
   .flip-card-question-text {
     font-size: 19px !important;
   }
+  /* Calendar (student + faculty CalendarApp) and Book a Mentor: stack the
+     month-grid/sidebar and date/sidebar split-panes, shrink calendar day
+     cells, and drop the booking-summary sticky positioning so it doesn't
+     pin oddly once stacked above the date/time pickers. */
+  .calendar-day-cell {
+    min-height: 40px !important;
+    padding: 4px !important;
+  }
+  .calendar-day-cell > span:first-child {
+    font-size: 11px !important;
+  }
+  .mentor-slot-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .mentor-summary-card {
+    position: static !important;
+  }
   .summary-deck-card {
     padding: 22px !important;
   }

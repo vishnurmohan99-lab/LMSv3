@@ -303,9 +303,9 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
   if (error) return <p style={{ color: "var(--red)" }}>{error}</p>;
 
   return (
-    <div className="fade-in-up" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 22, alignItems: "start" }}>
+    <div className="fade-in-up mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 22, alignItems: "start" }}>
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontSize: 16, fontWeight: 800 }}>{monthLabel}</div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => changeMonth(-1)} style={inputStyle}>‹ Prev</button>
@@ -335,6 +335,7 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
               <button
                 key={key}
                 onClick={() => setSelectedDate(d)}
+                className="calendar-day-cell"
                 style={{
                   minHeight: 64,
                   padding: "6px 6px",
