@@ -395,9 +395,14 @@ app only (`apps/web /student`) for now.
   real comprehension mock test (passage + MCQ + palette + submit +
   results) — all 4 views (instructions/taking/results, + list) confirmed
   rendering correctly stacked on mobile.
-- **Not yet started:** Feedback, Profile, Subscription, Answer Correction.
-  Faculty and Admin apps explicitly excluded from this rollout's scope for
-  now.
+- **Feedback + Profile** (commit `640ce39`): both already structurally
+  mobile-friendly (single-column cards, `flexWrap` on the feedback-form
+  list rows, `width:100%` form inputs) — only needed `.mobile-page-pad` on
+  the `<main>` wrappers (feedback list, feedback fill-page, profile).
+  Verified the allotted/submitted lists, the form-fill page (stars,
+  textarea, submit), and the Profile form all render cleanly stacked.
+- **Not yet started:** Subscription, Answer Correction. Faculty and Admin
+  apps explicitly excluded from this rollout's scope for now.
 
 **Dashboard fix + polish** (commit `3de7ace`, outside the mobile-rollout
 sequence — user reported it directly): `ScheduleRow` in
@@ -563,8 +568,9 @@ full context dump.
 
 ---
 *Last updated: 2026-06-27, after adding mobile responsive layout to
-Workout and Mock Test (commit `54994c9`, pushed + deployed). On top of the
-same day's earlier work: the mobile Book-a-Mentor CTA button fix (commit
+Feedback and Profile (commit `640ce39`, pushed + deployed). On top of the
+same day's earlier work: Workout and Mock Test mobile layout (commit
+`54994c9`), the mobile Book-a-Mentor CTA button fix (commit
 `46168b6`), the Today's Schedule "with undefined" bug fix + stat card
 restyle (commit `3de7ace`),
 mobile responsive layout for Forum (commit `ffc0752`), the Messages conversation-list ↔ thread mobile drill-down (commit
