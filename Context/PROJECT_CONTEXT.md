@@ -438,6 +438,17 @@ showed only the matching enrolled course (Biology) instead of all 5
 previously-visible ones — then reverted the test account back to no
 segment afterward.
 
+**PDF viewer toolbar hidden** (commit `fe77ae1`) — lesson PDFs are
+rendered via a plain `<iframe src={lesson.contentUrl}>`, which shows the
+browser's native PDF.js toolbar (page nav/zoom/print/save/etc.) inside the
+embed on both desktop and mobile. Appending `#toolbar=0` to the iframe
+`src` (long-supported PDF.js param, works regardless of any existing
+presigned-URL query string since it's a hash fragment) hides it. Applied
+to all 3 places a lesson PDF is iframed: student lesson viewer
+(`student/courses/[id]/page.tsx`), faculty lesson editor preview, admin
+lesson editor preview. Verified live against a real PDF lesson — toolbar
+gone, content renders directly.
+
 **Dashboard fix + polish** (commit `3de7ace`, outside the mobile-rollout
 sequence — user reported it directly): `ScheduleRow` in
 `student/dashboard/page.tsx` only special-cased `LIVE_LESSON` and otherwise
@@ -601,9 +612,11 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-29, after adding the mandatory segment-onboarding
-gate and fixing courses-page segment filtering (commit `a91da3c`, pushed +
-deployed). On top of 2026-06-27's work: mobile responsive layout for
+*Last updated: 2026-06-29, after hiding the native PDF-viewer toolbar in
+lesson PDF embeds across student/faculty/admin (commit `fe77ae1`, pushed +
+deployed to both apps/web and apps/admin). On top of the same day's
+earlier work: the mandatory segment-onboarding gate and courses-page
+segment filtering (commit `a91da3c`). On top of 2026-06-27's work: mobile responsive layout for
 Feedback and Profile (commit `640ce39`), Workout and Mock Test mobile
 layout (commit `54994c9`), the mobile Book-a-Mentor CTA button fix (commit
 `46168b6`), the Today's Schedule "with undefined" bug fix + stat card
