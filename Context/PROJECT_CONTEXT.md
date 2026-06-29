@@ -546,6 +546,53 @@ Also new: `Lesson.cheatSheetEnabled`, `CheatSheet` (`pages: Json`). Migration:
 `prisma/migrations/20260626150000_add_cheat_sheet/migration.sql`. Both
 hand-written, applied via `migrate deploy` (see gotcha above).
 
+Also new: `Reflection` (`studentId`+`date` unique, `wentWell`/`toImprove`
+nullable text — one journal entry per student per day, upserted not
+appended). Migration:
+`prisma/migrations/20260629180000_add_reflection/migration.sql`.
+
+**Study Planner** (commit `787e520`, deployed) — new feature, not part of
+the mobile-rollout sequence. Student gets a previously-disabled "Planner"
+nav item now enabled, `/student/planner` with 3 tabs:
+- **Weekly**: per-chapter "% lessons viewed" progress bars for a selected
+  enrolled course, computed from real `LessonView` rows (no fabricated
+  achievements/streaks — this project deliberately avoids displaying
+  metrics with no real backing data, same reasoning as the dashboard's
+  skipped "Time Spent"/attendance-trend cards). This required broadening
+  `LessonView` recording from SEQUENTIAL-drip-only to every drip type
+  (`recordLessonView` call in the course detail page, and
+  `getCourseTree`'s `viewedLessonIds` computation in
+  `courses.service.ts`) — previously that data only existed for
+  SEQUENTIAL courses, since it was originally added just to gate the
+  lesson-chain unlock check, not as a general activity signal. Each
+  `Lesson` in `getCourseTree` now also carries a `viewed: boolean` field
+  for any course type.
+- **Reflection**: today's "what went well 🌱 / to improve 🎯" journal form
+  (prefills if you already saved one today, since `Reflection` is one row
+  per day) + a read-only list of past entries.
+- **Tasks**: thin wrapper reusing the existing Todo API/model, scoped to
+  today, mirroring `CalendarApp.tsx`'s `TodoPanel` (add/toggle/delete) —
+  no new backend needed here.
+
+Admin gets a new `/admin/planner` page ("Planner — Student Reflections")
+— read-only list of every student's reflection entries (name/email, date,
+went-well/to-improve text), searchable by student name, for mentor/
+counselor oversight. No edit/delete from the admin side by design (scoped
+via `AskUserQuestion` up front — admin's role here is "view/oversee",
+not "manage prompts" or anything else).
+
+Verified end-to-end: curl-tested the upsert (same date twice → one row
+updated, not duplicated, confirmed via `GET /reflections/me` count),
+confirmed `GET /reflections` (admin) includes student info, then exercised
+the full UI live in the browser on both apps — Weekly progress bar
+against a real enrolled course, Reflection prefill-on-reload, Tasks add/
+toggle/strikethrough, and the admin oversight list. One leftover test
+`Reflection` row (vishnu@test.com, today's date, "Finished chapter 1 and
+2" / "Practice more MCQs") was **not** cleaned up — there's no delete
+endpoint by design (reflections are meant to be a permanent journal, not
+disposable like a to-do), so it remains in prod as harmless verification
+data, same precedent as the orphaned test `CheatSheet` row noted below.
+
 ## Outstanding / known gaps
 
 - Answer Correction: PDF upload rejected (image-only for v1); free-tier
@@ -612,11 +659,14 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-29, after hiding the native PDF-viewer toolbar in
-lesson PDF embeds across student/faculty/admin (commit `fe77ae1`, pushed +
-deployed to both apps/web and apps/admin). On top of the same day's
-earlier work: the mandatory segment-onboarding gate and courses-page
-segment filtering (commit `a91da3c`). On top of 2026-06-27's work: mobile responsive layout for
+*Last updated: 2026-06-30, after adding the Study Planner feature —
+student Weekly/Reflection/Tasks tabs + admin reflection oversight (commit
+`787e520`, pushed + deployed to apps/web, apps/admin, and apps/api via
+Render auto-deploy + a hand-written migration). On top of 2026-06-29's
+work: hiding the native PDF-viewer toolbar in lesson PDF embeds across
+student/faculty/admin (commit `fe77ae1`), the mandatory segment-onboarding
+gate and courses-page segment filtering (commit `a91da3c`). On top of
+2026-06-27's work: mobile responsive layout for
 Feedback and Profile (commit `640ce39`), Workout and Mock Test mobile
 layout (commit `54994c9`), the mobile Book-a-Mentor CTA button fix (commit
 `46168b6`), the Today's Schedule "with undefined" bug fix + stat card
