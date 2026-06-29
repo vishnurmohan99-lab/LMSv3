@@ -391,6 +391,14 @@ component using color-coded soft icon backgrounds (orange/blue/purple,
 mirroring the nicer pattern already on `faculty/dashboard/page.tsx`)
 instead of flat dark squares, and recolored the Book-a-Mentor CTA button
 orange (was flat black) to match the app's primary-action color.
+Follow-up (commit `46168b6`, user flagged via screenshot): that CTA is
+icon-only on desktop (compact square next to the stat cards), but on
+mobile `.mobile-stat-strip > button` spans both columns full-width with no
+padding — looked like a thin orange bar with a tiny icon. Added a
+`.mentor-cta-label` span ("Book a Mentor" text, `display:none` by
+default) that's revealed only inside the `.mobile-stat-strip > button`
+mobile breakpoint rule, plus real padding there, so it reads as a proper
+labeled button on mobile while staying a compact icon square on desktop.
 - **Bottom tab nav + chapter-list redesign** (new mockup screenshots supplied
   directly in-chat, not from the `design-reference/` dir — a course-overview
   + lesson mobile pair showing a bottom tab bar). Decisions confirmed via
@@ -532,9 +540,10 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-27, after fixing the student dashboard's Today's
-Schedule "with undefined" bug and restyling its stat cards (commit
-`3de7ace`, pushed + deployed). On top of the same day's earlier work:
+*Last updated: 2026-06-27, after fixing the mobile Book-a-Mentor CTA button
+on the student dashboard (commit `46168b6`, pushed + deployed). On top of
+the same day's earlier work: the Today's Schedule "with undefined" bug fix
++ stat card restyle (commit `3de7ace`),
 mobile responsive layout for Forum (commit `ffc0752`), the Messages conversation-list ↔ thread mobile drill-down (commit
 `9103fe8`), mobile responsive layout for Calendar and Book a Mentor (commit
 `557402d`), the bottom tab nav + chapter-list
