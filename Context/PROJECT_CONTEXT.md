@@ -361,9 +361,21 @@ app only (`apps/web /student`) for now.
   faculty (out of rollout scope) gets no back button and is otherwise
   unaffected; the CSS pane-toggle classes only apply where a page actually
   uses the `messenger-*-pane` classNames (student only).
-- **Not yet started:** Forum/Feedback, and the unread back half of the
-  mockup (Workout/Mock Test/Planner/Profile). Faculty and Admin apps
-  explicitly excluded from this rollout's scope for now.
+- **Forum** (commit `ffc0752`): `ForumApp.tsx` already had list/thread/new
+  switching via local `view` state with an always-visible "← All threads"
+  back button (not gated to mobile, harmless on desktop) — no drill-down
+  classes needed there. The only real mobile problem was the 240px fixed
+  categories `<aside>` sitting beside the content in a flex row. Fix: new
+  `.forum-shell` (flex row → column below 860px), `.forum-categories`
+  (sidebar → full-width horizontal strip), `.forum-categories-list`
+  (vertical button stack → horizontal scrollable chip row, each button
+  `flex:none` + pill-shaped), `.forum-categories-label` (hides the
+  "Categories" heading once it's a chip strip) — mirrors the mobile
+  mockup's category-pill pattern. Search+New-thread row got
+  `.mobile-stack-header`, content area got `.mobile-page-pad`.
+- **Not yet started:** Feedback, and the unread back half of the mockup
+  (Workout/Mock Test/Planner/Profile). Faculty and Admin apps explicitly
+  excluded from this rollout's scope for now.
 - **Bottom tab nav + chapter-list redesign** (new mockup screenshots supplied
   directly in-chat, not from the `design-reference/` dir — a course-overview
   + lesson mobile pair showing a bottom tab bar). Decisions confirmed via
@@ -505,10 +517,11 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-27, after adding the Messages conversation-list ↔
-thread mobile drill-down (commit `9103fe8`, pushed + deployed). On top of
-the same day's earlier work: mobile responsive layout for Calendar and Book
-a Mentor (commit `557402d`), the bottom tab nav + chapter-list
+*Last updated: 2026-06-27, after adding mobile responsive layout to Forum
+(commit `ffc0752`, pushed + deployed). On top of the same day's earlier
+work: the Messages conversation-list ↔ thread mobile drill-down (commit
+`9103fe8`), mobile responsive layout for Calendar and Book a Mentor (commit
+`557402d`), the bottom tab nav + chapter-list
 mockup redesign (commit `f4334ee`), its mobile-drilldown follow-up fix
 (commit `0e1f15b`, course-open now lands on the chapter list instead of
 jumping into the lesson player), and the Test-data cleanup + 5 new 30-Q
