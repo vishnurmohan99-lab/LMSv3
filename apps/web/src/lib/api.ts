@@ -99,6 +99,7 @@ export interface Lesson {
   cheatSheetEnabled: boolean;
   transcript: string | null;
   unlocked?: boolean;
+  viewed?: boolean;
 }
 
 export interface Chapter {
@@ -1057,6 +1058,24 @@ export const todosApi = {
   update: (id: string, data: Partial<Pick<Todo, 'text' | 'completed'>>) =>
     request<Todo>(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/todos/${id}`, { method: 'DELETE' }),
+};
+
+export interface Reflection {
+  id: string;
+  date: string;
+  wentWell: string | null;
+  toImprove: string | null;
+  createdAt: string;
+  updatedAt: string;
+  studentId: string;
+  student?: { id: string; fullName: string; email: string };
+}
+
+export const reflectionsApi = {
+  upsertMine: (data: { date: string; wentWell?: string; toImprove?: string }) =>
+    request<Reflection>('/reflections', { method: 'POST', body: JSON.stringify(data) }),
+  listMine: (days?: number) => request<Reflection[]>(`/reflections/me${days ? `?days=${days}` : ''}`),
+  listAll: (studentId?: string) => request<Reflection[]>(`/reflections${studentId ? `?studentId=${studentId}` : ''}`),
 };
 
 export type FeedbackTargetType = 'COURSE' | 'FACULTY' | 'MENTOR' | 'SYSTEM';

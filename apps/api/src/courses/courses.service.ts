@@ -146,16 +146,17 @@ export class CoursesService {
       !bypassDripping && course.dripType === 'SEQUENTIAL' ? await this.computeFinishedMap(course, course.chapters, user.sub) : null;
 
     const sequentialLessons = !bypassDripping && course.dripType === 'SEQUENTIAL';
-    const viewedLessonIds = sequentialLessons
-      ? new Set(
-          (
-            await this.prisma.lessonView.findMany({
-              where: { studentId: user.sub, lessonId: { in: course.chapters.flatMap((c) => c.lessons.map((l) => l.id)) } },
-              select: { lessonId: true },
-            })
-          ).map((v) => v.lessonId),
-        )
-      : null;
+    // Computed for every drip type (not just SEQUENTIAL, which only needs it for the lesson-chain
+    // unlock check below) so the Planner's Weekly progress view has real per-chapter view data
+    // for any course.
+    const viewedLessonIds = new Set(
+      (
+        await this.prisma.lessonView.findMany({
+          where: { studentId: user.sub, lessonId: { in: course.chapters.flatMap((c) => c.lessons.map((l) => l.id)) } },
+          select: { lessonId: true },
+        })
+      ).map((v) => v.lessonId),
+    );
 
     const chapters = await Promise.all(
       course.chapters.map(async (chapter) => {
@@ -168,10 +169,11 @@ export class CoursesService {
         const lessons = await Promise.all(
           chapter.lessons.map(async (lesson) => {
             const lessonUnlocked = sequentialLessons ? lessonChainUnlocked : unlocked;
-            if (sequentialLessons) lessonChainUnlocked = lessonChainUnlocked && viewedLessonIds!.has(lesson.id);
+            if (sequentialLessons) lessonChainUnlocked = lessonChainUnlocked && viewedLessonIds.has(lesson.id);
             return {
               ...lesson,
               unlocked: lessonUnlocked,
+              viewed: viewedLessonIds.has(lesson.id),
               contentUrl:
                 lessonUnlocked && lesson.contentUrl && (lesson.type === LessonType.VIDEO || lesson.type === LessonType.PDF)
                   ? await this.uploads.presignDownload(lesson.contentUrl)

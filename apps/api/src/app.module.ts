@@ -27,6 +27,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { TodosModule } from './todos/todos.module';
 import { AnswerCorrectionModule } from './answer-correction/answer-correction.module';
+import { ReflectionsModule } from './reflections/reflections.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AnswerCorrectionModule } from './answer-correction/answer-correction.mo
     CalendarModule,
     TodosModule,
     AnswerCorrectionModule,
+    ReflectionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

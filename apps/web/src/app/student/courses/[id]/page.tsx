@@ -367,11 +367,13 @@ export default function StudentCoursePlayerPage() {
   }, [selectedLessonId, course]);
 
   useEffect(() => {
-    if (course?.dripType === "SEQUENTIAL" && selectedLessonId) {
+    // Recorded for every drip type now (not just SEQUENTIAL, which needs it for lesson-chain
+    // unlocking) so Planner's Weekly progress tab has real per-chapter view data for any course.
+    if (selectedLessonId) {
       coursesApi.recordLessonView(selectedLessonId).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLessonId, course?.dripType]);
+  }, [selectedLessonId]);
 
   async function onMarkChapterComplete(chapterId: string) {
     setCompletingChapterId(chapterId);

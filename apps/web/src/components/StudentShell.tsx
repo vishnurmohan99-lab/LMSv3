@@ -195,7 +195,7 @@ const navItems = [
   { href: "/student/mock-test", label: "Mock Test", Icon: MockTestIcon, enabled: true },
   { href: "/student/answer-correction", label: "Answer Correction", Icon: AnswerCorrectionIcon, enabled: true },
   { href: "/student/mentor", label: "Mentor", Icon: MentorIcon, enabled: true },
-  { href: "/student/planner", label: "Planner", Icon: PlannerIcon, enabled: false },
+  { href: "/student/planner", label: "Planner", Icon: PlannerIcon, enabled: true },
   { href: "/student/subscription", label: "Subscription", Icon: SubscriptionIcon, enabled: true },
 ];
 

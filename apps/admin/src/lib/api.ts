@@ -1271,3 +1271,18 @@ export const subscriptionsApi = {
   enrollStudent: (id: string, studentId: string) => request(`/subscriptions/${id}/enroll/${studentId}`, { method: 'POST' }),
   unenrollStudent: (id: string, studentId: string) => request<{ success: boolean }>(`/subscriptions/${id}/enroll/${studentId}`, { method: 'DELETE' }),
 };
+
+export interface Reflection {
+  id: string;
+  date: string;
+  wentWell: string | null;
+  toImprove: string | null;
+  createdAt: string;
+  updatedAt: string;
+  studentId: string;
+  student: { id: string; fullName: string; email: string };
+}
+
+export const reflectionsApi = {
+  listAll: (studentId?: string) => request<Reflection[]>(`/reflections${studentId ? `?studentId=${studentId}` : ''}`),
+};

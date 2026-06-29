@@ -130,6 +130,16 @@ function ForumIcon({ active }: { active: boolean }) {
   );
 }
 
+function PlannerIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <rect x="3" y="4" width="18" height="17" rx="2" />
+      <path d="M3 9h18M8 13h2M14 13h2M8 17h2M14 17h2" />
+    </svg>
+  );
+}
+
 function ReportsIcon({ active }: { active: boolean }) {
   const c = active ? "#fff" : "var(--ink2)";
   return (
@@ -174,6 +184,7 @@ const navItems = [
   { href: "/admin/feedback", label: "Feedback", Icon: FeedbackIcon },
   { href: "/admin/forum", label: "Forum", Icon: ForumIcon },
   { href: "/admin/reports", label: "Reports", Icon: ReportsIcon },
+  { href: "/admin/planner", label: "Planner", Icon: PlannerIcon },
   { href: "/admin/users", label: "Users", Icon: UsersIcon },
 ];
 
