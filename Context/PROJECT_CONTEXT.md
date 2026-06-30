@@ -685,6 +685,18 @@ fixed backlog).
   parts — this user responds well to a small set of concrete multiple-choice
   decisions up front (via `AskUserQuestion`) before any code is written, for
   both new-feature scoping and large UI initiatives.
+- **Error handling, input validation, and loading states are mandatory on
+  every new push from 2026-06-30 onward** — bake them in as the feature is
+  built, don't bolt them on later. Concretely: every data-fetch gets a
+  `loading` state (and the existing "Loading…" / spinner treatment) and a
+  `catch` that surfaces an `ApiError`-aware message in the UI; every form/
+  mutation disables its submit button while in-flight (`saving`/`submitting`/
+  `posting`) and validates required fields client-side before calling the API;
+  every NestJS DTO carries `class-validator` decorators. The global
+  `ValidationPipe` runs `{ whitelist: true, forbidNonWhitelisted: true,
+  transform: true }` (set 2026-06-30, `apps/api/src/main.ts`), so unknown
+  request fields are rejected with a 400 — keep frontend payloads to the exact
+  DTO shape (never spread a whole entity into a write body).
 
 ## User & working style
 

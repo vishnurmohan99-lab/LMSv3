@@ -46,8 +46,21 @@ export class MessengerService {
     }
 
     if (dto.type === 'GROUP') {
-      const participantIds = Array.from(new Set([user.sub, ...(dto.participantIds ?? [])]));
-      if (participantIds.length < 2) throw new BadRequestException('A group needs at least one other participant');
+      const otherIds = Array.from(new Set((dto.participantIds ?? []).filter((id) => id !== user.sub)));
+      if (otherIds.length < 1) throw new BadRequestException('A group needs at least one other participant');
+
+      // Same eligibility rule as direct messages / the contact picker: students can't be
+      // added to a group with people they couldn't DM (e.g. other students), and every id
+      // must resolve to a real, reachable user — not an arbitrary id passed by the client.
+      const eligible = await this.eligibleContactIds(user);
+      if (eligible) {
+        const invalid = otherIds.filter((id) => !eligible.has(id));
+        if (invalid.length > 0) {
+          throw new ForbiddenException('You can only add admins or people you share a course with to a group');
+        }
+      }
+
+      const participantIds = [user.sub, ...otherIds];
       return this.prisma.conversation.create({
         data: {
           type: 'GROUP',
@@ -267,6 +280,32 @@ export class MessengerService {
     }
 
     return [];
+  }
+
+  /**
+   * The set of user ids this user is allowed to start a conversation with, mirroring the
+   * role scoping in {@link listContacts}. Returns null for ADMIN (unrestricted).
+   */
+  private async eligibleContactIds(user: JwtPayload): Promise<Set<string> | null> {
+    if (user.role === 'ADMIN') return null;
+
+    const admins = await this.prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } });
+    const adminIds = admins.map((a) => a.id);
+
+    if (user.role === 'STUDENT') {
+      const enrollments = await this.prisma.enrollment.findMany({
+        where: { studentId: user.sub },
+        select: { course: { select: { facultyId: true } } },
+      });
+      return new Set([...adminIds, ...enrollments.map((e) => e.course.facultyId)]);
+    }
+
+    // FACULTY: admins + students enrolled in their own courses
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { course: { facultyId: user.sub } },
+      select: { studentId: true },
+    });
+    return new Set([...adminIds, ...enrollments.map((e) => e.studentId)]);
   }
 
   private assertOwnership(user: JwtPayload, facultyId: string | null) {
