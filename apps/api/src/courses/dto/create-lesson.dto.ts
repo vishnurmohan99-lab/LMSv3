@@ -44,4 +44,12 @@ export class CreateLessonDto {
   @IsOptional()
   @IsString()
   transcript?: string;
+
+  @IsOptional()
+  @IsString()
+  captionsVtt?: string;
+
+  @IsOptional()
+  @IsString()
+  videoChapters?: string;
 }

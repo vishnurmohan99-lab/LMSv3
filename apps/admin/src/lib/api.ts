@@ -118,6 +118,8 @@ export interface Lesson {
   summaryDeckEnabled: boolean;
   cheatSheetEnabled: boolean;
   transcript: string | null;
+  captionsVtt?: string | null;
+  videoChapters?: string | null;
 }
 
 export interface Chapter {
@@ -250,6 +252,8 @@ export const coursesApi = {
       summaryDeckEnabled?: boolean;
       cheatSheetEnabled?: boolean;
       transcript?: string;
+      captionsVtt?: string;
+      videoChapters?: string;
     },
   ) => request<Lesson>(`/chapters/${chapterId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
   updateLesson: (
@@ -268,6 +272,8 @@ export const coursesApi = {
         | 'summaryDeckEnabled'
         | 'cheatSheetEnabled'
         | 'transcript'
+        | 'captionsVtt'
+        | 'videoChapters'
       >
     >,
   ) => request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { testsApi, testAttemptsApi, ApiError, type TestTree, type TestAttempt, type TestAttemptResult, type Leaderboard } from "@/lib/api";
+import { testsApi, testAttemptsApi, ApiError, type TestTree, type TestAttempt, type TestAttemptResult, type Leaderboard, type AttemptReview } from "@/lib/api";
 import ProgressRing from "@/components/ProgressRing";
 
 function initials(name: string) {
@@ -28,6 +28,23 @@ function formatTime(seconds: number) {
   const m = Math.floor(Math.max(0, seconds) / 60);
   const s = Math.max(0, seconds) % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatDuration(totalSeconds: number) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  if (m >= 60) return `${Math.floor(m / 60)}h ${m % 60}m`;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+const QUESTION_TYPE_LABELS: Record<string, string> = {
+  MCQ: "Multiple choice",
+  TRUE_FALSE: "True / False",
+  FILL_BLANK: "Fill in the blank",
+};
+
+function classifyQuestion(q: { type: string; hasPassage: boolean }) {
+  return q.hasPassage ? "Comprehension" : QUESTION_TYPE_LABELS[q.type] ?? q.type;
 }
 
 type HighlightRange = { start: number; end: number };
@@ -138,6 +155,7 @@ export default function StudentMockTestTakePage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [current, setCurrent] = useState(0);
   const [result, setResult] = useState<TestAttemptResult | null>(null);
+  const [review, setReview] = useState<AttemptReview | null>(null);
   const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [highlights, setHighlights] = useState<Record<string, HighlightRange[]>>({});
@@ -214,7 +232,9 @@ export default function StudentMockTestTakePage() {
       try {
         const res = await testAttemptsApi.submit(attempt.id);
         setResult(res);
+        setReview(null);
         setView("results");
+        testAttemptsApi.review(attempt.id).then(setReview).catch(() => {});
         testAttemptsApi.leaderboard(testId).then(setLeaderboard).catch(() => {});
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "Failed to submit attempt");
@@ -443,6 +463,21 @@ export default function StudentMockTestTakePage() {
     const correct = result.answers.filter((a) => a.isCorrect).length;
     const wrong = result.answers.filter((a) => a.isCorrect === false).length;
     const skipped = (result.maxScore ?? 0) - result.answers.length;
+
+    const timeTaken = review?.timeTakenSeconds ?? null;
+    const perQuestion = review && timeTaken != null && review.questions.length ? Math.round(timeTaken / review.questions.length) : null;
+    const typeGroups = (() => {
+      if (!review) return [] as { label: string; correct: number; total: number; pct: number }[];
+      const map = new Map<string, { correct: number; total: number }>();
+      for (const q of review.questions) {
+        const key = classifyQuestion(q);
+        const g = map.get(key) ?? { correct: 0, total: 0 };
+        g.total += 1;
+        if (q.isCorrect) g.correct += 1;
+        map.set(key, g);
+      }
+      return [...map.entries()].map(([label, g]) => ({ label, correct: g.correct, total: g.total, pct: g.total ? (g.correct / g.total) * 100 : 0 }));
+    })();
     return (
       <main className="fade-in-up mobile-page-pad" style={{ padding: "40px 30px", maxWidth: 840, margin: "0 auto" }}>
         <div
@@ -484,6 +519,81 @@ export default function StudentMockTestTakePage() {
             </div>
           </div>
         </div>
+
+        {review && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 18 }}>
+            <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px" }}>
+              <div style={{ fontSize: 11.5, color: "var(--ink3)", fontWeight: 600 }}>Time taken</div>
+              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, marginTop: 3 }}>{timeTaken != null ? formatDuration(timeTaken) : "—"}</div>
+            </div>
+            <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px" }}>
+              <div style={{ fontSize: 11.5, color: "var(--ink3)", fontWeight: 600 }}>Avg / question</div>
+              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, marginTop: 3 }}>{perQuestion != null ? formatDuration(perQuestion) : "—"}</div>
+            </div>
+            <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px" }}>
+              <div style={{ fontSize: 11.5, color: "var(--ink3)", fontWeight: 600 }}>Percentile</div>
+              <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, marginTop: 3, color: "var(--orange)" }}>
+                {review.totalStudents > 1 ? `Top ${Math.max(1, 100 - review.percentile)}%` : "—"}
+              </div>
+              <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 2 }}>
+                {review.totalStudents > 1 ? `of ${review.totalStudents} students` : "Be the first to set the bar"}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {typeGroups.length > 0 && (
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24, marginTop: 18 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Accuracy by question type</div>
+            <div style={{ display: "grid", gap: 14 }}>
+              {typeGroups.map((g) => (
+                <div key={g.label}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13 }}>
+                    <span style={{ fontWeight: 700 }}>{g.label}</span>
+                    <span style={{ color: "var(--ink3)", fontWeight: 600 }}>{g.correct}/{g.total} · {Math.round(g.pct)}%</span>
+                  </div>
+                  <div style={{ height: 9, background: "var(--line2)", borderRadius: 6, overflow: "hidden" }}>
+                    <div className="dash-bar-x" style={{ width: `${g.pct}%`, height: "100%", borderRadius: 6, background: g.pct >= 70 ? "var(--green)" : g.pct >= 40 ? "var(--orange)" : "var(--red)" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {review && review.questions.length > 0 && (
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24, marginTop: 18 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>Question review</div>
+            <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 12 }}>Your answer vs the correct answer for every question.</div>
+            <div>
+              {review.questions.map((q, i) => {
+                const tone = q.isCorrect ? "var(--green)" : q.answered ? "var(--red)" : "var(--ink3)";
+                const toneSoft = q.isCorrect ? "var(--green-soft)" : q.answered ? "var(--red-soft)" : "var(--bg)";
+                return (
+                  <div key={q.id} style={{ display: "flex", gap: 12, padding: "14px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                    <span style={{ width: 26, height: 26, borderRadius: 8, background: toneSoft, color: tone, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flex: "none" }}>
+                      {i + 1}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: tone, background: toneSoft, padding: "3px 10px", borderRadius: 7 }}>
+                          You: {q.answered ? q.selectedOption : "Skipped"}
+                        </span>
+                        {!q.isCorrect && q.correctOption && (
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green)", background: "var(--green-soft)", padding: "3px 10px", borderRadius: 7 }}>
+                            Correct: {q.correctOption}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span style={{ flex: "none", fontSize: 12, fontWeight: 800, color: tone }}>{q.isCorrect ? "✓" : q.answered ? "✗" : "—"}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {leaderboard && leaderboard.top.length > 0 && (
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24, marginTop: 18 }}>

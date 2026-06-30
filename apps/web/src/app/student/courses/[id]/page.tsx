@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { coursesApi, flashcardsApi, ApiError, type Chapter, type CourseTree, type Lesson } from "@/lib/api";
@@ -145,63 +145,133 @@ function lessonMeta(lesson: Lesson, chapterTitle: string) {
   return chapterTitle;
 }
 
-function VideoPlayer({ src }: { src: string }) {
+interface VideoChapter {
+  seconds: number;
+  label: string;
+}
+
+/** Parses YouTube-style chapter lines ("0:00 Intro", "1:02:30 Topic") into sorted markers. */
+function parseChapters(text?: string | null): VideoChapter[] {
+  if (!text) return [];
+  return text
+    .split("\n")
+    .map((line) => {
+      const m = line.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})\s+(.+)$/);
+      if (!m) return null;
+      const h = m[1] ? parseInt(m[1], 10) : 0;
+      return { seconds: h * 3600 + parseInt(m[2], 10) * 60 + parseInt(m[3], 10), label: m[4].trim() };
+    })
+    .filter((c): c is VideoChapter => c !== null)
+    .sort((a, b) => a.seconds - b.seconds);
+}
+
+function fmtTimestamp(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const mm = h > 0 ? m.toString().padStart(2, "0") : `${m}`;
+  return `${h > 0 ? `${h}:` : ""}${mm}:${s.toString().padStart(2, "0")}`;
+}
+
+function VideoPlayer({ src, captionsVtt, chapters }: { src: string; captionsVtt?: string | null; chapters: VideoChapter[] }) {
   const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const trackUrl = useMemo(() => (captionsVtt ? URL.createObjectURL(new Blob([captionsVtt], { type: "text/vtt" })) : null), [captionsVtt]);
+  useEffect(() => () => { if (trackUrl) URL.revokeObjectURL(trackUrl); }, [trackUrl]);
+
+  const activeChapter = chapters.reduce((acc, c, i) => (currentTime + 0.4 >= c.seconds ? i : acc), -1);
+
+  function seek(seconds: number) {
+    const v = videoRef.current;
+    if (v) {
+      v.currentTime = seconds;
+      v.play().catch(() => {});
+    }
+  }
+
   return (
-    <div
-      className="fade-in-up"
-      style={{
-        position: "relative",
-        borderRadius: "var(--rm)",
-        overflow: "hidden",
-        background: "linear-gradient(135deg,#1c1c1c,#2c2620)",
-        boxShadow: "0 16px 40px rgba(0,0,0,.18)",
-      }}
-    >
-      <video
-        ref={videoRef}
-        controls
-        src={src}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        style={{ width: "100%", display: "block", aspectRatio: "16/9", background: "#000" }}
-      />
-      {!playing && (
-        <button
-          onClick={() => videoRef.current?.play()}
-          aria-label="Play"
-          className="pop-in"
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-          }}
+    <div className="fade-in-up" style={{ display: "grid", gap: 14 }}>
+      <div
+        style={{
+          position: "relative",
+          borderRadius: "var(--rm)",
+          overflow: "hidden",
+          background: "linear-gradient(135deg,#1c1c1c,#2c2620)",
+          boxShadow: "0 16px 40px rgba(0,0,0,.18)",
+        }}
+      >
+        <video
+          ref={videoRef}
+          controls
+          src={src}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+          style={{ width: "100%", display: "block", aspectRatio: "16/9", background: "#000" }}
         >
-          <span
-            style={{
-              width: 62,
-              height: 62,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,.95)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 8px 24px rgba(0,0,0,.3)",
-            }}
+          {trackUrl && <track kind="subtitles" src={trackUrl} srcLang="en" label="Captions" default />}
+        </video>
+        {!playing && (
+          <button
+            onClick={() => videoRef.current?.play()}
+            aria-label="Play"
+            className="pop-in"
+            style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--ink)">
-              <path d="M8 5v14l11-7z" />
+            <span style={{ width: 62, height: 62, borderRadius: "50%", background: "rgba(255,255,255,.95)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(0,0,0,.3)" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--ink)">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          </button>
+        )}
+      </div>
+
+      {chapters.length > 0 && (
+        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 16 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: "var(--ink2)", marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
             </svg>
-          </span>
-        </button>
+            Chapters
+          </div>
+          <div style={{ display: "grid", gap: 2 }}>
+            {chapters.map((c, i) => {
+              const active = i === activeChapter;
+              return (
+                <button
+                  key={i}
+                  onClick={() => seek(c.seconds)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "9px 11px",
+                    borderRadius: 9,
+                    border: "none",
+                    background: active ? "var(--orange-soft)" : "transparent",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    textAlign: "left",
+                    width: "100%",
+                  }}
+                >
+                  <span style={{ fontSize: 12, fontWeight: 700, color: active ? "var(--orange)" : "var(--ink3)", fontVariantNumeric: "tabular-nums", flex: "none", minWidth: 48 }}>
+                    {fmtTimestamp(c.seconds)}
+                  </span>
+                  <span style={{ fontSize: 13.5, fontWeight: active ? 700 : 500, color: active ? "var(--ink)" : "var(--ink2)" }}>{c.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -210,7 +280,7 @@ function VideoPlayer({ src }: { src: string }) {
 function LessonViewer({ lesson }: { lesson: Lesson }) {
   if (lesson.type === "VIDEO") {
     return lesson.contentUrl ? (
-      <VideoPlayer src={lesson.contentUrl} />
+      <VideoPlayer src={lesson.contentUrl} captionsVtt={lesson.captionsVtt} chapters={parseChapters(lesson.videoChapters)} />
     ) : (
       <div
         className="fade-in-up"

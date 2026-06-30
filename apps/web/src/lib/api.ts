@@ -98,6 +98,8 @@ export interface Lesson {
   summaryDeckEnabled: boolean;
   cheatSheetEnabled: boolean;
   transcript: string | null;
+  captionsVtt?: string | null;
+  videoChapters?: string | null;
   unlocked?: boolean;
   viewed?: boolean;
 }
@@ -234,6 +236,8 @@ export const coursesApi = {
       summaryDeckEnabled?: boolean;
       cheatSheetEnabled?: boolean;
       transcript?: string;
+      captionsVtt?: string;
+      videoChapters?: string;
     },
   ) => request<Lesson>(`/chapters/${chapterId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
   updateLesson: (
@@ -252,6 +256,8 @@ export const coursesApi = {
         | 'summaryDeckEnabled'
         | 'cheatSheetEnabled'
         | 'transcript'
+        | 'captionsVtt'
+        | 'videoChapters'
       >
     >,
   ) => request<Lesson>(`/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -737,12 +743,35 @@ export interface TestAttemptResult extends TestAttempt {
   answers: TestAnswerResult[];
 }
 
+export interface AttemptReviewQuestion {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  options: string[];
+  correctOption: string | null;
+  selectedOption: string | null;
+  answered: boolean;
+  isCorrect: boolean;
+  hasPassage: boolean;
+  imageUrl: string | null;
+}
+
+export interface AttemptReview {
+  score: number | null;
+  maxScore: number | null;
+  timeTakenSeconds: number | null;
+  percentile: number;
+  totalStudents: number;
+  questions: AttemptReviewQuestion[];
+}
+
 export const testAttemptsApi = {
   start: (testId: string) => request<TestAttempt>(`/tests/${testId}/attempts`, { method: 'POST' }),
   mine: (testId: string) => request<TestAttempt[]>(`/tests/${testId}/attempts/mine`),
   saveAnswer: (attemptId: string, testQuestionId: string, selectedOption?: string) =>
     request<{ id: string }>(`/attempts/${attemptId}/answers`, { method: 'PATCH', body: JSON.stringify({ testQuestionId, selectedOption }) }),
   submit: (attemptId: string) => request<TestAttemptResult>(`/attempts/${attemptId}/submit`, { method: 'POST' }),
+  review: (attemptId: string) => request<AttemptReview>(`/attempts/${attemptId}/review`),
   leaderboard: (testId: string) => request<Leaderboard>(`/tests/${testId}/leaderboard`),
 };
 

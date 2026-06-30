@@ -247,6 +247,8 @@ model Lesson {
   summaryDeckEnabled Boolean    @default(false)
   cheatSheetEnabled  Boolean    @default(false)
   transcript         String?    @db.Text
+  captionsVtt        String?    @db.Text
+  videoChapters      String?    @db.Text
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 

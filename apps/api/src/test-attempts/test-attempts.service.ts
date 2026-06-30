@@ -165,6 +165,70 @@ export class TestAttemptsService {
     return { top, me, totalRanked: ranked.length };
   }
 
+  /** Detailed per-question review of the student's own SUBMITTED attempt, plus time taken and percentile. */
+  async getAttemptReview(user: JwtPayload, attemptId: string) {
+    const attempt = await this.prisma.testAttempt.findUnique({ where: { id: attemptId } });
+    if (!attempt) throw new NotFoundException('Attempt not found');
+    if (attempt.studentId !== user.sub) throw new ForbiddenException('This is not your attempt');
+    if (attempt.status !== 'SUBMITTED') throw new BadRequestException('This attempt has not been submitted yet');
+
+    const questions = await this.prisma.testQuestion.findMany({
+      where: { testId: attempt.testId },
+      orderBy: { order: 'asc' },
+      select: { id: true, type: true, prompt: true, options: true, correctOption: true, imageUrl: true, passage: { select: { id: true } } },
+    });
+    const answers = await this.prisma.testAnswer.findMany({ where: { attemptId } });
+    const answerByQuestion = new Map(answers.map((a) => [a.testQuestionId, a]));
+
+    const reviewQuestions = await Promise.all(
+      questions.map(async (q) => {
+        const ans = answerByQuestion.get(q.id);
+        const selectedOption = ans?.selectedOption ?? null;
+        return {
+          id: q.id,
+          type: q.type,
+          prompt: q.prompt,
+          options: q.options,
+          correctOption: q.correctOption,
+          selectedOption,
+          answered: selectedOption != null && selectedOption !== '',
+          isCorrect: !!ans?.isCorrect,
+          hasPassage: !!q.passage,
+          imageUrl: q.imageUrl ? await this.uploads.presignDownload(q.imageUrl) : null,
+        };
+      }),
+    );
+
+    const timeTakenSeconds = attempt.submittedAt
+      ? Math.max(0, Math.round((attempt.submittedAt.getTime() - attempt.startedAt.getTime()) / 1000))
+      : null;
+
+    // Percentile from best score per student among all submitted attempts for this test.
+    const allAttempts = await this.prisma.testAttempt.findMany({
+      where: { testId: attempt.testId, status: 'SUBMITTED', score: { not: null } },
+      select: { studentId: true, score: true },
+    });
+    const bestByStudent = new Map<string, number>();
+    for (const a of allAttempts) {
+      const s = a.score ?? 0;
+      if (s > (bestByStudent.get(a.studentId) ?? -1)) bestByStudent.set(a.studentId, s);
+    }
+    const myBest = bestByStudent.get(user.sub) ?? attempt.score ?? 0;
+    const totalStudents = bestByStudent.size;
+    const below = [...bestByStudent.values()].filter((s) => s < myBest).length;
+    // "You scored higher than N% of test-takers." 100 when you're the only/top scorer.
+    const percentile = totalStudents > 1 ? Math.round((below / (totalStudents - 1)) * 100) : 100;
+
+    return {
+      score: attempt.score,
+      maxScore: attempt.maxScore,
+      timeTakenSeconds,
+      percentile,
+      totalStudents,
+      questions: reviewQuestions,
+    };
+  }
+
   private async requireOwnAttempt(user: JwtPayload, attemptId: string) {
     const attempt = await this.prisma.testAttempt.findUnique({ where: { id: attemptId }, include: { test: true } });
     if (!attempt) throw new NotFoundException('Attempt not found');

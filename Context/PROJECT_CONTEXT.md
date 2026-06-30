@@ -725,7 +725,23 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after fixing **two student-course bugs**
+*Last updated: 2026-06-30, after shipping **video captions+chapters** and a
+**detailed mock-test result dashboard**. (1) `Lesson` gained `captionsVtt` +
+`videoChapters` (migration `20260630200000_add_video_captions_chapters`,
+additive nullable TEXT). Faculty lesson form (add+edit) has a "Video
+navigation" panel: .srt upload → `srtToVtt()` → WebVTT, plus a YouTube-style
+chapters textarea ("0:00 Intro" lines). Student `VideoPlayer` renders a
+`<track>` (blob VTT) for toggleable captions + a clickable Chapters list that
+seeks + highlights the active chapter (`parseChapters`). Course tree nulls
+captions/chapters for locked lessons. Admin course-builder UI NOT yet wired
+(api client supports it). (2) New `GET /attempts/:id/review`
+(`TestAttemptsService.getAttemptReview`, own SUBMITTED attempt only) → all
+questions w/ correct+selected option, time taken (submittedAt−startedAt),
+percentile (best-score-per-student rank). Results page adds time/avg-per-Q/
+percentile stat strip, accuracy-by-type bars, and a full per-question review
+(right/wrong/skipped). Verified by tsc + web build; migration applied by Render
+on deploy. Deployed apps/api (Render) + apps/web (Vercel). On top of fixing
+**two student-course bugs**
 (`apps/web/src/app/student/courses/[id]/page.tsx`, frontend-only): (1) the
 course progress bar + chapter "in progress N/M" were computed from the
 **selected lesson's position** (`lessonIndex`/`activeLessonPos`), so they reset

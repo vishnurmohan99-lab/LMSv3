@@ -34,4 +34,9 @@ export class TestAttemptsController {
   submit(@Param('id') attemptId: string, @CurrentUser() user: JwtPayload) {
     return this.attempts.submitAttempt(user, attemptId);
   }
+
+  @Get('attempts/:id/review')
+  review(@Param('id') attemptId: string, @CurrentUser() user: JwtPayload) {
+    return this.attempts.getAttemptReview(user, attemptId);
+  }
 }

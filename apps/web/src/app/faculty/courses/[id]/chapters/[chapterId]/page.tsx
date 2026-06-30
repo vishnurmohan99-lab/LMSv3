@@ -95,6 +95,68 @@ function parseSrtToTranscript(srt: string): string {
     .join("\n");
 }
 
+/** Converts an uploaded .srt into WebVTT (header + comma→period in timestamps) so the
+ *  <track> works in the student player. Already-VTT input is passed through. */
+function srtToVtt(srt: string): string {
+  const body = srt
+    .replace(/^﻿/, "")
+    .replace(/\r/g, "")
+    .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2")
+    .trim();
+  if (!body) return "";
+  return /^WEBVTT/.test(body) ? `${body}\n` : `WEBVTT\n\n${body}\n`;
+}
+
+function VideoExtrasFields({
+  captionsVtt,
+  videoChapters,
+  onCaptions,
+  onChapters,
+}: {
+  captionsVtt: string;
+  videoChapters: string;
+  onCaptions: (vtt: string) => void;
+  onChapters: (text: string) => void;
+}) {
+  return (
+    <div style={{ display: "grid", gap: 12, padding: 12, background: "var(--bg)", borderRadius: 10 }}>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Video navigation (optional)</div>
+      <div>
+        <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 5 }}>Subtitles — upload a .srt file (shown as toggleable captions)</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <input
+            type="file"
+            accept=".srt,.vtt"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (f) onCaptions(srtToVtt(await f.text()));
+            }}
+            style={{ fontSize: 12 }}
+          />
+          {captionsVtt && (
+            <>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green)" }}>✓ captions added</span>
+              <button type="button" onClick={() => onCaptions("")} style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>
+                remove
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 5 }}>Chapters — one per line, e.g. “0:00 Introduction”. Students can click to jump.</div>
+        <textarea
+          placeholder={"0:00 Introduction\n2:30 Key concept\n5:10 Worked example"}
+          value={videoChapters}
+          onChange={(e) => onChapters(e.target.value)}
+          rows={4}
+          style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical", width: "100%" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 const MENU_WIDTH = 180;
 
 function FeaturePicker({
@@ -246,6 +308,8 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
   const [liveAt, setLiveAt] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [transcript, setTranscript] = useState("");
+  const [captionsVtt, setCaptionsVtt] = useState("");
+  const [videoChapters, setVideoChapters] = useState("");
   const [features, setFeatures] = useState<Record<FeatureKey, boolean>>({
     flashcardsEnabled: false,
     aiNotesEnabled: false,
@@ -283,6 +347,8 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
         contentUrl,
         liveAt: type === "LIVE" && liveAt ? new Date(liveAt).toISOString() : undefined,
         transcript: type === "VIDEO" && transcript ? transcript : undefined,
+        captionsVtt: type === "VIDEO" && captionsVtt ? captionsVtt : undefined,
+        videoChapters: type === "VIDEO" && videoChapters.trim() ? videoChapters.trim() : undefined,
         ...features,
       });
       onDone();
@@ -343,6 +409,9 @@ function NewLessonForm({ chapterId, onDone }: { chapterId: string; onDone: () =>
           </div>
         </div>
       )}
+      {type === "VIDEO" && (
+        <VideoExtrasFields captionsVtt={captionsVtt} videoChapters={videoChapters} onCaptions={setCaptionsVtt} onChapters={setVideoChapters} />
+      )}
       <button type="submit" disabled={busy} style={{ ...btnStyle, opacity: busy ? 0.7 : 1 }}>
         {busy ? "Adding…" : "Add lesson"}
       </button>
@@ -388,13 +457,15 @@ function EditLessonForm({
   onCancel,
 }: {
   lesson: Lesson;
-  onSave: (data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) => Promise<void>;
+  onSave: (data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string; captionsVtt?: string; videoChapters?: string }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(lesson.title);
   const [file, setFile] = useState<File | null>(null);
   const [liveAt, setLiveAt] = useState(lesson.liveAt ? toLocalDatetimeValue(lesson.liveAt) : "");
   const [transcript, setTranscript] = useState(lesson.transcript ?? "");
+  const [captionsVtt, setCaptionsVtt] = useState(lesson.captionsVtt ?? "");
+  const [videoChapters, setVideoChapters] = useState(lesson.videoChapters ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -412,6 +483,8 @@ function EditLessonForm({
         contentUrl,
         liveAt: lesson.type === "LIVE" && liveAt ? new Date(liveAt).toISOString() : undefined,
         transcript: lesson.type === "VIDEO" ? transcript : undefined,
+        captionsVtt: lesson.type === "VIDEO" ? captionsVtt : undefined,
+        videoChapters: lesson.type === "VIDEO" ? videoChapters.trim() : undefined,
       });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to update lesson");
@@ -462,6 +535,9 @@ function EditLessonForm({
           </div>
         </div>
       )}
+      {lesson.type === "VIDEO" && (
+        <VideoExtrasFields captionsVtt={captionsVtt} videoChapters={videoChapters} onCaptions={setCaptionsVtt} onChapters={setVideoChapters} />
+      )}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" disabled={saving} style={{ ...btnStyle, opacity: saving ? 0.7 : 1 }}>
           {saving ? "Saving…" : "Save changes"}
@@ -488,7 +564,7 @@ function LessonCard({
   courseId: string;
   onDelete: () => void;
   onToggleFeature: (key: FeatureKey, next: boolean) => void;
-  onUpdate: (data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string }) => Promise<void>;
+  onUpdate: (data: { title?: string; contentUrl?: string; liveAt?: string; transcript?: string; captionsVtt?: string; videoChapters?: string }) => Promise<void>;
   moveControls?: React.ReactNode;
   order?: number;
 }) {

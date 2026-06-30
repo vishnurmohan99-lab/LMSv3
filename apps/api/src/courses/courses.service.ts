@@ -174,6 +174,9 @@ export class CoursesService {
               ...lesson,
               unlocked: lessonUnlocked,
               viewed: viewedLessonIds.has(lesson.id),
+              // Captions/chapters are only meaningful alongside a playable video, so gate them on unlock.
+              captionsVtt: lessonUnlocked ? lesson.captionsVtt : null,
+              videoChapters: lessonUnlocked ? lesson.videoChapters : null,
               contentUrl:
                 lessonUnlocked && lesson.contentUrl && (lesson.type === LessonType.VIDEO || lesson.type === LessonType.PDF)
                   ? await this.uploads.presignDownload(lesson.contentUrl)
@@ -534,6 +537,8 @@ export class CoursesService {
         summaryDeckEnabled: dto.summaryDeckEnabled ?? false,
         cheatSheetEnabled: dto.cheatSheetEnabled ?? false,
         transcript: dto.transcript,
+        captionsVtt: dto.captionsVtt,
+        videoChapters: dto.videoChapters,
         chapterId,
       },
     });
