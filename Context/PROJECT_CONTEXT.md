@@ -725,7 +725,17 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after a pre-deploy **security review pass** plus
+*Last updated: 2026-06-30, after **redesigning the student dashboard**
+(`apps/web/src/app/student/dashboard/page.tsx` + new analytics keyframes in
+`globals.css`): animated gradient performance ring (stroke-draw + count-up),
+exam-scores bar chart with grow animation + average reference line + gridlines,
+a NEW score-trend area/line chart (self-drawing, last 10 attempts), count-up
+stat cards with staggered `fade-in-up` + hover lift, a shimmer skeleton loader
+(`.dash-skeleton`), and a richer greeting/empty-state — all strictly on the
+existing `var(--*)` tokens and the `#f7902b→#f24d1b` brand gradient. Data-load
+logic, error handling, and mobile-responsive classes unchanged. Deployed to
+apps/web. Bar charts use fixed-px heights (the percentage-height-in-flex gotcha).
+On top of a pre-deploy **security review pass** plus
 the error-handling/validation/loading-state hardening. Security findings +
 fixes (commit `b0dbd0b`, PR #2 merged to main `594284a`, Render auto-deploy):
 (1) removed hardcoded JWT secret fallbacks — both passport strategies AND the

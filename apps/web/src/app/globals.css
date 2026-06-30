@@ -165,6 +165,48 @@ button:active, a:active {
   to { transform: rotate(360deg); }
 }
 
+/* ===================== Dashboard analytics =====================
+   Mount animations for the student dashboard graphs. Bars/lines use
+   transform + stroke-dashoffset (GPU-friendly), driven by inline CSS vars so
+   each instance can carry its own arc/length. Strictly theme tokens only. */
+
+@keyframes barGrow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes ringDraw {
+  from { stroke-dashoffset: var(--ring-arc); }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes lineDraw {
+  from { stroke-dashoffset: var(--line-len); }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes dashShimmer {
+  0% { background-position: -468px 0; }
+  100% { background-position: 468px 0; }
+}
+
+.dash-bar {
+  transform-origin: bottom center;
+  animation: barGrow .6s cubic-bezier(.2,.7,.3,1) both;
+  transition: filter .15s ease;
+}
+
+.dash-bar:hover {
+  filter: brightness(1.08) saturate(1.05);
+}
+
+.dash-skeleton {
+  background: linear-gradient(90deg, var(--line2) 25%, #e6e5e2 37%, var(--line2) 63%);
+  background-size: 936px 100%;
+  animation: dashShimmer 1.5s linear infinite;
+  border-radius: var(--rm);
+}
+
 .rte-content .ProseMirror {
   outline: none;
   color: var(--ink);

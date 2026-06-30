@@ -10,57 +10,176 @@ interface ScoredAttempt {
   submittedAt: string;
 }
 
+/** Eased count-up for headline numbers — runs once on mount / when target changes. */
+function useCountUp(target: number, duration = 900) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (target === 0) {
+      setValue(0);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setValue(target * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
+}
+
+const BRAND_GRADIENT_FROM = "#f7902b";
+const BRAND_GRADIENT_TO = "#f24d1b";
+
 function PerformanceRing({ pct }: { pct: number | null }) {
   const value = pct ?? 0;
-  const r = 60;
+  const r = 62;
   const c = 2 * Math.PI * r;
+  const arc = (value / 100) * c;
+  const display = useCountUp(value, 1100);
   return (
-    <div style={{ position: "relative", width: 150, height: 150, margin: "8px auto 0" }}>
-      <svg width="150" height="150" viewBox="0 0 150 150">
-        <circle cx="75" cy="75" r={r} fill="none" stroke="var(--line)" strokeWidth="14" />
+    <div style={{ position: "relative", width: 160, height: 160, margin: "10px auto 0" }}>
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="perfGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={BRAND_GRADIENT_FROM} />
+            <stop offset="100%" stopColor={BRAND_GRADIENT_TO} />
+          </linearGradient>
+        </defs>
+        <circle cx="80" cy="80" r={r} fill="none" stroke="var(--line)" strokeWidth="14" />
         {pct !== null && (
           <circle
-            cx="75"
-            cy="75"
+            cx="80"
+            cy="80"
             r={r}
             fill="none"
-            stroke="var(--orange)"
+            stroke="url(#perfGrad)"
             strokeWidth="14"
-            strokeDasharray={`${(value / 100) * c} ${c}`}
+            strokeDasharray={`${arc} ${c}`}
             strokeLinecap="round"
-            transform="rotate(-90 75 75)"
+            transform="rotate(-90 80 80)"
+            style={{ ["--ring-arc" as string]: `${arc}`, strokeDashoffset: 0, animation: "ringDraw 1.1s cubic-bezier(.2,.7,.3,1) both" } as React.CSSProperties}
           />
         )}
       </svg>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1 }}>{pct !== null ? `${Math.round(pct)}%` : "—"}</div>
-        <div style={{ fontSize: 11, color: "var(--ink3)" }}>Performance</div>
+        <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: -1 }}>{pct !== null ? `${Math.round(display)}%` : "—"}</div>
+        <div style={{ fontSize: 11, color: "var(--ink3)", fontWeight: 600, letterSpacing: 0.3 }}>Avg score</div>
       </div>
     </div>
   );
 }
 
-const BAR_TRACK_HEIGHT = 120;
+const CHART_H = 150;
+
+function shortDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getDate()}/${d.getMonth() + 1}`;
+}
 
 function ExamScoresChart({ attempts }: { attempts: ScoredAttempt[] }) {
-  const last8 = attempts.slice(-8);
+  const last = attempts.slice(-8);
+  const avg = last.reduce((s, a) => s + a.pct, 0) / last.length;
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: BAR_TRACK_HEIGHT }}>
-      {last8.map((a, i) => (
-        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", gap: 4 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ink2)" }}>{Math.round(a.pct)}</div>
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 28,
-              height: Math.max((a.pct / 100) * (BAR_TRACK_HEIGHT - 20), 3),
-              background: "var(--orange)",
-              borderRadius: "6px 6px 0 0",
-            }}
-          />
+    <div>
+      <div style={{ position: "relative", height: CHART_H, marginLeft: 4 }}>
+        {[100, 75, 50, 25].map((g) => (
+          <div key={g} style={{ position: "absolute", left: 0, right: 0, bottom: (g / 100) * CHART_H, borderTop: "1px dashed var(--line)" }}>
+            <span style={{ position: "absolute", left: -2, top: -7, fontSize: 9, color: "var(--ink3)", fontWeight: 600 }}>{g}</span>
+          </div>
+        ))}
+        {Number.isFinite(avg) && (
+          <div style={{ position: "absolute", left: 18, right: 0, bottom: (avg / 100) * CHART_H, borderTop: "1.5px dashed var(--orange)" }}>
+            <span style={{ position: "absolute", right: 0, top: -9, fontSize: 9.5, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "1px 6px", borderRadius: 6 }}>
+              avg {Math.round(avg)}%
+            </span>
+          </div>
+        )}
+        <div style={{ position: "absolute", inset: 0, paddingLeft: 18, display: "flex", alignItems: "flex-end", gap: 8 }}>
+          {last.map((a, i) => (
+            <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", gap: 4 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ink2)" }}>{Math.round(a.pct)}</div>
+              <div
+                className="dash-bar"
+                title={`${Math.round(a.pct)}% · ${shortDate(a.submittedAt)}`}
+                style={{
+                  width: "100%",
+                  maxWidth: 30,
+                  height: Math.max((a.pct / 100) * (CHART_H - 18), 3),
+                  background: `linear-gradient(180deg, ${BRAND_GRADIENT_FROM}, ${BRAND_GRADIENT_TO})`,
+                  borderRadius: "7px 7px 0 0",
+                  animationDelay: `${i * 70}ms`,
+                  boxShadow: "0 2px 6px rgba(242,106,27,.22)",
+                }}
+              />
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, paddingLeft: 18, marginTop: 6 }}>
+        {last.map((a, i) => (
+          <div key={i} style={{ flex: 1, textAlign: "center", fontSize: 9, color: "var(--ink3)", fontWeight: 600 }}>{shortDate(a.submittedAt)}</div>
+        ))}
+      </div>
     </div>
+  );
+}
+
+function ScoreTrendChart({ attempts }: { attempts: ScoredAttempt[] }) {
+  const pts = attempts.slice(-10);
+  if (pts.length < 2) return null;
+  const W = 600;
+  const H = 170;
+  const padX = 10;
+  const padY = 18;
+  const n = pts.length;
+  const coords = pts.map((a, i) => {
+    const x = padX + (i / (n - 1)) * (W - 2 * padX);
+    const y = padY + (1 - a.pct / 100) * (H - 2 * padY);
+    return { x, y, a };
+  });
+  const linePath = coords.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L ${coords[n - 1].x.toFixed(1)} ${H - padY} L ${coords[0].x.toFixed(1)} ${H - padY} Z`;
+  let len = 0;
+  for (let i = 1; i < coords.length; i++) {
+    len += Math.hypot(coords[i].x - coords[i - 1].x, coords[i].y - coords[i - 1].y);
+  }
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="180" style={{ display: "block" }}>
+      <defs>
+        <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(242,106,27,.22)" />
+          <stop offset="100%" stopColor="rgba(242,106,27,0)" />
+        </linearGradient>
+        <linearGradient id="trendLine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={BRAND_GRADIENT_FROM} />
+          <stop offset="100%" stopColor={BRAND_GRADIENT_TO} />
+        </linearGradient>
+      </defs>
+      {[0.25, 0.5, 0.75].map((g) => (
+        <line key={g} x1={padX} x2={W - padX} y1={padY + g * (H - 2 * padY)} y2={padY + g * (H - 2 * padY)} stroke="var(--line)" strokeWidth="1" strokeDasharray="3 4" />
+      ))}
+      <path d={areaPath} fill="url(#trendArea)" className="fade-in" />
+      <path
+        d={linePath}
+        fill="none"
+        stroke="url(#trendLine)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+        style={{ ["--line-len" as string]: `${len}`, strokeDasharray: len, strokeDashoffset: 0, animation: "lineDraw 1.2s cubic-bezier(.3,.7,.3,1) both" } as React.CSSProperties}
+      />
+      {coords.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="var(--card)" stroke="var(--orange)" strokeWidth="2.5" className="fade-in" style={{ animationDelay: `${500 + i * 60}ms` }}>
+          <title>{`${Math.round(p.a.pct)}% · ${shortDate(p.a.submittedAt)}`}</title>
+        </circle>
+      ))}
+    </svg>
   );
 }
 
@@ -77,14 +196,20 @@ function isCurrentlyLive(event: CalendarEvent, now: Date) {
   return diffMin >= -LIVE_WINDOW_BEFORE_MIN && diffMin <= LIVE_WINDOW_AFTER_MIN;
 }
 
-function StatCard({ icon, value, label, color, soft }: { icon: React.ReactNode; value: string; label: string; color: string; soft: string }) {
+function StatCard({ icon, count, unit, label, color, soft, delay }: { icon: React.ReactNode; count: number; unit: string; label: string; color: string; soft: string; delay: number }) {
+  const display = useCountUp(count);
   return (
-    <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+    <div
+      className="entity-card fade-in-up"
+      style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, animationDelay: `${delay}ms` }}
+    >
       <div style={{ width: 46, height: 46, borderRadius: 14, background: soft, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
         {icon}
       </div>
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5, color }}>{value}</div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5, color, whiteSpace: "nowrap" }}>
+          {Math.round(display)} {unit}
+        </div>
         <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>{label}</div>
       </div>
     </div>
@@ -181,6 +306,25 @@ function ScheduleRow({ event }: { event: CalendarEvent }) {
   return content;
 }
 
+function DashboardSkeleton() {
+  return (
+    <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px" }}>
+      <div className="dash-skeleton" style={{ height: 22, width: 140, marginBottom: 8, borderRadius: 8 }} />
+      <div className="dash-skeleton" style={{ height: 28, width: 220, marginBottom: 22, borderRadius: 8 }} />
+      <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 18, marginBottom: 18 }}>
+        <div className="dash-skeleton" style={{ height: 250 }} />
+        <div className="dash-skeleton" style={{ height: 250 }} />
+      </div>
+      <div className="mobile-stat-strip" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 64px", gap: 18, marginBottom: 18 }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="dash-skeleton" style={{ height: 78 }} />
+        ))}
+      </div>
+      <div className="dash-skeleton" style={{ height: 220 }} />
+    </main>
+  );
+}
+
 export default function StudentDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -230,13 +374,7 @@ export default function StudentDashboardPage() {
     load();
   }, []);
 
-  if (loading) {
-    return (
-      <main style={{ padding: "30px 30px 60px" }}>
-        <p style={{ color: "var(--ink2)" }}>Loading…</p>
-      </main>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
 
   if (error) {
     return (
@@ -247,6 +385,7 @@ export default function StudentDashboardPage() {
   }
 
   const avgPct = attempts.length ? attempts.reduce((s, a) => s + a.pct, 0) / attempts.length : null;
+  const bestPct = attempts.length ? Math.max(...attempts.map((a) => a.pct)) : null;
   const today = new Date();
   const completedSessions = bookings.filter((b) => new Date(b.date) < today).length;
   const now = new Date();
@@ -258,23 +397,28 @@ export default function StudentDashboardPage() {
   const liveNowEvents = events.filter((e) => isCurrentlyLive(e, now));
 
   return (
-    <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px" }}>
+    <main className="mobile-page-pad" style={{ padding: "30px 30px 60px" }}>
       {profile && (
-        <div style={{ marginBottom: 18 }}>
+        <div className="fade-in-up" style={{ marginBottom: 18 }}>
           <div style={{ fontSize: 13, color: "var(--ink3)", fontWeight: 600 }}>
             {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
           </div>
           <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: -0.6, marginTop: 2 }}>
             Hi, {profile.fullName.split(" ")[0]} 👋
           </div>
+          <div style={{ fontSize: 13.5, color: "var(--ink2)", fontWeight: 600, marginTop: 4 }}>
+            {avgPct === null
+              ? "Take your first mock test to start tracking your progress."
+              : `You're averaging ${Math.round(avgPct)}% across ${attempts.length} mock test${attempts.length === 1 ? "" : "s"}${bestPct !== null ? ` · best ${Math.round(bestPct)}%` : ""}.`}
+          </div>
         </div>
       )}
 
       {liveNowEvents.length > 0 && (
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>
+        <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div style={{ fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 9 }}>
-              <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--red)", boxShadow: "0 0 0 4px rgba(224,83,61,.16)" }} />
+              <span className="live-pulse" style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--red)" }} />
               Live now
             </div>
             <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--red)", background: "var(--red-soft)", padding: "4px 10px", borderRadius: 8 }}>
@@ -284,7 +428,7 @@ export default function StudentDashboardPage() {
           <div style={{ display: "grid", gap: 12 }}>
             {liveNowEvents.map((e) => {
               const content = (
-                <div style={{ border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 14, display: "flex", gap: 13, alignItems: "center" }}>
+                <div className="entity-card" style={{ border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 14, display: "flex", gap: 13, alignItems: "center" }}>
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--orange-soft)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
                     <PlayIcon color="var(--orange)" />
                   </div>
@@ -310,17 +454,17 @@ export default function StudentDashboardPage() {
       )}
 
       <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 18, marginBottom: 18 }}>
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center" }}>
+        <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center", animationDelay: "60ms" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink2)" }}>Performance</div>
           </div>
           <PerformanceRing pct={avgPct} />
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)", marginTop: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)", marginTop: 8 }}>
             {avgPct === null ? "Take a mock test to see your performance." : avgPct >= 70 ? "You did a great job!" : "Keep practicing — you're getting there."}
           </div>
         </div>
 
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
+        <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, animationDelay: "120ms" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
             <div style={{ fontSize: 16, fontWeight: 700 }}>Today&apos;s Schedule</div>
             <Link href="/student/calendar" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>
@@ -349,10 +493,12 @@ export default function StudentDashboardPage() {
               <path d="m3 12 9 5 9-5M3 17l9 5 9-5" />
             </svg>
           }
-          value={`${enrolledCount} Enrolled`}
+          count={enrolledCount}
+          unit="Enrolled"
           label="Courses"
           color="var(--orange)"
           soft="var(--orange-soft)"
+          delay={160}
         />
 
         <StatCard
@@ -361,10 +507,12 @@ export default function StudentDashboardPage() {
               <path d="M9 11H3v9h6v-9ZM21 4h-6v16h6V4ZM15 9H9v11h6V9Z" />
             </svg>
           }
-          value={`${attempts.length} Taken`}
+          count={attempts.length}
+          unit="Taken"
           label="Mock tests"
           color="var(--blue)"
           soft="var(--blue-soft)"
+          delay={220}
         />
 
         <StatCard
@@ -374,17 +522,19 @@ export default function StudentDashboardPage() {
               <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
             </svg>
           }
-          value={`${bookings.length} Booked`}
+          count={bookings.length}
+          unit="Booked"
           label="Mentor sessions"
           color="var(--purple)"
           soft="var(--purple-soft)"
+          delay={280}
         />
 
         <button
           onClick={() => router.push("/student/mentor")}
           title="Book a Mentor"
-          className="mentor-cta-btn"
-          style={{ background: "var(--orange)", border: "none", borderRadius: "var(--rm)", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, cursor: "pointer", boxShadow: "0 4px 12px rgba(242,106,27,.32)" }}
+          className="mentor-cta-btn fade-in-up"
+          style={{ background: "var(--orange)", border: "none", borderRadius: "var(--rm)", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, cursor: "pointer", boxShadow: "0 4px 12px rgba(242,106,27,.32)", animationDelay: "340ms" }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" style={{ flex: "none" }}>
             <circle cx="12" cy="8" r="4" />
@@ -397,7 +547,7 @@ export default function StudentDashboardPage() {
       </div>
 
       {upcomingEvents.length > 0 && (
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>
+        <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
             <div style={{ fontSize: 16, fontWeight: 700 }}>Upcoming</div>
             <Link href="/student/calendar" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>
@@ -414,28 +564,52 @@ export default function StudentDashboardPage() {
 
       <div style={{ marginTop: 18 }}>
         <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3, marginBottom: 14 }}>Performance analytics</div>
-        <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: attempts.length ? "1.3fr 1fr" : "1fr", gap: 18 }}>
-          {attempts.length > 0 && (
-            <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Exam scores</div>
-              <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 16 }}>Last {Math.min(attempts.length, 8)} mock test attempts</div>
-              <ExamScoresChart attempts={attempts} />
-            </div>
-          )}
 
-          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: attempts.length ? "center" : "left" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Mentorship</div>
-            <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 10 }}>Sessions booked</div>
-            {bookings.length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--ink3)" }}>No mentor sessions booked yet.</p>
-            ) : (
-              <>
-                <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, margin: "8px 0" }}>{bookings.length}</div>
-                <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>{completedSessions} completed</div>
-              </>
-            )}
+        {attempts.length === 0 ? (
+          <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "40px 22px", textAlign: "center" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 18, background: "var(--orange-soft)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+              <TestIcon color="var(--orange)" />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>No mock test data yet</div>
+            <div style={{ fontSize: 13, color: "var(--ink3)", marginTop: 4, marginBottom: 16 }}>Take a mock test and your score trends will appear here.</div>
+            <Link href="/student/mock-test" style={{ display: "inline-block", padding: "10px 22px", background: "var(--ink)", color: "#fff", borderRadius: 11, fontSize: 13.5, fontWeight: 700 }}>
+              Browse mock tests
+            </Link>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
+              <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Exam scores</div>
+                <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 16 }}>Last {Math.min(attempts.length, 8)} mock test attempts</div>
+                <ExamScoresChart attempts={attempts} />
+              </div>
+
+              <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, textAlign: "center", animationDelay: "80ms" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Mentorship</div>
+                <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 10 }}>Sessions booked</div>
+                {bookings.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--ink3)", marginTop: 20 }}>No mentor sessions booked yet.</p>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, margin: "14px 0 8px", background: `linear-gradient(135deg, ${BRAND_GRADIENT_FROM}, ${BRAND_GRADIENT_TO})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                      {bookings.length}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--ink2)", fontWeight: 600 }}>{completedSessions} completed</div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {attempts.length >= 2 && (
+              <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginTop: 18, animationDelay: "120ms" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Score trend</div>
+                <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 10 }}>Your last {Math.min(attempts.length, 10)} attempts over time</div>
+                <ScoreTrendChart attempts={attempts} />
+              </div>
+            )}
+          </>
+        )}
       </div>
     </main>
   );
