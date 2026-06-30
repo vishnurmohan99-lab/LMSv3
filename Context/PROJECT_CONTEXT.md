@@ -715,7 +715,26 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after replacing the AI Models settings'
+*Last updated: 2026-06-30, after a pre-deploy **security review pass** plus
+the error-handling/validation/loading-state hardening. Security findings +
+fixes (commit `b0dbd0b`, PR #2 merged to main `594284a`, Render auto-deploy):
+(1) removed hardcoded JWT secret fallbacks — both passport strategies AND the
+token-signing path now require `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET` and
+throw at startup if unset, instead of silently using an in-repo `*-change-me`
+default; (2) group conversations now validate participants against the same
+contact eligibility as DMs (`eligibleContactIds`), so a student can no longer
+group-message other students — ineligible ids 403. Earlier on the same branch
+(commit `906f655`): the global `ValidationPipe` gained
+`forbidNonWhitelisted: true` (unknown request fields now 400 instead of being
+stripped) and the Messenger sidebar surfaces initial-load errors instead of a
+silent blank list. The review found the codebase otherwise solid — every
+controller behind `JwtAccessGuard`, writes role-gated, `passwordHash` never
+leaves the API, registration can't self-assign a role, IDOR consistently
+blocked. **ACTION STILL NEEDED (manual):** delete the dead `JWT_ACCESS_SECRET`
+env var from both Vercel projects (web + admin) — unused by frontend code,
+already removed from local `.env.local`. Also recorded the standing rule that
+every new push must ship error handling, input validation, and loading states.
+On top of replacing the AI Models settings'
 freeform model text field with a curated preset dropdown (commit
 `fde6810`, pushed + deployed to apps/admin). On top of the same day's
 earlier work: the admin AI Models settings (per-feature OpenRouter/OpenAI
