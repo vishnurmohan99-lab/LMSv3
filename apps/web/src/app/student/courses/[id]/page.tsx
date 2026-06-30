@@ -231,9 +231,14 @@ function LessonViewer({ lesson }: { lesson: Lesson }) {
     return lesson.contentUrl ? (
       <div
         className="fade-in-up"
-        style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden", boxShadow: "0 8px 28px rgba(0,0,0,.06)" }}
+        style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden", boxShadow: "0 8px 28px rgba(0,0,0,.06)" }}
       >
-        <iframe src={`${lesson.contentUrl}#toolbar=0`} style={{ width: "100%", height: "70vh", border: "none", display: "block" }} />
+        {/* view=FitH fits the page to the frame width so portrait PDFs fill it instead of
+            being letterboxed on the viewer's dark background; white bg covers any gaps. */}
+        <iframe
+          src={`${lesson.contentUrl}#toolbar=0&navpanes=0&view=FitH`}
+          style={{ width: "100%", height: "85vh", border: "none", display: "block", background: "#fff" }}
+        />
       </div>
     ) : (
       <div className="fade-in-up" style={{ padding: 24, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", color: "var(--ink2)" }}>
@@ -370,7 +375,24 @@ export default function StudentCoursePlayerPage() {
     // Recorded for every drip type now (not just SEQUENTIAL, which needs it for lesson-chain
     // unlocking) so Planner's Weekly progress tab has real per-chapter view data for any course.
     if (selectedLessonId) {
-      coursesApi.recordLessonView(selectedLessonId).catch(() => {});
+      coursesApi
+        .recordLessonView(selectedLessonId)
+        .then(() => {
+          // Reflect the view locally so the progress bar moves immediately (and matches the
+          // server on the next load) without refetching the whole tree.
+          setCourse((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  chapters: prev.chapters.map((ch) => ({
+                    ...ch,
+                    lessons: ch.lessons.map((l) => (l.id === selectedLessonId ? { ...l, viewed: true } : l)),
+                  })),
+                }
+              : prev,
+          );
+        })
+        .catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLessonId]);
@@ -444,8 +466,10 @@ export default function StudentCoursePlayerPage() {
   const allLessons = course.chapters.flatMap((c) => c.lessons);
   const selectedLesson = allLessons.find((l) => l.id === selectedLessonId) ?? null;
   const selectedChapter = course.chapters.find((c) => c.lessons.some((l) => l.id === selectedLessonId)) ?? null;
-  const lessonIndex = allLessons.findIndex((l) => l.id === selectedLessonId);
-  const progressPct = allLessons.length > 0 ? Math.round(((lessonIndex + 1) / allLessons.length) * 100) : 0;
+  // Progress reflects lessons actually viewed (persisted server-side via LessonView),
+  // not which lesson happens to be selected — otherwise it resets on every remount.
+  const viewedCount = allLessons.filter((l) => l.viewed).length;
+  const progressPct = allLessons.length > 0 ? Math.round((viewedCount / allLessons.length) * 100) : 0;
 
   return (
     <div style={{ display: "flex", margin: 0, height: "100%", background: "var(--bg)" }}>
@@ -489,6 +513,7 @@ export default function StudentCoursePlayerPage() {
           const isActiveChapter = chapter.id === selectedChapter?.id;
           const lessonItems = chapter.lessons.filter((l) => l.id);
           const activeLessonPos = lessonItems.findIndex((l) => l.id === selectedLessonId);
+          const viewedInChapter = lessonItems.filter((l) => l.viewed).length;
           return (
             <div
               key={chapter.id}
@@ -554,8 +579,8 @@ export default function StudentCoursePlayerPage() {
                         : "Locked"
                       : chapter.finished
                       ? "Completed"
-                      : isActiveChapter && activeLessonPos >= 0
-                      ? `In progress · ${activeLessonPos + 1}/${lessonItems.length}`
+                      : viewedInChapter > 0
+                      ? `In progress · ${viewedInChapter}/${lessonItems.length}`
                       : `${chapter.lessons.length} lessons`}
                   </div>
                 </div>

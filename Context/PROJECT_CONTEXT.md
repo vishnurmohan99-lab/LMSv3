@@ -725,8 +725,19 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after **adding a study-activity heatmap + mentor
-timeline to the student dashboard**. New backend route
+*Last updated: 2026-06-30, after fixing **two student-course bugs**
+(`apps/web/src/app/student/courses/[id]/page.tsx`, frontend-only): (1) the
+course progress bar + chapter "in progress N/M" were computed from the
+**selected lesson's position** (`lessonIndex`/`activeLessonPos`), so they reset
+whenever the page remounted (e.g. after visiting Mock Test). Now derived from
+the persisted `lesson.viewed` flag (viewed-count ÷ total), with an optimistic
+local `viewed=true` on a successful `recordLessonView` so the bar moves live and
+survives navigation — consistent with the dashboard course-progress section.
+(2) PDF lessons rendered "mostly black": the portrait page was letterboxed on
+the native viewer's dark bg in a fixed-height iframe. Fixed by appending
+`#toolbar=0&navpanes=0&view=FitH` (fit-to-width) + white iframe/container bg +
+85vh height. Deployed to apps/web. On top of **adding a study-activity heatmap
++ mentor timeline to the student dashboard**. New backend route
 `GET /enrollments/me/activity` (STUDENT-only, `CoursesService.getMyActivity`)
 returns per-day lesson-view counts over the last 17 weeks, bucketed by UTC date
 (only non-zero days). Frontend: a GitHub-style **activity heatmap** (17×7 grid,
