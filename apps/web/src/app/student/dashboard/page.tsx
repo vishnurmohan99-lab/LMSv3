@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { enrollmentsApi, coursesApi, testsApi, testAttemptsApi, mentorApi, calendarApi, usersApi, ApiError, type MentorBooking, type CalendarEvent, type Profile } from "@/lib/api";
+import { enrollmentsApi, coursesApi, testsApi, testAttemptsApi, mentorApi, calendarApi, usersApi, ApiError, type MentorBooking, type CalendarEvent, type Profile, type ActivityDay } from "@/lib/api";
 
 interface ScoredAttempt {
   pct: number;
@@ -275,6 +275,150 @@ function CourseProgressBars({ courses }: { courses: CourseProgress[] }) {
   );
 }
 
+const HEAT_WEEKS = 17;
+const DAY_MS = 86400000;
+const HEAT_COLORS = ["var(--line2)", "rgba(242,106,27,.28)", "rgba(242,106,27,.5)", "rgba(242,106,27,.74)", "var(--orange)"];
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function heatLevel(count: number) {
+  if (count <= 0) return 0;
+  if (count === 1) return 1;
+  if (count === 2) return 2;
+  if (count <= 4) return 3;
+  return 4;
+}
+
+function ActivityHeatmap({ activity }: { activity: ActivityDay[] }) {
+  const counts = new Map(activity.map((a) => [a.date, a.count]));
+  const now = new Date();
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const startRaw = todayUTC - (HEAT_WEEKS * 7 - 1) * DAY_MS;
+  const startUTC = startRaw - new Date(startRaw).getUTCDay() * DAY_MS; // back to Sunday
+
+  const weeks: { ts: number; key: string; count: number; future: boolean }[][] = [];
+  let totalViews = 0;
+  for (let w = 0; w < HEAT_WEEKS; w++) {
+    const col = [];
+    for (let d = 0; d < 7; d++) {
+      const ts = startUTC + (w * 7 + d) * DAY_MS;
+      const key = new Date(ts).toISOString().slice(0, 10);
+      const count = counts.get(key) ?? 0;
+      totalViews += count;
+      col.push({ ts, key, count, future: ts > todayUTC });
+    }
+    weeks.push(col);
+  }
+
+  let streak = 0;
+  for (let i = 0; ; i++) {
+    const key = new Date(todayUTC - i * DAY_MS).toISOString().slice(0, 10);
+    if ((counts.get(key) ?? 0) > 0) streak++;
+    else break;
+  }
+
+  const CELL = 13;
+  const GAP = 3;
+  const monthLabels = weeks.map((col, w) => {
+    const m = new Date(col[0].ts).getUTCMonth();
+    const prevM = w > 0 ? new Date(weeks[w - 1][0].ts).getUTCMonth() : -1;
+    return m !== prevM ? MONTH_NAMES[m] : "";
+  });
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.6, color: "var(--orange)" }}>
+          {streak} <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>day streak</span>
+        </div>
+        <div style={{ fontSize: 12.5, color: "var(--ink3)", fontWeight: 600 }}>{totalViews} lessons opened in {HEAT_WEEKS} weeks</div>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <div style={{ display: "inline-flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", gap: GAP, height: 12 }}>
+            {monthLabels.map((label, w) => (
+              <div key={w} style={{ width: CELL, fontSize: 9, color: "var(--ink3)", fontWeight: 600, whiteSpace: "nowrap" }}>{label}</div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: GAP }}>
+            {weeks.map((col, w) => (
+              <div key={w} style={{ display: "flex", flexDirection: "column", gap: GAP }}>
+                {col.map((cell) => (
+                  <div
+                    key={cell.key}
+                    title={cell.future ? "" : `${cell.count} lesson${cell.count === 1 ? "" : "s"} · ${cell.key}`}
+                    style={{
+                      width: CELL,
+                      height: CELL,
+                      borderRadius: 3,
+                      background: cell.future ? "transparent" : HEAT_COLORS[heatLevel(cell.count)],
+                      border: cell.ts === todayUTC ? "1.5px solid var(--ink)" : "none",
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 12, fontSize: 10.5, color: "var(--ink3)", fontWeight: 600 }}>
+        Less
+        {HEAT_COLORS.map((c, i) => (
+          <span key={i} style={{ width: 11, height: 11, borderRadius: 3, background: c }} />
+        ))}
+        More
+      </div>
+    </div>
+  );
+}
+
+function MentorTimeline({ bookings }: { bookings: MentorBooking[] }) {
+  const now = Date.now();
+  function status(b: MentorBooking) {
+    if (b.cancelledAt) return { label: "Cancelled", color: "var(--ink3)", dot: "var(--line)" };
+    if (new Date(b.date).getTime() < now) return { label: "Completed", color: "var(--green)", dot: "var(--green)" };
+    return { label: "Upcoming", color: "var(--orange)", dot: "var(--orange)" };
+  }
+  const upcoming = bookings.filter((b) => !b.cancelledAt && new Date(b.date).getTime() >= now).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const rest = bookings.filter((b) => b.cancelledAt || new Date(b.date).getTime() < now).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const ordered = [...upcoming, ...rest].slice(0, 6);
+
+  if (ordered.length === 0) {
+    return (
+      <div style={{ padding: "24px 0", textAlign: "center" }}>
+        <p style={{ fontSize: 13, color: "var(--ink3)", marginBottom: 14 }}>No mentor sessions yet.</p>
+        <Link href="/student/mentor" style={{ display: "inline-block", padding: "9px 18px", background: "var(--ink)", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
+          Book a mentor
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: "relative", paddingLeft: 6 }}>
+      {ordered.map((b, i) => {
+        const s = status(b);
+        const date = new Date(b.date);
+        const last = i === ordered.length - 1;
+        return (
+          <div key={b.id} style={{ display: "flex", gap: 14, position: "relative" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: "none" }}>
+              <span style={{ width: 12, height: 12, borderRadius: "50%", background: s.dot, border: "2px solid var(--card)", boxShadow: `0 0 0 2px ${s.dot}`, marginTop: 4, flex: "none" }} />
+              {!last && <span style={{ width: 2, flex: 1, background: "var(--line)", marginTop: 4 }} />}
+            </div>
+            <div style={{ paddingBottom: last ? 0 : 18, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>{b.mentor?.fullName ?? "Mentor session"}</div>
+              <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>
+                {date.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+              </div>
+              <span style={{ display: "inline-block", marginTop: 6, fontSize: 10.5, fontWeight: 700, color: s.color, background: "var(--bg)", padding: "2px 9px", borderRadius: 6 }}>{s.label}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -425,6 +569,7 @@ export default function StudentDashboardPage() {
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [attempts, setAttempts] = useState<ScoredAttempt[]>([]);
   const [bookings, setBookings] = useState<MentorBooking[]>([]);
+  const [activity, setActivity] = useState<ActivityDay[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -468,6 +613,9 @@ export default function StudentDashboardPage() {
 
         const myBookings = await mentorApi.listBookingsAsStudent().catch(() => []);
         setBookings(myBookings);
+
+        const myActivity = await enrollmentsApi.activity().catch(() => []);
+        setActivity(myActivity);
 
         const calendarEvents = await calendarApi.student().catch(() => []);
         setEvents(calendarEvents);
@@ -682,6 +830,27 @@ export default function StudentDashboardPage() {
                 </Link>
               </div>
               <CourseProgressBars courses={courseProgress} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(activity.length > 0 || bookings.length > 0) && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3, marginBottom: 14 }}>Study activity</div>
+          <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 18 }}>
+            <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Lesson activity</div>
+              <ActivityHeatmap activity={activity} />
+            </div>
+            <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, animationDelay: "80ms" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>Mentor sessions</div>
+                <Link href="/student/mentor" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>
+                  Book
+                </Link>
+              </div>
+              <MentorTimeline bookings={bookings} />
             </div>
           </div>
         </div>

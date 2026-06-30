@@ -725,7 +725,20 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after **adding a Course-progress section to the
+*Last updated: 2026-06-30, after **adding a study-activity heatmap + mentor
+timeline to the student dashboard**. New backend route
+`GET /enrollments/me/activity` (STUDENT-only, `CoursesService.getMyActivity`)
+returns per-day lesson-view counts over the last 17 weeks, bucketed by UTC date
+(only non-zero days). Frontend: a GitHub-style **activity heatmap** (17×7 grid,
+4-level orange-opacity scale strictly on brand, current-day outline, current-
+streak + total-lessons header) and a **mentor-sessions timeline** (vertical,
+status-coloured dots: upcoming=orange / completed=green / cancelled=grey, from
+existing `mentorApi` bookings). `enrollmentsApi.activity()` added to web
+`lib/api.ts` only (student-only; admin has no student dashboard). Note:
+`LessonView` is upsert with `update:{}`, so `viewedAt` = first-open time — the
+heatmap shows lessons first opened per day. Verified locally (student 200 w/
+real data, 401 unauth, 403 admin) + web build. Deployed to apps/api (Render)
+and apps/web (Vercel). On top of **adding a Course-progress section to the
 student dashboard** (`apps/web/src/app/student/dashboard/page.tsx`): a
 multi-segment status **donut** (completed/in-progress/not-started, animated
 segment draw + count-up + legend) and **animated per-course progress bars**

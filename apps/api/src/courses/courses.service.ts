@@ -378,6 +378,28 @@ export class CoursesService {
     return { success: true };
   }
 
+  /**
+   * Per-day lesson-view counts for the current student over the last ~17 weeks,
+   * used by the dashboard study-activity heatmap. Buckets by UTC date so the
+   * frontend can align cells without timezone drift. Returns only non-zero days.
+   */
+  async getMyActivity(user: JwtPayload) {
+    const DAYS = 17 * 7;
+    const cutoff = new Date();
+    cutoff.setUTCHours(0, 0, 0, 0);
+    cutoff.setUTCDate(cutoff.getUTCDate() - (DAYS - 1));
+    const views = await this.prisma.lessonView.findMany({
+      where: { studentId: user.sub, viewedAt: { gte: cutoff } },
+      select: { viewedAt: true },
+    });
+    const counts = new Map<string, number>();
+    for (const v of views) {
+      const key = v.viewedAt.toISOString().slice(0, 10);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return Array.from(counts, ([date, count]) => ({ date, count }));
+  }
+
   async createCourse(user: JwtPayload, dto: CreateCourseDto) {
     if (dto.segmentId) {
       await this.validateSegmentation(dto.segmentId, dto.subsegmentId);

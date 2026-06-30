@@ -258,8 +258,14 @@ export const coursesApi = {
   removeLesson: (id: string) => request<{ success: boolean }>(`/lessons/${id}`, { method: 'DELETE' }),
 };
 
+export interface ActivityDay {
+  date: string;
+  count: number;
+}
+
 export const enrollmentsApi = {
   mine: () => request<Enrollment[]>('/enrollments/me'),
+  activity: () => request<ActivityDay[]>('/enrollments/me/activity'),
 };
 
 export type FlashcardStatus = 'NEW' | 'LEARNING' | 'KNOWN';

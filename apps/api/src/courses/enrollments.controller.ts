@@ -16,4 +16,9 @@ export class EnrollmentsController {
   listMine(@CurrentUser() user: JwtPayload) {
     return this.coursesService.listMyEnrollments(user);
   }
+
+  @Get('me/activity')
+  myActivity(@CurrentUser() user: JwtPayload) {
+    return this.coursesService.getMyActivity(user);
+  }
 }
