@@ -1,7 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { aiSettingsApi, ApiError, type AiFeatureSetting, type AiProvider } from "@/lib/api";
+import { aiSettingsApi, ApiError, type AiFeatureSetting, type AiProvider, type AiFeature } from "@/lib/api";
+
+/** Curated model choices per call-type, shown as a dropdown so the admin doesn't have to know
+ *  exact OpenRouter model id strings by heart. Only includes the few ids this app has actually
+ *  exercised plus other commonly-available OpenRouter free-tier models — not an exhaustive
+ *  catalog. "Custom" always falls back to a free-text field for anything else (verify the id
+ *  exists at openrouter.ai/models before using it). */
+const VISION_FEATURES: AiFeature[] = ["ANSWER_GRADING"];
+const IMAGE_FEATURES: AiFeature[] = ["CHEAT_SHEET_IMAGE"];
+
+const TEXT_MODEL_OPTIONS = [
+  "openai/gpt-oss-20b:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemini-2.0-flash-exp:free",
+  "deepseek/deepseek-chat-v3.1:free",
+];
+const VISION_MODEL_OPTIONS = ["nvidia/nemotron-nano-12b-v2-vl:free", "google/gemini-2.0-flash-exp:free"];
+const IMAGE_MODEL_OPTIONS = ["google/gemini-2.5-flash-image"];
+
+function modelOptionsFor(feature: AiFeature): string[] {
+  if (VISION_FEATURES.includes(feature)) return VISION_MODEL_OPTIONS;
+  if (IMAGE_FEATURES.includes(feature)) return IMAGE_MODEL_OPTIONS;
+  return TEXT_MODEL_OPTIONS;
+}
 
 const selectStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -20,13 +43,29 @@ const inputStyle: React.CSSProperties = {
 };
 
 function FeatureRow({ setting, onSaved }: { setting: AiFeatureSetting; onSaved: () => void }) {
+  const options = modelOptionsFor(setting.feature);
+  const initialIsCustom = !!setting.model && !options.includes(setting.model);
+
   const [provider, setProvider] = useState<AiProvider>(setting.provider);
   const [model, setModel] = useState(setting.model ?? "");
+  const [customMode, setCustomMode] = useState(initialIsCustom);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   const dirty = provider !== setting.provider || model !== (setting.model ?? "");
+
+  function onPickPreset(value: string) {
+    if (value === "__default__") {
+      setModel("");
+      setCustomMode(false);
+    } else if (value === "__custom__") {
+      setCustomMode(true);
+    } else {
+      setModel(value);
+      setCustomMode(false);
+    }
+  }
 
   async function onSave() {
     setSaving(true);
@@ -67,9 +106,43 @@ function FeatureRow({ setting, onSaved }: { setting: AiFeatureSetting; onSaved: 
         </div>
         <div>
           <label style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink2)", display: "block", marginBottom: 6 }}>
-            Model <span style={{ color: "var(--ink3)", fontWeight: 600 }}>(blank = default: {setting.defaultModel})</span>
+            Model <span style={{ color: "var(--ink3)", fontWeight: 600 }}>(default: {setting.defaultModel})</span>
           </label>
-          <input value={model} onChange={(e) => setModel(e.target.value)} placeholder={setting.defaultModel} style={inputStyle} />
+          {customMode ? (
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="e.g. provider/model-name:free"
+                style={{ ...inputStyle, background: "var(--card)" }}
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => onPickPreset("__default__")}
+                title="Back to preset list"
+                style={{ flex: "none", padding: "0 12px", border: "1px solid var(--line)", borderRadius: 10, background: "var(--bg)", color: "var(--ink2)", fontSize: 12.5, fontFamily: "inherit", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <select
+              value={model && options.includes(model) ? model : "__default__"}
+              onChange={(e) => onPickPreset(e.target.value)}
+              style={{ ...selectStyle, width: "100%", background: "var(--card)" }}
+            >
+              <option value="__default__">Default ({setting.defaultModel})</option>
+              {options
+                .filter((o) => o !== setting.defaultModel)
+                .map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              <option value="__custom__">Custom…</option>
+            </select>
+          )}
         </div>
         <button
           onClick={onSave}
