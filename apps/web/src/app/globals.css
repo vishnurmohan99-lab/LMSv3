@@ -185,9 +185,19 @@ button:active, a:active {
   to { stroke-dashoffset: 0; }
 }
 
+@keyframes barGrowX {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 @keyframes dashShimmer {
   0% { background-position: -468px 0; }
   100% { background-position: 468px 0; }
+}
+
+.dash-bar-x {
+  transform-origin: left center;
+  animation: barGrowX .8s cubic-bezier(.2,.7,.3,1) both;
 }
 
 .dash-bar {

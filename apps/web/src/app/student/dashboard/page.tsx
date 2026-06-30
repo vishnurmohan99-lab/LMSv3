@@ -3,11 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { enrollmentsApi, testsApi, testAttemptsApi, mentorApi, calendarApi, usersApi, ApiError, type MentorBooking, type CalendarEvent, type Profile } from "@/lib/api";
+import { enrollmentsApi, coursesApi, testsApi, testAttemptsApi, mentorApi, calendarApi, usersApi, ApiError, type MentorBooking, type CalendarEvent, type Profile } from "@/lib/api";
 
 interface ScoredAttempt {
   pct: number;
   submittedAt: string;
+}
+
+interface CourseProgress {
+  id: string;
+  title: string;
+  total: number;
+  viewed: number;
+  pct: number;
 }
 
 /** Eased count-up for headline numbers — runs once on mount / when target changes. */
@@ -183,6 +191,90 @@ function ScoreTrendChart({ attempts }: { attempts: ScoredAttempt[] }) {
   );
 }
 
+function CompletionDonut({ completed, inProgress, notStarted }: { completed: number; inProgress: number; notStarted: number }) {
+  const total = completed + inProgress + notStarted;
+  const r = 54;
+  const c = 2 * Math.PI * r;
+  const segments = [
+    { v: completed, color: "var(--green)" },
+    { v: inProgress, color: "var(--orange)" },
+    { v: notStarted, color: "var(--line)" },
+  ].filter((s) => s.v > 0);
+  const display = useCountUp(completed);
+  let cum = 0;
+  return (
+    <div style={{ position: "relative", width: 150, height: 150, margin: "0 auto" }}>
+      <svg width="150" height="150" viewBox="0 0 150 150">
+        {total === 0 && <circle cx="75" cy="75" r={r} fill="none" stroke="var(--line)" strokeWidth="14" />}
+        {segments.map((s, i) => {
+          const frac = s.v / total;
+          const arc = frac * c;
+          const rot = -90 + cum * 360;
+          cum += frac;
+          return (
+            <circle
+              key={i}
+              cx="75"
+              cy="75"
+              r={r}
+              fill="none"
+              stroke={s.color}
+              strokeWidth="14"
+              strokeDasharray={`${arc} ${c}`}
+              transform={`rotate(${rot} 75 75)`}
+              style={{ ["--ring-arc" as string]: `${arc}`, strokeDashoffset: 0, animation: "ringDraw .9s cubic-bezier(.2,.7,.3,1) both", animationDelay: `${i * 0.22}s` } as React.CSSProperties}
+            />
+          );
+        })}
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -1 }}>{Math.round(display)}</div>
+        <div style={{ fontSize: 11, color: "var(--ink3)", fontWeight: 600 }}>of {total} done</div>
+      </div>
+    </div>
+  );
+}
+
+function LegendDot({ color, label, value }: { color: string; label: string; value: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12 }}>
+      <span style={{ width: 9, height: 9, borderRadius: 3, background: color, flex: "none" }} />
+      <span style={{ color: "var(--ink2)", fontWeight: 600 }}>{label}</span>
+      <span style={{ marginLeft: "auto", fontWeight: 700 }}>{value}</span>
+    </div>
+  );
+}
+
+function CourseProgressBars({ courses }: { courses: CourseProgress[] }) {
+  const sorted = [...courses].sort((a, b) => b.pct - a.pct);
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      {sorted.map((cp, i) => (
+        <div key={cp.id}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cp.title}</span>
+            <span style={{ fontSize: 12, color: "var(--ink3)", fontWeight: 600, flex: "none" }}>
+              {cp.total === 0 ? "No lessons yet" : `${cp.viewed}/${cp.total} · ${Math.round(cp.pct)}%`}
+            </span>
+          </div>
+          <div style={{ height: 9, background: "var(--line2)", borderRadius: 6, overflow: "hidden" }}>
+            <div
+              className="dash-bar-x"
+              style={{
+                width: `${cp.pct}%`,
+                height: "100%",
+                borderRadius: 6,
+                background: cp.pct >= 100 ? "var(--green)" : `linear-gradient(90deg, ${BRAND_GRADIENT_FROM}, ${BRAND_GRADIENT_TO})`,
+                animationDelay: `${i * 90}ms`,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -330,6 +422,7 @@ export default function StudentDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrolledCount, setEnrolledCount] = useState(0);
+  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [attempts, setAttempts] = useState<ScoredAttempt[]>([]);
   const [bookings, setBookings] = useState<MentorBooking[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -344,6 +437,19 @@ export default function StudentDashboardPage() {
       try {
         const enrollments = await enrollmentsApi.mine();
         setEnrolledCount(enrollments.length);
+
+        // Per-course progress (lessons viewed ÷ total) — fetched in parallel so the
+        // dashboard isn't serialised on N course-tree round-trips.
+        const trees = await Promise.all(enrollments.map((e) => coursesApi.get(e.courseId).catch(() => null)));
+        setCourseProgress(
+          trees.map((tree, i) => {
+            if (!tree) return { id: enrollments[i].courseId, title: enrollments[i].course.title, total: 0, viewed: 0, pct: 0 };
+            const lessons = tree.chapters.flatMap((ch) => ch.lessons);
+            const total = lessons.length;
+            const viewed = lessons.filter((l) => l.viewed).length;
+            return { id: tree.id, title: tree.title, total, viewed, pct: total ? (viewed / total) * 100 : 0 };
+          }),
+        );
 
         const allAttempts: ScoredAttempt[] = [];
         for (const e of enrollments) {
@@ -386,6 +492,12 @@ export default function StudentDashboardPage() {
 
   const avgPct = attempts.length ? attempts.reduce((s, a) => s + a.pct, 0) / attempts.length : null;
   const bestPct = attempts.length ? Math.max(...attempts.map((a) => a.pct)) : null;
+  const totalLessons = courseProgress.reduce((s, c) => s + c.total, 0);
+  const totalViewed = courseProgress.reduce((s, c) => s + c.viewed, 0);
+  const overallPct = totalLessons ? (totalViewed / totalLessons) * 100 : 0;
+  const coursesCompleted = courseProgress.filter((c) => c.total > 0 && c.viewed === c.total).length;
+  const coursesInProgress = courseProgress.filter((c) => c.viewed > 0 && c.viewed < c.total).length;
+  const coursesNotStarted = courseProgress.filter((c) => c.viewed === 0).length;
   const today = new Date();
   const completedSessions = bookings.filter((b) => new Date(b.date) < today).length;
   const now = new Date();
@@ -545,6 +657,35 @@ export default function StudentDashboardPage() {
           </span>
         </button>
       </div>
+
+      {courseProgress.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>Course progress</div>
+            <div style={{ fontSize: 12.5, color: "var(--ink2)", fontWeight: 600 }}>{Math.round(overallPct)}% of all lessons completed</div>
+          </div>
+          <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 18 }}>
+            <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Courses</div>
+              <CompletionDonut completed={coursesCompleted} inProgress={coursesInProgress} notStarted={coursesNotStarted} />
+              <div style={{ display: "grid", gap: 9, marginTop: 18 }}>
+                <LegendDot color="var(--green)" label="Completed" value={coursesCompleted} />
+                <LegendDot color="var(--orange)" label="In progress" value={coursesInProgress} />
+                <LegendDot color="var(--line)" label="Not started" value={coursesNotStarted} />
+              </div>
+            </div>
+            <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, animationDelay: "80ms" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>By course</div>
+                <Link href="/student/courses" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>
+                  View all
+                </Link>
+              </div>
+              <CourseProgressBars courses={courseProgress} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {upcomingEvents.length > 0 && (
         <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>

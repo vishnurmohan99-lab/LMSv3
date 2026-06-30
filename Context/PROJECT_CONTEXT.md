@@ -725,7 +725,17 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after fixing a **logout bug** (couldn't log out —
+*Last updated: 2026-06-30, after **adding a Course-progress section to the
+student dashboard** (`apps/web/src/app/student/dashboard/page.tsx`): a
+multi-segment status **donut** (completed/in-progress/not-started, animated
+segment draw + count-up + legend) and **animated per-course progress bars**
+(lessons viewed ÷ total, `.dash-bar-x` scaleX grow added to globals.css), with
+an overall "X% of all lessons completed" summary. Motivation: the redesigned
+dashboard's mock-test graphs are data-gated, so an account with 0 attempts saw
+mostly empty states; course progress is derived from enrollments (the student's
+real data) by fetching each enrolled course tree in parallel
+(`coursesApi.get`) and counting `lesson.viewed`. tsc + web build verified;
+deployed to apps/web. On top of fixing a **logout bug** (couldn't log out —
 landing on /login auto-redirected back in). Root cause: prod auth cookies are
 `SameSite=None; Secure` (cross-domain vercel↔onrender), but `/auth/logout`
 called `res.clearCookie()` with NO options, so the deletion Set-Cookie lacked
