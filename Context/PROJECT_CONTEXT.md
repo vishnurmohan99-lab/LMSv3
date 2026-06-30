@@ -639,6 +639,16 @@ checking with the user first.
 
 ## Outstanding / known gaps
 
+- **TODO (manual, user to do — "will change later"):** delete the dead
+  `JWT_ACCESS_SECRET` env var from BOTH Vercel projects (web + admin) →
+  Settings → Environment Variables. Unused by frontend code (only
+  `NEXT_PUBLIC_API_URL` is read); already removed from local `.env.local`.
+  No redeploy needed after removal since nothing references it. Flagged
+  during the 2026-06-30 security review; left in place for now.
+- Security review (2026-06-30) optional follow-up not yet done: login flow
+  has a minor user-enumeration timing side-channel (early return when email
+  not found skips bcrypt.compare) — low priority, harden with a dummy-hash
+  compare if revisited.
 - Answer Correction: PDF upload rejected (image-only for v1); free-tier
   vision model untested on real handwriting; no rate-limiting/abuse-control;
   no "My submissions" history page; multi-page answers not supported.
