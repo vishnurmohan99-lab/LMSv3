@@ -1,12 +1,13 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { messengerApi, usersApi, type Conversation, type Profile } from "@/lib/api";
+import { messengerApi, usersApi, ApiError, type Conversation, type Profile } from "@/lib/api";
 
 interface MessengerContextValue {
   me: Profile | null;
   conversations: Conversation[];
   loading: boolean;
+  error: string | null;
   refresh: () => void;
 }
 
@@ -16,12 +17,23 @@ export function MessengerProvider({ children }: { children: React.ReactNode }) {
   const [me, setMe] = useState<Profile | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     messengerApi
       .listConversations()
-      .then(setConversations)
-      .catch(() => {})
+      .then((list) => {
+        setConversations(list);
+        setError(null);
+      })
+      // Background polling failures shouldn't wipe what's already on screen — only
+      // surface an error when we have nothing to show (i.e. the initial load failed).
+      .catch((err) =>
+        setConversations((prev) => {
+          if (prev.length === 0) setError(err instanceof ApiError ? err.message : "Failed to load conversations");
+          return prev;
+        }),
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -36,7 +48,7 @@ export function MessengerProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [refresh]);
 
-  return <MessengerContext.Provider value={{ me, conversations, loading, refresh }}>{children}</MessengerContext.Provider>;
+  return <MessengerContext.Provider value={{ me, conversations, loading, error, refresh }}>{children}</MessengerContext.Provider>;
 }
 
 export function useMessenger() {

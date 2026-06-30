@@ -41,7 +41,7 @@ export default function MessengerSidebar({
   onNewMessage: () => void;
   className?: string;
 }) {
-  const { me, conversations, loading } = useMessenger();
+  const { me, conversations, loading, error } = useMessenger();
   const router = useRouter();
   const params = useParams<{ id?: string }>();
   const activeId = params?.id;
@@ -107,6 +107,8 @@ export default function MessengerSidebar({
       <div style={{ flex: 1, overflowY: "auto", padding: "0 10px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
         {loading ? (
           <p style={{ color: "var(--ink2)", fontSize: 13, padding: "10px 14px" }}>Loading…</p>
+        ) : error ? (
+          <p style={{ color: "var(--red)", fontSize: 13, padding: "10px 14px" }}>{error}</p>
         ) : sorted.length === 0 ? (
           <p style={{ color: "var(--ink2)", fontSize: 13, padding: "10px 14px" }}>No conversations yet.</p>
         ) : (
