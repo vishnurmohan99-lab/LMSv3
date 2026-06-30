@@ -621,6 +621,21 @@ checking with the user first.
   the expected message → reverted to OPENROUTER → same call succeeds) and
   live in the admin UI (dropdown, save, persistence across reload, "Not
   integrated yet" badge), then reverted the test change.
+- **Follow-up (commit `fde6810`, user flagged via screenshot):** the
+  Model field was a freeform text input that visually looked like a
+  disabled placeholder box with no hint of what to type. Replaced with a
+  `<select>` of curated model ids — `TEXT_MODEL_OPTIONS` /
+  `VISION_MODEL_OPTIONS` / `IMAGE_MODEL_OPTIONS` arrays in
+  `admin/settings/page.tsx`, picked per feature via `modelOptionsFor()` —
+  defaulting to "Default (\<env fallback\>)", plus a "Custom…" option that
+  reveals the old text input for anything not in the curated list. Only
+  ids this app has actually exercised (`openai/gpt-oss-20b:free`,
+  `nvidia/nemotron-nano-12b-v2-vl:free`, `google/gemini-2.5-flash-image`)
+  plus a few other commonly-available OpenRouter free-tier models are
+  listed — **not a verified-exhaustive catalog**, so if a curated option
+  ever 404s like `qwen/qwen2.5-vl-32b-instruct:free` did historically,
+  remove it from the array rather than assuming the whole approach is
+  broken.
 
 ## Outstanding / known gaps
 
@@ -688,12 +703,14 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after adding the admin AI Models settings
-(per-feature OpenRouter/OpenAI provider switching, commit `61df750`,
-pushed + deployed to apps/admin and apps/api via Render auto-deploy + a
-hand-written migration). On top of the same day's earlier work: the
-Study Planner feature — student Weekly/Reflection/Tasks tabs + admin
-reflection oversight (commit `787e520`, deployed to apps/web, apps/admin,
+*Last updated: 2026-06-30, after replacing the AI Models settings'
+freeform model text field with a curated preset dropdown (commit
+`fde6810`, pushed + deployed to apps/admin). On top of the same day's
+earlier work: the admin AI Models settings (per-feature OpenRouter/OpenAI
+provider switching, commit `61df750`, deployed to apps/admin and apps/api
+via Render auto-deploy + a hand-written migration), the Study Planner
+feature — student Weekly/Reflection/Tasks tabs + admin reflection
+oversight (commit `787e520`, deployed to apps/web, apps/admin,
 and apps/api). On top of 2026-06-29's
 work: hiding the native PDF-viewer toolbar in lesson PDF embeds across
 student/faculty/admin (commit `fe77ae1`), the mandatory segment-onboarding
