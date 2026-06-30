@@ -57,12 +57,18 @@ export class AuthService {
   private async issueTokens(user: { id: string; email: string; role: string; fullName: string }) {
     const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role as JwtPayload['role'] };
 
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    if (!accessSecret || !refreshSecret) {
+      throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET environment variables are required');
+    }
+
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_ACCESS_SECRET,
+      secret: accessSecret,
       expiresIn: ACCESS_TOKEN_TTL,
     });
     const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
+      secret: refreshSecret,
       expiresIn: REFRESH_TOKEN_TTL,
     });
 

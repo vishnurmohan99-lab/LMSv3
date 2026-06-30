@@ -11,10 +11,14 @@ function extractFromCookie(req: Request): string | null {
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor() {
+    const secret = process.env.JWT_REFRESH_SECRET;
+    if (!secret) {
+      throw new Error('JWT_REFRESH_SECRET environment variable is required');
+    }
     super({
       jwtFromRequest: extractFromCookie,
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret-change-me',
+      secretOrKey: secret,
     });
   }
 
