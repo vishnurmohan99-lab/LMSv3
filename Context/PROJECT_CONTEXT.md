@@ -725,7 +725,17 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after **redesigning the student dashboard**
+*Last updated: 2026-06-30, after fixing a **logout bug** (couldn't log out —
+landing on /login auto-redirected back in). Root cause: prod auth cookies are
+`SameSite=None; Secure` (cross-domain vercel↔onrender), but `/auth/logout`
+called `res.clearCookie()` with NO options, so the deletion Set-Cookie lacked
+`SameSite=None; Secure` and the browser dropped it on the cross-site request —
+cookies survived, `usersApi.me()` still 200'd, and the login page redirected
+home. Fix (`apps/api/src/auth/auth.controller.ts`): shared `cookieBaseOptions()`
+used by BOTH set and clear so attributes can't drift; logout now clears with
+`{ httpOnly, secure, sameSite:'none'|'lax', path:'/' }`. Verified locally
+(login→me 200→logout→me 401) + prod logout Set-Cookie headers. Deployed via
+Render (API). On top of **redesigning the student dashboard**
 (`apps/web/src/app/student/dashboard/page.tsx` + new analytics keyframes in
 `globals.css`): animated gradient performance ring (stroke-draw + count-up),
 exam-scores bar chart with grow animation + average reference line + gridlines,
