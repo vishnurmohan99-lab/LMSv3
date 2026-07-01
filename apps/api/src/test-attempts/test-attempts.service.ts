@@ -53,7 +53,7 @@ export class TestAttemptsService {
     const rawQuestions = await this.prisma.testQuestion.findMany({
       where: { testId },
       orderBy: { order: 'asc' },
-      select: { id: true, type: true, prompt: true, options: true, order: true, testId: true, imageUrl: true, passage: true, marks: true, difficulty: true, answerTimeSeconds: true },
+      select: { id: true, type: true, prompt: true, options: true, order: true, testId: true, imageUrl: true, passage: true, marks: true, negativeMarks: true, difficulty: true, answerTimeSeconds: true, tags: { select: { id: true, name: true } } },
     });
     const testQuestions = await Promise.all(
       rawQuestions.map(async (q) => ({
@@ -182,7 +182,7 @@ export class TestAttemptsService {
     const questions = await this.prisma.testQuestion.findMany({
       where: { testId: attempt.testId },
       orderBy: { order: 'asc' },
-      select: { id: true, type: true, prompt: true, options: true, correctOption: true, imageUrl: true, marks: true, negativeMarks: true, passage: { select: { id: true } } },
+      select: { id: true, type: true, prompt: true, options: true, correctOption: true, imageUrl: true, marks: true, negativeMarks: true, tags: { select: { id: true, name: true } }, passage: { select: { id: true } } },
     });
     const answers = await this.prisma.testAnswer.findMany({ where: { attemptId } });
     const answerByQuestion = new Map(answers.map((a) => [a.testQuestionId, a]));
@@ -202,6 +202,7 @@ export class TestAttemptsService {
           isCorrect: !!ans?.isCorrect,
           marks: q.marks,
           negativeMarks: q.negativeMarks,
+          tags: q.tags,
           hasPassage: !!q.passage,
           imageUrl: q.imageUrl ? await this.uploads.presignDownload(q.imageUrl) : null,
         };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   testsApi,
@@ -14,6 +14,7 @@ import {
   type Question,
 } from "@/lib/api";
 import RichTextEditor from "@/components/RichTextEditor";
+import QuestionMetaFields, { emptyQuestionMeta, type QuestionMetaValue } from "@/components/QuestionMetaFields";
 import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
@@ -51,7 +52,7 @@ function QuestionForm({
   onCancel,
 }: {
   initial?: TestQuestion;
-  onSubmit: (data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) => Promise<void>;
+  onSubmit: (data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaValue) => Promise<void>;
   onCancel: () => void;
 }) {
   const [type, setType] = useState<QuestionType>(initial?.type ?? "MCQ");
@@ -70,6 +71,17 @@ function QuestionForm({
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState(initial?.imageUrl ?? "");
+  const [meta, setMeta] = useState<QuestionMetaValue>(
+    initial
+      ? {
+          difficulty: initial.difficulty,
+          marks: initial.marks,
+          negativeMarks: initial.negativeMarks,
+          answerTimeSeconds: initial.answerTimeSeconds,
+          tags: (initial.tags ?? []).map((t) => t.name),
+        }
+      : emptyQuestionMeta(),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,13 +94,13 @@ function QuestionForm({
       if (type === "MCQ") {
         const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
         if (cleanOptions.length < 2) throw new Error("Add at least 2 options");
-        await onSubmit({ type, prompt, options: cleanOptions, correctOption: cleanOptions[correctIndex] ?? cleanOptions[0], imageUrl });
+        await onSubmit({ type, prompt, options: cleanOptions, correctOption: cleanOptions[correctIndex] ?? cleanOptions[0], imageUrl, ...meta });
       } else if (type === "TRUE_FALSE") {
-        await onSubmit({ type, prompt, correctOption: trueFalseAnswer, imageUrl });
+        await onSubmit({ type, prompt, correctOption: trueFalseAnswer, imageUrl, ...meta });
       } else if (type === "FILL_BLANK") {
-        await onSubmit({ type, prompt, correctOption: fillAnswer, imageUrl });
+        await onSubmit({ type, prompt, correctOption: fillAnswer, imageUrl, ...meta });
       } else {
-        await onSubmit({ type, prompt, imageUrl });
+        await onSubmit({ type, prompt, imageUrl, ...meta });
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Failed to save question");
@@ -202,6 +214,8 @@ function QuestionForm({
           <input required value={fillAnswer} onChange={(e) => setFillAnswer(e.target.value)} style={inputStyle} />
         </div>
       )}
+
+      <QuestionMetaFields value={meta} onChange={setMeta} />
 
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" disabled={busy} style={{ ...btnStyle, opacity: busy ? 0.7 : 1 }}>
@@ -533,11 +547,20 @@ function ComprehensionForm({
   );
 }
 
-function ImportFromBank({ onDone }: { onDone: (questionIds: string[] | undefined, bankId: string) => Promise<void> }) {
+function ImportFromBank({
+  onDone,
+  filterQuestions,
+  emptyMessage = "This bank has no questions yet.",
+}: {
+  onDone: (questionIds: string[] | undefined, bankId: string) => Promise<void>;
+  filterQuestions?: (questions: Question[]) => Question[];
+  emptyMessage?: string;
+}) {
   const [banks, setBanks] = useState<QuestionBank[]>([]);
   const [selectedBankId, setSelectedBankId] = useState<string>("");
   const [bankQuestions, setBankQuestions] = useState<Question[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -555,17 +578,49 @@ function ImportFromBank({ onDone }: { onDone: (questionIds: string[] | undefined
     questionBanksApi
       .get(selectedBankId)
       .then((bank) => {
-        setBankQuestions(bank.questions);
+        setBankQuestions(filterQuestions ? filterQuestions(bank.questions) : bank.questions);
         setSelectedIds(new Set());
+        setTagFilter(new Set());
       })
       .finally(() => setLoadingQuestions(false));
   }, [selectedBankId]);
+
+  // Tags present across the loaded bank's questions, for the "build by topic" filter.
+  const bankTags = useMemo(() => {
+    const names = new Set<string>();
+    for (const q of bankQuestions) for (const t of q.tags ?? []) names.add(t.name);
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [bankQuestions]);
+
+  // A question matches when it carries at least one of the selected tags (OR match) — pick a few
+  // topics and the list narrows to every question tagged with any of them.
+  const filteredQuestions = useMemo(
+    () => (tagFilter.size === 0 ? bankQuestions : bankQuestions.filter((q) => (q.tags ?? []).some((t) => tagFilter.has(t.name)))),
+    [bankQuestions, tagFilter],
+  );
+
+  function toggleTagFilter(name: string) {
+    setTagFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
 
   function toggleSelected(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAllShown() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const q of filteredQuestions) next.add(q.id);
       return next;
     });
   }
@@ -607,19 +662,80 @@ function ImportFromBank({ onDone }: { onDone: (questionIds: string[] | undefined
         ))}
       </select>
 
+      {bankTags.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Filter by tag (topic)</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {bankTags.map((name) => {
+              const on = tagFilter.has(name);
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => toggleTagFilter(name)}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "5px 11px",
+                    borderRadius: 8,
+                    border: on ? "1px solid var(--orange)" : "1px solid var(--line)",
+                    background: on ? "var(--orange-soft)" : "var(--card)",
+                    color: on ? "var(--orange)" : "var(--ink2)",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {name}
+                </button>
+              );
+            })}
+            {tagFilter.size > 0 && (
+              <button type="button" onClick={() => setTagFilter(new Set())} style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {loadingQuestions ? (
         <p style={{ color: "var(--ink2)", fontSize: 13 }}>Loading questions…</p>
-      ) : bankQuestions.length > 0 ? (
-        <div style={{ display: "grid", gap: 6, maxHeight: 240, overflowY: "auto" }}>
-          {bankQuestions.map((q) => (
-            <label key={q.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "8px 10px", background: "var(--bg)", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
-              <input type="checkbox" checked={selectedIds.has(q.id)} onChange={() => toggleSelected(q.id)} style={{ marginTop: 3 }} />
-              <span dangerouslySetInnerHTML={{ __html: q.prompt }} />
-            </label>
-          ))}
-        </div>
+      ) : filteredQuestions.length > 0 ? (
+        <>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--ink3)" }}>
+            <span>
+              Showing {filteredQuestions.length} of {bankQuestions.length} question{bankQuestions.length === 1 ? "" : "s"}
+            </span>
+            <button type="button" onClick={selectAllShown} style={{ background: "none", border: "none", color: "var(--orange)", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+              Select all shown
+            </button>
+          </div>
+          <div style={{ display: "grid", gap: 6, maxHeight: 260, overflowY: "auto" }}>
+            {filteredQuestions.map((q) => (
+              <label key={q.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "8px 10px", background: "var(--bg)", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
+                <input type="checkbox" checked={selectedIds.has(q.id)} onChange={() => toggleSelected(q.id)} style={{ marginTop: 3 }} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span dangerouslySetInnerHTML={{ __html: q.prompt }} />
+                  {((q.tags ?? []).length > 0 || q.marks !== 1 || q.negativeMarks > 0) && (
+                    <span style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6, alignItems: "center" }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--ink3)" }}>{q.marks} mark{q.marks === 1 ? "" : "s"}</span>
+                      {q.negativeMarks > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--red)" }}>−{q.negativeMarks}</span>}
+                      {(q.tags ?? []).map((t) => (
+                        <span key={t.id} style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "2px 7px", borderRadius: 6 }}>
+                          {t.name}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </div>
+        </>
+      ) : selectedBankId && bankQuestions.length > 0 ? (
+        <p style={{ color: "var(--ink2)", fontSize: 13 }}>No questions match the selected tags.</p>
       ) : selectedBankId ? (
-        <p style={{ color: "var(--ink2)", fontSize: 13 }}>This bank has no questions yet.</p>
+        <p style={{ color: "var(--ink2)", fontSize: 13 }}>{emptyMessage}</p>
       ) : null}
 
       <div style={{ display: "flex", gap: 8 }}>
@@ -688,13 +804,13 @@ export default function FacultyTestDetailPage() {
     router.push("/faculty/tests");
   }
 
-  async function onAddQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) {
+  async function onAddQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaValue) {
     await testsApi.createQuestion(testId, data);
     setShowAddForm(false);
     load();
   }
 
-  async function onEditQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) {
+  async function onEditQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaValue) {
     if (!editingQuestion) return;
     await testsApi.updateQuestion(editingQuestion.id, {
       type: data.type,
@@ -702,6 +818,11 @@ export default function FacultyTestDetailPage() {
       options: data.options ?? [],
       correctOption: data.correctOption,
       imageUrl: data.imageUrl ?? null,
+      difficulty: data.difficulty,
+      marks: data.marks,
+      negativeMarks: data.negativeMarks,
+      answerTimeSeconds: data.answerTimeSeconds,
+      tags: data.tags,
     });
     setEditingQuestion(null);
     load();

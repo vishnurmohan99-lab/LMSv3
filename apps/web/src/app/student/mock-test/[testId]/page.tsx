@@ -269,6 +269,13 @@ export default function StudentMockTestTakePage() {
   if (view === "error" || !test) return <main style={{ padding: 40 }}><p style={{ color: "var(--red)" }}>{error}</p></main>;
 
   if (view === "instructions") {
+    const totalMarks = test.testQuestions.reduce((sum, q) => sum + (q.marks ?? 1), 0);
+    const uniformOneMark = test.testQuestions.every((q) => (q.marks ?? 1) === 1);
+    const hasNegative = test.testQuestions.some((q) => (q.negativeMarks ?? 0) > 0);
+    const marksNote =
+      uniformOneMark && !hasNegative
+        ? "Each question carries 1 mark — there is no negative marking."
+        : `Questions carry different marks (${totalMarks} in total) — each question shows its own marks. ${hasNegative ? "Wrong answers deduct negative marks." : "There is no negative marking."}`;
     return (
       <main className="fade-in-up mobile-page-pad" style={{ padding: "40px 30px", maxWidth: 680, margin: "0 auto" }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 34 }}>
@@ -297,12 +304,12 @@ export default function StudentMockTestTakePage() {
             </div>
             <div style={{ background: "var(--bg)", borderRadius: 12, padding: "14px 20px", flex: 1 }}>
               <div style={{ fontSize: 11, color: "var(--ink3)" }}>MARKS</div>
-              <div style={{ fontSize: 17, fontWeight: 800 }}>{test.testQuestions.length}</div>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>{totalMarks}</div>
             </div>
           </div>
 
           <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: "var(--ink2)", paddingLeft: 18 }}>
-            <li>Each question carries 1 mark — there is no negative marking.</li>
+            <li>{marksNote}</li>
             <li>You can navigate between questions freely before submitting.</li>
             <li>{test.publishMode === "TIMED" ? "The test auto-submits when the timer runs out." : "There is no time limit for this attempt."}</li>
             <li>You can retake this mock test as many times as you like — your best score is kept.</li>
@@ -352,9 +359,24 @@ export default function StudentMockTestTakePage() {
 
             {q && (
               <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 30 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}>
-                  {q.passage ? "Comprehension" : q.type === "MCQ" ? "Multiple Choice" : q.type === "TRUE_FALSE" ? "True / False" : "Fill in the blank"}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase" }}>
+                    {q.passage ? "Comprehension" : q.type === "MCQ" ? "Multiple Choice" : q.type === "TRUE_FALSE" ? "True / False" : "Fill in the blank"}
+                  </div>
+                  <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--ink2)", background: "var(--bg)", padding: "4px 10px", borderRadius: 8, flex: "none", whiteSpace: "nowrap" }}>
+                    {q.marks} mark{q.marks === 1 ? "" : "s"}
+                    {q.negativeMarks > 0 ? ` · −${q.negativeMarks}` : ""}
+                  </span>
                 </div>
+                {q.tags.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+                    {q.tags.map((t) => (
+                      <span key={t.id} style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "3px 9px", borderRadius: 7 }}>
+                        {t.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {q.imageUrl && <img src={q.imageUrl} alt="" style={{ width: "100%", maxHeight: 280, objectFit: "contain", borderRadius: 12, marginBottom: 18, background: "var(--bg)" }} />}
                 <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.5, marginBottom: 22 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
 
@@ -569,6 +591,8 @@ export default function StudentMockTestTakePage() {
               {review.questions.map((q, i) => {
                 const tone = q.isCorrect ? "var(--green)" : q.answered ? "var(--red)" : "var(--ink3)";
                 const toneSoft = q.isCorrect ? "var(--green-soft)" : q.answered ? "var(--red-soft)" : "var(--bg)";
+                const awarded = q.isCorrect ? q.marks : q.answered ? -q.negativeMarks : 0;
+                const awardedLabel = `${awarded > 0 ? "+" : ""}${awarded} / ${q.marks}`;
                 return (
                   <div key={q.id} style={{ display: "flex", gap: 12, padding: "14px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
                     <span style={{ width: 26, height: 26, borderRadius: 8, background: toneSoft, color: tone, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flex: "none" }}>
@@ -585,9 +609,17 @@ export default function StudentMockTestTakePage() {
                             Correct: {q.correctOption}
                           </span>
                         )}
+                        {q.tags.map((t) => (
+                          <span key={t.id} style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "3px 10px", borderRadius: 7 }}>
+                            {t.name}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                    <span style={{ flex: "none", fontSize: 12, fontWeight: 800, color: tone }}>{q.isCorrect ? "✓" : q.answered ? "✗" : "—"}</span>
+                    <span style={{ flex: "none", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: tone }}>{q.isCorrect ? "✓" : q.answered ? "✗" : "—"}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: tone, whiteSpace: "nowrap" }}>{awardedLabel}</span>
+                    </span>
                   </div>
                 );
               })}

@@ -761,6 +761,11 @@ export interface TestAttemptQuestion {
   imageUrl: string | null;
   passage: Passage | null;
   testId: string;
+  marks: number;
+  negativeMarks: number;
+  difficulty: QuestionDifficulty;
+  answerTimeSeconds: number | null;
+  tags: Tag[];
 }
 
 export interface TestAttempt {
@@ -797,6 +802,9 @@ export interface AttemptReviewQuestion {
   selectedOption: string | null;
   answered: boolean;
   isCorrect: boolean;
+  marks: number;
+  negativeMarks: number;
+  tags: Tag[];
   hasPassage: boolean;
   imageUrl: string | null;
 }

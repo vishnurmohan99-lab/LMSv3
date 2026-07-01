@@ -738,12 +738,23 @@ Question/TestQuestion), a shared `QuestionMetaFields` component (Difficulty /
 Marks / Negative marks / Answer time + tag picker with reuse+create), wired
 into the **question-bank** question editor in BOTH apps (matches the reference
 screenshot's "Question settings" panel). `answerTimeSeconds` is stored
-metadata, NOT an enforced per-question timer. **STILL TODO (explicit remaining
-work, next stage):** (1) the **build-tests-by-tag** filter in the test's
-question-import picker (the user's "tags used in mock test" ask — highest
-priority remaining); (2) the same `QuestionMetaFields` panel on the
-**test/mock-test** direct-question editors (`.../tests/[id]`,
-`.../mock-tests/[testId]` in both apps); (3) student-side display of tags/marks.
+metadata, NOT an enforced per-question timer. **The three remaining tag/marks
+stages are now DONE (2026-07-01, this session):** (1) **build-tests-by-tag** —
+the "Add from question bank" import picker (all 4 test/mock-test editors, web +
+admin) gained a "Filter by tag (topic)" chip row (OR-match, derived from tags
+present on the selected bank's questions) + a "Select all shown" button +
+per-row marks/tag display, so faculty can build a test from all questions of a
+topic in two clicks. Import still copies scalar fields (marks) but NOT the tag
+m2m into `TestQuestion` (createMany limitation, unchanged) — the filter operates
+on the source `Question` pool, which is the point. (2) `QuestionMetaFields` panel
+wired into the manual add/edit question form on all 4 test/mock-test editors
+(same pattern as the question-bank editor). (3) student-side display: backend
+`test-attempts.service.ts` attempt + review selects now also return
+`negativeMarks` + `tags` (marks was already returned); `TestAttemptQuestion` +
+`AttemptReviewQuestion` types extended; the student mock-test page shows a marks
+badge + topic tags in the taking view, marks-awarded (`+2 / 2`, `−0.5 / 2`,
+`0 / 2`) + tags in the review, and a fixed instructions screen (real total marks
++ dynamic marking note instead of the old hardcoded "1 mark each, no negative").
 Also still open from earlier this day: delete the dead Vercel
 `JWT_ACCESS_SECRET` env var (manual), and the optional login-timing hardening. On top of **adding manual poster-image upload to cheat
 sheets**. `CheatSheet.posterImageKey String?` (migration
