@@ -161,7 +161,12 @@ export class AiService {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model, prompt, size: '1024x1024' }),
+        // quality explicitly pinned to 'low' -- gpt-image-1 bills per image by quality tier
+        // (low/medium/high/auto), and 'auto' frequently resolves to 'high' (~15x the cost of
+        // 'low') for detailed prompts. These are small flat-style cheat-sheet illustrations,
+        // not photorealistic art, so low quality is the right default; don't remove this
+        // without discussing cost with the user first.
+        body: JSON.stringify({ model, prompt, size: '1024x1024', quality: 'low' }),
       });
 
       if (!res.ok) {

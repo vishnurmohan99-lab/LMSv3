@@ -725,7 +725,19 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-07-01, after **wiring a real OpenAI integration**
+*Last updated: 2026-07-01, after **capping OpenAI image cost**
+(`apps/api/src/ai/ai.service.ts` `generateImage()`, OPENAI branch): pinned
+`quality: 'low'` on `gpt-image-1` calls. Cost incident: the OpenAI wiring
+below shipped with no explicit `quality` param, so calls defaulted to
+`auto`, which resolved to `high` (~$0.17-0.19/image, ~15x `low`'s ~$0.01) —
+a handful of cheat-sheet illustration test/verification calls (mine +
+the user's) totaled ~$3 before this was caught via the user's OpenAI
+usage dashboard. **Standing rule going forward: never make a real OpenAI
+(or any billed provider) API call for testing/verification without
+explicitly telling the user first that it costs money and getting their
+go-ahead** — settings-only round-trips (PATCH/GET on `ai-settings`, no
+actual model call) are fine without asking, but anything that hits
+`api.openai.com/v1/...` is not. On top of **wiring a real OpenAI integration**
 alongside the existing OpenRouter path (`apps/api/src/ai/ai.service.ts`).
 `resolveModel()` now returns `{ provider, model }` and every call site
 (`complete`, `completeVision`, `generateImage`) branches on it: OpenAI uses
