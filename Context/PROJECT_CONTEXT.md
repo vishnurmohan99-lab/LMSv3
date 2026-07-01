@@ -725,8 +725,20 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-07-01, after **re-adding illustrations INTO the single
-cheat-sheet poster** (user: wants "a single image on screen, mobile, with
+*Last updated: 2026-07-01, after **adding manual poster-image upload to cheat
+sheets**. `CheatSheet.posterImageKey String?` (migration
+`20260701120000_add_cheatsheet_poster_image`, additive nullable). New
+FACULTY/ADMIN endpoints `POST/DELETE /lessons/:lessonId/cheat-sheet/poster`
+(`setCheatSheetPoster` upserts, so a poster can exist with no AI pages);
+`getCheatSheet` now returns presigned `posterImageUrl`. Faculty + admin
+authoring pages got an "Own poster image" upload row (uploadsApi.uploadFile ->
+R2 -> setPoster) with Replace/Remove. `CheatSheetPoster` renders
+`posterImageUrl` at the top with `width:100%; height:auto` (NEVER cropped — a
+long vertical poster just scrolls), above the AI sections; empty-state and
+student `CheatSheetReview` updated so a poster-only sheet (no AI pages) still
+shows. Use case: upload your own finished poster (e.g. the medical-reference
+style) since AI can't reliably produce accurate diagrams/photos. On top of
+**re-adding illustrations INTO the single cheat-sheet poster** (user: wants "a single image on screen, mobile, with
 images and text in it"). Backend `generateCheatSheet` generates one flat-style
 illustration per section again (prompt forbids text-in-image), but now at
 `quality:'low'` (fast + ~$0.01/image) — the earlier prod failures were

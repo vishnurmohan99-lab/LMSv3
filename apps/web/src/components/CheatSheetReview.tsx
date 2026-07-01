@@ -22,7 +22,7 @@ export default function CheatSheetReview({ lessonId, lessonTitle }: { lessonId: 
   if (error) return <p style={{ color: "var(--red)" }}>{error}</p>;
 
   const pages = sheet?.pages ?? [];
-  if (pages.length === 0) {
+  if (pages.length === 0 && !sheet?.posterImageUrl) {
     return (
       <div style={{ padding: 24, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, color: "var(--ink2)" }}>
         No cheat sheet has been generated for this lesson yet.
@@ -32,7 +32,7 @@ export default function CheatSheetReview({ lessonId, lessonTitle }: { lessonId: 
 
   return (
     <div className="fade-in-up">
-      <CheatSheetPoster pages={pages} title={lessonTitle} />
+      <CheatSheetPoster pages={pages} title={lessonTitle} posterImageUrl={sheet?.posterImageUrl} />
     </div>
   );
 }

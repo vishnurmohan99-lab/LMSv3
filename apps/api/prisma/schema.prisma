@@ -274,9 +274,10 @@ model SummaryDeck {
 }
 
 model CheatSheet {
-  id        String   @id @default(uuid())
-  pages     Json // CheatSheetPage[] -- { title, bullets[], table?, examTip?, illustrationKey? }
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid())
+  pages          Json // CheatSheetPage[] -- { title, bullets[], table?, examTip?, illustrationKey? }
+  posterImageKey String? // optional manually-uploaded full poster image (R2 key), shown uncropped
+  updatedAt      DateTime @updatedAt
 
   lessonId String @unique
   lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)

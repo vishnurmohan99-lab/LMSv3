@@ -800,7 +800,23 @@ export class CoursesService {
     const presignedPages = await Promise.all(
       pages.map(async (p) => ({ ...p, illustrationUrl: p.illustrationKey ? await this.uploads.presignDownload(p.illustrationKey) : null })),
     );
-    return { ...sheet, pages: presignedPages };
+    return {
+      ...sheet,
+      pages: presignedPages,
+      posterImageUrl: sheet.posterImageKey ? await this.uploads.presignDownload(sheet.posterImageKey) : null,
+    };
+  }
+
+  /** Sets (or clears, when imageKey is null) a manually-uploaded full poster image on the
+   *  lesson's cheat sheet. Upserts so a poster can exist even before any AI text is generated. */
+  async setCheatSheetPoster(lessonId: string, user: JwtPayload, imageKey: string | null) {
+    const lesson = await this.requireLessonWithCourse(lessonId);
+    this.assertOwnership(user, lesson.chapter.course.facultyId);
+    return this.prisma.cheatSheet.upsert({
+      where: { lessonId },
+      create: { lessonId, pages: [] as object, posterImageKey: imageKey },
+      update: { posterImageKey: imageKey },
+    });
   }
 
   private async callAiForCheatSheet(content: string, count: number): Promise<CheatSheetPage[]> {

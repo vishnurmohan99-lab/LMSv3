@@ -337,6 +337,7 @@ export interface CheatSheetPage {
 export interface CheatSheet {
   id: string;
   pages: CheatSheetPage[];
+  posterImageUrl?: string | null;
   lessonId: string;
   updatedAt: string;
 }
@@ -344,6 +345,9 @@ export interface CheatSheet {
 export const cheatSheetApi = {
   get: (lessonId: string) => request<CheatSheet | null>(`/lessons/${lessonId}/cheat-sheet`),
   generate: (lessonId: string) => request<CheatSheet>(`/lessons/${lessonId}/cheat-sheet/generate`, { method: 'POST' }),
+  setPoster: (lessonId: string, imageKey: string) =>
+    request<CheatSheet>(`/lessons/${lessonId}/cheat-sheet/poster`, { method: 'POST', body: JSON.stringify({ imageKey }) }),
+  removePoster: (lessonId: string) => request<CheatSheet>(`/lessons/${lessonId}/cheat-sheet/poster`, { method: 'DELETE' }),
 };
 
 export const uploadsApi = {

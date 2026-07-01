@@ -26,9 +26,22 @@ function SectionIcon({ color }: { color: string }) {
  * numbered, color-coded sections with icon-bulleted points, styled tables, and exam-tip
  * callouts. Real rendered text (accurate + crisp) — no AI-drawn images.
  */
-export default function CheatSheetPoster({ pages, title }: { pages: CheatSheetPage[]; title?: string }) {
+export default function CheatSheetPoster({ pages, title, posterImageUrl }: { pages: CheatSheetPage[]; title?: string; posterImageUrl?: string | null }) {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      {posterImageUrl && (
+        // Manually-uploaded poster — shown at its full natural height, never cropped
+        // (width scales to the container; long vertical posters just get taller and scroll).
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={posterImageUrl}
+          alt={title ?? "Cheat sheet poster"}
+          style={{ width: "100%", height: "auto", display: "block", borderRadius: "var(--rl)", border: "1px solid var(--line)", marginBottom: pages.length > 0 ? 18 : 0 }}
+        />
+      )}
+
+      {pages.length === 0 ? null : (
+      <>
       <div
         style={{
           background: "linear-gradient(135deg,#1c1c1c,#2c2620)",
@@ -157,6 +170,8 @@ export default function CheatSheetPoster({ pages, title }: { pages: CheatSheetPa
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }
