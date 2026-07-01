@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { cheatSheetApi, ApiError, type CheatSheet } from "@/lib/api";
+import CheatSheetPoster from "@/components/CheatSheetPoster";
 
 export default function ManageCheatSheetPage() {
   const params = useParams<{ id: string; lessonId: string }>();
@@ -77,90 +78,7 @@ export default function ManageCheatSheetPage() {
       ) : !sheet || sheet.pages.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No cheat sheet has been generated for this lesson yet.</p>
       ) : (
-        <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 20 }}>
-          {sheet.pages.map((page, i) => (
-            <div
-              key={i}
-              style={{
-                background: "var(--card)",
-                border: "1px solid var(--line)",
-                borderRadius: "var(--rl)",
-                padding: 22,
-                minHeight: 520,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", marginBottom: 7 }}>PAGE {i + 1}</div>
-              <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 12 }}>{page.title}</div>
-
-              {page.illustrationUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={page.illustrationUrl}
-                  alt={page.title}
-                  style={{ width: "100%", height: 170, objectFit: "cover", borderRadius: 12, marginBottom: 14, flex: "none" }}
-                />
-              ) : page.illustrationError ? (
-                <div
-                  title={page.illustrationError}
-                  style={{ fontSize: 11.5, color: "var(--red)", background: "var(--red-soft)", borderRadius: 10, padding: "8px 11px", marginBottom: 14, flex: "none" }}
-                >
-                  Illustration failed: {page.illustrationError}
-                </div>
-              ) : null}
-
-              <ul style={{ fontSize: 13.5, lineHeight: 1.7, color: "var(--ink2)", margin: 0, paddingLeft: 20 }}>
-                {page.bullets.map((b, bi) => (
-                  <li key={bi} style={{ marginBottom: 6 }}>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-
-              {page.table && (
-                <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse", marginTop: 12 }}>
-                  <thead>
-                    <tr>
-                      {page.table.headers.map((h, hi) => (
-                        <th key={hi} style={{ textAlign: "left", padding: "5px 7px", borderBottom: "1px solid var(--line)", color: "var(--ink2)" }}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {page.table.rows.map((row, ri) => (
-                      <tr key={ri}>
-                        {row.map((cell, ci) => (
-                          <td key={ci} style={{ padding: "5px 7px", borderBottom: "1px solid var(--line2)" }}>
-                            {cell}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
-              {page.examTip && (
-                <div
-                  style={{
-                    marginTop: 14,
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    color: "var(--amber)",
-                    background: "var(--amber-soft)",
-                    borderRadius: 10,
-                    padding: "8px 10px",
-                  }}
-                >
-                  💡 {page.examTip}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <CheatSheetPoster pages={sheet.pages} />
       )}
     </main>
   );

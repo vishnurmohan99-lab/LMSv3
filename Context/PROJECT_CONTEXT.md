@@ -725,7 +725,23 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-07-01, after **larger portrait Cheat Sheet cards +
+*Last updated: 2026-07-01, after **redesigning Cheat Sheet as a single
+designed infographic + dropping AI illustrations entirely**. User wanted the
+"single image with text and diagram" look (showed a dense medical-poster
+reference) and was unhappy with the bullet-cards + small AI image. Decision:
+designed HTML template (NOT an AI-generated image — image models garble
+in-image text and cost per call). New `CheatSheetPoster` component
+(duplicated in `apps/web/src/components/` and `apps/admin/src/components/`):
+dark header band + numbered, theme-color-coded sections (cycling
+orange/purple/green/blue/amber/red) with icon-bulleted points (auto multi-
+column when >3 bullets), accent-colored tables, and "Exam Tip" callouts. Used
+in the student `CheatSheetReview` (replaced the swipe deck), and the faculty +
+admin authoring pages (replaced the card grid). Backend `generateCheatSheet`
+NO LONGER calls `ai.generateImage` — cheat sheets are now text-only generation
+(cheap gpt-4o-mini via CHEAT_SHEET_TEXT), permanently ending the gpt-image-1
+cost AND the missing-illustration failures. Does NOT replicate the reference's
+custom medical photos/diagrams (icons + SVG accents only). On top of
+**larger portrait Cheat Sheet cards +
 surfacing illustration failures in the UI**. (1) Faculty/admin "Manage Cheat
 Sheet" grid (`.../lessons/[lessonId]/cheat-sheet/page.tsx`, both apps):
 removed the fixed `aspectRatio: 3/4` + `overflow: hidden` that clipped longer

@@ -756,25 +756,11 @@ export class CoursesService {
     const pageCount = Math.max(3, Math.min(8, Math.ceil(content.length / 2000)));
     const draftPages = await this.callAiForCheatSheet(content, pageCount);
 
-    const pages: CheatSheetPage[] = [];
-    for (const draft of draftPages) {
-      let illustrationKey: string | undefined;
-      let illustrationError: string | undefined;
-      try {
-        const { buffer, contentType } = await this.ai.generateImage(
-          `Simple, clean, flat-style educational illustration (no text, no words, no letters in the image) representing: ${draft.title}. Minimal, portrait orientation, friendly study-material aesthetic.`,
-          'CHEAT_SHEET_IMAGE',
-        );
-        illustrationKey = await this.uploads.uploadGeneratedImage(buffer, contentType);
-      } catch (err) {
-        // Illustration is a nice-to-have -- a failed/quota-limited image call must not fail the whole cheat sheet.
-        // Still surfaced to the page itself (not just the server console) so faculty/admin can
-        // see *why* an illustration is missing instead of a silently blank spot.
-        illustrationError = err instanceof Error ? err.message : 'Illustration generation failed';
-        console.error('[CheatSheet] illustration generation failed:', illustrationError);
-      }
-      pages.push({ ...draft, illustrationKey, illustrationError });
-    }
+    // Cheat sheets are rendered as a designed HTML infographic (color-coded sections, icons,
+    // tables) from this text — NOT AI-drawn images. Per-page AI illustration was removed: image
+    // models garble in-image text and each call was a real per-image OpenAI cost. So no image
+    // generation here anymore; `pages` is just the model's structured text.
+    const pages: CheatSheetPage[] = draftPages;
 
     return this.prisma.cheatSheet.upsert({
       where: { lessonId },
