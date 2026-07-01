@@ -6,6 +6,7 @@ import { questionBanksApi, uploadsApi, ApiError, type QuestionBankTree, type Que
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import RichTextEditor from "@/components/RichTextEditor";
+import QuestionMetaFields, { emptyQuestionMeta, type QuestionMetaValue } from "@/components/QuestionMetaFields";
 import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
@@ -67,7 +68,7 @@ function QuestionForm({
   onCancel,
 }: {
   initial?: Question;
-  onSubmit: (data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) => Promise<void>;
+  onSubmit: (data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaValue) => Promise<void>;
   onCancel: () => void;
 }) {
   const [type, setType] = useState<QuestionType>(initial?.type ?? "MCQ");
@@ -80,6 +81,17 @@ function QuestionForm({
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState(initial?.imageUrl ?? "");
+  const [meta, setMeta] = useState<QuestionMetaValue>(
+    initial
+      ? {
+          difficulty: initial.difficulty,
+          marks: initial.marks,
+          negativeMarks: initial.negativeMarks,
+          answerTimeSeconds: initial.answerTimeSeconds,
+          tags: (initial.tags ?? []).map((t) => t.name),
+        }
+      : emptyQuestionMeta(),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,13 +111,13 @@ function QuestionForm({
       if (type === "MCQ") {
         const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
         if (cleanOptions.length < 2) throw new Error("Add at least 2 options");
-        await onSubmit({ type, prompt, options: cleanOptions, correctOption: cleanOptions[correctIndex] ?? cleanOptions[0], imageUrl });
+        await onSubmit({ type, prompt, options: cleanOptions, correctOption: cleanOptions[correctIndex] ?? cleanOptions[0], imageUrl, ...meta });
       } else if (type === "TRUE_FALSE") {
-        await onSubmit({ type, prompt, correctOption: trueFalseAnswer, imageUrl });
+        await onSubmit({ type, prompt, correctOption: trueFalseAnswer, imageUrl, ...meta });
       } else if (type === "FILL_BLANK") {
-        await onSubmit({ type, prompt, correctOption: fillAnswer, imageUrl });
+        await onSubmit({ type, prompt, correctOption: fillAnswer, imageUrl, ...meta });
       } else {
-        await onSubmit({ type, prompt, imageUrl });
+        await onSubmit({ type, prompt, imageUrl, ...meta });
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Failed to save question");
@@ -221,6 +233,8 @@ function QuestionForm({
           <input required value={fillAnswer} onChange={(e) => setFillAnswer(e.target.value)} style={inputStyle} />
         </div>
       )}
+
+      <QuestionMetaFields value={meta} onChange={setMeta} />
 
       <div style={{ display: "flex", gap: 8 }}>
         <button

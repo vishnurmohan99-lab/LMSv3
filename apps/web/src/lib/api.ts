@@ -426,6 +426,27 @@ export interface Passage {
   imageUrl: string | null;
 }
 
+export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
+export interface Tag {
+  id: string;
+  name: string;
+}
+
+export const tagsApi = {
+  list: () => request<Tag[]>('/tags'),
+  create: (name: string) => request<Tag>('/tags', { method: 'POST', body: JSON.stringify({ name }) }),
+};
+
+/** The rich per-question fields shared by Question and TestQuestion editors. */
+export interface QuestionMeta {
+  difficulty: QuestionDifficulty;
+  marks: number;
+  negativeMarks: number;
+  answerTimeSeconds: number | null;
+  tags: Tag[];
+}
+
 export interface Question {
   id: string;
   type: QuestionType;
@@ -437,6 +458,20 @@ export interface Question {
   passageId: string | null;
   passage: Passage | null;
   questionBankId: string;
+  difficulty: QuestionDifficulty;
+  marks: number;
+  negativeMarks: number;
+  answerTimeSeconds: number | null;
+  tags: Tag[];
+}
+
+/** Payload for the new question fields (tags are sent as names). */
+export interface QuestionMetaInput {
+  difficulty?: QuestionDifficulty;
+  marks?: number;
+  negativeMarks?: number;
+  answerTimeSeconds?: number | null;
+  tags?: string[];
 }
 
 export interface QuestionBank {
@@ -466,9 +501,9 @@ export const questionBanksApi = {
 
   createQuestion: (
     bankId: string,
-    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string; imageUrl?: string },
+    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaInput,
   ) => request<Question>(`/question-banks/${bankId}/questions`, { method: 'POST', body: JSON.stringify(data) }),
-  updateQuestion: (id: string, data: Partial<Pick<Question, 'type' | 'prompt' | 'order' | 'options' | 'correctOption' | 'imageUrl'>>) =>
+  updateQuestion: (id: string, data: Partial<Pick<Question, 'type' | 'prompt' | 'order' | 'options' | 'correctOption' | 'imageUrl'>> & QuestionMetaInput) =>
     request<Question>(`/questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeQuestion: (id: string) => request<{ success: boolean }>(`/questions/${id}`, { method: 'DELETE' }),
   createComprehension: (
@@ -619,6 +654,11 @@ export interface TestQuestion {
   passageId: string | null;
   passage: Passage | null;
   testId: string;
+  difficulty: QuestionDifficulty;
+  marks: number;
+  negativeMarks: number;
+  answerTimeSeconds: number | null;
+  tags: Tag[];
 }
 
 export interface Test {
@@ -692,9 +732,9 @@ export const testsApi = {
 
   createQuestion: (
     testId: string,
-    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string; imageUrl?: string },
+    data: { type: QuestionType; prompt: string; order?: number; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaInput,
   ) => request<TestQuestion>(`/tests/${testId}/questions`, { method: 'POST', body: JSON.stringify(data) }),
-  updateQuestion: (id: string, data: Partial<Pick<TestQuestion, 'type' | 'prompt' | 'order' | 'options' | 'correctOption' | 'imageUrl'>>) =>
+  updateQuestion: (id: string, data: Partial<Pick<TestQuestion, 'type' | 'prompt' | 'order' | 'options' | 'correctOption' | 'imageUrl'>> & QuestionMetaInput) =>
     request<TestQuestion>(`/test-questions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeQuestion: (id: string) => request<{ success: boolean }>(`/test-questions/${id}`, { method: 'DELETE' }),
 

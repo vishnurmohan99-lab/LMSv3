@@ -725,7 +725,22 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-07-01, after **adding manual poster-image upload to cheat
+*Last updated: 2026-07-01, after the **question tags + rich-fields** feature.
+Backend (commit b6380fb, live+migrated): global `Tag` model (m2m to Question +
+TestQuestion), `QuestionDifficulty` enum, and `difficulty/marks/negativeMarks/
+answerTimeSeconds` on both. `GET/POST /tags`. Question + test-question
+create/update take the fields + `tags[]` (names, connectOrCreate). Scoring
+rewritten to marks-based: maxScore=sum(marks), +marks correct / -negativeMarks
+wrong / 0 unanswered, clamped >=0 — BACKWARD COMPATIBLE (defaults marks=1,
+neg=0 = old count scoring). Frontend so far: web+admin api clients (`tagsApi`,
+`QuestionMetaInput`, fields on Question/TestQuestion), a shared
+`QuestionMetaFields` component (Difficulty / Marks / Negative marks / Answer
+time + tag picker with reuse+create), wired into the **question-bank** question
+editor in BOTH apps. `answerTimeSeconds` is stored metadata, NOT an enforced
+per-question timer. STILL TODO (next stage): the same fields on the
+**test/mock-test** question editors, the **build-tests-by-tag** filter in the
+import picker (the "tags used in mock test" part), and showing tags/marks in
+the student view. On top of **adding manual poster-image upload to cheat
 sheets**. `CheatSheet.posterImageKey String?` (migration
 `20260701120000_add_cheatsheet_poster_image`, additive nullable). New
 FACULTY/ADMIN endpoints `POST/DELETE /lessons/:lessonId/cheat-sheet/poster`
