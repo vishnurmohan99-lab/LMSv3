@@ -39,7 +39,7 @@ export default function ManageCheatSheetPage() {
   }
 
   return (
-    <main style={{ padding: 40, maxWidth: 1000 }}>
+    <main className="mobile-page-pad" style={{ padding: 40, maxWidth: 1000 }}>
       <Link href={`/faculty/courses/${courseId}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
         ← Back to course
       </Link>
@@ -77,7 +77,7 @@ export default function ManageCheatSheetPage() {
       ) : !sheet || sheet.pages.length === 0 ? (
         <p style={{ color: "var(--ink2)" }}>No cheat sheet has been generated for this lesson yet.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
+        <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 20 }}>
           {sheet.pages.map((page, i) => (
             <div
               key={i}
@@ -85,39 +85,45 @@ export default function ManageCheatSheetPage() {
                 background: "var(--card)",
                 border: "1px solid var(--line)",
                 borderRadius: "var(--rl)",
-                padding: 18,
-                aspectRatio: "3 / 4",
+                padding: 22,
+                minHeight: 520,
                 display: "flex",
                 flexDirection: "column",
-                overflow: "hidden",
               }}
             >
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)", marginBottom: 6 }}>PAGE {i + 1}</div>
-              <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 10 }}>{page.title}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", marginBottom: 7 }}>PAGE {i + 1}</div>
+              <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 12 }}>{page.title}</div>
 
-              {page.illustrationUrl && (
+              {page.illustrationUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={page.illustrationUrl}
                   alt={page.title}
-                  style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 10, marginBottom: 10, flex: "none" }}
+                  style={{ width: "100%", height: 170, objectFit: "cover", borderRadius: 12, marginBottom: 14, flex: "none" }}
                 />
-              )}
+              ) : page.illustrationError ? (
+                <div
+                  title={page.illustrationError}
+                  style={{ fontSize: 11.5, color: "var(--red)", background: "var(--red-soft)", borderRadius: 10, padding: "8px 11px", marginBottom: 14, flex: "none" }}
+                >
+                  Illustration failed: {page.illustrationError}
+                </div>
+              ) : null}
 
-              <ul style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--ink2)", margin: 0, paddingLeft: 18, flex: 1, overflowY: "auto" }}>
+              <ul style={{ fontSize: 13.5, lineHeight: 1.7, color: "var(--ink2)", margin: 0, paddingLeft: 20 }}>
                 {page.bullets.map((b, bi) => (
-                  <li key={bi} style={{ marginBottom: 4 }}>
+                  <li key={bi} style={{ marginBottom: 6 }}>
                     {b}
                   </li>
                 ))}
               </ul>
 
               {page.table && (
-                <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse", marginTop: 8 }}>
+                <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse", marginTop: 12 }}>
                   <thead>
                     <tr>
                       {page.table.headers.map((h, hi) => (
-                        <th key={hi} style={{ textAlign: "left", padding: "4px 6px", borderBottom: "1px solid var(--line)", color: "var(--ink2)" }}>
+                        <th key={hi} style={{ textAlign: "left", padding: "5px 7px", borderBottom: "1px solid var(--line)", color: "var(--ink2)" }}>
                           {h}
                         </th>
                       ))}
@@ -127,7 +133,7 @@ export default function ManageCheatSheetPage() {
                     {page.table.rows.map((row, ri) => (
                       <tr key={ri}>
                         {row.map((cell, ci) => (
-                          <td key={ci} style={{ padding: "4px 6px", borderBottom: "1px solid var(--line2)" }}>
+                          <td key={ci} style={{ padding: "5px 7px", borderBottom: "1px solid var(--line2)" }}>
                             {cell}
                           </td>
                         ))}
@@ -140,12 +146,12 @@ export default function ManageCheatSheetPage() {
               {page.examTip && (
                 <div
                   style={{
-                    marginTop: 10,
-                    fontSize: 11.5,
+                    marginTop: 14,
+                    fontSize: 12.5,
                     fontWeight: 600,
                     color: "var(--amber)",
                     background: "var(--amber-soft)",
-                    borderRadius: 8,
+                    borderRadius: 10,
                     padding: "8px 10px",
                   }}
                 >

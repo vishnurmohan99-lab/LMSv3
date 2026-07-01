@@ -328,6 +328,7 @@ export interface CheatSheetPage {
   table?: { headers: string[]; rows: string[][] };
   examTip?: string;
   illustrationUrl?: string | null;
+  illustrationError?: string;
 }
 export interface CheatSheet {
   id: string;

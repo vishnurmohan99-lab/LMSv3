@@ -725,7 +725,25 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-07-01, after **capping OpenAI image cost**
+*Last updated: 2026-07-01, after **larger portrait Cheat Sheet cards +
+surfacing illustration failures in the UI**. (1) Faculty/admin "Manage Cheat
+Sheet" grid (`.../lessons/[lessonId]/cheat-sheet/page.tsx`, both apps):
+removed the fixed `aspectRatio: 3/4` + `overflow: hidden` that clipped longer
+pages with an internal scrollbar; cards now use `minHeight: 520` and grow with
+content, `minmax(340px,1fr)` grid (naturally single-column on mobile via
+auto-fill). (2) `CheatSheetPage` gained `illustrationError?: string`
+(`apps/api/src/courses/courses.service.ts`) — when `generateImage()` throws
+for a page, the message is now stored on that page (not just
+`console.error`'d) and shown as a small red "Illustration failed: ..." note
+in both authoring UIs instead of a silent blank space. `AiService.generateImage`
+OPENAI branch also now parses the actual OpenAI error body (`error.message`)
+instead of just the HTTP status code, so the surfaced reason is actually
+useful. Motivation: a fresh cheat-sheet generation (after the quality:low cost
+fix) still came back with zero illustrations and no visible reason — this
+change makes the real cause visible next time without needing Render log
+access. tsc + both builds pass; **NOT deployed yet** pending user OK (no
+billed API calls were made to test this — see [[billed-api-cost-caution]]).
+On top of **capping OpenAI image cost**
 (`apps/api/src/ai/ai.service.ts` `generateImage()`, OPENAI branch): pinned
 `quality: 'low'` on `gpt-image-1` calls. Cost incident: the OpenAI wiring
 below shipped with no explicit `quality` param, so calls defaulted to

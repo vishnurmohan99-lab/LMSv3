@@ -170,7 +170,9 @@ export class AiService {
       });
 
       if (!res.ok) {
-        throw new BadRequestException(`AI image generation failed (${res.status})`);
+        const errBody = await res.json().catch(() => null);
+        const reason = errBody?.error?.message ?? `HTTP ${res.status}`;
+        throw new BadRequestException(`AI image generation failed: ${reason}`);
       }
 
       const data = await res.json();

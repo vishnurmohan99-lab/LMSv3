@@ -23,6 +23,11 @@ export interface CheatSheetPage {
   table?: { headers: string[]; rows: string[][] };
   examTip?: string;
   illustrationKey?: string;
+  /** Set when illustration generation failed for this page, so the UI can show why
+   *  instead of silently rendering with no image. Illustration failures don't fail the
+   *  whole cheat sheet (text is more valuable than the picture), but they shouldn't be
+   *  invisible either. */
+  illustrationError?: string;
 }
 
 function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
@@ -754,6 +759,7 @@ export class CoursesService {
     const pages: CheatSheetPage[] = [];
     for (const draft of draftPages) {
       let illustrationKey: string | undefined;
+      let illustrationError: string | undefined;
       try {
         const { buffer, contentType } = await this.ai.generateImage(
           `Simple, clean, flat-style educational illustration (no text, no words, no letters in the image) representing: ${draft.title}. Minimal, portrait orientation, friendly study-material aesthetic.`,
@@ -762,9 +768,12 @@ export class CoursesService {
         illustrationKey = await this.uploads.uploadGeneratedImage(buffer, contentType);
       } catch (err) {
         // Illustration is a nice-to-have -- a failed/quota-limited image call must not fail the whole cheat sheet.
-        console.error('[CheatSheet] illustration generation failed:', err instanceof Error ? err.message : err);
+        // Still surfaced to the page itself (not just the server console) so faculty/admin can
+        // see *why* an illustration is missing instead of a silently blank spot.
+        illustrationError = err instanceof Error ? err.message : 'Illustration generation failed';
+        console.error('[CheatSheet] illustration generation failed:', illustrationError);
       }
-      pages.push({ ...draft, illustrationKey });
+      pages.push({ ...draft, illustrationKey, illustrationError });
     }
 
     return this.prisma.cheatSheet.upsert({
