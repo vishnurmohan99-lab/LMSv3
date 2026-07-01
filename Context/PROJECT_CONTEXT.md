@@ -732,15 +732,20 @@ answerTimeSeconds` on both. `GET/POST /tags`. Question + test-question
 create/update take the fields + `tags[]` (names, connectOrCreate). Scoring
 rewritten to marks-based: maxScore=sum(marks), +marks correct / -negativeMarks
 wrong / 0 unanswered, clamped >=0 — BACKWARD COMPATIBLE (defaults marks=1,
-neg=0 = old count scoring). Frontend so far: web+admin api clients (`tagsApi`,
-`QuestionMetaInput`, fields on Question/TestQuestion), a shared
-`QuestionMetaFields` component (Difficulty / Marks / Negative marks / Answer
-time + tag picker with reuse+create), wired into the **question-bank** question
-editor in BOTH apps. `answerTimeSeconds` is stored metadata, NOT an enforced
-per-question timer. STILL TODO (next stage): the same fields on the
-**test/mock-test** question editors, the **build-tests-by-tag** filter in the
-import picker (the "tags used in mock test" part), and showing tags/marks in
-the student view. On top of **adding manual poster-image upload to cheat
+neg=0 = old count scoring). Frontend DEPLOYED (commit b1830ab, both apps):
+web+admin api clients (`tagsApi`, `QuestionMetaInput`, fields on
+Question/TestQuestion), a shared `QuestionMetaFields` component (Difficulty /
+Marks / Negative marks / Answer time + tag picker with reuse+create), wired
+into the **question-bank** question editor in BOTH apps (matches the reference
+screenshot's "Question settings" panel). `answerTimeSeconds` is stored
+metadata, NOT an enforced per-question timer. **STILL TODO (explicit remaining
+work, next stage):** (1) the **build-tests-by-tag** filter in the test's
+question-import picker (the user's "tags used in mock test" ask — highest
+priority remaining); (2) the same `QuestionMetaFields` panel on the
+**test/mock-test** direct-question editors (`.../tests/[id]`,
+`.../mock-tests/[testId]` in both apps); (3) student-side display of tags/marks.
+Also still open from earlier this day: delete the dead Vercel
+`JWT_ACCESS_SECRET` env var (manual), and the optional login-timing hardening. On top of **adding manual poster-image upload to cheat
 sheets**. `CheatSheet.posterImageKey String?` (migration
 `20260701120000_add_cheatsheet_poster_image`, additive nullable). New
 FACULTY/ADMIN endpoints `POST/DELETE /lessons/:lessonId/cheat-sheet/poster`
