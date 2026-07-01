@@ -725,8 +725,21 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-07-01, after **redesigning Cheat Sheet as a single
-designed infographic + dropping AI illustrations entirely**. User wanted the
+*Last updated: 2026-07-01, after **re-adding illustrations INTO the single
+cheat-sheet poster** (user: wants "a single image on screen, mobile, with
+images and text in it"). Backend `generateCheatSheet` generates one flat-style
+illustration per section again (prompt forbids text-in-image), but now at
+`quality:'low'` (fast + ~$0.01/image) — the earlier prod failures were
+high-quality calls timing out, which low quality avoids. `CheatSheetPoster`
+(web + admin) renders `illustrationUrl` full-width at the top of each section
+body (mobile-friendly), a muted "Illustration unavailable" note on
+`illustrationError`, else text-only. So each generation now costs ~$0.05 for
+images again — user explicitly asked for images back; they control regen cost
+(agent does not trigger generations, see [[billed-api-cost-caution]]). NOTE:
+this re-enables the exact cost source removed one commit earlier — deliberate,
+not a flip-flop (layout is now good + cost is capped low). *Prior context:
+redesigned Cheat Sheet as a single designed infographic (dropped AI
+illustrations entirely at that step). User wanted the
 "single image with text and diagram" look (showed a dense medical-poster
 reference) and was unhappy with the bullet-cards + small AI image. Decision:
 designed HTML template (NOT an AI-generated image — image models garble

@@ -756,11 +756,27 @@ export class CoursesService {
     const pageCount = Math.max(3, Math.min(8, Math.ceil(content.length / 2000)));
     const draftPages = await this.callAiForCheatSheet(content, pageCount);
 
-    // Cheat sheets are rendered as a designed HTML infographic (color-coded sections, icons,
-    // tables) from this text — NOT AI-drawn images. Per-page AI illustration was removed: image
-    // models garble in-image text and each call was a real per-image OpenAI cost. So no image
-    // generation here anymore; `pages` is just the model's structured text.
-    const pages: CheatSheetPage[] = draftPages;
+    // Each section gets a small flat-style illustration (NO text in the image itself — the text
+    // is real rendered HTML in the poster). Images are generated at 'low' quality (see
+    // AiService.generateImage) so each is cheap (~$0.01) AND fast — the earlier prod failures
+    // were high-quality calls timing out, which low quality avoids. A failed image never fails
+    // the whole sheet; its reason is stored on the page and surfaced in the UI.
+    const pages: CheatSheetPage[] = [];
+    for (const draft of draftPages) {
+      let illustrationKey: string | undefined;
+      let illustrationError: string | undefined;
+      try {
+        const { buffer, contentType } = await this.ai.generateImage(
+          `Simple, clean, flat-style educational illustration with NO text, words, letters or numbers anywhere in the image, representing the concept: ${draft.title}. Minimal, friendly study-material aesthetic, soft colors.`,
+          'CHEAT_SHEET_IMAGE',
+        );
+        illustrationKey = await this.uploads.uploadGeneratedImage(buffer, contentType);
+      } catch (err) {
+        illustrationError = err instanceof Error ? err.message : 'Illustration generation failed';
+        console.error('[CheatSheet] illustration generation failed:', illustrationError);
+      }
+      pages.push({ ...draft, illustrationKey, illustrationError });
+    }
 
     return this.prisma.cheatSheet.upsert({
       where: { lessonId },

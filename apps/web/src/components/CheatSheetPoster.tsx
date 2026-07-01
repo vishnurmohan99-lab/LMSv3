@@ -89,6 +89,22 @@ export default function CheatSheetPoster({ pages, title }: { pages: CheatSheetPa
               </div>
 
               <div style={{ padding: 18 }}>
+                {page.illustrationUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={page.illustrationUrl}
+                    alt={page.title}
+                    style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12, marginBottom: 14, display: "block" }}
+                  />
+                ) : page.illustrationError ? (
+                  <div
+                    title={page.illustrationError}
+                    style={{ fontSize: 11.5, color: "var(--ink3)", background: "var(--bg)", borderRadius: 10, padding: "8px 11px", marginBottom: 14, textAlign: "center" }}
+                  >
+                    Illustration unavailable
+                  </div>
+                ) : null}
+
                 {page.bullets.length > 0 && (
                   <div style={{ display: "grid", gridTemplateColumns: page.bullets.length > 3 ? "repeat(auto-fit, minmax(240px, 1fr))" : "1fr", gap: "8px 20px" }}>
                     {page.bullets.map((b, bi) => (
