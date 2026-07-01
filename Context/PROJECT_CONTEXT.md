@@ -733,8 +733,9 @@ navigation" panel: .srt upload → `srtToVtt()` → WebVTT, plus a YouTube-style
 chapters textarea ("0:00 Intro" lines). Student `VideoPlayer` renders a
 `<track>` (blob VTT) for toggleable captions + a clickable Chapters list that
 seeks + highlights the active chapter (`parseChapters`). Course tree nulls
-captions/chapters for locked lessons. Admin course-builder UI NOT yet wired
-(api client supports it). (2) New `GET /attempts/:id/review`
+captions/chapters for locked lessons. Authoring wired in BOTH the faculty
+(apps/web) and admin (apps/admin) course-builders (same VideoExtrasFields +
+srtToVtt). (2) New `GET /attempts/:id/review`
 (`TestAttemptsService.getAttemptReview`, own SUBMITTED attempt only) → all
 questions w/ correct+selected option, time taken (submittedAt−startedAt),
 percentile (best-score-per-student rank). Results page adds time/avg-per-Q/
