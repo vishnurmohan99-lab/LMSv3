@@ -11,19 +11,36 @@ import { aiSettingsApi, ApiError, type AiFeatureSetting, type AiProvider, type A
 const VISION_FEATURES: AiFeature[] = ["ANSWER_GRADING"];
 const IMAGE_FEATURES: AiFeature[] = ["CHEAT_SHEET_IMAGE"];
 
-const TEXT_MODEL_OPTIONS = [
+const OPENROUTER_TEXT_MODEL_OPTIONS = [
   "openai/gpt-oss-20b:free",
   "meta-llama/llama-3.3-70b-instruct:free",
   "google/gemini-2.0-flash-exp:free",
   "deepseek/deepseek-chat-v3.1:free",
 ];
-const VISION_MODEL_OPTIONS = ["nvidia/nemotron-nano-12b-v2-vl:free", "google/gemini-2.0-flash-exp:free"];
-const IMAGE_MODEL_OPTIONS = ["google/gemini-2.5-flash-image"];
+const OPENROUTER_VISION_MODEL_OPTIONS = ["nvidia/nemotron-nano-12b-v2-vl:free", "google/gemini-2.0-flash-exp:free"];
+const OPENROUTER_IMAGE_MODEL_OPTIONS = ["google/gemini-2.5-flash-image"];
 
-function modelOptionsFor(feature: AiFeature): string[] {
-  if (VISION_FEATURES.includes(feature)) return VISION_MODEL_OPTIONS;
-  if (IMAGE_FEATURES.includes(feature)) return IMAGE_MODEL_OPTIONS;
-  return TEXT_MODEL_OPTIONS;
+const OPENAI_TEXT_MODEL_OPTIONS = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"];
+const OPENAI_VISION_MODEL_OPTIONS = ["gpt-4o-mini", "gpt-4o"];
+const OPENAI_IMAGE_MODEL_OPTIONS = ["gpt-image-1"];
+
+/** Mirrors the OPENAI_*_DEFAULT constants in apps/api/src/ai/ai.service.ts, so the "default"
+ *  label shown here matches what actually gets called once a feature is switched to OpenAI. */
+function openAiDefaultFor(feature: AiFeature): string {
+  if (VISION_FEATURES.includes(feature)) return "gpt-4o-mini";
+  if (IMAGE_FEATURES.includes(feature)) return "gpt-image-1";
+  return "gpt-4o-mini";
+}
+
+function modelOptionsFor(feature: AiFeature, provider: AiProvider): string[] {
+  if (provider === "OPENAI") {
+    if (VISION_FEATURES.includes(feature)) return OPENAI_VISION_MODEL_OPTIONS;
+    if (IMAGE_FEATURES.includes(feature)) return OPENAI_IMAGE_MODEL_OPTIONS;
+    return OPENAI_TEXT_MODEL_OPTIONS;
+  }
+  if (VISION_FEATURES.includes(feature)) return OPENROUTER_VISION_MODEL_OPTIONS;
+  if (IMAGE_FEATURES.includes(feature)) return OPENROUTER_IMAGE_MODEL_OPTIONS;
+  return OPENROUTER_TEXT_MODEL_OPTIONS;
 }
 
 const selectStyle: React.CSSProperties = {
@@ -43,8 +60,8 @@ const inputStyle: React.CSSProperties = {
 };
 
 function FeatureRow({ setting, onSaved }: { setting: AiFeatureSetting; onSaved: () => void }) {
-  const options = modelOptionsFor(setting.feature);
-  const initialIsCustom = !!setting.model && !options.includes(setting.model);
+  const initialOptions = modelOptionsFor(setting.feature, setting.provider);
+  const initialIsCustom = !!setting.model && !initialOptions.includes(setting.model);
 
   const [provider, setProvider] = useState<AiProvider>(setting.provider);
   const [model, setModel] = useState(setting.model ?? "");
@@ -53,7 +70,17 @@ function FeatureRow({ setting, onSaved }: { setting: AiFeatureSetting; onSaved: 
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  const options = modelOptionsFor(setting.feature, provider);
+  const effectiveDefault = provider === "OPENAI" ? openAiDefaultFor(setting.feature) : setting.defaultModel;
   const dirty = provider !== setting.provider || model !== (setting.model ?? "");
+
+  function onChangeProvider(next: AiProvider) {
+    setProvider(next);
+    // Presets differ per provider (OpenRouter ids vs OpenAI ids) — a model chosen for the old
+    // provider is almost never valid for the new one, so reset to that provider's default.
+    setModel("");
+    setCustomMode(false);
+  }
 
   function onPickPreset(value: string) {
     if (value === "__default__") {
@@ -89,31 +116,26 @@ function FeatureRow({ setting, onSaved }: { setting: AiFeatureSetting; onSaved: 
           <div style={{ fontSize: 14.5, fontWeight: 700 }}>{setting.label}</div>
           <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>{setting.description}</div>
         </div>
-        {provider === "OPENAI" && (
-          <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "3px 9px", borderRadius: 7, flex: "none", whiteSpace: "nowrap" }}>
-            Not integrated yet
-          </span>
-        )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "160px 1fr auto", gap: 12, alignItems: "end" }}>
         <div>
           <label style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink2)", display: "block", marginBottom: 6 }}>Provider</label>
-          <select value={provider} onChange={(e) => setProvider(e.target.value as AiProvider)} style={{ ...selectStyle, width: "100%" }}>
+          <select value={provider} onChange={(e) => onChangeProvider(e.target.value as AiProvider)} style={{ ...selectStyle, width: "100%" }}>
             <option value="OPENROUTER">OpenRouter</option>
             <option value="OPENAI">OpenAI</option>
           </select>
         </div>
         <div>
           <label style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink2)", display: "block", marginBottom: 6 }}>
-            Model <span style={{ color: "var(--ink3)", fontWeight: 600 }}>(default: {setting.defaultModel})</span>
+            Model <span style={{ color: "var(--ink3)", fontWeight: 600 }}>(default: {effectiveDefault})</span>
           </label>
           {customMode ? (
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                placeholder="e.g. provider/model-name:free"
+                placeholder={provider === "OPENAI" ? "e.g. gpt-4o" : "e.g. provider/model-name:free"}
                 style={{ ...inputStyle, background: "var(--card)" }}
                 autoFocus
               />
@@ -132,9 +154,9 @@ function FeatureRow({ setting, onSaved }: { setting: AiFeatureSetting; onSaved: 
               onChange={(e) => onPickPreset(e.target.value)}
               style={{ ...selectStyle, width: "100%", background: "var(--card)" }}
             >
-              <option value="__default__">Default ({setting.defaultModel})</option>
+              <option value="__default__">Default ({effectiveDefault})</option>
               {options
-                .filter((o) => o !== setting.defaultModel)
+                .filter((o) => o !== effectiveDefault)
                 .map((o) => (
                   <option key={o} value={o}>
                     {o}

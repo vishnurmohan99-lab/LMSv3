@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AiFeature } from '../../generated/prisma/client';
+import { AiFeature, AiProvider } from '../../generated/prisma/client';
+
+const OPENAI_TEXT_DEFAULT = 'gpt-4o-mini';
+const OPENAI_VISION_DEFAULT = 'gpt-4o-mini';
+const OPENAI_IMAGE_DEFAULT = 'gpt-image-1';
 
 /**
  * Extracts the first balanced JSON array/object from raw AI text, ignoring brackets that
@@ -50,28 +54,38 @@ export function extractFirstJsonValue(raw: string, open: '[' | '{', close: ']' |
 export class AiService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Resolves which model to call for a given feature, honoring an admin override (Admin →
-   *  Settings → AI Models) over the env-var default. Throws if the feature is set to a
-   *  provider that isn't wired up yet (currently only OpenAI), so the admin gets a clear
-   *  signal to switch it back rather than a silent fallback. */
-  private async resolveModel(feature: AiFeature, envDefault: string): Promise<string> {
+  /** Resolves which provider+model to call for a given feature, honoring an admin override
+   *  (Admin → Settings → AI Models) over the env-var/OpenAI default. */
+  private async resolveModel(feature: AiFeature, envDefault: string, openaiDefault: string): Promise<{ provider: AiProvider; model: string }> {
     const setting = await this.prisma.aiFeatureSetting.findUnique({ where: { feature } });
-    if (setting?.provider === 'OPENAI') {
-      throw new BadRequestException(
-        `OpenAI is not yet integrated for this feature — switch it back to OpenRouter in Admin → Settings → AI Models.`,
-      );
-    }
-    return setting?.model?.trim() || envDefault;
+    const provider = setting?.provider ?? 'OPENROUTER';
+    const model = setting?.model?.trim() || (provider === 'OPENAI' ? openaiDefault : envDefault);
+    return { provider, model };
   }
 
-  async complete(prompt: string, feature: AiFeature): Promise<string> {
+  private requireOpenAiKey(): string {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new BadRequestException('AI generation is not configured (missing OPENAI_API_KEY)');
+    }
+    return apiKey;
+  }
+
+  private requireOpenRouterKey(): string {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
     }
-    const model = await this.resolveModel(feature, process.env.OPENROUTER_MODEL ?? 'openai/gpt-oss-20b:free');
+    return apiKey;
+  }
 
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  async complete(prompt: string, feature: AiFeature): Promise<string> {
+    const { provider, model } = await this.resolveModel(feature, process.env.OPENROUTER_MODEL ?? 'openai/gpt-oss-20b:free', OPENAI_TEXT_DEFAULT);
+
+    const apiKey = provider === 'OPENAI' ? this.requireOpenAiKey() : this.requireOpenRouterKey();
+    const url = provider === 'OPENAI' ? 'https://api.openai.com/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions';
+
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -93,13 +107,16 @@ export class AiService {
 
   /** Multimodal call: text prompt + one image, for the Answer Correction vision grading pipeline. */
   async completeVision(prompt: string, imageDataUri: string, feature: AiFeature): Promise<string> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
-    }
-    const model = await this.resolveModel(feature, process.env.OPENROUTER_VISION_MODEL ?? 'nvidia/nemotron-nano-12b-v2-vl:free');
+    const { provider, model } = await this.resolveModel(
+      feature,
+      process.env.OPENROUTER_VISION_MODEL ?? 'nvidia/nemotron-nano-12b-v2-vl:free',
+      OPENAI_VISION_DEFAULT,
+    );
 
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const apiKey = provider === 'OPENAI' ? this.requireOpenAiKey() : this.requireOpenRouterKey();
+    const url = provider === 'OPENAI' ? 'https://api.openai.com/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions';
+
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -116,7 +133,7 @@ export class AiService {
             ],
           },
         ],
-        provider: { require_parameters: true },
+        ...(provider === 'OPENROUTER' ? { provider: { require_parameters: true } } : {}),
       }),
     });
 
@@ -130,18 +147,36 @@ export class AiService {
 
   /**
    * Generates one image from a text prompt, for the Cheat Sheet illustration pipeline.
-   * Returns the raw image bytes + detected content type. OpenRouter has no $0 image model at
-   * time of writing -- defaults to the cheapest available (fractions of a cent/image), kept
-   * swappable via OPENROUTER_IMAGE_MODEL (or an admin override) so this can move to OpenAI's
-   * image API later without touching the calling code.
+   * Returns the raw image bytes + detected content type. OpenRouter has no $0 image model, so
+   * this is the feature most likely to be switched to OPENAI (gpt-image-1) via the admin panel.
    */
   async generateImage(prompt: string, feature: AiFeature): Promise<{ buffer: Buffer; contentType: string }> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      throw new BadRequestException('AI generation is not configured (missing OPENROUTER_API_KEY)');
-    }
-    const model = await this.resolveModel(feature, process.env.OPENROUTER_IMAGE_MODEL ?? 'google/gemini-2.5-flash-image');
+    const { provider, model } = await this.resolveModel(feature, process.env.OPENROUTER_IMAGE_MODEL ?? 'google/gemini-2.5-flash-image', OPENAI_IMAGE_DEFAULT);
 
+    if (provider === 'OPENAI') {
+      const apiKey = this.requireOpenAiKey();
+      const res = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model, prompt, size: '1024x1024' }),
+      });
+
+      if (!res.ok) {
+        throw new BadRequestException(`AI image generation failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      const b64: string | undefined = data.data?.[0]?.b64_json;
+      if (!b64) {
+        throw new BadRequestException('AI image generation did not return an image');
+      }
+      return { buffer: Buffer.from(b64, 'base64'), contentType: 'image/png' };
+    }
+
+    const apiKey = this.requireOpenRouterKey();
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {

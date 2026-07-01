@@ -725,7 +725,26 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-06-30, after shipping **video captions+chapters** and a
+*Last updated: 2026-07-01, after **wiring a real OpenAI integration**
+alongside the existing OpenRouter path (`apps/api/src/ai/ai.service.ts`).
+`resolveModel()` now returns `{ provider, model }` and every call site
+(`complete`, `completeVision`, `generateImage`) branches on it: OpenAI uses
+`api.openai.com/v1/chat/completions` (+ `/v1/images/generations` for images,
+returning `b64_json`), defaults `gpt-4o-mini` (text/vision) / `gpt-image-1`
+(images). `OPENAI_API_KEY` added to `apps/api/.env` and Render. Admin →
+Settings → AI Models (`apps/admin/.../settings/page.tsx`) dropped the "Not
+integrated yet" badge and now shows provider-specific model presets +
+"default: X" label that switches when you flip Provider (resets the model
+field, since OpenRouter ids like `meta-llama/...` aren't valid OpenAI ids).
+**Verified**: a direct call to the exact OpenAI endpoint/model shape returned
+200; the admin ai-settings PATCH/GET round-trip confirmed via the real API
+against Neon (CHAT → OPENAI/gpt-4o-mini → reverted to OPENROUTER/default, no
+lasting state change). Did NOT exercise a real feature end-to-end (flashcards/
+chat) against actual lesson content — that would mutate real course data
+without a user-named target, correctly blocked by the safety classifier.
+Cheat Sheet illustrations (previously blocked — no $0 OpenRouter image tier)
+can now be unblocked by switching `CHEAT_SHEET_IMAGE` to OPENAI in the admin
+panel. On top of shipping **video captions+chapters** and a
 **detailed mock-test result dashboard**. (1) `Lesson` gained `captionsVtt` +
 `videoChapters` (migration `20260630200000_add_video_captions_chapters`,
 additive nullable TEXT). Faculty lesson form (add+edit) has a "Video
