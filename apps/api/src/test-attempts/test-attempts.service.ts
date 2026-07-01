@@ -53,7 +53,7 @@ export class TestAttemptsService {
     const rawQuestions = await this.prisma.testQuestion.findMany({
       where: { testId },
       orderBy: { order: 'asc' },
-      select: { id: true, type: true, prompt: true, options: true, order: true, testId: true, imageUrl: true, passage: true },
+      select: { id: true, type: true, prompt: true, options: true, order: true, testId: true, imageUrl: true, passage: true, marks: true, difficulty: true, answerTimeSeconds: true },
     });
     const testQuestions = await Promise.all(
       rawQuestions.map(async (q) => ({
@@ -98,20 +98,27 @@ export class TestAttemptsService {
     const answers = await this.prisma.testAnswer.findMany({ where: { attemptId } });
     const answerByQuestion = new Map(answers.map((a) => [a.testQuestionId, a]));
 
+    // Marks-based scoring: each question is worth `marks` (default 1) for a correct answer, and
+    // deducts `negativeMarks` (default 0) for a wrong answer. Unanswered questions score 0. The
+    // final total is clamped at 0 so negative marking can't push a student below zero. With the
+    // defaults (marks=1, negativeMarks=0) this is identical to the previous count-based scoring.
     let score = 0;
+    const maxScore = testQuestions.reduce((sum, q) => sum + (q.marks ?? 1), 0);
     await this.prisma.$transaction(
       async (tx) => {
         for (const q of testQuestions) {
           const answer = answerByQuestion.get(q.id);
-          const isCorrect = !!answer && normalize(answer.selectedOption) === normalize(q.correctOption) && normalize(q.correctOption).length > 0;
-          if (isCorrect) score++;
+          const answered = !!answer && normalize(answer.selectedOption).length > 0;
+          const isCorrect = answered && normalize(answer!.selectedOption) === normalize(q.correctOption) && normalize(q.correctOption).length > 0;
+          if (isCorrect) score += q.marks ?? 1;
+          else if (answered) score -= q.negativeMarks ?? 0;
           if (answer) {
             await tx.testAnswer.update({ where: { id: answer.id }, data: { isCorrect } });
           }
         }
         await tx.testAttempt.update({
           where: { id: attemptId },
-          data: { status: 'SUBMITTED', submittedAt: new Date(), score, maxScore: testQuestions.length },
+          data: { status: 'SUBMITTED', submittedAt: new Date(), score: Math.max(0, score), maxScore },
         });
       },
       { maxWait: 15000, timeout: 15000 },
@@ -175,7 +182,7 @@ export class TestAttemptsService {
     const questions = await this.prisma.testQuestion.findMany({
       where: { testId: attempt.testId },
       orderBy: { order: 'asc' },
-      select: { id: true, type: true, prompt: true, options: true, correctOption: true, imageUrl: true, passage: { select: { id: true } } },
+      select: { id: true, type: true, prompt: true, options: true, correctOption: true, imageUrl: true, marks: true, negativeMarks: true, passage: { select: { id: true } } },
     });
     const answers = await this.prisma.testAnswer.findMany({ where: { attemptId } });
     const answerByQuestion = new Map(answers.map((a) => [a.testQuestionId, a]));
@@ -193,6 +200,8 @@ export class TestAttemptsService {
           selectedOption,
           answered: selectedOption != null && selectedOption !== '',
           isCorrect: !!ans?.isCorrect,
+          marks: q.marks,
+          negativeMarks: q.negativeMarks,
           hasPassage: !!q.passage,
           imageUrl: q.imageUrl ? await this.uploads.presignDownload(q.imageUrl) : null,
         };

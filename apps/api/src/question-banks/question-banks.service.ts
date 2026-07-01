@@ -42,7 +42,7 @@ export class QuestionBanksService {
   async getQuestionBank(id: string, user: JwtPayload) {
     const bank = await this.prisma.questionBank.findUnique({
       where: { id },
-      include: { questions: { orderBy: { order: 'asc' }, include: { passage: true } } },
+      include: { questions: { orderBy: { order: 'asc' }, include: { passage: true, tags: true } } },
     });
     if (!bank) throw new NotFoundException('Question bank not found');
     if (!bank.published && !isOwnerOrAdmin(user, bank.facultyId)) {
@@ -93,6 +93,12 @@ export class QuestionBanksService {
     return { success: true };
   }
 
+  /** connectOrCreate input for a global tag list, so any new tag name becomes reusable. */
+  private tagConnectOrCreate(names?: string[]) {
+    const clean = Array.from(new Set((names ?? []).map((n) => n.trim()).filter(Boolean)));
+    return clean.map((name) => ({ where: { name }, create: { name } }));
+  }
+
   async createQuestion(bankId: string, user: JwtPayload, dto: CreateQuestionDto) {
     const bank = await this.requireQuestionBank(bankId);
     this.assertOwnership(user, bank.facultyId);
@@ -104,8 +110,14 @@ export class QuestionBanksService {
         options: dto.options ?? [],
         correctOption: dto.correctOption,
         imageUrl: dto.imageUrl,
+        difficulty: dto.difficulty,
+        marks: dto.marks,
+        negativeMarks: dto.negativeMarks,
+        answerTimeSeconds: dto.answerTimeSeconds ?? null,
+        tags: dto.tags?.length ? { connectOrCreate: this.tagConnectOrCreate(dto.tags) } : undefined,
         questionBankId: bankId,
       },
+      include: { tags: true },
     });
   }
 
@@ -139,9 +151,16 @@ export class QuestionBanksService {
   async updateQuestion(id: string, user: JwtPayload, dto: UpdateQuestionDto) {
     const question = await this.requireQuestionWithBank(id);
     this.assertOwnership(user, question.questionBank.facultyId);
+    const { tags, prompt, ...rest } = dto;
     return this.prisma.question.update({
       where: { id },
-      data: { ...dto, prompt: dto.prompt !== undefined ? sanitizePrompt(dto.prompt) : undefined },
+      data: {
+        ...rest,
+        prompt: prompt !== undefined ? sanitizePrompt(prompt) : undefined,
+        // Replace the tag set entirely when tags are provided (clear then re-link).
+        tags: tags !== undefined ? { set: [], connectOrCreate: this.tagConnectOrCreate(tags) } : undefined,
+      },
+      include: { tags: true },
     });
   }
 

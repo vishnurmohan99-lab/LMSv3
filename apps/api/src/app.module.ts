@@ -3,6 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { TagsModule } from './tags/tags.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
@@ -60,6 +61,7 @@ import { AiSettingsModule } from './ai-settings/ai-settings.module';
     AnswerCorrectionModule,
     ReflectionsModule,
     AiSettingsModule,
+    TagsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

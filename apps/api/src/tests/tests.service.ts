@@ -59,6 +59,12 @@ export class TestsService {
     return this.presignTests(tests);
   }
 
+  /** connectOrCreate input for a global tag list, so any new tag name becomes reusable. */
+  private tagConnectOrCreate(names?: string[]) {
+    const clean = Array.from(new Set((names ?? []).map((n) => n.trim()).filter(Boolean)));
+    return clean.map((name) => ({ where: { name }, create: { name } }));
+  }
+
   private async presignTests<T extends { bannerUrl: string | null }>(tests: T[]): Promise<T[]> {
     return Promise.all(
       tests.map(async (test) => ({
@@ -71,7 +77,7 @@ export class TestsService {
   async getTest(id: string, user: JwtPayload) {
     const test = await this.prisma.test.findUnique({
       where: { id },
-      include: { testQuestions: { orderBy: { order: 'asc' }, include: { passage: true } } },
+      include: { testQuestions: { orderBy: { order: 'asc' }, include: { passage: true, tags: true } } },
     });
     if (!test) throw new NotFoundException('Test not found');
     if (!test.published && !isOwnerOrAdmin(user, test.facultyId)) {
@@ -201,8 +207,14 @@ export class TestsService {
         options: dto.options ?? [],
         correctOption: dto.correctOption,
         imageUrl: dto.imageUrl,
+        difficulty: dto.difficulty,
+        marks: dto.marks,
+        negativeMarks: dto.negativeMarks,
+        answerTimeSeconds: dto.answerTimeSeconds ?? null,
+        tags: dto.tags?.length ? { connectOrCreate: this.tagConnectOrCreate(dto.tags) } : undefined,
         testId,
       },
+      include: { tags: true },
     });
   }
 
@@ -236,9 +248,15 @@ export class TestsService {
   async updateQuestion(id: string, user: JwtPayload, dto: UpdateTestQuestionDto) {
     const question = await this.requireTestQuestion(id);
     this.assertOwnership(user, question.test.facultyId);
+    const { tags, prompt, ...rest } = dto;
     return this.prisma.testQuestion.update({
       where: { id },
-      data: { ...dto, prompt: dto.prompt !== undefined ? sanitizePrompt(dto.prompt) : undefined },
+      data: {
+        ...rest,
+        prompt: prompt !== undefined ? sanitizePrompt(prompt) : undefined,
+        tags: tags !== undefined ? { set: [], connectOrCreate: this.tagConnectOrCreate(tags) } : undefined,
+      },
+      include: { tags: true },
     });
   }
 
@@ -270,6 +288,9 @@ export class TestsService {
     let order = (maxOrder._max.order ?? -1) + 1;
 
     return this.prisma.testQuestion.createManyAndReturn({
+      // createManyAndReturn can't write the tag m2m relation; scalar fields (incl. marks/
+      // negativeMarks that drive scoring) are copied here. Tag links on imported TestQuestions
+      // aren't needed for the current features (tags filter the source Question pool).
       data: questions.map((q) => ({
         type: q.type,
         prompt: q.prompt,
@@ -277,6 +298,10 @@ export class TestsService {
         correctOption: q.correctOption,
         imageUrl: q.imageUrl,
         passageId: q.passageId,
+        difficulty: q.difficulty,
+        marks: q.marks,
+        negativeMarks: q.negativeMarks,
+        answerTimeSeconds: q.answerTimeSeconds,
         order: order++,
         testId,
       })),

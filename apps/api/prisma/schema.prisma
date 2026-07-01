@@ -483,6 +483,21 @@ enum QuestionType {
   TRUE_FALSE
 }
 
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+/** Global, reusable topic tag. A tag created on one question is available to every other. */
+model Tag {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  createdAt     DateTime       @default(now())
+  questions     Question[]
+  testQuestions TestQuestion[]
+}
+
 model Passage {
   id        String   @id @default(uuid())
   text      String   @db.Text
@@ -503,6 +518,12 @@ model Question {
 
   options       String[] @default([])
   correctOption String?
+
+  difficulty        QuestionDifficulty @default(MEDIUM)
+  marks             Int                @default(1)
+  negativeMarks     Float              @default(0)
+  answerTimeSeconds Int?
+  tags              Tag[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -574,6 +595,12 @@ model TestQuestion {
 
   options       String[] @default([])
   correctOption String?
+
+  difficulty        QuestionDifficulty @default(MEDIUM)
+  marks             Int                @default(1)
+  negativeMarks     Float              @default(0)
+  answerTimeSeconds Int?
+  tags              Tag[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
