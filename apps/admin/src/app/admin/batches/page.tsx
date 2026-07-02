@@ -135,10 +135,18 @@ export default function AdminBatchesPage() {
             A batch belongs to a segment or subsegment — every student in it gets access to all courses tagged there.
           </p>
         </div>
-        <button onClick={openAdd} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 7 }}>
-          <PlusIcon />
-          Add batch
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Link
+            href="/admin/batch-statuses"
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 10, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink2)", fontSize: 13.5, fontWeight: 700 }}
+          >
+            Batch Statuses
+          </Link>
+          <button onClick={openAdd} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 7 }}>
+            <PlusIcon />
+            Add batch
+          </button>
+        </div>
       </div>
 
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}

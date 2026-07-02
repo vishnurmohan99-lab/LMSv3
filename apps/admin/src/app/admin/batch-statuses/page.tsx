@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { batchStatusTypesApi, ApiError, type BatchStatusType } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
@@ -133,7 +134,10 @@ export default function BatchStatusesPage() {
 
   return (
     <div className="fade-in" style={{ padding: "30px 40px 60px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+      <Link href="/admin/batches" style={{ color: "var(--ink3)", fontSize: 13, fontWeight: 700 }}>
+        ← Back to Batches
+      </Link>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "14px 0 22px" }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Batch Statuses</div>
         <button onClick={openAdd} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 8 }}>
           <PlusIcon />

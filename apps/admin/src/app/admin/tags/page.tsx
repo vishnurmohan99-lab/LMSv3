@@ -130,8 +130,8 @@ export default function AdminTagsPage() {
 
   return (
     <main className="fade-in" style={{ padding: "30px 40px 60px", maxWidth: 760, margin: "0 auto" }}>
-      <Link href="/admin/question-banks" style={{ color: "var(--ink3)", fontSize: 13, fontWeight: 700 }}>
-        ← Back to Question Banks
+      <Link href="/admin/tests" style={{ color: "var(--ink3)", fontSize: 13, fontWeight: 700 }}>
+        ← Back to Tests
       </Link>
       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, margin: "14px 0 4px" }}>Manage Tags</div>
       <p style={{ fontSize: 13, color: "var(--ink3)", marginBottom: 22 }}>

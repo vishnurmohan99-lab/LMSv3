@@ -196,26 +196,34 @@ export default function AdminTestsPage() {
     <div className="fade-in" style={{ padding: "30px 40px 60px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Tests</div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 18px",
-            background: "var(--ink)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 700,
-            fontFamily: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          <PlusIcon />
-          Add test
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Link
+            href="/admin/tags"
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", borderRadius: 10, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink2)", fontSize: 13.5, fontWeight: 700 }}
+          >
+            Manage tags
+          </Link>
+          <button
+            onClick={() => setShowAddModal(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 18px",
+              background: "var(--ink)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            <PlusIcon />
+            Add test
+          </button>
+        </div>
       </div>
 
       {showAddModal && (
