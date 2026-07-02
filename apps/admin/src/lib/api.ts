@@ -401,11 +401,15 @@ export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export interface Tag {
   id: string;
   name: string;
+  _count?: { questions: number; testQuestions: number };
 }
 
 export const tagsApi = {
   list: () => request<Tag[]>('/tags'),
   create: (name: string) => request<Tag>('/tags', { method: 'POST', body: JSON.stringify({ name }) }),
+  rename: (id: string, name: string) => request<Tag>(`/tags/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+  merge: (id: string, targetId: string) => request<Tag>(`/tags/${id}/merge`, { method: 'POST', body: JSON.stringify({ targetId }) }),
+  remove: (id: string) => request<{ success: boolean }>(`/tags/${id}`, { method: 'DELETE' }),
 };
 
 export interface QuestionMetaInput {

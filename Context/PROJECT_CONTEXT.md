@@ -744,9 +744,9 @@ the "Add from question bank" import picker (all 4 test/mock-test editors, web +
 admin) gained a "Filter by tag (topic)" chip row (OR-match, derived from tags
 present on the selected bank's questions) + a "Select all shown" button +
 per-row marks/tag display, so faculty can build a test from all questions of a
-topic in two clicks. Import still copies scalar fields (marks) but NOT the tag
-m2m into `TestQuestion` (createMany limitation, unchanged) — the filter operates
-on the source `Question` pool, which is the point. (2) `QuestionMetaFields` panel
+topic in two clicks. Import now ALSO copies the tag
+m2m into `TestQuestion` (see the tags-follow-up note below — the createMany
+limitation was removed). (2) `QuestionMetaFields` panel
 wired into the manual add/edit question form on all 4 test/mock-test editors
 (same pattern as the question-bank editor). (3) student-side display: backend
 `test-attempts.service.ts` attempt + review selects now also return
@@ -755,6 +755,31 @@ wired into the manual add/edit question form on all 4 test/mock-test editors
 badge + topic tags in the taking view, marks-awarded (`+2 / 2`, `−0.5 / 2`,
 `0 / 2`) + tags in the review, and a fixed instructions screen (real total marks
 + dynamic marking note instead of the old hardcoded "1 mark each, no negative").
+**Tags/marks FOLLOW-UP (2026-07-01, same session, 5 more items done):** (1)
+**Import carries tags** — `tests.service.ts importQuestions` no longer uses
+`createManyAndReturn`; it creates each `TestQuestion` in a `$transaction` with
+`tags: { connectOrCreate }` so the source question's tags copy onto the imported
+test question. (2) **Tag management (admin + faculty)** — new `PATCH /tags/:id`
+(rename, unique-name guarded), `DELETE /tags/:id`, `POST /tags/:id/merge`
+`{targetId}` (reassigns every Question + TestQuestion off the source tag onto the
+target inside a tx, then deletes the source); all FACULTY/ADMIN. `GET /tags` now
+`include`s `_count { questions, testQuestions }`. New pages `/admin/tags`
+(AdminShell nav item "Tags", new `TagsIcon`) and `/faculty/tags` (linked from the
+faculty question-banks header "Manage tags"), both with create/rename/merge/delete
++ usage counts + confirm-before-destructive. `tagsApi` in both apps gained
+`rename/merge/remove`; `Tag` type gained optional `_count`. (3) **Editor cards
+show tags/marks at a glance** — new shared `QuestionMetaBadges` component
+(duplicated in both apps' components/) rendering marks/negative/difficulty(≠MEDIUM)/
+tags as compact chips, wired into the single-question card of ALL 6 editors (2 QB +
+2 test + 2 mock-test); renders nothing when everything is default so plain
+questions stay clean. (4) **Soft per-question timer** — student mock-test taking
+view shows a "Suggested time: m:ss" countdown from the question's
+`answerTimeSeconds` (backend already returns it); it is GUIDANCE ONLY — never
+auto-advances, locks, or submits (chosen via AskUserQuestion over hard
+enforcement, to preserve free navigation). (5) **Workout shows tags** — workout
+`question.findMany` now includes tags; the practice card shows difficulty(≠MEDIUM)
++ tag chips (no marks — practice is ungraded). No new migration (all additive on
+existing columns/relations). tsc + all 3 builds pass.
 Also still open from earlier this day: delete the dead Vercel
 `JWT_ACCESS_SECRET` env var (manual), and the optional login-timing hardening. On top of **adding manual poster-image upload to cheat
 sheets**. `CheatSheet.posterImageKey String?` (migration

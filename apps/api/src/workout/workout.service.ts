@@ -38,6 +38,7 @@ export class WorkoutService {
         type: { in: types },
         questionBank: { facultyId: course.facultyId },
       },
+      include: { tags: { select: { id: true, name: true } } },
     });
 
     return shuffle(questions).slice(0, count);

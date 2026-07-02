@@ -21,6 +21,7 @@ import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import RichTextEditor from "@/components/RichTextEditor";
 import QuestionMetaFields, { emptyQuestionMeta, type QuestionMetaValue } from "@/components/QuestionMetaFields";
+import QuestionMetaBadges from "@/components/QuestionMetaBadges";
 import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
@@ -1168,6 +1169,7 @@ export default function AdminTestDetailPage() {
                   dangerouslySetInnerHTML={{ __html: group.question.prompt }}
                 />
                 <QuestionAnswerSummary question={group.question} />
+                <QuestionMetaBadges marks={group.question.marks} negativeMarks={group.question.negativeMarks} difficulty={group.question.difficulty} tags={group.question.tags} />
               </div>
               ),
             );

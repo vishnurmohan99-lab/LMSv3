@@ -126,6 +126,29 @@ export default function StudentWorkoutPage() {
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}>
               {FORMATS.find((f) => f.type === q.type)?.label}
             </div>
+            {(q.difficulty !== "MEDIUM" || (q.tags?.length ?? 0) > 0) && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16, alignItems: "center" }}>
+                {q.difficulty !== "MEDIUM" && (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "3px 9px",
+                      borderRadius: 7,
+                      color: q.difficulty === "EASY" ? "var(--green)" : "var(--red)",
+                      background: q.difficulty === "EASY" ? "var(--green-soft)" : "var(--red-soft)",
+                    }}
+                  >
+                    {q.difficulty === "EASY" ? "Easy" : "Hard"}
+                  </span>
+                )}
+                {(q.tags ?? []).map((t) => (
+                  <span key={t.id} style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "3px 9px", borderRadius: 7 }}>
+                    {t.name}
+                  </span>
+                ))}
+              </div>
+            )}
             <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.5, marginBottom: 22 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
 
             {q.type === "MCQ" || q.type === "TRUE_FALSE" ? (

@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import RichTextEditor from "@/components/RichTextEditor";
 import QuestionMetaFields, { emptyQuestionMeta, type QuestionMetaValue } from "@/components/QuestionMetaFields";
+import QuestionMetaBadges from "@/components/QuestionMetaBadges";
 import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
@@ -1042,6 +1043,7 @@ export default function FacultyTestDetailPage() {
                 {group.question.imageUrl && <img src={group.question.imageUrl} alt="" style={{ width: "100%", maxHeight: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />}
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, maxHeight: 80, overflow: "hidden" }} dangerouslySetInnerHTML={{ __html: group.question.prompt }} />
                 <QuestionAnswerSummary question={group.question} />
+                <QuestionMetaBadges marks={group.question.marks} negativeMarks={group.question.negativeMarks} difficulty={group.question.difficulty} tags={group.question.tags} />
               </div>
               ),
             );

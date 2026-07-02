@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import RichTextEditor from "@/components/RichTextEditor";
 import QuestionMetaFields, { emptyQuestionMeta, type QuestionMetaValue } from "@/components/QuestionMetaFields";
+import QuestionMetaBadges from "@/components/QuestionMetaBadges";
 import { useConfirm } from "@/components/ConfirmProvider";
 
 const inputStyle: React.CSSProperties = {
@@ -695,6 +696,7 @@ export default function FacultyMockTestBuilderPage() {
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, maxHeight: 80, overflow: "hidden" }} dangerouslySetInnerHTML={{ __html: question.prompt }} />
               <QuestionAnswerSummary question={question} />
+              <QuestionMetaBadges marks={question.marks} negativeMarks={question.negativeMarks} difficulty={question.difficulty} tags={question.tags} />
             </div>
           ))}
         </div>

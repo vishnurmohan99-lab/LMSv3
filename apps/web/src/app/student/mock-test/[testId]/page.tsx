@@ -158,6 +158,7 @@ export default function StudentMockTestTakePage() {
   const [review, setReview] = useState<AttemptReview | null>(null);
   const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [questionSecondsLeft, setQuestionSecondsLeft] = useState<number | null>(null);
   const [highlights, setHighlights] = useState<Record<string, HighlightRange[]>>({});
   const submittingRef = useRef(false);
 
@@ -254,6 +255,19 @@ export default function StudentMockTestTakePage() {
     const t = setTimeout(() => setSecondsLeft((s) => (s !== null ? s - 1 : s)), 1000);
     return () => clearTimeout(t);
   }, [secondsLeft, view, onSubmit]);
+
+  // Soft per-question suggested-time countdown — guidance only. It never auto-advances, locks,
+  // or submits; it just resets to the current question's answerTimeSeconds when the question changes.
+  useEffect(() => {
+    if (view !== "taking") return;
+    setQuestionSecondsLeft(attempt?.testQuestions?.[current]?.answerTimeSeconds ?? null);
+  }, [current, view, attempt]);
+
+  useEffect(() => {
+    if (view !== "taking" || questionSecondsLeft === null || questionSecondsLeft <= 0) return;
+    const t = setTimeout(() => setQuestionSecondsLeft((s) => (s !== null && s > 0 ? s - 1 : s)), 1000);
+    return () => clearTimeout(t);
+  }, [questionSecondsLeft, view]);
 
   async function onSelectAnswer(testQuestionId: string, selectedOption: string) {
     if (!attempt) return;
@@ -375,6 +389,17 @@ export default function StudentMockTestTakePage() {
                         {t.name}
                       </span>
                     ))}
+                  </div>
+                )}
+                {q.answerTimeSeconds != null && questionSecondsLeft != null && (
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: questionSecondsLeft > 0 ? "var(--ink3)" : "var(--amber)", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 3" />
+                    </svg>
+                    {questionSecondsLeft > 0
+                      ? `Suggested time: ${formatTime(questionSecondsLeft)}`
+                      : "Suggested time's up — no penalty, take your time"}
                   </div>
                 )}
                 {q.imageUrl && <img src={q.imageUrl} alt="" style={{ width: "100%", maxHeight: 280, objectFit: "contain", borderRadius: 12, marginBottom: 18, background: "var(--bg)" }} />}

@@ -171,6 +171,16 @@ function AnswerCorrectionIcon({ active }: { active: boolean }) {
   );
 }
 
+function TagsIcon({ active }: { active: boolean }) {
+  const c = active ? "#fff" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />
+      <circle cx="7" cy="7" r="1.4" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8">
@@ -185,6 +195,7 @@ const navItems = [
   { href: "/admin/segments", label: "Segments", Icon: SegmentsIcon },
   { href: "/admin/courses", label: "Courses", Icon: CoursesIcon },
   { href: "/admin/question-banks", label: "Question Banks", Icon: QuestionBankIcon },
+  { href: "/admin/tags", label: "Tags", Icon: TagsIcon },
   { href: "/admin/tests", label: "Tests", Icon: TestsIcon },
   { href: "/admin/answer-correction", label: "Answer Correction", Icon: AnswerCorrectionIcon },
   { href: "/admin/batches", label: "Batches", Icon: BatchStatusIcon },

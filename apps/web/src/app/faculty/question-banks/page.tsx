@@ -80,22 +80,27 @@ export default function FacultyQuestionBanksPage() {
     <main className="fade-in" style={{ padding: "30px 40px 60px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4 }}>Question Banks</div>
-        <button
-          onClick={() => setShowAddForm((s) => !s)}
-          style={{
-            padding: "10px 18px",
-            background: "var(--ink)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 700,
-            fontFamily: "inherit",
-            cursor: "pointer",
-          }}
-        >
-          {showAddForm ? "Close" : "+ Add question bank"}
-        </button>
+        <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
+          <Link href="/faculty/tags" style={{ color: "var(--ink2)", fontSize: 13, fontWeight: 700 }}>
+            Manage tags
+          </Link>
+          <button
+            onClick={() => setShowAddForm((s) => !s)}
+            style={{
+              padding: "10px 18px",
+              background: "var(--ink)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            {showAddForm ? "Close" : "+ Add question bank"}
+          </button>
+        </span>
       </div>
 
       {showAddForm && (

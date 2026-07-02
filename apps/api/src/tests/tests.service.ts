@@ -281,31 +281,42 @@ export class TestsService {
         ...(test.courseId ? { type: { not: 'ESSAY' } } : {}),
       },
       orderBy: { order: 'asc' },
+      include: { tags: { select: { name: true } } },
     });
     if (questions.length === 0) throw new BadRequestException('No questions found to import');
 
     const maxOrder = await this.prisma.testQuestion.aggregate({ where: { testId }, _max: { order: true } });
     let order = (maxOrder._max.order ?? -1) + 1;
 
-    return this.prisma.testQuestion.createManyAndReturn({
-      // createManyAndReturn can't write the tag m2m relation; scalar fields (incl. marks/
-      // negativeMarks that drive scoring) are copied here. Tag links on imported TestQuestions
-      // aren't needed for the current features (tags filter the source Question pool).
-      data: questions.map((q) => ({
-        type: q.type,
-        prompt: q.prompt,
-        options: q.options,
-        correctOption: q.correctOption,
-        imageUrl: q.imageUrl,
-        passageId: q.passageId,
-        difficulty: q.difficulty,
-        marks: q.marks,
-        negativeMarks: q.negativeMarks,
-        answerTimeSeconds: q.answerTimeSeconds,
-        order: order++,
-        testId,
-      })),
-    });
+    // Created one row at a time (not createMany) so the source question's tag links carry
+    // through onto the imported TestQuestion — createMany can't write the m2m relation.
+    const created = await this.prisma.$transaction(
+      (tx) =>
+        Promise.all(
+          questions.map((q) =>
+            tx.testQuestion.create({
+              data: {
+                type: q.type,
+                prompt: q.prompt,
+                options: q.options,
+                correctOption: q.correctOption,
+                imageUrl: q.imageUrl,
+                passageId: q.passageId,
+                difficulty: q.difficulty,
+                marks: q.marks,
+                negativeMarks: q.negativeMarks,
+                answerTimeSeconds: q.answerTimeSeconds,
+                tags: q.tags.length ? { connectOrCreate: this.tagConnectOrCreate(q.tags.map((t) => t.name)) } : undefined,
+                order: order++,
+                testId,
+              },
+              include: { tags: true },
+            }),
+          ),
+        ),
+      { maxWait: 20000, timeout: 20000 },
+    );
+    return created;
   }
 
   private assertOwnership(user: JwtPayload, facultyId: string) {
