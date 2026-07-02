@@ -1,10 +1,16 @@
-import { IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 import { TestType } from '../../../generated/prisma/client';
 
 export class CreateTestDto {
   @IsString()
   @MinLength(1)
   title: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  passPercent?: number;
 
   @IsOptional()
   @IsString()

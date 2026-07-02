@@ -665,11 +665,23 @@ checking with the user first.
   from end-to-end verification (harmless, but not cleaned up).
 - Mobile UI rollout partial — see above. Faculty/Admin apps not in scope yet.
 - Prior-session gaps still open: no DB-level "comprehension group" beyond
-  shared `passageId`, PASS_TEST 50% threshold hardcoded, sequential
-  lesson-gating simplification (display order ≠ gating order), no custom
-  domain, no payment gateway, no bulk/CSV import, no real notification
-  center, student-side Feedback fill-page UI still not interactively
-  browser-verified.
+  shared `passageId`, sequential lesson-gating simplification (display order ≠
+  gating order), no custom domain, no payment gateway, no bulk/CSV import, no
+  real notification center, student-side Feedback fill-page UI still not
+  interactively browser-verified.
+- **RESOLVED 2026-07-02:** PASS_TEST threshold is now per-test (`Test.passPercent
+  Int @default(50)`, migration `20260702120000_add_test_pass_percent`); the old
+  hardcoded 50% in `courses.service.ts` PASS_TEST completion now reads each
+  test's `passPercent` (`score*100 >= maxScore*passPercent`). Editable via a
+  "Pass mark" card on all 4 test/mock-test editors; student mock-test
+  instructions + results show the pass mark and a Passed/Not-passed badge.
+  Comprehension now IS supported on the student workout page: a "📖
+  Comprehension" toggle includes passage-bound questions (backend adds an OR
+  clause — standalone `passageId:null` of chosen types PLUS, when toggled,
+  `passageId:{not:null}` comprehension sub-questions; workout now presigns
+  question + passage images, which also fixed a latent bug where workout
+  attached-images were served as raw R2 keys). Session view renders the passage
+  in a scrollable block above each comprehension question.
 
 ## Roadmap status
 

@@ -696,6 +696,7 @@ export interface Test {
   availableFrom: string | null;
   availableUntil: string | null;
   durationMinutes: number | null;
+  passPercent: number;
   facultyId: string;
   chapterId: string | null;
   courseId: string | null;
@@ -744,6 +745,7 @@ export const testsApi = {
         | 'availableFrom'
         | 'availableUntil'
         | 'durationMinutes'
+        | 'passPercent'
         | 'chapterId'
         | 'courseId'
         | 'segmentId'

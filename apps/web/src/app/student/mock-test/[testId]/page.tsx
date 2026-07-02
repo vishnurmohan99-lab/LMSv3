@@ -324,6 +324,7 @@ export default function StudentMockTestTakePage() {
 
           <ul style={{ fontSize: 13.5, lineHeight: 1.9, color: "var(--ink2)", paddingLeft: 18 }}>
             <li>{marksNote}</li>
+            <li>You need <b>{test.passPercent}%</b> or above to pass this test.</li>
             <li>You can navigate between questions freely before submitting.</li>
             <li>{test.publishMode === "TIMED" ? "The test auto-submits when the timer runs out." : "There is no time limit for this attempt."}</li>
             <li>You can retake this mock test as many times as you like — your best score is kept.</li>
@@ -507,6 +508,7 @@ export default function StudentMockTestTakePage() {
 
   if (view === "results" && result) {
     const pct = result.maxScore ? (result.score ?? 0) / result.maxScore : 0;
+    const passed = result.maxScore ? (result.score ?? 0) * 100 >= result.maxScore * test.passPercent : false;
     const correct = result.answers.filter((a) => a.isCorrect).length;
     const wrong = result.answers.filter((a) => a.isCorrect === false).length;
     const skipped = (result.maxScore ?? 0) - result.answers.length;
@@ -549,6 +551,10 @@ export default function StudentMockTestTakePage() {
             <div style={{ fontSize: 12, letterSpacing: 1, textTransform: "uppercase", opacity: 0.7 }}>Result</div>
             <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.4 }}>
               {result.score} / {result.maxScore} marks
+            </div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 8, padding: "5px 12px", borderRadius: 999, background: passed ? "rgba(127,211,164,.2)" : "rgba(255,138,128,.2)", fontSize: 12.5, fontWeight: 800 }}>
+              <span style={{ color: passed ? "#7fd3a4" : "#ff8a80" }}>{passed ? "✓ Passed" : "✕ Not passed"}</span>
+              <span style={{ opacity: 0.7, fontWeight: 600 }}>· pass mark {test.passPercent}%</span>
             </div>
             <div style={{ display: "flex", gap: 26, marginTop: 14 }}>
               <div>

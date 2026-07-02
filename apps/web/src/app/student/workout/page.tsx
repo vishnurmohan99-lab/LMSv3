@@ -34,6 +34,7 @@ export default function StudentWorkoutPage() {
   const [courseId, setCourseId] = useState("");
   const [chapterId, setChapterId] = useState("");
   const [selectedFormats, setSelectedFormats] = useState<QuestionType[]>(["MCQ"]);
+  const [includeComprehension, setIncludeComprehension] = useState(false);
   const [count, setCount] = useState(10);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -63,11 +64,11 @@ export default function StudentWorkoutPage() {
   }
 
   async function onStartWorkout() {
-    if (!courseId || selectedFormats.length === 0) return;
+    if (!courseId || (selectedFormats.length === 0 && !includeComprehension)) return;
     setStarting(true);
     setError(null);
     try {
-      const qs = await workoutApi.getQuestions(courseId, { chapterId: chapterId || undefined, types: selectedFormats, count });
+      const qs = await workoutApi.getQuestions(courseId, { chapterId: chapterId || undefined, types: selectedFormats, count, comprehension: includeComprehension });
       if (qs.length === 0) {
         setError("No questions match your selected format(s) for this course yet.");
         return;
@@ -123,8 +124,15 @@ export default function StudentWorkoutPage() {
 
         {q && (
           <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 30 }}>
+            {q.passage && (
+              <div style={{ marginBottom: 18, padding: 16, background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 12, maxHeight: 260, overflowY: "auto" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1, color: "var(--purple)", textTransform: "uppercase", marginBottom: 8 }}>📖 Passage</div>
+                {q.passage.imageUrl && <img src={q.passage.imageUrl} alt="" style={{ width: "100%", borderRadius: 8, marginBottom: 10 }} />}
+                <div style={{ fontSize: 13, lineHeight: 1.7, color: "var(--ink2)", whiteSpace: "pre-wrap" }}>{q.passage.text}</div>
+              </div>
+            )}
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}>
-              {FORMATS.find((f) => f.type === q.type)?.label}
+              {q.passage ? "Comprehension" : FORMATS.find((f) => f.type === q.type)?.label}
             </div>
             {(q.difficulty !== "MEDIUM" || (q.tags?.length ?? 0) > 0) && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16, alignItems: "center" }}>
@@ -333,6 +341,23 @@ export default function StudentWorkoutPage() {
               </button>
             );
           })}
+          <button
+            onClick={() => setIncludeComprehension((v) => !v)}
+            title="Include comprehension passages and their questions"
+            style={{
+              padding: "8px 14px",
+              borderRadius: 999,
+              fontSize: 12.5,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              border: includeComprehension ? "1px solid var(--purple)" : "1px solid var(--line)",
+              background: includeComprehension ? "var(--purple-soft)" : "var(--card)",
+              color: includeComprehension ? "var(--purple)" : "var(--ink2)",
+            }}
+          >
+            📖 Comprehension
+          </button>
         </div>
 
         <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>
@@ -351,7 +376,7 @@ export default function StudentWorkoutPage() {
 
         <button
           onClick={onStartWorkout}
-          disabled={!courseId || selectedFormats.length === 0 || starting}
+          disabled={!courseId || (selectedFormats.length === 0 && !includeComprehension) || starting}
           style={{
             width: "100%",
             padding: 14,
@@ -363,7 +388,7 @@ export default function StudentWorkoutPage() {
             fontWeight: 700,
             fontFamily: "inherit",
             cursor: "pointer",
-            opacity: !courseId || selectedFormats.length === 0 || starting ? 0.6 : 1,
+            opacity: !courseId || (selectedFormats.length === 0 && !includeComprehension) || starting ? 0.6 : 1,
           }}
         >
           {starting ? "Generating…" : "Generate Workout"}

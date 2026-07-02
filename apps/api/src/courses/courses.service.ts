@@ -292,11 +292,15 @@ export class CoursesService {
       const attempts = allTestIds.length
         ? await this.prisma.testAttempt.findMany({
             where: { studentId, testId: { in: allTestIds }, status: 'SUBMITTED' },
-            select: { testId: true, score: true, maxScore: true },
+            select: { testId: true, score: true, maxScore: true, test: { select: { passPercent: true } } },
           })
         : [];
+      // Each test defines its own pass threshold (default 50%). An attempt passes when
+      // score/maxScore >= passPercent/100, kept as integer maths to avoid float rounding.
       const passedTestIds = new Set(
-        attempts.filter((a) => a.score != null && a.maxScore && a.score * 2 >= a.maxScore).map((a) => a.testId),
+        attempts
+          .filter((a) => a.score != null && a.maxScore && a.score * 100 >= a.maxScore * a.test.passPercent)
+          .map((a) => a.testId),
       );
       // Chapters with no test attached can't be gated by a test score — fall back to manual completion for those.
       const fallbackChapterIds = chapters.filter((c) => c.tests.length === 0).map((c) => c.id);

@@ -17,14 +17,16 @@ export class WorkoutController {
     @Param('courseId') courseId: string,
     @Query('types') typesParam: string,
     @Query('count') countParam: string,
+    @Query('comprehension') comprehensionParam: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    const types = (typesParam ?? 'MCQ,TRUE_FALSE,FILL_BLANK,ESSAY')
+    const types = (typesParam ?? '')
       .split(',')
       .map((t) => t.trim())
       .filter((t) => VALID_TYPES.has(t as QuestionType)) as QuestionType[];
-    if (types.length === 0) throw new BadRequestException('No valid question types specified');
+    const includeComprehension = comprehensionParam === 'true' || comprehensionParam === '1';
+    if (types.length === 0 && !includeComprehension) throw new BadRequestException('No valid question types specified');
     const count = Math.min(Math.max(parseInt(countParam, 10) || 10, 1), 50);
-    return this.workout.getQuestions(user, courseId, types, count);
+    return this.workout.getQuestions(user, courseId, types, count, includeComprehension);
   }
 }

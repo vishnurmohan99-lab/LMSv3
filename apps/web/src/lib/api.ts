@@ -677,6 +677,7 @@ export interface Test {
   availableFrom: string | null;
   availableUntil: string | null;
   durationMinutes: number | null;
+  passPercent: number;
   facultyId: string;
   chapterId: string | null;
   courseId: string | null;
@@ -725,6 +726,7 @@ export const testsApi = {
         | 'availableFrom'
         | 'availableUntil'
         | 'durationMinutes'
+        | 'passPercent'
         | 'chapterId'
         | 'courseId'
         | 'segmentId'
@@ -848,9 +850,10 @@ export interface Leaderboard {
 }
 
 export const workoutApi = {
-  getQuestions: (courseId: string, params: { chapterId?: string; types: QuestionType[]; count: number }) => {
+  getQuestions: (courseId: string, params: { chapterId?: string; types: QuestionType[]; count: number; comprehension?: boolean }) => {
     const qs = new URLSearchParams({ types: params.types.join(','), count: String(params.count) });
     if (params.chapterId) qs.set('chapterId', params.chapterId);
+    if (params.comprehension) qs.set('comprehension', 'true');
     return request<Question[]>(`/workout/courses/${courseId}/questions?${qs.toString()}`);
   },
 };

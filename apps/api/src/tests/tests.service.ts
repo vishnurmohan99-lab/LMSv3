@@ -122,6 +122,7 @@ export class TestsService {
             bannerUrl: dto.bannerUrl,
             order: dto.order ?? 0,
             type: dto.type,
+            passPercent: dto.passPercent,
             chapterId: dto.chapterId,
             courseId: dto.courseId,
             segmentId: dto.segmentId,

@@ -987,6 +987,30 @@ export default function FacultyTestDetailPage() {
         )}
       </div>
 
+      <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 16, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>Pass mark</div>
+            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Students pass at this score or above — used for &ldquo;Pass a test&rdquo; course completion.</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              defaultValue={test.passPercent}
+              onBlur={async (e) => {
+                const value = e.target.value === "" ? 50 : Math.min(100, Math.max(0, Number(e.target.value)));
+                const updated = await testsApi.update(test.id, { passPercent: value });
+                setTest({ ...test, passPercent: updated.passPercent });
+              }}
+              style={{ ...inputStyle, width: 90, textAlign: "right" }}
+            />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink2)" }}>%</span>
+          </div>
+        </div>
+      </div>
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ fontSize: 13, color: "var(--ink3)" }}>
           {test.testQuestions.length} question{test.testQuestions.length === 1 ? "" : "s"}

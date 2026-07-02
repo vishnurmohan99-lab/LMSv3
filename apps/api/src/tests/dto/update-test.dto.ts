@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString, IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 import { TestPublishMode, TestType } from '../../../generated/prisma/client';
 
 export class UpdateTestDto {
@@ -42,6 +42,12 @@ export class UpdateTestDto {
   @IsOptional()
   @IsInt()
   durationMinutes?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  passPercent?: number;
 
   @IsOptional()
   @IsString()
