@@ -590,7 +590,7 @@ export default function FacultyQuestionBankDetailPage() {
     load();
   }
 
-  async function onEditQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) {
+  async function onEditQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaValue) {
     if (!editingQuestion) return;
     await questionBanksApi.updateQuestion(editingQuestion.id, {
       type: data.type,
@@ -598,6 +598,11 @@ export default function FacultyQuestionBankDetailPage() {
       options: data.options ?? [],
       correctOption: data.correctOption,
       imageUrl: data.imageUrl ?? null,
+      difficulty: data.difficulty,
+      marks: data.marks,
+      negativeMarks: data.negativeMarks,
+      answerTimeSeconds: data.answerTimeSeconds,
+      tags: data.tags,
     });
     setEditingQuestion(null);
     load();
