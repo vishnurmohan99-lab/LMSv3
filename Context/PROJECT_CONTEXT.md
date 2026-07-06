@@ -756,13 +756,14 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
-- **Pending (2026-07-06 audit, NOT yet committed):** order-tiebreaker + bank-question
+- `760ce53` (2026-07-06 audit, deployed) — order-tiebreaker + bank-question
   order-assignment fixes (`question-banks`/`tests`/`batch-status-types` services now
   assign `max+1` on create and sort `[{order},{createdAt}]`); question-bank editor
   hardening in both apps (silent `refresh()` instead of full-page `load()` on
   mutations, plus try/catch + `actionError` banner + in-flight `saving` guard on
   publish/title/add/edit/delete); this context file cleanup (missing commits added,
-  Cheat Sheet illustration contradiction resolved, changelog restructured).
+  Cheat Sheet illustration contradiction resolved, changelog restructured). No
+  migration (pure query logic). Deployed: Render (API push) + Vercel ×2, all 200.
 - `1af982c` (2026-07-02) — Admin nav consolidation: Batch Statuses moved into the
   Batches page; Tags moved into the Tests page. No backend change.
 - `47dff1d` (2026-07-02) — Fix: the question-bank editor's edit-question save
