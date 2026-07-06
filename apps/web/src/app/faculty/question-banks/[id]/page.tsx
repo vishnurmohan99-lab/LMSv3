@@ -547,6 +547,8 @@ export default function FacultyQuestionBankDetailPage() {
   const [bank, setBank] = useState<QuestionBankTree | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showComprehensionForm, setShowComprehensionForm] = useState(false);
@@ -563,49 +565,93 @@ export default function FacultyQuestionBankDetailPage() {
       .finally(() => setLoading(false));
   }
 
+  // Silent reload for post-mutation refreshes — never touches `loading`, so the
+  // page doesn't blank to "Loading…" on every add/edit/delete.
+  function refresh() {
+    return questionBanksApi
+      .get(bankId)
+      .then(setBank)
+      .catch((err) => setActionError(err instanceof ApiError ? err.message : "Failed to refresh question bank"));
+  }
+
   useEffect(load, [bankId]);
 
   async function onTogglePublished() {
-    if (!bank) return;
-    const updated = await questionBanksApi.update(bank.id, { published: !bank.published });
-    setBank({ ...bank, published: updated.published });
+    if (!bank || saving) return;
+    setSaving(true);
+    setActionError(null);
+    try {
+      const updated = await questionBanksApi.update(bank.id, { published: !bank.published });
+      setBank({ ...bank, published: updated.published });
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to update publish status");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function onSaveTitle() {
-    if (!bank) return;
-    await questionBanksApi.update(bank.id, { title: titleValue });
-    setEditingTitle(false);
-    load();
+    if (!bank || saving) return;
+    if (!titleValue.trim()) {
+      setActionError("Title cannot be empty");
+      return;
+    }
+    setSaving(true);
+    setActionError(null);
+    try {
+      await questionBanksApi.update(bank.id, { title: titleValue.trim() });
+      setEditingTitle(false);
+      await refresh();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to save title");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function onDeleteBank() {
     if (!(await confirm({ message: "Delete this question bank and all its questions? This cannot be undone." }))) return;
-    await questionBanksApi.remove(bankId);
-    router.push("/faculty/question-banks");
+    setActionError(null);
+    try {
+      await questionBanksApi.remove(bankId);
+      router.push("/faculty/question-banks");
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to delete question bank");
+    }
   }
 
   async function onAddQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string }) {
-    await questionBanksApi.createQuestion(bankId, data);
-    setShowAddForm(false);
-    load();
+    setActionError(null);
+    try {
+      await questionBanksApi.createQuestion(bankId, data);
+      setShowAddForm(false);
+      await refresh();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to add question");
+    }
   }
 
   async function onEditQuestion(data: { type: QuestionType; prompt: string; options?: string[]; correctOption?: string; imageUrl?: string } & QuestionMetaValue) {
     if (!editingQuestion) return;
-    await questionBanksApi.updateQuestion(editingQuestion.id, {
-      type: data.type,
-      prompt: data.prompt,
-      options: data.options ?? [],
-      correctOption: data.correctOption,
-      imageUrl: data.imageUrl ?? null,
-      difficulty: data.difficulty,
-      marks: data.marks,
-      negativeMarks: data.negativeMarks,
-      answerTimeSeconds: data.answerTimeSeconds,
-      tags: data.tags,
-    });
-    setEditingQuestion(null);
-    load();
+    setActionError(null);
+    try {
+      await questionBanksApi.updateQuestion(editingQuestion.id, {
+        type: data.type,
+        prompt: data.prompt,
+        options: data.options ?? [],
+        correctOption: data.correctOption,
+        imageUrl: data.imageUrl ?? null,
+        difficulty: data.difficulty,
+        marks: data.marks,
+        negativeMarks: data.negativeMarks,
+        answerTimeSeconds: data.answerTimeSeconds,
+        tags: data.tags,
+      });
+      setEditingQuestion(null);
+      await refresh();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to save question");
+    }
   }
 
   async function onAddComprehension(data: {
@@ -613,15 +659,25 @@ export default function FacultyQuestionBankDetailPage() {
     passageImageUrl?: string;
     questions: { type: ComprehensionQuestionType; prompt: string; options?: string[]; correctOption: string; imageUrl?: string }[];
   }) {
-    await questionBanksApi.createComprehension(bankId, data);
-    setShowComprehensionForm(false);
-    load();
+    setActionError(null);
+    try {
+      await questionBanksApi.createComprehension(bankId, data);
+      setShowComprehensionForm(false);
+      await refresh();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to add comprehension set");
+    }
   }
 
   async function onDeleteQuestion(id: string) {
     if (!(await confirm({ message: "Delete this question? This cannot be undone." }))) return;
-    await questionBanksApi.removeQuestion(id);
-    load();
+    setActionError(null);
+    try {
+      await questionBanksApi.removeQuestion(id);
+      await refresh();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to delete question");
+    }
   }
 
   if (loading) return <main style={{ padding: 40 }}><p style={{ color: "var(--ink2)" }}>Loading…</p></main>;
@@ -629,6 +685,7 @@ export default function FacultyQuestionBankDetailPage() {
 
   return (
     <main className="fade-in" style={{ padding: "30px 40px 60px" }}>
+      {actionError && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{actionError}</p>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: "var(--orange)", textTransform: "uppercase", marginBottom: 4 }}>
@@ -643,8 +700,8 @@ export default function FacultyQuestionBankDetailPage() {
                 onKeyDown={(e) => e.key === "Enter" && onSaveTitle()}
                 style={{ ...inputStyle, fontSize: 20, fontWeight: 800 }}
               />
-              <button onClick={onSaveTitle} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
-                Save
+              <button onClick={onSaveTitle} disabled={saving} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13, background: "none", border: "none", cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1 }}>
+                {saving ? "Saving…" : "Save"}
               </button>
             </div>
           ) : (

@@ -42,7 +42,7 @@ export class QuestionBanksService {
   async getQuestionBank(id: string, user: JwtPayload) {
     const bank = await this.prisma.questionBank.findUnique({
       where: { id },
-      include: { questions: { orderBy: { order: 'asc' }, include: { passage: true, tags: true } } },
+      include: { questions: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }], include: { passage: true, tags: true } } },
     });
     if (!bank) throw new NotFoundException('Question bank not found');
     if (!bank.published && !isOwnerOrAdmin(user, bank.facultyId)) {
@@ -102,11 +102,12 @@ export class QuestionBanksService {
   async createQuestion(bankId: string, user: JwtPayload, dto: CreateQuestionDto) {
     const bank = await this.requireQuestionBank(bankId);
     this.assertOwnership(user, bank.facultyId);
+    const maxOrder = await this.prisma.question.aggregate({ where: { questionBankId: bankId }, _max: { order: true } });
     return this.prisma.question.create({
       data: {
         type: dto.type,
         prompt: sanitizePrompt(dto.prompt),
-        order: dto.order ?? 0,
+        order: dto.order ?? (maxOrder._max.order ?? -1) + 1,
         options: dto.options ?? [],
         correctOption: dto.correctOption,
         imageUrl: dto.imageUrl,

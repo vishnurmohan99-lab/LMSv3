@@ -281,7 +281,7 @@ export class TestsService {
         ...(dto.questionIds && dto.questionIds.length > 0 ? { id: { in: dto.questionIds } } : {}),
         ...(test.courseId ? { type: { not: 'ESSAY' } } : {}),
       },
-      orderBy: { order: 'asc' },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
       include: { tags: { select: { name: true } } },
     });
     if (questions.length === 0) throw new BadRequestException('No questions found to import');

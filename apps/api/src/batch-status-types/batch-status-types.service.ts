@@ -9,7 +9,7 @@ export class BatchStatusTypesService {
   constructor(private readonly prisma: PrismaService) {}
 
   listBatchStatusTypes() {
-    return this.prisma.batchStatusType.findMany({ orderBy: { order: 'asc' } });
+    return this.prisma.batchStatusType.findMany({ orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] });
   }
 
   async createBatchStatusType(dto: CreateBatchStatusTypeDto) {
@@ -23,11 +23,12 @@ export class BatchStatusTypesService {
             if (dto.isCompletionTarget) {
               await tx.batchStatusType.updateMany({ where: { isCompletionTarget: true }, data: { isCompletionTarget: false } });
             }
+            const maxOrder = await tx.batchStatusType.aggregate({ _max: { order: true } });
             return tx.batchStatusType.create({
               data: {
                 name: dto.name,
                 color: dto.color,
-                order: dto.order ?? 0,
+                order: dto.order ?? (maxOrder._max.order ?? -1) + 1,
                 isDefault: dto.isDefault ?? false,
                 isCompletionTarget: dto.isCompletionTarget ?? false,
               },

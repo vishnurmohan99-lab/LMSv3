@@ -655,15 +655,23 @@ checking with the user first.
 - Cheat Sheet: PDF-only (no video support yet, despite the original feature
   request describing video too — explicitly deferred); no extraction of
   images/diagrams from the source PDF (AI-generated illustrations only).
-  **Illustrations are currently blocked**: OpenRouter returns 402 Payment
-  Required on every image call (no $0 image tier exists; confirmed live via
-  added error logging) — text/bullets/table/exam-tip generation works fine,
-  pages just render with no picture until the OpenRouter account has a
-  credit balance added at openrouter.ai/credits. Flagged to the user as a
-  billing action, not a code fix. One orphaned test `CheatSheet` row + a few
+  **Illustrations status (current):** the earlier OpenRouter 402 block is
+  RESOLVED — the OpenAI image path is now wired in and illustrations are
+  re-enabled at `quality: 'low'` (~$0.01/image, ~$0.05/generation), switchable
+  per-feature in Admin → Settings → AI Models (`CHEAT_SHEET_IMAGE`). Generation
+  cost is real but capped low; the agent never triggers generations — the user
+  controls regen cost (see [[billed-api-cost-caution]]). A muted "Illustration
+  unavailable" note renders per-section on failure instead of a silent blank.
+  Users can also upload their own finished poster image (never cropped) as an
+  alternative to AI illustrations. One orphaned test `CheatSheet` row + a few
   R2 images remain attached to the real "Test Lesson" PDF lesson in Physics
   from end-to-end verification (harmless, but not cleaned up).
 - Mobile UI rollout partial — see above. Faculty/Admin apps not in scope yet.
+- **Editor hardening not yet applied to all editors:** the 2026-07-06 audit
+  converted the question-bank editor (both apps) to silent `refresh()` + full
+  error handling, but the **test** and **mock-test** editors (all 4 pages) still
+  use `load()` inside mutation handlers (full-page blink) and lack try/catch on
+  `onTogglePublished`/`onSaveTitle`/`onChangeType`. Same fix pattern applies.
 - Prior-session gaps still open: no DB-level "comprehension group" beyond
   shared `passageId`, sequential lesson-gating simplification (display order ≠
   gating order), no custom domain, no payment gateway, no bulk/CSV import, no
@@ -685,11 +693,15 @@ checking with the user first.
 
 ## Roadmap status
 
-All original roadmap phases complete. Current work is post-roadmap: (1) the
-AI Answer-Correction feature (done, deployed), (2) the AI Cheat Sheet
-Generator (done, deployed, PDF-only for v1), (3) the mobile-responsiveness
-initiative (in progress, picked module-by-module live in conversation, not a
-fixed backlog).
+All original roadmap phases complete. Post-roadmap work shipped since:
+AI Answer-Correction, AI Cheat Sheet Generator (PDF-only v1), the
+mobile-responsiveness initiative (student app, module-by-module, ongoing),
+Study Planner, real OpenAI integration + per-feature Admin AI Model settings,
+video captions/chapters, the detailed mock-test result dashboard, and the
+question **tags + marks** workstream (global `Tag` model, marks-based scoring,
+build-by-tag import, tag management, per-test `passPercent`, workout
+comprehension). See the Changelog (newest first) at the bottom for the
+commit-level detail on all of this.
 
 ## Cross-cutting rules for every phase
 
@@ -737,270 +749,100 @@ kept current automatically after every commit, rather than re-requesting a
 full context dump.
 
 ---
-*Last updated: 2026-07-01, after the **question tags + rich-fields** feature.
-Backend (commit b6380fb, live+migrated): global `Tag` model (m2m to Question +
-TestQuestion), `QuestionDifficulty` enum, and `difficulty/marks/negativeMarks/
-answerTimeSeconds` on both. `GET/POST /tags`. Question + test-question
-create/update take the fields + `tags[]` (names, connectOrCreate). Scoring
-rewritten to marks-based: maxScore=sum(marks), +marks correct / -negativeMarks
-wrong / 0 unanswered, clamped >=0 — BACKWARD COMPATIBLE (defaults marks=1,
-neg=0 = old count scoring). Frontend DEPLOYED (commit b1830ab, both apps):
-web+admin api clients (`tagsApi`, `QuestionMetaInput`, fields on
-Question/TestQuestion), a shared `QuestionMetaFields` component (Difficulty /
-Marks / Negative marks / Answer time + tag picker with reuse+create), wired
-into the **question-bank** question editor in BOTH apps (matches the reference
-screenshot's "Question settings" panel). `answerTimeSeconds` is stored
-metadata, NOT an enforced per-question timer. **The three remaining tag/marks
-stages are now DONE (2026-07-01, this session):** (1) **build-tests-by-tag** —
-the "Add from question bank" import picker (all 4 test/mock-test editors, web +
-admin) gained a "Filter by tag (topic)" chip row (OR-match, derived from tags
-present on the selected bank's questions) + a "Select all shown" button +
-per-row marks/tag display, so faculty can build a test from all questions of a
-topic in two clicks. Import now ALSO copies the tag
-m2m into `TestQuestion` (see the tags-follow-up note below — the createMany
-limitation was removed). (2) `QuestionMetaFields` panel
-wired into the manual add/edit question form on all 4 test/mock-test editors
-(same pattern as the question-bank editor). (3) student-side display: backend
-`test-attempts.service.ts` attempt + review selects now also return
-`negativeMarks` + `tags` (marks was already returned); `TestAttemptQuestion` +
-`AttemptReviewQuestion` types extended; the student mock-test page shows a marks
-badge + topic tags in the taking view, marks-awarded (`+2 / 2`, `−0.5 / 2`,
-`0 / 2`) + tags in the review, and a fixed instructions screen (real total marks
-+ dynamic marking note instead of the old hardcoded "1 mark each, no negative").
-**Tags/marks FOLLOW-UP (2026-07-01, same session, 5 more items done):** (1)
-**Import carries tags** — `tests.service.ts importQuestions` no longer uses
-`createManyAndReturn`; it creates each `TestQuestion` in a `$transaction` with
-`tags: { connectOrCreate }` so the source question's tags copy onto the imported
-test question. (2) **Tag management (admin + faculty)** — new `PATCH /tags/:id`
-(rename, unique-name guarded), `DELETE /tags/:id`, `POST /tags/:id/merge`
-`{targetId}` (reassigns every Question + TestQuestion off the source tag onto the
-target inside a tx, then deletes the source); all FACULTY/ADMIN. `GET /tags` now
-`include`s `_count { questions, testQuestions }`. New pages `/admin/tags`
-(AdminShell nav item "Tags", new `TagsIcon`) and `/faculty/tags` (linked from the
-faculty question-banks header "Manage tags"), both with create/rename/merge/delete
-+ usage counts + confirm-before-destructive. `tagsApi` in both apps gained
-`rename/merge/remove`; `Tag` type gained optional `_count`. (3) **Editor cards
-show tags/marks at a glance** — new shared `QuestionMetaBadges` component
-(duplicated in both apps' components/) rendering marks/negative/difficulty(≠MEDIUM)/
-tags as compact chips, wired into the single-question card of ALL 6 editors (2 QB +
-2 test + 2 mock-test); renders nothing when everything is default so plain
-questions stay clean. (4) **Soft per-question timer** — student mock-test taking
-view shows a "Suggested time: m:ss" countdown from the question's
-`answerTimeSeconds` (backend already returns it); it is GUIDANCE ONLY — never
-auto-advances, locks, or submits (chosen via AskUserQuestion over hard
-enforcement, to preserve free navigation). (5) **Workout shows tags** — workout
-`question.findMany` now includes tags; the practice card shows difficulty(≠MEDIUM)
-+ tag chips (no marks — practice is ungraded). No new migration (all additive on
-existing columns/relations). tsc + all 3 builds pass.
-Also still open from earlier this day: delete the dead Vercel
-`JWT_ACCESS_SECRET` env var (manual), and the optional login-timing hardening. On top of **adding manual poster-image upload to cheat
-sheets**. `CheatSheet.posterImageKey String?` (migration
-`20260701120000_add_cheatsheet_poster_image`, additive nullable). New
-FACULTY/ADMIN endpoints `POST/DELETE /lessons/:lessonId/cheat-sheet/poster`
-(`setCheatSheetPoster` upserts, so a poster can exist with no AI pages);
-`getCheatSheet` now returns presigned `posterImageUrl`. Faculty + admin
-authoring pages got an "Own poster image" upload row (uploadsApi.uploadFile ->
-R2 -> setPoster) with Replace/Remove. `CheatSheetPoster` renders
-`posterImageUrl` at the top with `width:100%; height:auto` (NEVER cropped — a
-long vertical poster just scrolls), above the AI sections; empty-state and
-student `CheatSheetReview` updated so a poster-only sheet (no AI pages) still
-shows. Use case: upload your own finished poster (e.g. the medical-reference
-style) since AI can't reliably produce accurate diagrams/photos. On top of
-**re-adding illustrations INTO the single cheat-sheet poster** (user: wants "a single image on screen, mobile, with
-images and text in it"). Backend `generateCheatSheet` generates one flat-style
-illustration per section again (prompt forbids text-in-image), but now at
-`quality:'low'` (fast + ~$0.01/image) — the earlier prod failures were
-high-quality calls timing out, which low quality avoids. `CheatSheetPoster`
-(web + admin) renders `illustrationUrl` full-width at the top of each section
-body (mobile-friendly), a muted "Illustration unavailable" note on
-`illustrationError`, else text-only. So each generation now costs ~$0.05 for
-images again — user explicitly asked for images back; they control regen cost
-(agent does not trigger generations, see [[billed-api-cost-caution]]). NOTE:
-this re-enables the exact cost source removed one commit earlier — deliberate,
-not a flip-flop (layout is now good + cost is capped low). *Prior context:
-redesigned Cheat Sheet as a single designed infographic (dropped AI
-illustrations entirely at that step). User wanted the
-"single image with text and diagram" look (showed a dense medical-poster
-reference) and was unhappy with the bullet-cards + small AI image. Decision:
-designed HTML template (NOT an AI-generated image — image models garble
-in-image text and cost per call). New `CheatSheetPoster` component
-(duplicated in `apps/web/src/components/` and `apps/admin/src/components/`):
-dark header band + numbered, theme-color-coded sections (cycling
-orange/purple/green/blue/amber/red) with icon-bulleted points (auto multi-
-column when >3 bullets), accent-colored tables, and "Exam Tip" callouts. Used
-in the student `CheatSheetReview` (replaced the swipe deck), and the faculty +
-admin authoring pages (replaced the card grid). Backend `generateCheatSheet`
-NO LONGER calls `ai.generateImage` — cheat sheets are now text-only generation
-(cheap gpt-4o-mini via CHEAT_SHEET_TEXT), permanently ending the gpt-image-1
-cost AND the missing-illustration failures. Does NOT replicate the reference's
-custom medical photos/diagrams (icons + SVG accents only). On top of
-**larger portrait Cheat Sheet cards +
-surfacing illustration failures in the UI**. (1) Faculty/admin "Manage Cheat
-Sheet" grid (`.../lessons/[lessonId]/cheat-sheet/page.tsx`, both apps):
-removed the fixed `aspectRatio: 3/4` + `overflow: hidden` that clipped longer
-pages with an internal scrollbar; cards now use `minHeight: 520` and grow with
-content, `minmax(340px,1fr)` grid (naturally single-column on mobile via
-auto-fill). (2) `CheatSheetPage` gained `illustrationError?: string`
-(`apps/api/src/courses/courses.service.ts`) — when `generateImage()` throws
-for a page, the message is now stored on that page (not just
-`console.error`'d) and shown as a small red "Illustration failed: ..." note
-in both authoring UIs instead of a silent blank space. `AiService.generateImage`
-OPENAI branch also now parses the actual OpenAI error body (`error.message`)
-instead of just the HTTP status code, so the surfaced reason is actually
-useful. Motivation: a fresh cheat-sheet generation (after the quality:low cost
-fix) still came back with zero illustrations and no visible reason — this
-change makes the real cause visible next time without needing Render log
-access. tsc + both builds pass; **NOT deployed yet** pending user OK (no
-billed API calls were made to test this — see [[billed-api-cost-caution]]).
-On top of **capping OpenAI image cost**
-(`apps/api/src/ai/ai.service.ts` `generateImage()`, OPENAI branch): pinned
-`quality: 'low'` on `gpt-image-1` calls. Cost incident: the OpenAI wiring
-below shipped with no explicit `quality` param, so calls defaulted to
-`auto`, which resolved to `high` (~$0.17-0.19/image, ~15x `low`'s ~$0.01) —
-a handful of cheat-sheet illustration test/verification calls (mine +
-the user's) totaled ~$3 before this was caught via the user's OpenAI
-usage dashboard. **Standing rule going forward: never make a real OpenAI
-(or any billed provider) API call for testing/verification without
-explicitly telling the user first that it costs money and getting their
-go-ahead** — settings-only round-trips (PATCH/GET on `ai-settings`, no
-actual model call) are fine without asking, but anything that hits
-`api.openai.com/v1/...` is not. On top of **wiring a real OpenAI integration**
-alongside the existing OpenRouter path (`apps/api/src/ai/ai.service.ts`).
-`resolveModel()` now returns `{ provider, model }` and every call site
-(`complete`, `completeVision`, `generateImage`) branches on it: OpenAI uses
-`api.openai.com/v1/chat/completions` (+ `/v1/images/generations` for images,
-returning `b64_json`), defaults `gpt-4o-mini` (text/vision) / `gpt-image-1`
-(images). `OPENAI_API_KEY` added to `apps/api/.env` and Render. Admin →
-Settings → AI Models (`apps/admin/.../settings/page.tsx`) dropped the "Not
-integrated yet" badge and now shows provider-specific model presets +
-"default: X" label that switches when you flip Provider (resets the model
-field, since OpenRouter ids like `meta-llama/...` aren't valid OpenAI ids).
-**Verified**: a direct call to the exact OpenAI endpoint/model shape returned
-200; the admin ai-settings PATCH/GET round-trip confirmed via the real API
-against Neon (CHAT → OPENAI/gpt-4o-mini → reverted to OPENROUTER/default, no
-lasting state change). Did NOT exercise a real feature end-to-end (flashcards/
-chat) against actual lesson content — that would mutate real course data
-without a user-named target, correctly blocked by the safety classifier.
-Cheat Sheet illustrations (previously blocked — no $0 OpenRouter image tier)
-can now be unblocked by switching `CHEAT_SHEET_IMAGE` to OPENAI in the admin
-panel. On top of shipping **video captions+chapters** and a
-**detailed mock-test result dashboard**. (1) `Lesson` gained `captionsVtt` +
-`videoChapters` (migration `20260630200000_add_video_captions_chapters`,
-additive nullable TEXT). Faculty lesson form (add+edit) has a "Video
-navigation" panel: .srt upload → `srtToVtt()` → WebVTT, plus a YouTube-style
-chapters textarea ("0:00 Intro" lines). Student `VideoPlayer` renders a
-`<track>` (blob VTT) for toggleable captions + a clickable Chapters list that
-seeks + highlights the active chapter (`parseChapters`). Course tree nulls
-captions/chapters for locked lessons. Authoring wired in BOTH the faculty
-(apps/web) and admin (apps/admin) course-builders (same VideoExtrasFields +
-srtToVtt). (2) New `GET /attempts/:id/review`
-(`TestAttemptsService.getAttemptReview`, own SUBMITTED attempt only) → all
-questions w/ correct+selected option, time taken (submittedAt−startedAt),
-percentile (best-score-per-student rank). Results page adds time/avg-per-Q/
-percentile stat strip, accuracy-by-type bars, and a full per-question review
-(right/wrong/skipped). Verified by tsc + web build; migration applied by Render
-on deploy. Deployed apps/api (Render) + apps/web (Vercel). On top of fixing
-**two student-course bugs**
-(`apps/web/src/app/student/courses/[id]/page.tsx`, frontend-only): (1) the
-course progress bar + chapter "in progress N/M" were computed from the
-**selected lesson's position** (`lessonIndex`/`activeLessonPos`), so they reset
-whenever the page remounted (e.g. after visiting Mock Test). Now derived from
-the persisted `lesson.viewed` flag (viewed-count ÷ total), with an optimistic
-local `viewed=true` on a successful `recordLessonView` so the bar moves live and
-survives navigation — consistent with the dashboard course-progress section.
-(2) PDF lessons rendered "mostly black": the portrait page was letterboxed on
-the native viewer's dark bg in a fixed-height iframe. Fixed by appending
-`#toolbar=0&navpanes=0&view=FitH` (fit-to-width) + white iframe/container bg +
-85vh height. Deployed to apps/web. On top of **adding a study-activity heatmap
-+ mentor timeline to the student dashboard**. New backend route
-`GET /enrollments/me/activity` (STUDENT-only, `CoursesService.getMyActivity`)
-returns per-day lesson-view counts over the last 17 weeks, bucketed by UTC date
-(only non-zero days). Frontend: a GitHub-style **activity heatmap** (17×7 grid,
-4-level orange-opacity scale strictly on brand, current-day outline, current-
-streak + total-lessons header) and a **mentor-sessions timeline** (vertical,
-status-coloured dots: upcoming=orange / completed=green / cancelled=grey, from
-existing `mentorApi` bookings). `enrollmentsApi.activity()` added to web
-`lib/api.ts` only (student-only; admin has no student dashboard). Note:
-`LessonView` is upsert with `update:{}`, so `viewedAt` = first-open time — the
-heatmap shows lessons first opened per day. Verified locally (student 200 w/
-real data, 401 unauth, 403 admin) + web build. Deployed to apps/api (Render)
-and apps/web (Vercel). On top of **adding a Course-progress section to the
-student dashboard** (`apps/web/src/app/student/dashboard/page.tsx`): a
-multi-segment status **donut** (completed/in-progress/not-started, animated
-segment draw + count-up + legend) and **animated per-course progress bars**
-(lessons viewed ÷ total, `.dash-bar-x` scaleX grow added to globals.css), with
-an overall "X% of all lessons completed" summary. Motivation: the redesigned
-dashboard's mock-test graphs are data-gated, so an account with 0 attempts saw
-mostly empty states; course progress is derived from enrollments (the student's
-real data) by fetching each enrolled course tree in parallel
-(`coursesApi.get`) and counting `lesson.viewed`. tsc + web build verified;
-deployed to apps/web. On top of fixing a **logout bug** (couldn't log out —
-landing on /login auto-redirected back in). Root cause: prod auth cookies are
-`SameSite=None; Secure` (cross-domain vercel↔onrender), but `/auth/logout`
-called `res.clearCookie()` with NO options, so the deletion Set-Cookie lacked
-`SameSite=None; Secure` and the browser dropped it on the cross-site request —
-cookies survived, `usersApi.me()` still 200'd, and the login page redirected
-home. Fix (`apps/api/src/auth/auth.controller.ts`): shared `cookieBaseOptions()`
-used by BOTH set and clear so attributes can't drift; logout now clears with
-`{ httpOnly, secure, sameSite:'none'|'lax', path:'/' }`. Verified locally
-(login→me 200→logout→me 401) + prod logout Set-Cookie headers. Deployed via
-Render (API). On top of **redesigning the student dashboard**
-(`apps/web/src/app/student/dashboard/page.tsx` + new analytics keyframes in
-`globals.css`): animated gradient performance ring (stroke-draw + count-up),
-exam-scores bar chart with grow animation + average reference line + gridlines,
-a NEW score-trend area/line chart (self-drawing, last 10 attempts), count-up
-stat cards with staggered `fade-in-up` + hover lift, a shimmer skeleton loader
-(`.dash-skeleton`), and a richer greeting/empty-state — all strictly on the
-existing `var(--*)` tokens and the `#f7902b→#f24d1b` brand gradient. Data-load
-logic, error handling, and mobile-responsive classes unchanged. Deployed to
-apps/web. Bar charts use fixed-px heights (the percentage-height-in-flex gotcha).
-On top of a pre-deploy **security review pass** plus
-the error-handling/validation/loading-state hardening. Security findings +
-fixes (commit `b0dbd0b`, PR #2 merged to main `594284a`, Render auto-deploy):
-(1) removed hardcoded JWT secret fallbacks — both passport strategies AND the
-token-signing path now require `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET` and
-throw at startup if unset, instead of silently using an in-repo `*-change-me`
-default; (2) group conversations now validate participants against the same
-contact eligibility as DMs (`eligibleContactIds`), so a student can no longer
-group-message other students — ineligible ids 403. Earlier on the same branch
-(commit `906f655`): the global `ValidationPipe` gained
-`forbidNonWhitelisted: true` (unknown request fields now 400 instead of being
-stripped) and the Messenger sidebar surfaces initial-load errors instead of a
-silent blank list. The review found the codebase otherwise solid — every
-controller behind `JwtAccessGuard`, writes role-gated, `passwordHash` never
-leaves the API, registration can't self-assign a role, IDOR consistently
-blocked. **ACTION STILL NEEDED (manual):** delete the dead `JWT_ACCESS_SECRET`
-env var from both Vercel projects (web + admin) — unused by frontend code,
-already removed from local `.env.local`. Also recorded the standing rule that
-every new push must ship error handling, input validation, and loading states.
-On top of replacing the AI Models settings'
-freeform model text field with a curated preset dropdown (commit
-`fde6810`, pushed + deployed to apps/admin). On top of the same day's
-earlier work: the admin AI Models settings (per-feature OpenRouter/OpenAI
-provider switching, commit `61df750`, deployed to apps/admin and apps/api
-via Render auto-deploy + a hand-written migration), the Study Planner
-feature — student Weekly/Reflection/Tasks tabs + admin reflection
-oversight (commit `787e520`, deployed to apps/web, apps/admin,
-and apps/api). On top of 2026-06-29's
-work: hiding the native PDF-viewer toolbar in lesson PDF embeds across
-student/faculty/admin (commit `fe77ae1`), the mandatory segment-onboarding
-gate and courses-page segment filtering (commit `a91da3c`). On top of
-2026-06-27's work: mobile responsive layout for
-Feedback and Profile (commit `640ce39`), Workout and Mock Test mobile
-layout (commit `54994c9`), the mobile Book-a-Mentor CTA button fix (commit
-`46168b6`), the Today's Schedule "with undefined" bug fix + stat card
-restyle (commit `3de7ace`),
-mobile responsive layout for Forum (commit `ffc0752`), the Messages conversation-list ↔ thread mobile drill-down (commit
-`9103fe8`), mobile responsive layout for Calendar and Book a Mentor (commit
-`557402d`), the bottom tab nav + chapter-list
-mockup redesign (commit `f4334ee`), its mobile-drilldown follow-up fix
-(commit `0e1f15b`, course-open now lands on the chapter list instead of
-jumping into the lesson player), and the Test-data cleanup + 5 new 30-Q
-question banks + 6-passage Comprehension Practice bank (data-only, no code
-deploy). On top of the rest of 2026-06-26's work: the mobile UI rollout
-commits (shell, course list, course detail/lesson player, flashcards+AI
-deck, dashboard), the Answer Correction feature, the AI Cheat Sheet
-Generator, the lesson/test/chapter order-tiebreak fix, diagnosing the Cheat
-Sheet image 402, the load()/refresh() no-blink fix for reorder/feature-toggle
-actions, and Comprehension mixed question types + passage-relative
-numbering.*
+
+## Changelog (newest first)
+
+Keep this list current after every commit: add one newest-first bullet with the
+commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
+the **Feature history** and **Current Prisma data model** sections above.
+
+- **Pending (2026-07-06 audit, NOT yet committed):** order-tiebreaker + bank-question
+  order-assignment fixes (`question-banks`/`tests`/`batch-status-types` services now
+  assign `max+1` on create and sort `[{order},{createdAt}]`); question-bank editor
+  hardening in both apps (silent `refresh()` instead of full-page `load()` on
+  mutations, plus try/catch + `actionError` banner + in-flight `saving` guard on
+  publish/title/add/edit/delete); this context file cleanup (missing commits added,
+  Cheat Sheet illustration contradiction resolved, changelog restructured).
+- `1af982c` (2026-07-02) — Admin nav consolidation: Batch Statuses moved into the
+  Batches page; Tags moved into the Tests page. No backend change.
+- `47dff1d` (2026-07-02) — Fix: the question-bank editor's edit-question save
+  silently dropped `difficulty/marks/negativeMarks/answerTimeSeconds/tags` (write
+  payload omitted them). Now sends the full `QuestionMeta` shape.
+- `76c7566` (2026-07-02) — Per-test pass threshold (`Test.passPercent Int @default(50)`,
+  migration `20260702120000_add_test_pass_percent`; PASS_TEST completion reads each
+  test's `passPercent`) + comprehension support on the student **workout** page (OR
+  clause for `passageId:{not:null}` sub-questions; workout now presigns question +
+  passage images — also fixed raw-R2-key image bug). See known-gaps RESOLVED note.
+- `24349fe` (2026-07-01) — Tags/marks follow-ups: import carries tags; tag management
+  (rename/merge/delete + usage counts, `/admin/tags` + `/faculty/tags`, `PATCH /tags/:id`,
+  `DELETE /tags/:id`, `POST /tags/:id/merge`); `QuestionMetaBadges` on all 6 editors;
+  soft per-question timer (guidance only, never auto-advances); workout shows tags.
+- `93c3bb9` (2026-07-01) — Build-by-tag import filter (all 4 test editors),
+  `QuestionMetaFields` panels on test editors, student-side marks/tags display +
+  fixed instructions screen (real total marks + dynamic marking note).
+- `b1830ab` (2026-07-01) — Question tags + fields UI: tag picker + difficulty/marks
+  in the question-bank editor (both apps), shared `QuestionMetaFields` component.
+- `b6380fb` (2026-07-01) — Question tags + fields backend: global `Tag` model (m2m to
+  Question + TestQuestion), `QuestionDifficulty` enum, `difficulty/marks/negativeMarks/
+  answerTimeSeconds` on both; `GET/POST /tags`. Marks-based scoring (maxScore=sum(marks),
+  +marks/−negativeMarks/0, clamped ≥0), backward-compatible (marks=1/neg=0 = old count).
+- `8cc28a5` — Manual poster-image upload for cheat sheets (`CheatSheet.posterImageKey`,
+  migration `20260701120000_add_cheatsheet_poster_image`); shown uncropped;
+  `POST/DELETE /lessons/:lessonId/cheat-sheet/poster`.
+- `fe3d46f` — Re-added AI illustrations into the single cheat-sheet poster at
+  `quality:'low'` (~$0.01/image); prompt forbids in-image text.
+- `f40a07d` — Redesigned Cheat Sheet as a single designed HTML infographic
+  (`CheatSheetPoster` component); AI illustrations dropped at this step (re-added above).
+- `3afd875` — Larger portrait cheat-sheet cards (removed clipping aspect-ratio) +
+  surfaced illustration failures in the UI (`illustrationError` per page).
+- `597d8ad` — Capped OpenAI image cost: pinned `quality:'low'` on `gpt-image-1`
+  (default `auto`→`high` cost ~$3 in test calls). Standing rule: never make a billed
+  provider call for testing without asking first ([[billed-api-cost-caution]]).
+- `89830cb` — Real OpenAI integration alongside OpenRouter (`resolveModel()` returns
+  `{provider, model}`; OpenAI uses `/v1/chat/completions` + `/v1/images/generations`;
+  `OPENAI_API_KEY` in `.env` + Render).
+- `1f3e833` — Video captions+chapters (`Lesson.captionsVtt`/`videoChapters`, migration
+  `20260630200000_add_video_captions_chapters`) + detailed mock-test result dashboard
+  (`GET /attempts/:id/review`: time/percentile/accuracy-by-type/per-question review).
+- Two student-course bugfixes — course progress bar now from persisted `lesson.viewed`;
+  PDF lessons no longer render mostly-black (`#toolbar=0&navpanes=0&view=FitH` + white bg + 85vh).
+- Study-activity heatmap + mentor timeline on the student dashboard
+  (`GET /enrollments/me/activity`, last 17 weeks bucketed by UTC date).
+- Course-progress section on the student dashboard (status donut + animated per-course bars).
+- Logout bug fix — `res.clearCookie()` had no options, so cross-domain
+  `SameSite=None;Secure` cookies weren't dropped; shared `cookieBaseOptions()` now used
+  for set + clear (`apps/api/src/auth/auth.controller.ts`).
+- Student dashboard redesign — animated performance ring, exam-scores bar chart,
+  score-trend chart, count-up stat cards, skeleton loader (bar charts use fixed-px
+  heights per the flex-percentage-height gotcha).
+- Pre-deploy security review + error-handling/validation/loading-state hardening
+  (`b0dbd0b`, PR #2 → `594284a`): removed hardcoded JWT secret fallbacks (throw at
+  startup if unset); group conversations validate participants against contact
+  eligibility; `ValidationPipe` gained `forbidNonWhitelisted` (`906f655`).
+  **ACTION STILL NEEDED (manual):** delete dead `JWT_ACCESS_SECRET` from both Vercel
+  projects. Optional: harden login user-enumeration timing side-channel.
+- `fde6810` — AI Models settings: freeform model text field replaced with a curated
+  preset `<select>` (+ "Custom…" fallback).
+- `61df750` — Admin AI Models settings: per-feature OpenRouter/OpenAI provider + model
+  override (`AiFeatureSetting` model); selecting OpenAI errors clearly on next call
+  rather than silently falling back (deliberate — don't "fix" into a fallback).
+- `787e520` — Study Planner: student Weekly (per-chapter % lessons viewed from real
+  `LessonView`) / Reflection (`Reflection` model, one row/day, migration
+  `20260629180000_add_reflection`) / Tasks (Todo reuse); admin reflection-oversight page.
+- `fe77ae1` (2026-06-29) — Hid the native PDF-viewer toolbar in lesson PDF embeds
+  (`#toolbar=0`) across student/faculty/admin.
+- `a91da3c` (2026-06-29) — Mandatory segment-onboarding gate (`SegmentOnboardingGate.tsx`)
+  + courses-page segment filtering; supersedes the old "no-segment student sees all
+  content" behavior.
+- 2026-06-27 mobile rollout + fixes: Feedback+Profile (`640ce39`), Workout+Mock Test
+  (`54994c9`), Book-a-Mentor CTA (`46168b6`), Today's Schedule "with undefined" bug +
+  stat-card restyle (`3de7ace`), Forum (`ffc0752`), Messages drill-down (`9103fe8`),
+  Calendar+Mentor (`557402d`), bottom tab nav + chapter-list redesign (`f4334ee`) +
+  drill-down follow-up (`0e1f15b`); plus data-only Test cleanup + 5 new 30-Q banks +
+  6-passage Comprehension Practice bank.
+- 2026-06-26 foundation: mobile UI rollout (shell/course list/course detail/flashcards+
+  deck/dashboard), Answer Correction feature, AI Cheat Sheet Generator, lesson/test/
+  chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
+  fix, Comprehension mixed question types + passage-relative numbering.
+
+*Last updated: 2026-07-06 (audit pass over the 2026-07-02 state, latest commit `1af982c`).*
