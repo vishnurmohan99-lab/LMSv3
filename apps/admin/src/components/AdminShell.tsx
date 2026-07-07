@@ -10,7 +10,7 @@ function Icon({ children }: { children: React.ReactNode }) {
 }
 
 function DashboardIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="12" cy="12" r="4" />
@@ -20,7 +20,7 @@ function DashboardIcon({ active }: { active: boolean }) {
 }
 
 function SegmentsIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
@@ -29,7 +29,7 @@ function SegmentsIcon({ active }: { active: boolean }) {
 }
 
 function CoursesIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="m12 3 9 5-9 5-9-5 9-5Z" />
@@ -39,7 +39,7 @@ function CoursesIcon({ active }: { active: boolean }) {
 }
 
 function QuestionBankIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="12" cy="12" r="9" />
@@ -50,7 +50,7 @@ function QuestionBankIcon({ active }: { active: boolean }) {
 }
 
 function TestsIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M9 11l2 2 4-4" />
@@ -60,7 +60,7 @@ function TestsIcon({ active }: { active: boolean }) {
 }
 
 function BatchStatusIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="8" cy="8" r="2.5" />
@@ -72,7 +72,7 @@ function BatchStatusIcon({ active }: { active: boolean }) {
 }
 
 function MessagesIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />
@@ -81,7 +81,7 @@ function MessagesIcon({ active }: { active: boolean }) {
 }
 
 function SettingsIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="12" cy="12" r="3" />
@@ -91,7 +91,7 @@ function SettingsIcon({ active }: { active: boolean }) {
 }
 
 function UsersIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="9" cy="7" r="4" />
@@ -101,7 +101,7 @@ function UsersIcon({ active }: { active: boolean }) {
 }
 
 function ProfileIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="12" cy="8" r="4" />
@@ -111,7 +111,7 @@ function ProfileIcon({ active }: { active: boolean }) {
 }
 
 function FeedbackIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -121,7 +121,7 @@ function FeedbackIcon({ active }: { active: boolean }) {
 }
 
 function SubscriptionsIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <rect x="2" y="5" width="20" height="14" rx="2" />
@@ -131,7 +131,7 @@ function SubscriptionsIcon({ active }: { active: boolean }) {
 }
 
 function ForumIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M17 8h2a2 2 0 0 1 2 2v9l-3-2H9a2 2 0 0 1-2-2v-1" />
@@ -141,7 +141,7 @@ function ForumIcon({ active }: { active: boolean }) {
 }
 
 function PlannerIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <rect x="3" y="4" width="18" height="17" rx="2" />
@@ -151,7 +151,7 @@ function PlannerIcon({ active }: { active: boolean }) {
 }
 
 function ReportsIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M3 3v18h18" />
@@ -161,7 +161,7 @@ function ReportsIcon({ active }: { active: boolean }) {
 }
 
 function AnswerCorrectionIcon({ active }: { active: boolean }) {
-  const c = active ? "#fff" : "var(--ink2)";
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
@@ -205,11 +205,11 @@ function navStyle(active: boolean): React.CSSProperties {
     gap: 12,
     padding: "11px 14px",
     border: "none",
-    background: active ? "var(--ink)" : "transparent",
-    color: active ? "#fff" : "var(--ink2)",
+    background: active ? "var(--orange-soft)" : "transparent",
+    color: active ? "var(--orange-deep)" : "var(--ink2)",
     fontSize: 14,
     fontWeight: active ? 700 : 600,
-    borderRadius: 12,
+    borderRadius: "var(--rs)",
     fontFamily: "inherit",
     textAlign: "left",
     marginBottom: 3,
@@ -268,7 +268,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               width: 26,
               height: 26,
               borderRadius: 8,
-              background: "linear-gradient(135deg,#f7902b,#f24d1b)",
+              background: "linear-gradient(135deg,#fb8a44,#e0540e)",
               transform: "rotate(45deg)",
               flex: "none",
             }}
@@ -293,7 +293,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 width: 32,
                 height: 32,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg,#f7902b,#f24d1b)",
+                background: "linear-gradient(135deg,#fb8a44,#e0540e)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

@@ -206,11 +206,11 @@ function navStyle(active: boolean, enabled: boolean): React.CSSProperties {
     gap: 12,
     padding: "11px 14px",
     border: "none",
-    background: active ? "var(--ink)" : "transparent",
-    color: active ? "#fff" : enabled ? "var(--ink2)" : "var(--ink3)",
+    background: active ? "var(--orange-soft)" : "transparent",
+    color: active ? "var(--orange-deep)" : enabled ? "var(--ink2)" : "var(--ink3)",
     fontSize: 14,
     fontWeight: active ? 700 : 600,
-    borderRadius: 12,
+    borderRadius: "var(--rs)",
     fontFamily: "inherit",
     textAlign: "left",
     marginBottom: 3,
@@ -311,7 +311,7 @@ export default function StudentShell({ children }: { children: React.ReactNode }
               height: 36,
               flex: "none",
               borderRadius: "50%",
-              background: "linear-gradient(135deg,#f7902b,#f24d1b)",
+              background: "linear-gradient(135deg,#fb8a44,#e0540e)",
               color: "#fff",
               fontWeight: 800,
               fontSize: 12.5,
@@ -344,7 +344,7 @@ export default function StudentShell({ children }: { children: React.ReactNode }
               width: 26,
               height: 26,
               borderRadius: 8,
-              background: "linear-gradient(135deg,#f7902b,#f24d1b)",
+              background: "linear-gradient(135deg,#fb8a44,#e0540e)",
               transform: "rotate(45deg)",
               flex: "none",
             }}
@@ -432,7 +432,7 @@ export default function StudentShell({ children }: { children: React.ReactNode }
                 width: 32,
                 height: 32,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg,#f7902b,#f24d1b)",
+                background: "linear-gradient(135deg,#fb8a44,#e0540e)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -465,7 +465,7 @@ export default function StudentShell({ children }: { children: React.ReactNode }
         >
           {navItems.map(({ href, label, Icon: ItemIcon, enabled }) => {
             const active = isActive(href);
-            const color = active ? "#fff" : enabled ? "var(--ink2)" : "var(--ink3)";
+            const color = active ? "var(--orange-deep)" : enabled ? "var(--ink2)" : "var(--ink3)";
             const content = (
               <>
                 <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -497,7 +497,7 @@ export default function StudentShell({ children }: { children: React.ReactNode }
           <Link href="/student/profile" style={navStyle(isActive("/student/profile"), true)}>
             <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Icon>
-                <ProfileIcon c={isActive("/student/profile") ? "#fff" : "var(--ink2)"} />
+                <ProfileIcon c={isActive("/student/profile") ? "var(--orange-deep)" : "var(--ink2)"} />
               </Icon>
               <span>Profile</span>
             </span>

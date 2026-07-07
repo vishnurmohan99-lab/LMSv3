@@ -775,8 +775,14 @@ the **Feature history** and **Current Prisma data model** sections above.
     deliberately NOT a structural rebuild — the mockup's continue-learning/recommended/
     streak/reflection sections were left for a future scoped module (the current dashboard
     is analytics-heavy with real data and was recently redesigned).
-  Next modules TBD with the user (core primitives / shells / other screens). Verify each
-  live via production (local http can't hold the Secure auth cookie).
+  - **M3 · Shared shells** (`StudentShell.tsx` + `AdminShell.tsx`) — highest-leverage
+    retrofit (on every page; there is NO shared Button/input component — primitives are
+    inline everywhere — so the shells ARE the leverage point). Brand gradients → Ascent
+    orange-400→600; **active nav item** changed from the old solid-black pill to the
+    mockup's orange-tinted treatment (`background: --orange-soft`, text/icon
+    `--orange-deep` #e0540e, radius `--rs`). Bottom nav already used orange.
+  Next modules TBD with the user (screens: course detail/lesson player, auth, etc.).
+  Verify each live via production (local http can't hold the Secure auth cookie).
 - `760ce53` (2026-07-06 audit, deployed) — order-tiebreaker + bank-question
   order-assignment fixes (`question-banks`/`tests`/`batch-status-types` services now
   assign `max+1` on create and sort `[{order},{createdAt}]`); question-bank editor
