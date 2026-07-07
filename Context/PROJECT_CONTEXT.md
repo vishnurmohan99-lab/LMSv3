@@ -807,6 +807,18 @@ the **Feature history** and **Current Prisma data model** sections above.
     mentor timeline, stat strip) and removed ~350 lines of now-dead code (910→560). New mobile
     CSS: `.dash-continue-grid`/`.dash-rec-grid` stack. Priority note: user directed
     **student → admin → faculty**, matching Design System/ pages on web + mobile.
+  - **M5.1 · dashboard pixel-match to the S1 screenshot** (user supplied an annotated shot):
+    Continue-learning cards now show the **recently-studied chapter + next lesson** ("Ch 4 ·
+    <lesson>") with striped-gradient dummy thumbnails (play glyph / PDF chip) + green progress;
+    Recommended now shows **enrolled + purchasable** courses (enrolled hide price → "Enrolled/
+    Continue") with striped thumbnails, BESTSELLER/NEW badge (derived), instructor avatar+name
+    (backend `listCourses` now includes `faculty.fullName`), rating, price/FREE, Enroll; Today's
+    schedule uses colored bars + type tag chips (LIVE/Test/Unlock/Session). **Placeholders (no
+    real data yet, user OK'd dummy "to see how it looks"):** per-course difficulty chip
+    (Easy/Med/Hard = deterministic hash of course id — needs a real Course.difficulty field to
+    be true), striped thumbnails (until courses have real images), and the "82 days to exam"
+    line was OMITTED (no exam-date field — would be a permanently-wrong countdown). Removed the
+    old event-icon helpers. Web builds clean; API `faculty` include deploys via Render.
   Next: remaining student screens (course-detail/player S2, mock-test, workout, planner,
   calendar, mentor, subscription), then admin, then faculty.
   Verify each live via production (local http can't hold the Secure auth cookie).

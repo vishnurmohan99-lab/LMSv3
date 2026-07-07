@@ -16,6 +16,10 @@ interface CourseProgress {
   total: number;
   viewed: number;
   pct: number;
+  thumbnailUrl: string | null;
+  chapterLabel: string | null; // e.g. "Ch 4" — the chapter currently being studied
+  nextLesson: string | null; // title of the next unviewed lesson in that chapter
+  nextType: string | null; // that lesson's type (VIDEO / PDF / …) for the thumbnail glyph
 }
 
 const HEAT_WEEKS = 17;
@@ -127,49 +131,6 @@ function isCurrentlyLive(event: CalendarEvent, now: Date) {
   return diffMin >= -LIVE_WINDOW_BEFORE_MIN && diffMin <= LIVE_WINDOW_AFTER_MIN;
 }
 
-function LiveIcon({ color }: { color: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
-      <path d="m23 7-7 5 7 5V7z" />
-      <rect x="1" y="5" width="15" height="14" rx="2" />
-    </svg>
-  );
-}
-
-function EventMentorIcon({ color }: { color: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
-    </svg>
-  );
-}
-
-function UnlockIcon({ color }: { color: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
-      <rect x="5" y="11" width="14" height="9" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 7.5-2" />
-    </svg>
-  );
-}
-
-function TestIcon({ color }: { color: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
-      <path d="M9 11l3 3L22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-    </svg>
-  );
-}
-
-function eventIcon(type: CalendarEvent["type"]) {
-  if (type === "LIVE_LESSON") return <LiveIcon color="var(--orange)" />;
-  if (type === "CHAPTER_UNLOCK") return <UnlockIcon color="var(--green)" />;
-  if (type === "TEST") return <TestIcon color="var(--orange)" />;
-  return <EventMentorIcon color="var(--purple)" />;
-}
-
 function eventSub(event: CalendarEvent) {
   if (event.type === "LIVE_LESSON" || event.type === "CHAPTER_UNLOCK") return event.courseTitle ?? "";
   if (event.type === "TEST") return "Test";
@@ -182,30 +143,35 @@ function eventHref(event: CalendarEvent) {
   return null;
 }
 
+const EVENT_ACCENT: Record<string, { bar: string; bg: string; ink: string; tag: string }> = {
+  LIVE_LESSON: { bar: "var(--live)", bg: "var(--live-soft)", ink: "var(--live)", tag: "LIVE" },
+  TEST: { bar: "var(--blue)", bg: "var(--blue-soft)", ink: "var(--blue)", tag: "Test" },
+  CHAPTER_UNLOCK: { bar: "var(--green)", bg: "var(--green-soft)", ink: "var(--green)", tag: "Unlock" },
+  MENTOR_SESSION: { bar: "var(--purple)", bg: "var(--purple-soft)", ink: "var(--purple-ink)", tag: "Session" },
+};
+
 function ScheduleRow({ event }: { event: CalendarEvent }) {
   const date = new Date(event.date);
-  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const time = date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
   const href = eventHref(event);
+  const a = EVENT_ACCENT[event.type] ?? EVENT_ACCENT.MENTOR_SESSION;
   const content = (
-    <div style={{ display: "flex", gap: 14, alignItems: "center", padding: "13px 0", borderTop: "1px solid var(--line)" }}>
-      <div style={{ width: 56, flex: "none", textAlign: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{eventIcon(event.type)}</div>
-        <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: -0.3, marginTop: 2 }}>{time}</div>
-      </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 0", borderTop: "1px solid var(--line2)" }}>
+      <span style={{ fontSize: 10.5, fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--ink3)", width: 42, flex: "none" }}>{time}</span>
+      <span style={{ width: 4, height: 34, borderRadius: 2, background: a.bar, flex: "none" }} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</div>
-        <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>{eventSub(event)}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.title}</div>
+        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{eventSub(event)}</div>
       </div>
+      <span style={{ fontSize: 10, fontWeight: 700, color: a.ink, background: a.bg, borderRadius: 999, padding: "3px 9px", flex: "none" }}>{a.tag}</span>
     </div>
   );
-
-  if (href) {
+  if (href)
     return (
       <Link href={href} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
         {content}
       </Link>
     );
-  }
   return content;
 }
 
@@ -233,54 +199,98 @@ function fmtPrice(course: Course) {
   return `₹${Math.round(course.priceCents / 100).toLocaleString("en-IN")}`;
 }
 
-/** Compact enrolled-course card for "Continue learning" (thumbnail + progress). */
-function ContinueCard({ course, pct }: { course: Course; pct: number }) {
+// Dummy striped thumbnail (matches the mockup) — used when a course has no real image.
+const STRIPES: Record<string, string> = {
+  orange: "repeating-linear-gradient(45deg,#ffe9d8,#ffe9d8 8px,#fff6ef 8px,#fff6ef 16px)",
+  purple: "repeating-linear-gradient(45deg,#ece6ff,#ece6ff 8px,#f5f2ff 8px,#f5f2ff 16px)",
+  green: "repeating-linear-gradient(45deg,#d7f0e6,#d7f0e6 8px,#e6f6ee 8px,#e6f6ee 16px)",
+};
+function initials(name?: string) {
+  if (!name) return "··";
+  return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+}
+// Deterministic placeholder difficulty (no real course-difficulty field exists yet).
+const LEVELS = [
+  { label: "Easy", stripe: "green", bg: "var(--diff-easy-soft)", ink: "var(--diff-easy)" },
+  { label: "Medium", stripe: "purple", bg: "var(--diff-med-soft)", ink: "var(--diff-med)" },
+  { label: "Hard", stripe: "orange", bg: "var(--diff-hard-soft)", ink: "var(--diff-hard)" },
+];
+function pseudoLevel(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return LEVELS[h % 3];
+}
+
+/** Enrolled-course card for "Continue learning": thumbnail + current chapter/lesson + progress. */
+function ContinueCard({ prog }: { prog: CourseProgress }) {
+  const isPdf = prog.nextType === "PDF";
+  const sub = prog.chapterLabel && prog.nextLesson ? `${prog.chapterLabel} · ${prog.nextLesson}` : prog.pct >= 100 ? "Completed — revise anytime" : "Start your first lesson";
   return (
     <Link
-      href={`/student/courses/${course.id}`}
+      href={`/student/courses/${prog.id}`}
       className="entity-card"
       style={{ display: "flex", gap: 14, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16, textDecoration: "none", color: "inherit" }}
     >
-      <div style={{ width: 104, height: 74, borderRadius: 12, flex: "none", overflow: "hidden", background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : "var(--orange-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {!course.thumbnailUrl && (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--orange)"><path d="M8 5v14l11-7z" /></svg>
-        )}
+      <div style={{ width: 104, height: 74, borderRadius: 12, flex: "none", position: "relative", overflow: "hidden", background: prog.thumbnailUrl ? `url(${prog.thumbnailUrl}) center/cover` : STRIPES[isPdf ? "purple" : "orange"], display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {!prog.thumbnailUrl &&
+          (isPdf ? (
+            <span style={{ fontSize: 10, fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--purple-ink)", background: "rgba(255,255,255,.8)", borderRadius: 5, padding: "3px 7px" }}>PDF</span>
+          ) : (
+            <div style={{ width: 28, height: 28, borderRadius: 999, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,.15)" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--orange)"><path d="M8 5v14l11-7z" /></svg>
+            </div>
+          ))}
       </div>
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{course.title}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{prog.title}</div>
+        <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</div>
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 10, paddingTop: 10 }}>
           <div style={{ flex: 1, height: 6, background: "var(--line2)", borderRadius: 999, overflow: "hidden" }}>
-            <div style={{ width: `${Math.round(pct)}%`, height: "100%", background: "var(--progress)", borderRadius: 999 }} />
+            <div style={{ width: `${Math.round(prog.pct)}%`, height: "100%", background: "var(--progress)", borderRadius: 999 }} />
           </div>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", fontFamily: "var(--font-mono)" }}>{Math.round(pct)}%</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", fontFamily: "var(--font-mono)" }}>{Math.round(prog.pct)}%</span>
         </div>
       </div>
     </Link>
   );
 }
 
-/** Compact recommended-course card (badge + rating + price + enroll link). */
-function RecCard({ course }: { course: Course }) {
+/** Recommended-course card (badge + level + instructor + rating + price/enrolled + enroll). */
+function RecCard({ course, enrolled, badge }: { course: Course; enrolled: boolean; badge: string | null }) {
+  const level = pseudoLevel(course.id);
+  const price = fmtPrice(course);
   return (
     <Link
-      href={`/student/courses?q=${encodeURIComponent(course.title)}`}
+      href={enrolled ? `/student/courses/${course.id}` : `/student/courses?q=${encodeURIComponent(course.title)}`}
       className="entity-card"
       style={{ display: "block", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden", textDecoration: "none", color: "inherit" }}
     >
-      <div style={{ height: 84, background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : "linear-gradient(135deg,var(--orange-soft),var(--purple-soft))" }} />
+      <div style={{ height: 92, position: "relative", background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : STRIPES[level.stripe], display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {!course.thumbnailUrl && <span style={{ fontSize: 9, fontWeight: 500, fontFamily: "var(--font-mono)", color: "var(--ink3)", background: "rgba(255,255,255,.75)", borderRadius: 5, padding: "3px 7px" }}>thumbnail</span>}
+        {badge && (
+          <span style={{ position: "absolute", top: 8, left: 8, fontSize: 9, fontWeight: 800, letterSpacing: 0.4, color: "#fff", background: badge === "BESTSELLER" ? "var(--orange)" : "var(--purple)", borderRadius: 5, padding: "3px 7px" }}>{badge}</span>
+        )}
+        <span style={{ position: "absolute", bottom: 8, left: 8, fontSize: 9.5, fontWeight: 700, color: level.ink, background: "rgba(255,255,255,.85)", borderRadius: 5, padding: "3px 7px" }}>{level.label}</span>
+      </div>
       <div style={{ padding: 14 }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.4, minHeight: 38, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{course.title}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 11.5, color: "var(--ink3)", fontWeight: 600 }}>
-          {course.avgRating != null ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 8 }}>
+          <div style={{ width: 22, height: 22, borderRadius: 999, flex: "none", background: "var(--purple-soft)", color: "var(--purple-ink)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700 }}>{initials(course.faculty?.fullName)}</div>
+          <span style={{ fontSize: 11, color: "var(--ink3)", fontWeight: 500, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.faculty?.fullName ?? "Instructor"}</span>
+          {course.avgRating != null && (
             <>
-              <span style={{ color: "var(--amber)" }}>★</span>
-              <span style={{ color: "var(--ink)", fontWeight: 700, fontFamily: "var(--font-mono)" }}>{course.avgRating.toFixed(1)}</span>
-              {course.reviewCount ? <span>({course.reviewCount})</span> : null}
+              <span style={{ color: "var(--amber)", fontSize: 11 }}>★</span>
+              <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{course.avgRating.toFixed(1)}</span>
             </>
-          ) : (
-            <span>New</span>
           )}
-          <span style={{ marginLeft: "auto", fontWeight: 800, color: fmtPrice(course) === "Free" ? "var(--green)" : "var(--ink)" }}>{fmtPrice(course)}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 11 }}>
+          {enrolled ? (
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange-deep)", background: "var(--orange-soft)", padding: "4px 10px", borderRadius: 999 }}>Enrolled</span>
+          ) : (
+            <span style={{ fontSize: 14, fontWeight: 800, color: price === "Free" ? "var(--green)" : "var(--ink)" }}>{price}</span>
+          )}
+          <span style={{ fontSize: 11, fontWeight: 600, border: "1px solid var(--line)", borderRadius: 8, height: 28, display: "flex", alignItems: "center", padding: "0 12px", color: "var(--ink)" }}>{enrolled ? "Continue" : "Enroll"}</span>
         </div>
       </div>
     </Link>
@@ -325,9 +335,9 @@ export default function StudentDashboardPage() {
         const enrollments = await enrollmentsApi.mine();
         setEnrollments(enrollments);
 
-        // Recommended = published catalog courses the student isn't already enrolled in.
-        const enrolledIds = new Set(enrollments.map((e) => e.courseId));
-        coursesApi.list().then((all) => setCatalog(all.filter((c) => !enrolledIds.has(c.id)))).catch(() => {});
+        // Recommended shows enrolled + available-to-purchase courses (listCourses returns both
+        // for a student, with faculty/rating/price included).
+        coursesApi.list().then(setCatalog).catch(() => {});
         // Today's reflection (for the evening-reflection card).
         reflectionsApi
           .listMine(1)
@@ -342,11 +352,26 @@ export default function StudentDashboardPage() {
         const trees = await Promise.all(enrollments.map((e) => coursesApi.get(e.courseId).catch(() => null)));
         setCourseProgress(
           trees.map((tree, i) => {
-            if (!tree) return { id: enrollments[i].courseId, title: enrollments[i].course.title, total: 0, viewed: 0, pct: 0 };
+            const enr = enrollments[i];
+            if (!tree)
+              return { id: enr.courseId, title: enr.course.title, total: 0, viewed: 0, pct: 0, thumbnailUrl: enr.course.thumbnailUrl, chapterLabel: null, nextLesson: null, nextType: null };
             const lessons = tree.chapters.flatMap((ch) => ch.lessons);
             const total = lessons.length;
             const viewed = lessons.filter((l) => l.viewed).length;
-            return { id: tree.id, title: tree.title, total, viewed, pct: total ? (viewed / total) * 100 : 0 };
+            // "Recently studied" chapter = first chapter that still has an unviewed lesson.
+            let chapterLabel: string | null = null;
+            let nextLesson: string | null = null;
+            let nextType: string | null = null;
+            for (let ci = 0; ci < tree.chapters.length; ci++) {
+              const nl = tree.chapters[ci].lessons.find((l) => !l.viewed);
+              if (nl) {
+                chapterLabel = `Ch ${ci + 1}`;
+                nextLesson = nl.title;
+                nextType = nl.type;
+                break;
+              }
+            }
+            return { id: tree.id, title: tree.title, total, viewed, pct: total ? (viewed / total) * 100 : 0, thumbnailUrl: tree.thumbnailUrl, chapterLabel, nextLesson, nextType };
           }),
         );
 
@@ -410,22 +435,29 @@ export default function StudentDashboardPage() {
     else break;
   }
 
-  // Continue learning: enrolled courses joined with their progress, in-progress first.
-  const progressById = new Map(courseProgress.map((c) => [c.id, c]));
-  const continueList = enrollments
-    .map((e) => ({ course: e.course, prog: progressById.get(e.courseId) }))
+  // Continue learning: enrolled courses with their progress, in-progress (recently studied) first.
+  const continueList = [...courseProgress]
     .sort((a, b) => {
-      const ap = a.prog?.pct ?? 0;
-      const bp = b.prog?.pct ?? 0;
       const rank = (p: number) => (p > 0 && p < 100 ? 0 : p === 0 ? 1 : 2);
-      return rank(ap) - rank(bp) || bp - ap;
+      return rank(a.pct) - rank(b.pct) || b.pct - a.pct;
     })
     .slice(0, 4);
 
-  // Recommended: highest-rated / most-enrolled catalog courses the student hasn't joined.
+  // Recommended: enrolled + available-to-purchase courses. Enrolled ones hide the price.
+  const enrolledIdSet = new Set(enrollments.map((e) => e.courseId));
+  const topEnrollment = Math.max(0, ...catalog.map((c) => c._count?.enrollments ?? 0));
+  const isNew = (c: Course) => Date.now() - new Date(c.createdAt).getTime() < 30 * 86400000;
   const recommended = [...catalog]
     .sort((a, b) => (b.avgRating ?? -1) - (a.avgRating ?? -1) || (b._count?.enrollments ?? 0) - (a._count?.enrollments ?? 0))
-    .slice(0, 3);
+    .slice(0, 6)
+    .map((course) => {
+      const enrolled = enrolledIdSet.has(course.id);
+      // Derived preview badge (no real "bestseller" flag exists yet): most-enrolled → BESTSELLER, else recent → NEW.
+      let badge: string | null = null;
+      if (!enrolled && topEnrollment > 0 && (course._count?.enrollments ?? 0) === topEnrollment) badge = "BESTSELLER";
+      else if (isNew(course)) badge = "NEW";
+      return { course, enrolled, badge };
+    });
 
   const firstName = profile?.fullName.split(" ")[0] ?? "there";
   const hour = now.getHours();
@@ -465,8 +497,8 @@ export default function StudentDashboardPage() {
                 <Link href="/student/courses" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange-deep)" }}>View all →</Link>
               </div>
               <div className="dash-continue-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                {continueList.map(({ course, prog }) => (
-                  <ContinueCard key={course.id} course={course} pct={prog?.pct ?? 0} />
+                {continueList.map((prog) => (
+                  <ContinueCard key={prog.id} prog={prog} />
                 ))}
               </div>
             </div>
@@ -483,8 +515,8 @@ export default function StudentDashboardPage() {
                 <Link href="/student/courses" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange-deep)" }}>Browse all →</Link>
               </div>
               <div className="dash-rec-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-                {recommended.map((c) => (
-                  <RecCard key={c.id} course={c} />
+                {recommended.map(({ course, enrolled, badge }) => (
+                  <RecCard key={course.id} course={course} enrolled={enrolled} badge={badge} />
                 ))}
               </div>
             </div>

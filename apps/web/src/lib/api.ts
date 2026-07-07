@@ -140,6 +140,7 @@ export interface Course {
   durationMinutes: number | null;
   avgRating?: number | null;
   reviewCount?: number;
+  faculty?: { fullName: string };
   _count?: { enrollments: number };
 }
 

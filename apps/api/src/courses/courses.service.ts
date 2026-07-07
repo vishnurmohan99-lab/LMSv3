@@ -70,18 +70,19 @@ export class CoursesService {
           ],
         },
         orderBy: { createdAt: 'desc' },
+        include: { faculty: { select: { fullName: true } }, _count: { select: { enrollments: true } } },
       });
     } else if (user.role === 'ADMIN') {
       courses = await this.prisma.course.findMany({
         where: categoryFilter,
         orderBy: { createdAt: 'desc' },
-        include: { _count: { select: { enrollments: true } } },
+        include: { _count: { select: { enrollments: true } }, faculty: { select: { fullName: true } } },
       });
     } else {
       courses = await this.prisma.course.findMany({
         where: { OR: [{ published: true }, { facultyId: user.sub }], ...categoryFilter },
         orderBy: { createdAt: 'desc' },
-        include: { _count: { select: { enrollments: true } } },
+        include: { _count: { select: { enrollments: true } }, faculty: { select: { fullName: true } } },
       });
     }
 
