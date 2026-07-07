@@ -40,8 +40,9 @@ function useCountUp(target: number, duration = 900) {
   return value;
 }
 
-const BRAND_GRADIENT_FROM = "#f7902b";
-const BRAND_GRADIENT_TO = "#f24d1b";
+// Ascent brand gradient (orange-400 → orange-600), matching .banner-gradient-orange.
+const BRAND_GRADIENT_FROM = "#fb8a44";
+const BRAND_GRADIENT_TO = "#e0540e";
 
 function PerformanceRing({ pct }: { pct: number | null }) {
   const value = pct ?? 0;
@@ -663,7 +664,7 @@ export default function StudentDashboardPage() {
           <div style={{ fontSize: 13, color: "var(--ink3)", fontWeight: 600 }}>
             {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
           </div>
-          <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: -0.6, marginTop: 2 }}>
+          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.8, marginTop: 3 }}>
             Hi, {profile.fullName.split(" ")[0]} 👋
           </div>
           <div style={{ fontSize: 13.5, color: "var(--ink2)", fontWeight: 600, marginTop: 4 }}>
@@ -678,10 +679,10 @@ export default function StudentDashboardPage() {
         <div className="fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22, marginBottom: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div style={{ fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 9 }}>
-              <span className="live-pulse" style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--red)" }} />
+              <span className="live-pulse" style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--live)" }} />
               Live now
             </div>
-            <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--red)", background: "var(--red-soft)", padding: "4px 10px", borderRadius: 8 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--live)", background: "var(--live-soft)", padding: "4px 10px", borderRadius: 8 }}>
               {liveNowEvents.length} live
             </span>
           </div>

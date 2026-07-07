@@ -756,6 +756,27 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Design-system redesign to "Ascent" (2026-07-07, in progress, module-by-module).**
+  Source: `Design System/` (Claude Design mockups — tokens + component library + all
+  screens, brand "Ascent": warm neutrals, primary orange `#f26a1b`, violet `#7c5cfc`,
+  live-pink `#e63368`, Plus Jakarta Sans + JetBrains Mono). Decision: **retrofit into the
+  existing inline-style architecture** (NOT a Tailwind/shadcn migration), paced
+  module-by-module. Modules shipped:
+  - **M1 · Foundation tokens** (`b6e397c`, deployed web+admin) — retrofitted both apps'
+    `globals.css` `:root`, preserving every existing var NAME, warming values onto the
+    Ascent scale and adding role tokens (`--live`, `--progress`, `--diff-easy/med/hard`,
+    `--e1..--e4` elevation, `--rxs..--rxl` radius, `-ink`/`-bright`/`-deep` brand steps,
+    `--font-sans/--font-mono`). Recolored `.live-pulse` (→pink), `.entity-card` shadow,
+    banner gradients, body bg. Everything downstream inherits automatically.
+  - **M2 · Student dashboard** (`apps/web/.../student/dashboard/page.tsx`) — the screen was
+    already ~fully token-driven, so this was a compliance+polish pass: brand gradient
+    constants → Ascent orange-400→600, greeting bumped toward H1 scale, "Live now"
+    indicator moved off generic `--red` onto the dedicated `--live` pink role. NOTE:
+    deliberately NOT a structural rebuild — the mockup's continue-learning/recommended/
+    streak/reflection sections were left for a future scoped module (the current dashboard
+    is analytics-heavy with real data and was recently redesigned).
+  Next modules TBD with the user (core primitives / shells / other screens). Verify each
+  live via production (local http can't hold the Secure auth cookie).
 - `760ce53` (2026-07-06 audit, deployed) — order-tiebreaker + bank-question
   order-assignment fixes (`question-banks`/`tests`/`batch-status-types` services now
   assign `max+1` on create and sort `[{order},{createdAt}]`); question-bank editor
