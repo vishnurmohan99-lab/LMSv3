@@ -327,6 +327,24 @@ export default function FacultyDashboardPage() {
               alignItems: "center",
             }}
           >
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Faculty Notes</div>
+            <Link href="/faculty/notes" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
+              Open →
+            </Link>
+          </div>
+
+          <div
+            style={{
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: "var(--rl)",
+              padding: 22,
+              marginTop: 18,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <div style={{ fontSize: 16, fontWeight: 700 }}>Calendar</div>
             <Link href="/faculty/calendar" style={{ color: "var(--orange)", fontWeight: 700, fontSize: 13 }}>
               Open calendar →

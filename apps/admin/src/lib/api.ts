@@ -1361,3 +1361,42 @@ export const aiSettingsApi = {
       body: JSON.stringify(data),
     }),
 };
+
+// ---- Notes Bank (faculty notes) ----
+export interface NotesBank {
+  id: string;
+  title: string;
+  published: boolean;
+  createdAt: string;
+  createdById: string;
+  _count?: { notes: number };
+  batches: { batch: { id: string; name: string } }[];
+}
+export interface Note {
+  id: string;
+  name: string;
+  fileUrl: string;
+  fileName: string | null;
+  order: number;
+  courseId: string;
+  chapterId: string | null;
+  course: { id: string; title: string };
+  chapter: { id: string; title: string } | null;
+  notesBank?: { id: string; title: string };
+}
+export interface NotesBankTree extends NotesBank {
+  notes: Note[];
+}
+export const facultyNotesApi = {
+  listBanks: () => request<NotesBank[]>('/notes-banks'),
+  getBank: (id: string) => request<NotesBankTree>(`/notes-banks/${id}`),
+  createBank: (data: { title: string; batchIds?: string[] }) => request<NotesBank>('/notes-banks', { method: 'POST', body: JSON.stringify(data) }),
+  updateBank: (id: string, data: { title?: string; published?: boolean; batchIds?: string[] }) =>
+    request<NotesBank>(`/notes-banks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeBank: (id: string) => request<{ success: boolean }>(`/notes-banks/${id}`, { method: 'DELETE' }),
+  createNote: (bankId: string, data: { name: string; fileUrl: string; fileName?: string; courseId: string; chapterId?: string }) =>
+    request<Note>(`/notes-banks/${bankId}/notes`, { method: 'POST', body: JSON.stringify(data) }),
+  updateNote: (id: string, data: { name?: string; fileUrl?: string; fileName?: string; courseId?: string; chapterId?: string | null }) =>
+    request<Note>(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeNote: (id: string) => request<{ success: boolean }>(`/notes/${id}`, { method: 'DELETE' }),
+};

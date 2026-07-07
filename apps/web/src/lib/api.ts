@@ -1376,3 +1376,51 @@ export const subscriptionsApi = {
   getDetail: (id: string) => request<SubscriptionDetail>(`/subscriptions/${id}`),
   subscribe: (id: string) => request(`/subscriptions/${id}/subscribe`, { method: 'POST' }),
 };
+
+// ---- Notes Bank (faculty notes) ----
+export interface NotesBank {
+  id: string;
+  title: string;
+  published: boolean;
+  createdAt: string;
+  createdById: string;
+  _count?: { notes: number };
+  batches: { batch: { id: string; name: string } }[];
+}
+export interface Note {
+  id: string;
+  name: string;
+  fileUrl: string;
+  fileName: string | null;
+  order: number;
+  courseId: string;
+  chapterId: string | null;
+  course: { id: string; title: string };
+  chapter: { id: string; title: string } | null;
+  notesBank?: { id: string; title: string };
+}
+export interface NotesBankTree extends NotesBank {
+  notes: Note[];
+}
+export interface StudentNotes {
+  notes: Note[];
+  courses: { id: string; title: string }[];
+  chapters: { id: string; title: string; courseId: string }[];
+}
+export const facultyNotesApi = {
+  listBanks: () => request<NotesBank[]>('/notes-banks'),
+  getBank: (id: string) => request<NotesBankTree>(`/notes-banks/${id}`),
+  createBank: (data: { title: string; batchIds?: string[] }) => request<NotesBank>('/notes-banks', { method: 'POST', body: JSON.stringify(data) }),
+  updateBank: (id: string, data: { title?: string; published?: boolean; batchIds?: string[] }) =>
+    request<NotesBank>(`/notes-banks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeBank: (id: string) => request<{ success: boolean }>(`/notes-banks/${id}`, { method: 'DELETE' }),
+  createNote: (bankId: string, data: { name: string; fileUrl: string; fileName?: string; courseId: string; chapterId?: string }) =>
+    request<Note>(`/notes-banks/${bankId}/notes`, { method: 'POST', body: JSON.stringify(data) }),
+  updateNote: (id: string, data: { name?: string; fileUrl?: string; fileName?: string; courseId?: string; chapterId?: string | null }) =>
+    request<Note>(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeNote: (id: string) => request<{ success: boolean }>(`/notes/${id}`, { method: 'DELETE' }),
+  mine: (params?: { q?: string; courseId?: string; chapterId?: string }) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>).toString();
+    return request<StudentNotes>(`/notes/mine${qs ? `?${qs}` : ''}`);
+  },
+};

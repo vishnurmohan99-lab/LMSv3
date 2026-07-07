@@ -71,6 +71,16 @@ function BatchStatusIcon({ active }: { active: boolean }) {
   );
 }
 
+function NotesIcon({ active }: { active: boolean }) {
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+      <path d="M14 3v6h6M8 13h8M8 17h5" />
+    </svg>
+  );
+}
+
 function MessagesIcon({ active }: { active: boolean }) {
   const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
@@ -187,6 +197,7 @@ const navItems = [
   { href: "/admin/question-banks", label: "Question Banks", Icon: QuestionBankIcon },
   { href: "/admin/tests", label: "Tests", Icon: TestsIcon },
   { href: "/admin/answer-correction", label: "Answer Correction", Icon: AnswerCorrectionIcon },
+  { href: "/admin/notes", label: "Faculty Notes", Icon: NotesIcon },
   { href: "/admin/batches", label: "Batches", Icon: BatchStatusIcon },
   { href: "/admin/subscriptions", label: "Subscriptions", Icon: SubscriptionsIcon },
   { href: "/admin/messages", label: "Messages", Icon: MessagesIcon },

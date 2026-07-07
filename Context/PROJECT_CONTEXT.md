@@ -756,6 +756,20 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Notes Bank / "Faculty Notes" feature (2026-07-07).** New: admin+faculty create notes
+  banks (like question banks); each bank is shared with **one or more batches** (m2m); each
+  note is an **uploaded file** (PDF/image) tagged to a course + optional chapter. Students get
+  a **"Faculty Notes"** tab that lists notes from banks shared with their batches, searchable
+  by name and filterable by course/chapter. Scope chosen via AskUserQuestion (file uploads /
+  admin+faculty authoring / m2m batches). Data model: `NotesBank` (title, published, createdBy),
+  `NotesBankBatch` (join), `Note` (name, fileUrl R2 key, fileName, courseId, chapterId?, order);
+  migration `20260707140000_add_notes_bank`. Backend module `apps/api/src/notes/` (NotesBanks +
+  Notes controllers, NotesService — bank/note CRUD FACULTY/ADMIN, `GET /notes/mine` student-scoped
+  by BatchEnrollment with q/courseId/chapterId filters + presigned download URLs). Frontend:
+  `facultyNotesApi` in both clients (**named to avoid the existing AI-lesson `notesApi`**);
+  `/admin/notes` + `/admin/notes/[id]`, `/faculty/notes` + `[id]` (standalone `<main>`, linked from
+  the faculty dashboard), `/student/notes`; nav items in AdminShell + StudentShell. Files reuse
+  `uploadsApi.uploadFile` (R2 presign). Web + admin build clean; API + migration deploy via Render.
 - **Design-system redesign to "Ascent" (2026-07-07, in progress, module-by-module).**
   Source: `Design System/` (Claude Design mockups — tokens + component library + all
   screens, brand "Ascent": warm neutrals, primary orange `#f26a1b`, violet `#7c5cfc`,

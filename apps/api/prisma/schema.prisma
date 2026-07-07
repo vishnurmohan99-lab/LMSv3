@@ -44,6 +44,7 @@ model User {
   tests             Test[]              @relation("FacultyTests")
   enrollments       Enrollment[]
   courseReviews     CourseReview[]
+  createdNotesBanks NotesBank[]         @relation("CreatedNotesBanks")
   flashcardProgress FlashcardProgress[]
   chatMessages      ChatMessage[]
   batchesAsFaculty  Batch[]             @relation("BatchFaculty")
@@ -129,6 +130,7 @@ model Course {
   chapters         Chapter[]
   enrollments      Enrollment[]
   reviews          CourseReview[]
+  notes            Note[]
   conversations    Conversation[]
   mockTests        Test[]
   feedbackForms    FeedbackForm[]
@@ -201,6 +203,7 @@ model Chapter {
   lessons     Lesson[]
   tests       Test[]
   completions ChapterCompletion[]
+  notes       Note[]
 }
 
 model ChapterCompletion {
@@ -405,6 +408,7 @@ model Batch {
   conversations Conversation[]
   feedbackForms FeedbackForm[]
   forumCategories ForumCategory[]
+  notesBankLinks NotesBankBatch[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -1239,5 +1243,53 @@ model CourseReview {
   student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, studentId])
+  @@index([courseId])
+}
+
+// Faculty/Admin notes, grouped into banks. A bank is shared with one or more batches;
+// a student sees a bank's notes if they're enrolled in any of its batches.
+model NotesBank {
+  id        String   @id @default(uuid())
+  title     String
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation("CreatedNotesBanks", fields: [createdById], references: [id])
+
+  notes   Note[]
+  batches NotesBankBatch[]
+}
+
+model NotesBankBatch {
+  notesBankId String
+  notesBank   NotesBank @relation(fields: [notesBankId], references: [id], onDelete: Cascade)
+  batchId     String
+  batch       Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@id([notesBankId, batchId])
+  @@index([batchId])
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  name      String
+  fileUrl   String   // private R2 key; presigned on read
+  fileName  String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notesBankId String
+  notesBank   NotesBank @relation(fields: [notesBankId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  chapterId String?
+  chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+
+  @@index([notesBankId])
   @@index([courseId])
 }
