@@ -796,7 +796,19 @@ the **Feature history** and **Current Prisma data model** sections above.
     IMPORTANT: auto-mode blocks `prisma migrate deploy` AND `prisma generate` here — the migrations
     apply via Render's deploy (its start runs migrate deploy); API build verified by Render, not
     locally. Web + admin build clean locally.
-  Next modules TBD with the user (remaining student screens, then admin, then faculty).
+  - **M5 · Student dashboard rebuilt to mockup S1/S1m** (`student/dashboard/page.tsx`) — the
+    full structural rebuild deferred in M2. Now matches the Ascent S1 (desktop `1fr/360px`)
+    + S1m (mobile stack): greeting + 🔥 streak, **Continue learning** cards (thumbnail +
+    progress), **Study activity** heatmap, **Recommended for you** (real catalog courses
+    w/ rating+price via M4), and a right rail = **On-track** syllabus ring + avg/best, **LIVE
+    NOW** card, **Today's schedule**, **Evening reflection** (from today's `Reflection`). All
+    real data (added catalog + reflection fetch). Dropped the old analytics-heavy render
+    (performance ring, exam-score bar/trend charts, completion donut, course-progress bars,
+    mentor timeline, stat strip) and removed ~350 lines of now-dead code (910→560). New mobile
+    CSS: `.dash-continue-grid`/`.dash-rec-grid` stack. Priority note: user directed
+    **student → admin → faculty**, matching Design System/ pages on web + mobile.
+  Next: remaining student screens (course-detail/player S2, mock-test, workout, planner,
+  calendar, mentor, subscription), then admin, then faculty.
   Verify each live via production (local http can't hold the Secure auth cookie).
 - `760ce53` (2026-07-06 audit, deployed) — order-tiebreaker + bank-question
   order-assignment fixes (`question-banks`/`tests`/`batch-status-types` services now

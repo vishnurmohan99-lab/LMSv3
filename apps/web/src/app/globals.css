@@ -505,4 +505,9 @@ button:active, a:active {
   .catalog-filter-toggle {
     display: inline-flex !important;
   }
+  /* Dashboard S1: continue-learning + recommended grids stack on mobile (S1m). */
+  .dash-continue-grid,
+  .dash-rec-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
