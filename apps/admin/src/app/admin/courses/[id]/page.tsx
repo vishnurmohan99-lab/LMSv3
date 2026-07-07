@@ -170,6 +170,9 @@ export default function AdminCourseAuthoringPage() {
   const [editUnlockAt, setEditUnlockAt] = useState("");
   const [editUnlockAfterDays, setEditUnlockAfterDays] = useState("");
   const [savingChapter, setSavingChapter] = useState(false);
+  const [chapterError, setChapterError] = useState<string | null>(null);
+  const [savingThumb, setSavingThumb] = useState(false);
+  const [thumbError, setThumbError] = useState<string | null>(null);
 
   /** Silent background refetch -- updates data in place without ever showing the loading screen, so reorders/toggles don't blink. */
   function refresh() {
@@ -227,6 +230,23 @@ export default function AdminCourseAuthoringPage() {
     if (v !== null && !Number.isFinite(v)) return;
     const updated = await coursesApi.update(course.id, { durationMinutes: v });
     setCourse({ ...course, durationMinutes: updated.durationMinutes });
+  }
+
+  async function onChangeThumbnail(fileInput: HTMLInputElement) {
+    const file = fileInput.files?.[0];
+    if (!course || !file) return;
+    setSavingThumb(true);
+    setThumbError(null);
+    try {
+      const key = await uploadsApi.uploadFile(file);
+      await coursesApi.update(course.id, { thumbnailUrl: key });
+      await refresh(); // re-fetch so the presigned image URL comes back
+    } catch (e) {
+      setThumbError(e instanceof ApiError ? e.message : "Failed to upload image");
+    } finally {
+      setSavingThumb(false);
+      fileInput.value = "";
+    }
   }
 
   async function onChangeDripType(dripType: DripType) {
@@ -305,6 +325,7 @@ export default function AdminCourseAuthoringPage() {
     e.preventDefault();
     if (!editingChapterId) return;
     setSavingChapter(true);
+    setChapterError(null);
     try {
       const bannerUrl = editChapterBanner ? await uploadsApi.uploadFile(editChapterBanner) : undefined;
       await coursesApi.updateChapter(editingChapterId, {
@@ -314,7 +335,9 @@ export default function AdminCourseAuthoringPage() {
         unlockAfterDays: editUnlockAfterDays ? Number(editUnlockAfterDays) : null,
       });
       setEditingChapterId(null);
-      refresh();
+      await refresh();
+    } catch (e) {
+      setChapterError(e instanceof ApiError ? e.message : "Failed to save chapter");
     } finally {
       setSavingChapter(false);
     }
@@ -356,6 +379,32 @@ export default function AdminCourseAuthoringPage() {
             {course.published ? "Unpublish" : "Publish"}
           </button>
         </span>
+      </div>
+
+      <div style={{ marginTop: 20, padding: 16, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 10 }}>Course image</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div
+            style={{
+              width: 160,
+              height: 90,
+              borderRadius: 10,
+              flex: "none",
+              overflow: "hidden",
+              background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : "linear-gradient(135deg,var(--orange-soft),var(--purple-soft))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {!course.thumbnailUrl && <span style={{ fontSize: 11, color: "var(--ink3)", fontWeight: 600 }}>No image</span>}
+          </div>
+          <div>
+            <input type="file" accept="image/*" disabled={savingThumb} onChange={(e) => onChangeThumbnail(e.target)} style={{ fontSize: 13 }} />
+            <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 6 }}>{savingThumb ? "Uploading…" : "Shown on the dashboard, catalog and course page. JPG / PNG."}</div>
+            {thumbError && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 4 }}>{thumbError}</div>}
+          </div>
+        </div>
       </div>
 
       <div
@@ -660,6 +709,7 @@ export default function AdminCourseAuthoringPage() {
               {savingChapter && <Spinner />}
               {savingChapter ? "Saving…" : "Save changes"}
             </button>
+            {chapterError && <p style={{ color: "var(--red)", fontSize: 13, margin: 0 }}>{chapterError}</p>}
           </form>
         </Modal>
       )}
