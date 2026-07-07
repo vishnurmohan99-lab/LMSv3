@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 import { CourseType, DripType, CompletionRule } from '../../../generated/prisma/client';
 
 export class UpdateCourseDto {
@@ -6,6 +6,18 @@ export class UpdateCourseDto {
   @IsString()
   @MinLength(2)
   title?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100000000)
+  priceCents?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100000)
+  durationMinutes?: number | null;
 
   @IsOptional()
   @IsString()

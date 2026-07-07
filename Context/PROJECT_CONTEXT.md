@@ -781,7 +781,22 @@ the **Feature history** and **Current Prisma data model** sections above.
     orange-400→600; **active nav item** changed from the old solid-black pill to the
     mockup's orange-tinted treatment (`background: --orange-soft`, text/icon
     `--orange-deep` #e0540e, radius `--rs`). Bottom nav already used orange.
-  Next modules TBD with the user (screens: course detail/lesson player, auth, etc.).
+  - **M4 · Real backing fields + student catalog redesign** — user chose (via AskUserQuestion)
+    to ADD REAL DATA rather than fake the mockup's rating/price/hours chips. New backend:
+    `Course.priceCents` + `durationMinutes` (migration `20260707120000`), and a **`CourseReview`**
+    model (migration `20260707130000`, one rating/student/course, 1–5 + comment) → `avgRating`/
+    `reviewCount` on course list + detail; endpoints `GET/POST /courses/:id/reviews`,
+    `GET :id/reviews/me` (enrolled-only upsert). Price/duration inputs added to admin + faculty
+    course settings forms (₹ whole-rupees → stored as paise; hours → stored as minutes). Student
+    **catalog** (`student/courses/page.tsx`) rebuilt to the Ascent mockup: filter sidebar
+    (Subject facets from segments + Free-only + sort popular/rating/newest), result count, rich
+    cards (segment badge on thumbnail, ★rating, duration, price/Free), skeleton + empty states,
+    and a mobile filter **bottom-sheet** (`.catalog-shell`/`.catalog-filters`/`.catalog-filter-toggle`).
+    Course-detail sidebar got a `CourseRatingCard` (avg + student's own star rating/comment).
+    IMPORTANT: auto-mode blocks `prisma migrate deploy` AND `prisma generate` here — the migrations
+    apply via Render's deploy (its start runs migrate deploy); API build verified by Render, not
+    locally. Web + admin build clean locally.
+  Next modules TBD with the user (remaining student screens, then admin, then faculty).
   Verify each live via production (local http can't hold the Secure auth cookie).
 - `760ce53` (2026-07-06 audit, deployed) — order-tiebreaker + bank-question
   order-assignment fixes (`question-banks`/`tests`/`batch-status-types` services now

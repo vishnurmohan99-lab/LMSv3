@@ -154,6 +154,10 @@ export interface Course {
   updatedAt: string;
   segmentId: string | null;
   subsegmentId: string | null;
+  priceCents: number | null;
+  durationMinutes: number | null;
+  avgRating?: number | null;
+  reviewCount?: number;
   _count?: { enrollments: number };
 }
 
@@ -216,13 +220,15 @@ export const coursesApi = {
     segmentId?: string;
     subsegmentId?: string;
     type?: CourseType;
+    priceCents?: number;
+    durationMinutes?: number;
     dripType?: DripType;
     completionRule?: CompletionRule;
     published?: boolean;
   }) => request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType' | 'completionRule'>>,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType' | 'completionRule' | 'priceCents' | 'durationMinutes'>>,
   ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
 

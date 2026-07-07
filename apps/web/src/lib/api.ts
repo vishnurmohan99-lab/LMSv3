@@ -136,7 +136,22 @@ export interface Course {
   updatedAt: string;
   segmentId: string | null;
   subsegmentId: string | null;
+  priceCents: number | null;
+  durationMinutes: number | null;
+  avgRating?: number | null;
+  reviewCount?: number;
   _count?: { enrollments: number };
+}
+
+export interface CourseReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  updatedAt: string;
+  courseId: string;
+  studentId: string;
+  student?: { id: string; fullName: string };
 }
 
 export interface CoursePrivateAccess {
@@ -199,14 +214,20 @@ export const coursesApi = {
     return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string; segmentId?: string; subsegmentId?: string; thumbnailUrl?: string; type?: CourseType }) =>
+  create: (data: { title: string; description?: string; segmentId?: string; subsegmentId?: string; thumbnailUrl?: string; type?: CourseType; priceCents?: number; durationMinutes?: number }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType' | 'completionRule'>>,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType' | 'completionRule' | 'priceCents' | 'durationMinutes'>>,
   ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
   enroll: (id: string) => request<{ id: string }>(`/courses/${id}/enroll`, { method: 'POST' }),
+
+  listReviews: (courseId: string) =>
+    request<{ reviews: CourseReview[]; avgRating: number | null; reviewCount: number }>(`/courses/${courseId}/reviews`),
+  myReview: (courseId: string) => request<CourseReview | null>(`/courses/${courseId}/reviews/me`),
+  submitReview: (courseId: string, data: { rating: number; comment?: string }) =>
+    request<CourseReview>(`/courses/${courseId}/reviews`, { method: 'POST', body: JSON.stringify(data) }),
   markChapterComplete: (chapterId: string) => request<{ id: string }>(`/chapters/${chapterId}/complete`, { method: 'POST' }),
   recordLessonView: (lessonId: string) => request<{ success: boolean }>(`/lessons/${lessonId}/view`, { method: 'POST' }),
 

@@ -7,6 +7,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-payload.interface';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { CreateCourseReviewDto } from './dto/create-course-review.dto';
 
 @UseGuards(JwtAccessGuard)
 @Controller('courses')
@@ -53,6 +54,26 @@ export class CoursesController {
   @Post(':id/enroll')
   enroll(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.coursesService.enroll(id, user);
+  }
+
+  // ---- Course reviews / ratings ----
+  @Get(':id/reviews')
+  listReviews(@Param('id') id: string) {
+    return this.coursesService.listReviews(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('STUDENT')
+  @Get(':id/reviews/me')
+  myReview(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.myReview(id, user);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('STUDENT')
+  @Post(':id/reviews')
+  upsertReview(@Param('id') id: string, @Body() dto: CreateCourseReviewDto, @CurrentUser() user: JwtPayload) {
+    return this.coursesService.upsertReview(id, user, dto);
   }
 
   @UseGuards(RolesGuard)

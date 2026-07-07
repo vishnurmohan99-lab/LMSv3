@@ -137,6 +137,23 @@ export default function CourseAuthoringPage() {
     setCourse({ ...course, type: updated.type });
   }
 
+  // Price entered in whole ₹ (stored as paise); duration in hours (stored as minutes).
+  async function onChangePriceRupees(rupees: string) {
+    if (!course) return;
+    const v = rupees.trim() === "" ? null : Math.max(0, Math.round(Number(rupees) * 100));
+    if (v !== null && !Number.isFinite(v)) return;
+    const updated = await coursesApi.update(course.id, { priceCents: v });
+    setCourse({ ...course, priceCents: updated.priceCents });
+  }
+
+  async function onChangeDurationHours(hours: string) {
+    if (!course) return;
+    const v = hours.trim() === "" ? null : Math.max(0, Math.round(Number(hours) * 60));
+    if (v !== null && !Number.isFinite(v)) return;
+    const updated = await coursesApi.update(course.id, { durationMinutes: v });
+    setCourse({ ...course, durationMinutes: updated.durationMinutes });
+  }
+
   async function onChangeDripType(dripType: DripType) {
     if (!course) return;
     const updated = await coursesApi.update(course.id, { dripType });
@@ -300,6 +317,47 @@ export default function CourseAuthoringPage() {
           {course.type === "PAID" && "Requires admin enrollment or a subscription — no self-enroll."}
           {course.type === "PRIVATE" && "Only whitelisted students below can access this course."}
         </span>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 18,
+          marginTop: 10,
+          padding: "12px 16px",
+          background: "var(--card)",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--rm)",
+          alignItems: "center",
+          flexWrap: "wrap",
+          fontSize: 13,
+        }}
+      >
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Price (₹):</span>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            defaultValue={course.priceCents != null ? course.priceCents / 100 : ""}
+            onBlur={(e) => onChangePriceRupees(e.target.value)}
+            placeholder="Free"
+            style={{ ...inputStyle, width: 120 }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontWeight: 700, color: "var(--ink2)" }}>Duration (hrs):</span>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            defaultValue={course.durationMinutes != null ? course.durationMinutes / 60 : ""}
+            onBlur={(e) => onChangeDurationHours(e.target.value)}
+            placeholder="—"
+            style={{ ...inputStyle, width: 100 }}
+          />
+        </div>
+        <span style={{ color: "var(--ink3)" }}>Shown on the catalog. Leave price blank for free.</span>
       </div>
 
       <div

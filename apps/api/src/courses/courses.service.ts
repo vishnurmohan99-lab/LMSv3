@@ -7,6 +7,7 @@ import { JwtPayload } from '../auth/jwt-payload.interface';
 import { LessonType, AiFeature } from '../../generated/prisma/client';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { CreateCourseReviewDto } from './dto/create-course-review.dto';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { CreateLessonDto } from './dto/create-lesson.dto';
@@ -84,12 +85,64 @@ export class CoursesService {
       });
     }
 
+    const ratings = await this.ratingMap(courses.map((c) => c.id));
     return Promise.all(
       courses.map(async (course) => ({
         ...course,
+        ...(ratings.get(course.id) ?? { avgRating: null, reviewCount: 0 }),
         thumbnailUrl: course.thumbnailUrl ? await this.uploads.presignDownload(course.thumbnailUrl) : null,
       })),
     );
+  }
+
+  /** avgRating (rounded to 1 dp) + reviewCount per course id, from CourseReview aggregates. */
+  private async ratingMap(courseIds: string[]) {
+    const map = new Map<string, { avgRating: number | null; reviewCount: number }>();
+    if (courseIds.length === 0) return map;
+    const agg = await this.prisma.courseReview.groupBy({
+      by: ['courseId'],
+      where: { courseId: { in: courseIds } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+    for (const r of agg) {
+      map.set(r.courseId, {
+        avgRating: r._avg.rating !== null ? Math.round(r._avg.rating * 10) / 10 : null,
+        reviewCount: r._count.rating,
+      });
+    }
+    return map;
+  }
+
+  /** Student rates an enrolled course (upsert). FREE/PAID/PRIVATE all reviewable once enrolled. */
+  async upsertReview(courseId: string, user: JwtPayload, dto: CreateCourseReviewDto) {
+    await this.requireCourse(courseId);
+    const enrolled = await this.prisma.enrollment.findUnique({
+      where: { studentId_courseId: { studentId: user.sub, courseId } },
+    });
+    if (!enrolled) throw new ForbiddenException('You can only review a course you are enrolled in');
+    return this.prisma.courseReview.upsert({
+      where: { courseId_studentId: { courseId, studentId: user.sub } },
+      create: { courseId, studentId: user.sub, rating: dto.rating, comment: dto.comment ?? null },
+      update: { rating: dto.rating, comment: dto.comment ?? null },
+    });
+  }
+
+  async listReviews(courseId: string) {
+    await this.requireCourse(courseId);
+    const reviews = await this.prisma.courseReview.findMany({
+      where: { courseId },
+      include: { student: { select: { id: true, fullName: true } } },
+      orderBy: { updatedAt: 'desc' },
+    });
+    const [summary] = [...(await this.ratingMap([courseId])).values()];
+    return { reviews, avgRating: summary?.avgRating ?? null, reviewCount: summary?.reviewCount ?? 0 };
+  }
+
+  async myReview(courseId: string, user: JwtPayload) {
+    return this.prisma.courseReview.findUnique({
+      where: { courseId_studentId: { courseId, studentId: user.sub } },
+    });
   }
 
   async enroll(courseId: string, user: JwtPayload) {
@@ -206,6 +259,7 @@ export class CoursesService {
 
     return {
       ...course,
+      ...((await this.ratingMap([course.id])).get(course.id) ?? { avgRating: null, reviewCount: 0 }),
       thumbnailUrl: course.thumbnailUrl ? await this.uploads.presignDownload(course.thumbnailUrl) : null,
       chapters,
     };
@@ -427,6 +481,8 @@ export class CoursesService {
             segmentId: dto.segmentId,
             subsegmentId: dto.subsegmentId,
             type: dto.type,
+            priceCents: dto.priceCents,
+            durationMinutes: dto.durationMinutes,
             dripType: dto.dripType,
             completionRule: dto.completionRule,
             published: dto.published ?? false,

@@ -494,4 +494,15 @@ button:active, a:active {
   .summary-deck-card {
     padding: 22px !important;
   }
+  /* Course catalog: collapse the filter sidebar into a bottom-sheet (toggle button
+     reveals the same filter panel), mirroring the mockup's mobile catalog. */
+  .catalog-shell {
+    grid-template-columns: 1fr !important;
+  }
+  .catalog-filters {
+    display: none !important;
+  }
+  .catalog-filter-toggle {
+    display: inline-flex !important;
+  }
 }

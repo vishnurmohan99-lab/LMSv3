@@ -43,6 +43,7 @@ model User {
   questionBanks     QuestionBank[]      @relation("FacultyQuestionBanks")
   tests             Test[]              @relation("FacultyTests")
   enrollments       Enrollment[]
+  courseReviews     CourseReview[]
   flashcardProgress FlashcardProgress[]
   chatMessages      ChatMessage[]
   batchesAsFaculty  Batch[]             @relation("BatchFaculty")
@@ -109,6 +110,8 @@ model Course {
   thumbnailUrl   String?
   published      Boolean        @default(false)
   type           CourseType     @default(FREE)
+  priceCents      Int?          // null/0 or type=FREE → shown as "Free"; else ₹(priceCents/100)
+  durationMinutes Int?          // manual estimate for catalog display ("X hrs")
   dripType       DripType       @default(NONE)
   completionRule CompletionRule @default(MANUAL)
   createdAt      DateTime       @default(now())
@@ -125,6 +128,7 @@ model Course {
 
   chapters         Chapter[]
   enrollments      Enrollment[]
+  reviews          CourseReview[]
   conversations    Conversation[]
   mockTests        Test[]
   feedbackForms    FeedbackForm[]
@@ -1218,4 +1222,22 @@ model AnswerEvaluation {
   manualGradedById   String?
   manualGradedBy     User?     @relation("AnswerEvaluationGradedBy", fields: [manualGradedById], references: [id])
   manualGradedAt     DateTime?
+}
+
+// One rating per student per course (upserted). Powers avgRating/reviewCount on courses.
+model CourseReview {
+  id        String   @id @default(uuid())
+  rating    Int      // 1..5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([courseId])
 }
