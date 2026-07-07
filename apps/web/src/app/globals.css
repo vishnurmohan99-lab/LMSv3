@@ -1,30 +1,66 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ===== Ascent design system — foundation tokens (retrofit 2026-07-07) =====
+     Warm, calm palette: primary Ember Orange, accent Focus Violet, warm-gray
+     neutrals. Existing variable NAMES are preserved so every current component
+     keeps working; only values are warmed, plus new role tokens are added below.
+     Source of truth: Design System/ mockup (Ascent v1.0). */
 
-  --bg: #f4f3f1;
+  /* Next.js defaults (warmed) */
+  --background: #faf8f6;
+  --foreground: #1c1915;
+
+  /* Surfaces + ink — warm neutral scale (50/100/200/400/600/900) */
+  --bg: #faf8f6;        /* neutral-50  · page canvas */
+  --bg-sunk: #f4f1ed;   /* neutral-100 · sunken area behind cards */
   --card: #ffffff;
-  --ink: #1a1a1a;
-  --ink2: #6b6b6b;
-  --ink3: #9a9a9a;
-  --line: #ececea;
-  --line2: #f1f0ee;
-  --orange: #f26a1b;
-  --orange-soft: #fdeede;
-  --green: #1f7a4d;
-  --green-soft: #e7f3ec;
-  --purple: #7c5cfc;
-  --purple-soft: #efeaff;
-  --amber: #f59e0b;
-  --amber-soft: #fdf1dd;
-  --red: #e0533d;
-  --red-soft: #fbe9e6;
-  --red-line: #f0c9c2;
-  --blue: #3b6fd4;
-  --blue-soft: #e8eefb;
-  --rl: 22px;
-  --rm: 16px;
-  --rs: 11px;
+  --ink: #1c1915;       /* neutral-900 · primary text */
+  --ink2: #59534b;      /* neutral-600 · secondary text */
+  --ink3: #aaa39a;      /* neutral-400 · faint text/metadata */
+  --line: #e9e4de;      /* neutral-200 · borders */
+  --line2: #f4f1ed;     /* neutral-100 · hairlines/fills */
+
+  /* Primary · Ember Orange (brand hue unchanged) */
+  --orange: #f26a1b;        /* 500 */
+  --orange-soft: #fdf0dd;
+  --orange-ink: #a35a06;    /* readable text on orange-soft */
+  --orange-bright: #fb8a44; /* 400 · hover / dark surfaces */
+  --orange-deep: #e0540e;   /* 600 · pressed / gradients */
+
+  /* Accent · Focus Violet (brand hue unchanged) */
+  --purple: #7c5cfc;        /* 500 */
+  --purple-soft: #f5f2ff;
+  --purple-ink: #5a2ed6;    /* 700 · text on purple-soft */
+  --purple-bright: #a284ff; /* 400 · dark surfaces */
+
+  /* Semantic */
+  --green: #0e7a48;     --green-soft: #e6f6ee;   /* success */
+  --amber: #dd8b12;     --amber-soft: #fdf0dd;   --amber-ink: #a35a06;  /* warning */
+  --red: #dc4040;       --red-soft: #fde9ea;     --red-ink: #ab2530;  --red-line: #f4d0d4;  /* danger */
+  --blue: #2e7de0;      --blue-soft: #e7f0fc;    /* info */
+
+  /* Education roles */
+  --live: #e63368;      --live-soft: #fde9ea;    /* LIVE / happening now */
+  --progress: #14b077;                            /* completion fills */
+  --diff-easy: #0c7a60; --diff-easy-soft: #e2f4ef;
+  --diff-med: #a35a06;  --diff-med-soft: #fdf0dd;
+  --diff-hard: #ab2530; --diff-hard-soft: #fde9ea;
+
+  /* Radius scale */
+  --rxs: 6px;
+  --rs: 10px;   /* was 11 */
+  --rm: 14px;   /* was 16 */
+  --rl: 20px;   /* was 22 */
+  --rxl: 28px;
+
+  /* Elevation (warm-tinted shadows) */
+  --e1: 0 1px 2px rgba(28,22,15,.06);
+  --e2: 0 2px 8px rgba(28,22,15,.07);
+  --e3: 0 8px 24px rgba(28,22,15,.10);
+  --e4: 0 20px 48px rgba(28,22,15,.16);
+
+  /* Type families */
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
 html {
@@ -42,8 +78,8 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--ink);
-  background: #e7e5e1;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: var(--bg-sunk);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -59,21 +95,21 @@ a {
 }
 
 .entity-card {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+  box-shadow: var(--e1);
   transition: transform .18s ease, box-shadow .18s ease;
 }
 
 .entity-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, .1);
+  box-shadow: 0 16px 34px rgba(28, 22, 15, .12);
 }
 
 .banner-gradient-dark {
-  background: linear-gradient(135deg, #1c1c1c, #2c2620);
+  background: linear-gradient(135deg, #1c1915, #2a2620);
 }
 
 .banner-gradient-orange {
-  background: linear-gradient(135deg, #f7902b, #f24d1b);
+  background: linear-gradient(135deg, #fb8a44, #e0540e);
 }
 
 button, a {
@@ -121,8 +157,8 @@ button:active, a:active {
 }
 
 @keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(224,83,61,.45); }
-  50% { box-shadow: 0 0 0 6px rgba(224,83,61,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(230,51,104,.45); }
+  50% { box-shadow: 0 0 0 6px rgba(230,51,104,0); }
 }
 
 .live-pulse {
