@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
-  enrollmentsApi,
-  coursesApi,
   todosApi,
   reflectionsApi,
+  planApi,
   ApiError,
-  type Enrollment,
-  type CourseTree,
   type Todo,
   type Reflection,
+  type StudyPlanItem,
+  type PlanItemType,
 } from "@/lib/api";
 
 function todayMidnight() {
@@ -24,86 +24,205 @@ function dayKey(iso: string) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-function ProgressBar({ label, pct }: { label: string; pct: number }) {
-  return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>
-        <span>{label}</span>
-        <span style={{ color: pct === 100 ? "var(--green)" : pct > 0 ? "var(--orange)" : "var(--ink3)" }}>{pct}%</span>
-      </div>
-      <div style={{ height: 8, background: "var(--bg)", borderRadius: 5 }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: "var(--orange)", borderRadius: 5, transition: "width .4s ease" }} />
-      </div>
-    </div>
-  );
+const PLAN_TYPE_META: Record<PlanItemType, { label: string; ink: string; bg: string }> = {
+  VIDEO: { label: "Video", ink: "var(--orange-deep)", bg: "var(--orange-soft)" },
+  NOTES: { label: "Notes", ink: "var(--purple-ink)", bg: "var(--purple-soft)" },
+  TEST: { label: "Test", ink: "var(--blue)", bg: "var(--blue-soft)" },
+  PRACTICE: { label: "Practice", ink: "var(--green)", bg: "var(--green-soft)" },
+  OTHER: { label: "Task", ink: "var(--ink2)", bg: "var(--bg-sunk)" },
+};
+
+function planHref(it: StudyPlanItem): string | null {
+  switch (it.resourceKind) {
+    case "course":
+      return it.courseId ? `/student/courses/${it.courseId}` : null;
+    case "test":
+      return it.resourceId ? `/student/mock-test/${it.resourceId}` : null;
+    case "note":
+      return "/student/notes";
+    case "workout":
+      return `/student/workout${it.courseId ? `?course=${it.courseId}` : ""}`;
+    default:
+      return it.courseId ? `/student/courses/${it.courseId}` : null;
+  }
 }
 
-function WeeklyTab() {
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
-  const [courseId, setCourseId] = useState("");
-  const [course, setCourse] = useState<CourseTree | null>(null);
+function localKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function startOfWeek(d: Date) {
+  const x = new Date(d);
+  const day = (x.getDay() + 6) % 7; // Monday = 0
+  x.setDate(x.getDate() - day);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function TimetableTab() {
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const [items, setItems] = useState<StudyPlanItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    enrollmentsApi
-      .mine()
-      .then((e) => {
-        setEnrollments(e);
-        if (e.length > 0) setCourseId(e[0].courseId);
-      })
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [type, setType] = useState<PlanItemType>("PRACTICE");
+  const [adding, setAdding] = useState(false);
+
+  const weekEnd = useMemo(() => {
+    const e = new Date(weekStart);
+    e.setDate(e.getDate() + 7);
+    return e;
+  }, [weekStart]);
+
+  function load() {
+    setLoading(true);
+    planApi
+      .mine({ from: weekStart.toISOString(), to: weekEnd.toISOString() })
+      .then(setItems)
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Failed to load plan"))
       .finally(() => setLoading(false));
-  }, []);
+  }
+  useEffect(load, [weekStart, weekEnd]);
 
-  useEffect(() => {
-    if (!courseId) return;
-    coursesApi.get(courseId).then(setCourse).catch(() => setCourse(null));
-  }, [courseId]);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const itemsByDay = useMemo(() => {
+    const m = new Map<string, StudyPlanItem[]>();
+    for (const it of items) {
+      const k = localKey(new Date(it.scheduledFor));
+      if (!m.has(k)) m.set(k, []);
+      m.get(k)!.push(it);
+    }
+    for (const arr of m.values()) arr.sort((a, b) => a.scheduledFor.localeCompare(b.scheduledFor));
+    return m;
+  }, [items]);
 
-  if (loading) return <p style={{ color: "var(--ink2)" }}>Loading…</p>;
-  if (enrollments.length === 0) {
-    return (
-      <div style={{ padding: 40, textAlign: "center", color: "var(--ink3)", fontSize: 14, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)" }}>
-        Enroll in a course to see your weekly progress here.
-      </div>
-    );
+  async function onAddPersonal() {
+    if (!title.trim() || !date) {
+      setError("Give your plan item a title and a date.");
+      return;
+    }
+    setAdding(true);
+    setError(null);
+    try {
+      const scheduledFor = new Date(`${date}T${time || "09:00"}`).toISOString();
+      await planApi.createMine({ scheduledFor, type, title: title.trim() });
+      setTitle("");
+      load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to add item");
+    } finally {
+      setAdding(false);
+    }
   }
 
+  async function onDelete(it: StudyPlanItem) {
+    try {
+      await planApi.removeItem(it.id);
+      setItems((prev) => prev.filter((x) => x.id !== it.id));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to remove");
+    }
+  }
+
+  const todayKey = localKey(new Date());
+
   return (
-    <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <div style={{ fontSize: 16, fontWeight: 800 }}>Plan vs actual</div>
-        <select
-          value={courseId}
-          onChange={(e) => setCourseId(e.target.value)}
-          style={{ padding: "8px 12px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, fontFamily: "inherit", background: "var(--bg)" }}
-        >
-          {enrollments.map((e) => (
-            <option key={e.courseId} value={e.courseId}>
-              {e.course.title}
-            </option>
-          ))}
-        </select>
+    <div>
+      {/* Week nav */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <button onClick={() => setWeekStart((w) => { const n = new Date(w); n.setDate(n.getDate() - 7); return n; })} style={navBtn}>‹ Prev</button>
+        <div style={{ fontSize: 14, fontWeight: 800 }}>
+          {weekStart.toLocaleDateString(undefined, { month: "short", day: "numeric" })} – {days[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+        </div>
+        <button onClick={() => setWeekStart((w) => { const n = new Date(w); n.setDate(n.getDate() + 7); return n; })} style={navBtn}>Next ›</button>
       </div>
-      <p style={{ fontSize: 12.5, color: "var(--ink3)", margin: "4px 0 18px" }}>
-        Lessons viewed per chapter, based on your real activity in this course.
-      </p>
-      {!course ? (
-        <p style={{ color: "var(--ink2)" }}>Loading…</p>
-      ) : course.chapters.length === 0 ? (
-        <p style={{ color: "var(--ink3)", fontSize: 13 }}>This course has no chapters yet.</p>
+
+      {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 12 }}>{error}</p>}
+
+      {/* Day-by-day timetable */}
+      {loading ? (
+        <p style={{ color: "var(--ink3)", fontSize: 13 }}>Loading…</p>
       ) : (
-        <div style={{ display: "grid", gap: 16 }}>
-          {course.chapters.map((chapter) => {
-            const total = chapter.lessons.length;
-            const viewed = chapter.lessons.filter((l) => l.viewed).length;
-            const pct = total > 0 ? Math.round((viewed / total) * 100) : 0;
-            return <ProgressBar key={chapter.id} label={chapter.title} pct={pct} />;
+        <div style={{ display: "grid", gap: 12 }}>
+          {days.map((d) => {
+            const key = localKey(d);
+            const dayItems = itemsByDay.get(key) ?? [];
+            const isToday = key === todayKey;
+            return (
+              <div key={key} style={{ background: "var(--card)", border: isToday ? "1.5px solid var(--orange)" : "1px solid var(--line)", borderRadius: "var(--rl)", padding: "14px 16px" }}>
+                <div style={{ fontSize: 12.5, fontWeight: 800, color: isToday ? "var(--orange-deep)" : "var(--ink2)", marginBottom: dayItems.length ? 10 : 0 }}>
+                  {d.toLocaleDateString(undefined, { weekday: "long" })} · {d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  {isToday && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: "var(--orange-deep)", background: "var(--orange-soft)", padding: "2px 8px", borderRadius: 999 }}>Today</span>}
+                </div>
+                {dayItems.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "var(--ink3)" }}>Nothing planned.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {dayItems.map((it) => {
+                      const meta = PLAN_TYPE_META[it.type];
+                      const href = planHref(it);
+                      const inner = (
+                        <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 12px", borderRadius: "var(--rs)", background: "var(--bg-sunk)" }}>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--ink3)", width: 42, flex: "none" }}>
+                            {new Date(it.scheduledFor).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })}
+                          </span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: meta.ink, background: meta.bg, borderRadius: 999, padding: "3px 9px", flex: "none" }}>{meta.label}</span>
+                          <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "inherit" }}>{it.title}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: it.source === "personal" ? "var(--ink3)" : "var(--purple-ink)", background: it.source === "personal" ? "transparent" : "var(--purple-soft)", padding: it.source === "personal" ? 0 : "2px 8px", borderRadius: 999, flex: "none" }}>
+                            {it.source === "personal" ? "You" : it.batch?.name ?? "Batch"}
+                          </span>
+                          {it.source === "personal" && (
+                            <button onClick={(e) => { e.preventDefault(); onDelete(it); }} style={{ background: "none", border: "none", color: "var(--red)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flex: "none" }}>✕</button>
+                          )}
+                        </div>
+                      );
+                      return href ? (
+                        <Link key={it.id} href={href} style={{ textDecoration: "none", color: "inherit" }}>{inner}</Link>
+                      ) : (
+                        <div key={it.id}>{inner}</div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
           })}
         </div>
       )}
+
+      {/* Add your own */}
+      <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 16, marginTop: 16 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 12 }}>Add your own plan</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, alignItems: "end" }}>
+          <div style={{ gridColumn: "span 2", minWidth: 0 }}>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Practice DI set / Mock test 3" style={fieldStyle} />
+          </div>
+          <select value={type} onChange={(e) => setType(e.target.value as PlanItemType)} style={{ ...fieldStyle, cursor: "pointer" }}>
+            <option value="PRACTICE">Practice</option>
+            <option value="TEST">Mock test</option>
+            <option value="VIDEO">Revision</option>
+            <option value="OTHER">Task</option>
+          </select>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={fieldStyle} />
+          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} style={fieldStyle} />
+          <button onClick={onAddPersonal} disabled={adding} style={{ padding: "10px 14px", background: "var(--ink)", color: "#fff", border: "none", borderRadius: "var(--rs)", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: adding ? "default" : "pointer", opacity: adding ? 0.7 : 1, height: 38 }}>
+            {adding ? "Adding…" : "Add"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
+
+const navBtn: React.CSSProperties = { padding: "7px 14px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rs)", fontSize: 12.5, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", color: "var(--ink2)" };
+const fieldStyle: React.CSSProperties = { width: "100%", padding: "9px 12px", border: "1px solid var(--line)", borderRadius: "var(--rs)", fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--card)" };
 
 function ReflectionTab() {
   const [reflections, setReflections] = useState<Reflection[]>([]);
@@ -318,10 +437,10 @@ function TasksTab() {
 }
 
 export default function StudentPlannerPage() {
-  const [tab, setTab] = useState<"weekly" | "reflection" | "tasks">("weekly");
+  const [tab, setTab] = useState<"timetable" | "reflection" | "tasks">("timetable");
 
   const tabs: { key: typeof tab; label: string }[] = [
-    { key: "weekly", label: "Weekly" },
+    { key: "timetable", label: "Timetable" },
     { key: "reflection", label: "Reflection" },
     { key: "tasks", label: "Tasks" },
   ];
@@ -352,7 +471,7 @@ export default function StudentPlannerPage() {
         ))}
       </div>
 
-      {tab === "weekly" && <WeeklyTab />}
+      {tab === "timetable" && <TimetableTab />}
       {tab === "reflection" && <ReflectionTab />}
       {tab === "tasks" && <TasksTab />}
     </main>

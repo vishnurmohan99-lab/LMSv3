@@ -19,6 +19,7 @@ import {
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
+import BatchStudyPlan from "@/components/BatchStudyPlan";
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -460,7 +461,9 @@ export default function BatchDetailPage() {
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+      <BatchStudyPlan batchId={batchId} />
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, marginTop: 24 }}>
         <div style={{ fontSize: 16, fontWeight: 700 }}>Sessions</div>
         <button onClick={openAddSession} style={{ ...btnStyle, display: "flex", alignItems: "center", gap: 7 }}>
           <PlusIcon />

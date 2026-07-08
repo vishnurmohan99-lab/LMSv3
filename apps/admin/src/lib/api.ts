@@ -1400,3 +1400,33 @@ export const facultyNotesApi = {
     request<Note>(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeNote: (id: string) => request<{ success: boolean }>(`/notes/${id}`, { method: 'DELETE' }),
 };
+
+// ---- Study Plan (batch timetable + personal plan) ----
+export type PlanItemType = 'VIDEO' | 'NOTES' | 'TEST' | 'PRACTICE' | 'OTHER';
+export interface StudyPlanItem {
+  id: string;
+  scheduledFor: string;
+  type: PlanItemType;
+  title: string;
+  resourceKind: string | null;
+  resourceId: string | null;
+  courseId: string | null;
+  batchId: string | null;
+  studentId: string | null;
+  batch?: { id: string; name: string } | null;
+  source?: 'batch' | 'personal';
+}
+export interface PlanItemInput {
+  scheduledFor: string;
+  type?: PlanItemType;
+  title: string;
+  resourceKind?: string | null;
+  resourceId?: string | null;
+  courseId?: string | null;
+}
+export const planApi = {
+  listBatchPlan: (batchId: string) => request<StudyPlanItem[]>(`/batches/${batchId}/plan`),
+  createBatchItem: (batchId: string, data: PlanItemInput) => request<StudyPlanItem>(`/batches/${batchId}/plan`, { method: 'POST', body: JSON.stringify(data) }),
+  updateItem: (id: string, data: Partial<PlanItemInput>) => request<StudyPlanItem>(`/plan-items/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  removeItem: (id: string) => request<{ success: boolean }>(`/plan-items/${id}`, { method: 'DELETE' }),
+};

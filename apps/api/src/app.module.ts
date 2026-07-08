@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { TagsModule } from './tags/tags.module';
 import { NotesModule } from './notes/notes.module';
+import { StudyPlanModule } from './study-plan/study-plan.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
@@ -64,6 +65,7 @@ import { AiSettingsModule } from './ai-settings/ai-settings.module';
     AiSettingsModule,
     TagsModule,
     NotesModule,
+    StudyPlanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

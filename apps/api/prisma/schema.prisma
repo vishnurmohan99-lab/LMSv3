@@ -19,6 +19,14 @@ enum Role {
   ADMIN
 }
 
+enum PlanItemType {
+  VIDEO
+  NOTES
+  TEST
+  PRACTICE
+  OTHER
+}
+
 model User {
   id              String   @id @default(uuid())
   email           String   @unique
@@ -45,6 +53,8 @@ model User {
   enrollments       Enrollment[]
   courseReviews     CourseReview[]
   createdNotesBanks NotesBank[]         @relation("CreatedNotesBanks")
+  createdPlanItems  StudyPlanItem[]     @relation("PlanItemCreatedBy")
+  planItems         StudyPlanItem[]     @relation("PlanItemStudent")
   flashcardProgress FlashcardProgress[]
   chatMessages      ChatMessage[]
   batchesAsFaculty  Batch[]             @relation("BatchFaculty")
@@ -409,6 +419,7 @@ model Batch {
   feedbackForms FeedbackForm[]
   forumCategories ForumCategory[]
   notesBankLinks NotesBankBatch[]
+  planItems     StudyPlanItem[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -1292,4 +1303,32 @@ model Note {
 
   @@index([notesBankId])
   @@index([courseId])
+}
+
+// A dated study-plan item. Owned by EITHER a batch (faculty/admin timetable) OR a student
+// (personal plan). The linked resource is denormalized (resourceKind/resourceId/courseId) so
+// deleting a lesson/note/test never breaks the plan — the frontend builds the click-through URL.
+model StudyPlanItem {
+  id           String       @id @default(uuid())
+  scheduledFor DateTime
+  type         PlanItemType @default(OTHER)
+  title        String
+  resourceKind String? // 'lesson' | 'note' | 'test' | 'workout' | null
+  resourceId   String?
+  courseId     String? // context for building the resource URL
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  createdById String
+  createdBy   User   @relation("PlanItemCreatedBy", fields: [createdById], references: [id])
+
+  batchId String?
+  batch   Batch?  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  studentId String?
+  student   User?   @relation("PlanItemStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([studentId])
+  @@index([scheduledFor])
 }

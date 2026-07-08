@@ -756,6 +756,27 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Study Plan feature + course-image fix (2026-07-08).**
+  - **Course image now editable** (`85d967f`, deployed): thumbnail could only be set at course
+    CREATE — added a "Course image" upload/replace card to admin + faculty course settings
+    (`courses/[id]`). Sets `thumbnailUrl` → already presigned in listCourses/getCourseTree, so it
+    now shows on dashboard/catalog/detail (everywhere the course appears). Also hardened
+    `onSaveChapterEdit` (both apps) — it had no catch, so failed saves silently did nothing.
+  - **Study Plan** (scope via AskUserQuestion: **specific dates · linked to real resources ·
+    managed in the Batch page, merged timetable for students**). Replaces the planner's old
+    "Weekly" (per-chapter %) tab with a **Timetable**. Data: `StudyPlanItem` (scheduledFor, type
+    enum VIDEO/NOTES/TEST/PRACTICE/OTHER, title, denormalized `resourceKind`/`resourceId`/`courseId`
+    link so deleting a resource never breaks the plan, owner = `batchId` XOR `studentId`), migration
+    `20260708120000_add_study_plan`. Module `apps/api/src/study-plan/`: batch-plan CRUD
+    (FACULTY/ADMIN, faculty gated to `Batch.facultyId`), `GET /plan/mine?from&to` (student, merged
+    batch-items-from-my-batches + personal, with `source` flag), personal create, owner-checked
+    update/delete. Frontend: `planApi` both clients; admin `BatchStudyPlan.tsx` dropped into the
+    Batch detail page (add item: type/title/date/time + course→chapter or test link); student
+    Planner Timetable tab (week nav, day-grouped, batch+personal merged, click-through via
+    `planHref`, add-your-own personal items). Reflection + Tasks unchanged.
+    **FACULTY-SIDE GAP:** backend allows faculty, but there's no faculty batches UI in `apps/web`
+    yet — faculty can't reach the batch plan editor. Follow-up: add `/faculty/batches`.
+    API + migration deploy via Render; web + admin build clean.
 - **Notes Bank / "Faculty Notes" feature (2026-07-07).** New: admin+faculty create notes
   banks (like question banks); each bank is shared with **one or more batches** (m2m); each
   note is an **uploaded file** (PDF/image) tagged to a course + optional chapter. Students get
