@@ -27,6 +27,33 @@ function normalize(v: string) {
   return v.trim().toLowerCase();
 }
 
+const QUESTION_COUNTS = [5, 10, 15, 20, 30];
+
+/** Shared header: title + "Ungraded practice" badge + 3-step progress dots (setup → session → done). */
+function StepHeader({ step }: { step: 1 | 2 | 3 }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>Workout</div>
+      <span style={{ fontSize: 10.5, fontWeight: 600, background: "var(--green-soft)", color: "var(--green)", borderRadius: 999, padding: "4px 10px" }}>Ungraded practice</span>
+      <div style={{ flex: 1 }} />
+      <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+        {[1, 2, 3].map((n) => (
+          <span
+            key={n}
+            style={{
+              width: n === step ? 20 : 8,
+              height: 8,
+              borderRadius: 999,
+              background: n === step ? "var(--orange)" : n < step ? "var(--orange-bright)" : "var(--line)",
+              transition: "all .2s ease",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function StudentWorkoutPage() {
   const [view, setView] = useState<"dashboard" | "session" | "done">("dashboard");
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -113,12 +140,16 @@ export default function StudentWorkoutPage() {
     const isCorrect = q && q.type !== "ESSAY" ? normalize(answer) === normalize(q.correctOption ?? "") : null;
     return (
       <main className="fade-in mobile-page-pad" style={{ padding: "26px 30px", maxWidth: 720, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>
-            Question {index + 1} of {questions.length}
+        <StepHeader step={2} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", background: "var(--line2)", borderRadius: 7, padding: "5px 10px", flex: "none" }}>
+            Q {index + 1}/{questions.length}
+          </span>
+          <div style={{ flex: 1, height: 6, background: "var(--line2)", borderRadius: 999, overflow: "hidden" }}>
+            <div style={{ width: `${((index + 1) / questions.length) * 100}%`, height: "100%", background: "var(--orange)", borderRadius: 999, transition: "width .3s ease" }} />
           </div>
-          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            Exit
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "var(--ink3)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flex: "none" }}>
+            End session
           </button>
         </div>
 
@@ -259,24 +290,27 @@ export default function StudentWorkoutPage() {
     const gradable = questions.filter((q) => q.type !== "ESSAY").length;
     const pct = gradable > 0 ? correctCount / gradable : 0;
     return (
-      <main className="fade-in-up mobile-page-pad" style={{ padding: "40px 30px", maxWidth: 620, margin: "0 auto", textAlign: "center" }}>
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "48px 40px" }}>
-          <div style={{ position: "relative", width: 110, height: 110, margin: "0 auto 18px" }}>
-            <ProgressRing pct={pct} color="var(--orange)" size={110} strokeWidth={9} />
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800 }}>
-              {Math.round(pct * 100)}%
+      <main className="fade-in-up mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 620, margin: "0 auto" }}>
+        <StepHeader step={3} />
+        <div style={{ display: "flex", gap: 24, alignItems: "center", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24 }}>
+          <div style={{ position: "relative", width: 96, height: 96, flex: "none" }}>
+            <ProgressRing pct={pct} color="var(--green)" size={96} strokeWidth={9} />
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ fontSize: 20, fontWeight: 800 }}>{Math.round(pct * 100)}%</div>
+              <div style={{ fontSize: 9, fontWeight: 500, color: "var(--ink3)" }}>correct</div>
             </div>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4 }}>Workout complete!</div>
-          <p style={{ color: "var(--ink3)", fontSize: 14, margin: "8px 0 22px" }}>
-            You answered {attempted} of {questions.length} questions, {correctCount} correct.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.3 }}>Nice reps 💪</div>
+            <p style={{ color: "var(--ink2)", fontSize: 13, lineHeight: 1.6, margin: "4px 0 14px" }}>
+              You attempted <b>{attempted} of {questions.length}</b> · <b style={{ color: "var(--green)" }}>{correctCount} correct</b>
+              {gradable < questions.length ? ` (${questions.length - gradable} short-answer not auto-graded)` : ""}.
+            </p>
             <button
               onClick={() => setView("dashboard")}
-              style={{ padding: "12px 24px", background: "var(--orange)", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
+              style={{ padding: "0 16px", height: 36, background: "var(--orange)", color: "#fff", border: "none", borderRadius: 9, fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}
             >
-              New workout
+              New session
             </button>
           </div>
         </div>
@@ -286,11 +320,11 @@ export default function StudentWorkoutPage() {
 
   return (
     <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 720, margin: "0 auto" }}>
-      <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, marginBottom: 22 }}>Workout</div>
+      <StepHeader step={1} />
 
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 26 }}>
-        <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>Create a Workout</div>
-        <p style={{ fontSize: 13, color: "var(--ink3)", margin: "4px 0 22px" }}>Generate a personalised practice set from your syllabus.</p>
+        <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.3 }}>Build a session</div>
+        <p style={{ fontSize: 13, color: "var(--ink3)", margin: "4px 0 22px" }}>Quick reps from your syllabus — no marks, no timer pressure.</p>
 
         <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
           <div>
@@ -360,17 +394,32 @@ export default function StudentWorkoutPage() {
           </button>
         </div>
 
-        <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>
-          Number of questions — <b style={{ color: "var(--orange)" }}>{count}</b>
-        </label>
-        <input
-          type="range"
-          min={5}
-          max={30}
-          value={count}
-          onChange={(e) => setCount(Number(e.target.value))}
-          style={{ width: "100%", margin: "10px 0 22px", accentColor: "var(--orange)" }}
-        />
+        <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>Number of questions</label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0 22px" }}>
+          {QUESTION_COUNTS.map((n) => {
+            const active = count === n;
+            return (
+              <button
+                key={n}
+                onClick={() => setCount(n)}
+                style={{
+                  minWidth: 46,
+                  padding: "8px 14px",
+                  borderRadius: 999,
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  border: active ? "1px solid var(--orange)" : "1px solid var(--line)",
+                  background: active ? "var(--orange-soft)" : "var(--card)",
+                  color: active ? "var(--orange)" : "var(--ink2)",
+                }}
+              >
+                {n}
+              </button>
+            );
+          })}
+        </div>
 
         {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 14 }}>{error}</p>}
 
@@ -378,20 +427,21 @@ export default function StudentWorkoutPage() {
           onClick={onStartWorkout}
           disabled={!courseId || (selectedFormats.length === 0 && !includeComprehension) || starting}
           style={{
-            width: "100%",
-            padding: 14,
-            background: "var(--ink)",
+            padding: "0 26px",
+            height: 46,
+            background: "var(--orange)",
             color: "#fff",
             border: "none",
-            borderRadius: 13,
+            borderRadius: 12,
             fontSize: 15,
-            fontWeight: 700,
+            fontWeight: 600,
             fontFamily: "inherit",
             cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(242,106,27,.3)",
             opacity: !courseId || (selectedFormats.length === 0 && !includeComprehension) || starting ? 0.6 : 1,
           }}
         >
-          {starting ? "Generating…" : "Generate Workout"}
+          {starting ? "Generating…" : "Start practicing →"}
         </button>
       </div>
     </main>
