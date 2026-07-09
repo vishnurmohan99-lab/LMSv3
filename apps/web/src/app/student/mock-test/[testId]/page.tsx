@@ -160,7 +160,17 @@ export default function StudentMockTestTakePage() {
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [questionSecondsLeft, setQuestionSecondsLeft] = useState<number | null>(null);
   const [highlights, setHighlights] = useState<Record<string, HighlightRange[]>>({});
+  const [marked, setMarked] = useState<Set<string>>(new Set());
   const submittingRef = useRef(false);
+
+  function toggleMark(testQuestionId: string) {
+    setMarked((m) => {
+      const next = new Set(m);
+      if (next.has(testQuestionId)) next.delete(testQuestionId);
+      else next.add(testQuestionId);
+      return next;
+    });
+  }
 
   function addHighlight(passageId: string, range: HighlightRange) {
     setHighlights((h) => ({ ...h, [passageId]: [...(h[passageId] ?? []), range] }));
@@ -446,6 +456,32 @@ export default function StudentMockTestTakePage() {
               </div>
             )}
 
+            {q && (
+              <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 14 }}>
+                <button
+                  onClick={() => toggleMark(q.id)}
+                  style={{
+                    ...btnStyle,
+                    padding: "9px 16px",
+                    fontSize: 12.5,
+                    background: marked.has(q.id) ? "var(--purple-soft)" : "var(--card)",
+                    color: marked.has(q.id) ? "var(--purple-ink)" : "var(--ink)",
+                    border: marked.has(q.id) ? "1px solid var(--purple)" : "1px solid var(--line)",
+                  }}
+                >
+                  {marked.has(q.id) ? "★ Marked for review" : "☆ Mark for review"}
+                </button>
+                {answers[q.id] !== undefined && (
+                  <button
+                    onClick={() => setAnswers((a) => { const next = { ...a }; delete next[q.id]; return next; })}
+                    style={{ ...btnStyle, padding: "9px 16px", fontSize: 12.5 }}
+                  >
+                    Clear response
+                  </button>
+                )}
+              </div>
+            )}
+
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20, flexWrap: "wrap", gap: 10 }}>
               <button onClick={() => setCurrent((c) => Math.max(0, c - 1))} disabled={current === 0} style={{ ...btnStyle, opacity: current === 0 ? 0.5 : 1 }}>
                 Previous
@@ -468,7 +504,8 @@ export default function StudentMockTestTakePage() {
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Question Palette</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
               {questions.map((qq, i) => {
-                const answered = !!answers[qq.id];
+                const answered = answers[qq.id] !== undefined;
+                const isMarked = marked.has(qq.id);
                 const active = i === current;
                 return (
                   <button
@@ -479,8 +516,8 @@ export default function StudentMockTestTakePage() {
                       height: 36,
                       borderRadius: 9,
                       border: active ? "2px solid var(--ink)" : "1px solid var(--line)",
-                      background: answered ? "var(--green-soft)" : "var(--card)",
-                      color: answered ? "var(--green)" : "var(--ink2)",
+                      background: isMarked ? "var(--purple-soft)" : answered ? "var(--green-soft)" : "var(--card)",
+                      color: isMarked ? "var(--purple-ink)" : answered ? "var(--green)" : "var(--ink2)",
                       fontSize: qq.passage ? 10.5 : 12.5,
                       fontWeight: 700,
                       fontFamily: "inherit",
@@ -495,6 +532,9 @@ export default function StudentMockTestTakePage() {
             <div style={{ display: "grid", gap: 6, marginTop: 16, fontSize: 11.5, color: "var(--ink2)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--green-soft)", border: "1px solid var(--green)" }} /> Answered
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--purple-soft)", border: "1px solid var(--purple)" }} /> Marked for review
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--card)", border: "1px solid var(--line)" }} /> Not visited

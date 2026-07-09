@@ -107,37 +107,92 @@ export default function StudentSubscriptionPage() {
   }
 
   return (
-    <main className="fade-in" style={{ padding: "30px 30px 60px" }}>
-      <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, marginBottom: 6 }}>Subscriptions</div>
-      <p style={{ fontSize: 13, color: "var(--ink3)", marginBottom: 22 }}>Subscribe to a bundle to unlock every course and test included.</p>
+    <main className="fade-in" style={{ padding: "36px 30px 60px" }}>
+      <div style={{ textAlign: "center", maxWidth: 520, margin: "0 auto 28px" }}>
+        <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>Subscription bundles</div>
+        <p style={{ fontSize: 13.5, color: "var(--ink3)", marginTop: 6, lineHeight: 1.6 }}>Subscribe to a bundle to unlock every course and test included — your progress always stays.</p>
+      </div>
 
-      {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
+      {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16, textAlign: "center" }}>{error}</p>}
 
       {loading ? (
-        <p style={{ color: "var(--ink2)" }}>Loading…</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, maxWidth: 980, margin: "0 auto" }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="dash-skeleton" style={{ height: 220 }} />
+          ))}
+        </div>
       ) : subscriptions.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: "var(--ink3)", fontSize: 14, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: 40, textAlign: "center", color: "var(--ink3)", fontSize: 14, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)" }}>
           No subscriptions are available yet.
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, maxWidth: 980, margin: "0 auto" }}>
           {subscriptions.map((sub) => (
             <button
               key={sub.id}
               onClick={() => openDetail(sub.id)}
               className="entity-card"
-              style={{ textAlign: "left", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 8, cursor: "pointer", fontFamily: "inherit" }}
+              style={{
+                textAlign: "left",
+                background: "var(--card)",
+                border: sub.subscribed ? "2px solid var(--orange)" : "1px solid var(--line)",
+                boxShadow: sub.subscribed ? "0 8px 24px rgba(242,106,27,.12)" : "none",
+                borderRadius: 20,
+                padding: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                position: "relative",
+              }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>{sub.title}</div>
-                {sub.subscribed && (
-                  <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--green)", background: "var(--green-soft)", padding: "2px 8px", borderRadius: 6, flex: "none" }}>SUBSCRIBED</span>
-                )}
+              {sub.subscribed && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -10,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    fontSize: 9,
+                    fontWeight: 800,
+                    letterSpacing: 0.5,
+                    background: "var(--orange)",
+                    color: "#fff",
+                    borderRadius: 999,
+                    padding: "4px 12px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  CURRENT PLAN
+                </span>
+              )}
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{sub.title}</div>
+              {sub.description && <div style={{ fontSize: 12.5, color: "var(--ink3)", lineHeight: 1.5 }}>{sub.description}</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 7, marginTop: 8, flex: 1 }}>
+                <div style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--ink2)" }}>
+                  <span style={{ color: "var(--green)", fontWeight: 700 }}>✓</span>
+                  {sub._count.courses} course{sub._count.courses === 1 ? "" : "s"}
+                </div>
+                <div style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--ink2)" }}>
+                  <span style={{ color: "var(--green)", fontWeight: 700 }}>✓</span>
+                  {sub._count.tests} test{sub._count.tests === 1 ? "" : "s"}
+                </div>
               </div>
-              {sub.description && <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>{sub.description}</div>}
-              <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 4 }}>
-                {sub._count.courses} course{sub._count.courses === 1 ? "" : "s"} · {sub._count.tests} test{sub._count.tests === 1 ? "" : "s"}
-              </div>
+              <span
+                style={{
+                  marginTop: 10,
+                  textAlign: "center",
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  padding: "10px 0",
+                  borderRadius: 11,
+                  background: sub.subscribed ? "var(--line2)" : "var(--ink)",
+                  color: sub.subscribed ? "var(--ink3)" : "#fff",
+                }}
+              >
+                {sub.subscribed ? "✓ You're subscribed" : "View details →"}
+              </span>
             </button>
           ))}
         </div>
