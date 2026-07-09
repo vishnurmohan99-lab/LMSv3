@@ -1,10 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { forumApi, usersApi, ApiError, type ForumCategory, type ForumThread, type ForumThreadDetail, type Profile } from "@/lib/api";
 
 function initials(name: string) {
   return name.trim().slice(0, 2).toUpperCase();
+}
+
+function isMentor(role: "STUDENT" | "FACULTY" | "ADMIN") {
+  return role === "FACULTY" || role === "ADMIN";
+}
+
+// Lightweight derived "hot" signal — no real hot flag exists, so a thread with a
+// healthy amount of discussion is surfaced, mirroring how other pages derive badges.
+const HOT_REPLY_THRESHOLD = 5;
+
+function timeAgoShort(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
 }
 
 function timeAgo(iso: string) {
@@ -56,6 +74,11 @@ export default function ForumApp() {
 
   useEffect(loadCategories, []);
   useEffect(loadThreads, [activeCategory, search]);
+
+  const categoryName = useMemo(() => {
+    const map = new Map(categories.map((c) => [c.id, c.name]));
+    return (id: string) => map.get(id) ?? "General";
+  }, [categories]);
 
   function openThreadView(id: string) {
     setOpenThreadId(id);
@@ -146,235 +169,294 @@ export default function ForumApp() {
 
   const isAdmin = me?.role === "ADMIN";
   const postableCategories = categories.filter((c) => c.canPost);
+  const chips = [{ id: "all", name: "All Topics", count: categories.reduce((s, c) => s + c.count, 0) }, ...categories];
+
+  const answeredByMentor = openThread ? openThread.posts.some((p) => isMentor(p.author.role)) : false;
 
   return (
-    <div className="forum-shell" style={{ display: "flex", height: "100%", minHeight: "calc(100vh - 70px)" }}>
-      <aside className="forum-categories" style={{ width: 240, flex: "none", borderRight: "1px solid var(--line)", background: "var(--card)", padding: "18px 12px", overflowY: "auto" }}>
-        <div className="forum-categories-label" style={{ fontSize: 12, fontWeight: 700, color: "var(--ink3)", textTransform: "uppercase", letterSpacing: 1, padding: "0 6px 10px" }}>Categories</div>
-        <div className="forum-categories-list" style={{ display: "grid", gap: 3 }}>
-          {[{ id: "all", name: "All Topics", count: categories.reduce((s, c) => s + c.count, 0) }, ...categories].map((c) => {
-            const active = activeCategory === c.id;
-            return (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setActiveCategory(c.id);
-                  setView("list");
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 8,
-                  padding: "11px 14px",
-                  border: "none",
-                  borderRadius: 11,
-                  background: active ? "var(--ink)" : "transparent",
-                  color: active ? "#fff" : "var(--ink2)",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  width: "100%",
-                  fontSize: 13.5,
-                  fontWeight: active ? 700 : 600,
-                  textAlign: "left",
-                }}
-              >
-                <span>{c.name}</span>
-                <span style={{ fontSize: 11, opacity: 0.7 }}>{c.count}</span>
-              </button>
-            );
-          })}
+    <div className="mobile-page-pad" style={{ padding: "24px 30px 40px" }}>
+      {/* Header bar */}
+      <div className="mobile-stack-header" style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4 }}>Community forum</div>
+        <div className="mobile-full-width" style={{ position: "relative", flex: "1 1 200px", maxWidth: 300, marginLeft: "auto" }}>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search threads…"
+            style={{ width: "100%", padding: "9px 14px 9px 36px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 12.5, fontFamily: "inherit", outline: "none", background: "var(--line2)", boxSizing: "border-box" }}
+          />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" strokeWidth="2" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3-3" />
+          </svg>
         </div>
-      </aside>
+        <button
+          onClick={() => setView("new")}
+          style={{ padding: "0 16px", height: 36, background: "var(--orange)", color: "#fff", border: "none", borderRadius: 9, fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" }}
+        >
+          + New thread
+        </button>
+      </div>
 
-      <div className="mobile-page-pad" style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "24px 30px" }}>
-        {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
+      {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
-        {view === "new" && (
-          <div style={{ maxWidth: 680, margin: "0 auto" }}>
-            <button
-              onClick={() => setView("list")}
-              style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 15px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", marginBottom: 18 }}
-            >
-              ← All threads
-            </button>
-            <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "26px 28px" }}>
-              <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.3, marginBottom: 18 }}>Start a new thread</div>
-              {postableCategories.length === 0 ? (
-                <p style={{ color: "var(--ink3)", fontSize: 13.5 }}>You don&apos;t have permission to post in any forum category right now.</p>
-              ) : (
-                <>
-                  <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Category</label>
-                  <select
-                    value={newCategoryId}
-                    onChange={(e) => setNewCategoryId(e.target.value)}
-                    style={{ width: "100%", margin: "8px 0 16px", padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 11, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--bg)", color: "var(--ink)" }}
-                  >
-                    <option value="">Select a category…</option>
-                    {postableCategories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Title</label>
-                  <input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="What's your question or topic?"
-                    style={{ width: "100%", margin: "8px 0 16px", padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 11, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--bg)" }}
-                  />
-                  <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)" }}>Description</label>
-                  <textarea
-                    value={newBody}
-                    onChange={(e) => setNewBody(e.target.value)}
-                    placeholder="Share details…"
-                    style={{ width: "100%", margin: "8px 0 20px", padding: "13px 15px", border: "1px solid var(--line)", borderRadius: 12, fontFamily: "inherit", fontSize: 13.5, lineHeight: 1.6, outline: "none", resize: "vertical", minHeight: 110, background: "var(--bg)" }}
-                  />
-                  <button
-                    onClick={onCreateThread}
-                    disabled={!newTitle.trim() || !newBody.trim() || !newCategoryId || creating}
-                    style={{ width: "100%", padding: 14, background: !newTitle.trim() || !newBody.trim() || !newCategoryId || creating ? "var(--line)" : "var(--ink)", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: creating ? "default" : "pointer" }}
-                  >
-                    {creating ? "Posting…" : "Post thread"}
-                  </button>
-                </>
-              )}
-            </div>
+      {/* LIST */}
+      {view === "list" && (
+        <div className="fade-in-up">
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 16 }}>
+            {chips.map((c) => {
+              const active = activeCategory === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCategory(c.id)}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    border: active ? "none" : "1px solid var(--line)",
+                    background: active ? "var(--ink)" : "var(--card)",
+                    color: active ? "#fff" : "var(--ink2)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  {c.name}
+                  <span style={{ opacity: 0.6, marginLeft: 6 }}>{c.count}</span>
+                </button>
+              );
+            })}
           </div>
-        )}
 
-        {view === "thread" && (
-          <div style={{ maxWidth: 780, margin: "0 auto" }}>
-            <button
-              onClick={backToList}
-              style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 15px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", marginBottom: 18 }}
-            >
-              ← All threads
-            </button>
-            {!openThread ? (
-              <p style={{ color: "var(--ink2)" }}>Loading…</p>
-            ) : (
-              <>
-                <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "26px 28px" }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.4, lineHeight: 1.25 }}>{openThread.title}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 12, fontSize: 12.5, color: "var(--ink3)", fontWeight: 600, flexWrap: "wrap" }}>
-                    <span>Started by {openThread.author.fullName}</span>
-                    <span>{openThread._count.posts} replies</span>
-                    <button onClick={onToggleLike} style={{ border: "none", background: "none", cursor: "pointer", color: openThread.likedByMe ? "var(--orange)" : "var(--ink3)", fontWeight: 700, padding: 0, fontSize: 12.5 }}>
-                      ▲ {openThread._count.likes}
-                    </button>
-                    {isAdmin && (
-                      <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-                        <button onClick={onTogglePin} style={{ padding: "6px 12px", background: "var(--bg)", border: "none", borderRadius: 8, fontSize: 11.5, fontWeight: 700, color: "var(--ink2)", fontFamily: "inherit", cursor: "pointer" }}>
-                          📌 {openThread.pinned ? "Unpin" : "Pin"}
-                        </button>
-                        <button onClick={onToggleLock} style={{ padding: "6px 12px", background: "var(--bg)", border: "none", borderRadius: 8, fontSize: 11.5, fontWeight: 700, color: "var(--ink2)", fontFamily: "inherit", cursor: "pointer" }}>
-                          🔒 {openThread.locked ? "Unlock" : "Lock"}
-                        </button>
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ marginTop: 16, fontSize: 14, lineHeight: 1.6, color: "var(--ink)" }}>{openThread.body}</p>
-                  <div style={{ marginTop: 16, display: "grid", gap: 14 }}>
-                    {openThread.posts.map((p) => (
-                      <div key={p.id} style={{ display: "flex", gap: 12, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg,#f7902b,#f24d1b)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flex: "none" }}>
-                          {initials(p.author.fullName)}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700 }}>{p.author.fullName}</span>
-                            <span style={{ fontSize: 11, color: "var(--ink3)" }}>{timeAgo(p.createdAt)}</span>
-                          </div>
-                          <p style={{ fontSize: 13.5, marginTop: 4, lineHeight: 1.55 }}>{p.body}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {openThread.locked ? (
-                  <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--bg)", borderRadius: "var(--rm)", fontSize: 13, color: "var(--ink3)", fontWeight: 600, textAlign: "center" }}>
-                    🔒 This thread is locked — no new replies.
-                  </div>
-                ) : !openThread.canComment ? (
-                  <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--bg)", borderRadius: "var(--rm)", fontSize: 13, color: "var(--ink3)", fontWeight: 600, textAlign: "center" }}>
-                    You don&apos;t have permission to comment in this category.
-                  </div>
-                ) : (
-                  <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: "18px 20px", marginTop: 16, display: "flex", gap: 12, alignItems: "center" }}>
-                    <input
-                      value={reply}
-                      onChange={(e) => setReply(e.target.value)}
-                      placeholder="Write a reply…"
-                      style={{ flex: 1, padding: "13px 16px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--bg)" }}
-                    />
-                    <button
-                      onClick={onReply}
-                      disabled={!reply.trim() || posting}
-                      style={{ padding: "13px 24px", background: !reply.trim() || posting ? "var(--line)" : "var(--orange)", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: posting ? "default" : "pointer" }}
-                    >
-                      Post reply
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {view === "list" && (
-          <div style={{ maxWidth: 820, margin: "0 auto" }}>
-            <div className="mobile-stack-header" style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-              <div style={{ position: "relative", flex: 1 }}>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search threads…"
-                  style={{ width: "100%", padding: "12px 16px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--card)" }}
-                />
-              </div>
-              <button
-                onClick={() => setView("new")}
-                style={{ padding: "12px 22px", background: "var(--ink)", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" }}
-              >
-                New thread
-              </button>
+          {loading ? (
+            <p style={{ color: "var(--ink2)" }}>Loading…</p>
+          ) : threads.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: "var(--ink3)", fontSize: 14, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16 }}>
+              No threads yet — start the conversation.
             </div>
-            {loading ? (
-              <p style={{ color: "var(--ink2)" }}>Loading…</p>
-            ) : threads.length === 0 ? (
-              <div style={{ padding: 40, textAlign: "center", color: "var(--ink3)", fontSize: 14, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)" }}>
-                No threads yet — start the conversation.
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: 12 }}>
-                {threads.map((t) => (
+          ) : (
+            <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden" }}>
+              {threads.map((t, i) => {
+                const hot = t._count.posts >= HOT_REPLY_THRESHOLD;
+                const needsAnswers = t._count.posts === 0;
+                return (
                   <button
                     key={t.id}
                     onClick={() => openThreadView(t.id)}
-                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 20px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", cursor: "pointer", fontFamily: "inherit", textAlign: "left", width: "100%" }}
+                    className="forum-thread-row"
+                    style={{
+                      display: "flex",
+                      gap: 12,
+                      alignItems: "center",
+                      padding: "14px 18px",
+                      borderTop: i ? "1px solid var(--line2)" : "none",
+                      background: "transparent",
+                      border: "none",
+                      borderRadius: 0,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "left",
+                      width: "100%",
+                    }}
                   >
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg,#f7902b,#f24d1b)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, flex: "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--purple-soft)", color: "var(--purple-ink)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, flex: "none" }}>
                       {initials(t.author.fullName)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                        {t.pinned && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "2px 7px", borderRadius: 6 }}>📌 PINNED</span>}
-                        {t.locked && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--ink3)", background: "var(--bg)", padding: "2px 7px", borderRadius: 6 }}>🔒 LOCKED</span>}
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        {t.pinned && <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: 0.5, background: "var(--orange-soft)", color: "var(--orange-deep)", borderRadius: 4, padding: "2px 6px", flex: "none" }}>📌 PINNED</span>}
+                        <span style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</span>
+                        {hot && <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: 0.5, background: "var(--live-soft)", color: "var(--live)", borderRadius: 4, padding: "2px 6px", flex: "none" }}>HOT</span>}
+                        {t.locked && <span style={{ fontSize: 10, flex: "none" }}>🔒</span>}
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.35 }}>{t.title}</div>
-                      <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 5 }}>
-                        by {t.author.fullName} · {t._count.posts} replies · ▲ {t._count.likes}
+                      <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {t.author.fullName} · {categoryName(t.categoryId)}
+                        {needsAnswers ? <span style={{ color: "var(--orange-ink)", fontWeight: 600 }}> · needs answers</span> : null}
                       </div>
                     </div>
+                    <div style={{ textAlign: "right", flex: "none", width: 44 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "var(--font-mono)" }}>{t._count.posts}</div>
+                      <div style={{ fontSize: 9.5, color: "var(--ink3)" }}>replies</div>
+                    </div>
+                    <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--ink3)", flex: "none", width: 28, textAlign: "right" }}>{timeAgoShort(t.createdAt)}</span>
                   </button>
-                ))}
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* THREAD DETAIL */}
+      {view === "thread" && (
+        <div className="fade-in-up" style={{ maxWidth: 780 }}>
+          <span onClick={backToList} style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink3)", cursor: "pointer" }}>← All threads</span>
+          {!openThread ? (
+            <p style={{ color: "var(--ink2)", marginTop: 14 }}>Loading…</p>
+          ) : (
+            <>
+              <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 18, padding: 22, marginTop: 14 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--purple-soft)", color: "var(--purple-ink)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flex: "none" }}>
+                    {initials(openThread.author.fullName)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{openThread.author.fullName}</div>
+                    <div style={{ fontSize: 10.5, color: "var(--ink3)" }}>{timeAgo(openThread.createdAt)} · {categoryName(openThread.categoryId)}</div>
+                  </div>
+                  {answeredByMentor && (
+                    <span style={{ fontSize: 10.5, fontWeight: 600, background: "var(--green-soft)", color: "var(--green)", borderRadius: 999, padding: "4px 10px", flex: "none" }}>✓ Answered</span>
+                  )}
+                  {isAdmin && (
+                    <span style={{ display: "flex", gap: 8, flex: "none" }}>
+                      <button onClick={onTogglePin} style={{ padding: "6px 12px", background: "var(--bg)", border: "none", borderRadius: 8, fontSize: 11.5, fontWeight: 700, color: "var(--ink2)", fontFamily: "inherit", cursor: "pointer" }}>
+                        📌 {openThread.pinned ? "Unpin" : "Pin"}
+                      </button>
+                      <button onClick={onToggleLock} style={{ padding: "6px 12px", background: "var(--bg)", border: "none", borderRadius: 8, fontSize: 11.5, fontWeight: 700, color: "var(--ink2)", fontFamily: "inherit", cursor: "pointer" }}>
+                        🔒 {openThread.locked ? "Unlock" : "Lock"}
+                      </button>
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.35 }}>{openThread.title}</div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.7, color: "var(--ink2)", marginTop: 10 }}>{openThread.body}</div>
+                <div style={{ display: "flex", gap: 12, marginTop: 12, fontSize: 11.5, fontWeight: 600, color: "var(--ink3)" }}>
+                  <button onClick={onToggleLike} style={{ border: "none", background: "none", cursor: "pointer", color: openThread.likedByMe ? "var(--orange-deep)" : "var(--ink3)", fontWeight: 600, padding: 0, fontSize: 11.5, fontFamily: "inherit" }}>
+                    ▲ {openThread._count.likes} helpful
+                  </button>
+                  <span>{openThread._count.posts} replies</span>
+                </div>
               </div>
+
+              {openThread.posts.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 14 }}>
+                  {openThread.posts.map((p) => {
+                    const mentor = isMentor(p.author.role);
+                    return (
+                      <div
+                        key={p.id}
+                        style={{
+                          background: "var(--card)",
+                          border: mentor ? "1.5px solid #b7e4cd" : "1px solid var(--line)",
+                          borderRadius: 16,
+                          padding: "16px 18px",
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: 9, alignItems: "center", marginBottom: 7 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: "50%", background: mentor ? "var(--orange-soft)" : "var(--purple-soft)", color: mentor ? "var(--orange-deep)" : "var(--purple-ink)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flex: "none" }}>
+                            {initials(p.author.fullName)}
+                          </div>
+                          <span style={{ fontSize: 12.5, fontWeight: 700 }}>{p.author.fullName}</span>
+                          {mentor && <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: 0.5, background: "var(--green-soft)", color: "var(--green)", borderRadius: 4, padding: "2px 6px" }}>✓ MENTOR</span>}
+                          <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--ink3)", marginLeft: "auto" }}>{timeAgoShort(p.createdAt)}</span>
+                        </div>
+                        <div style={{ fontSize: 13, lineHeight: 1.65, color: "var(--ink2)" }}>{p.body}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {openThread.locked ? (
+                <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--bg)", borderRadius: 14, fontSize: 13, color: "var(--ink3)", fontWeight: 600, textAlign: "center" }}>
+                  🔒 This thread is locked — no new replies.
+                </div>
+              ) : !openThread.canComment ? (
+                <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--bg)", borderRadius: 14, fontSize: 13, color: "var(--ink3)", fontWeight: 600, textAlign: "center" }}>
+                  You don&apos;t have permission to comment in this category.
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                  <input
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                    placeholder="Add your reply…"
+                    style={{ flex: 1, height: 44, padding: "0 16px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13.5, fontFamily: "inherit", outline: "none", background: "var(--card)" }}
+                  />
+                  <button
+                    onClick={onReply}
+                    disabled={!reply.trim() || posting}
+                    style={{ height: 44, padding: "0 20px", background: !reply.trim() || posting ? "var(--line)" : "var(--ink)", color: "#fff", border: "none", borderRadius: 12, fontSize: 13, fontWeight: 600, fontFamily: "inherit", cursor: posting ? "default" : "pointer" }}
+                  >
+                    Reply
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* NEW THREAD */}
+      {view === "new" && (
+        <div className="fade-in-up" style={{ maxWidth: 640 }}>
+          <span onClick={() => setView("list")} style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink3)", cursor: "pointer" }}>← Cancel</span>
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 18, padding: 24, marginTop: 14 }}>
+            <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: -0.3, marginBottom: 16 }}>Start a thread</div>
+            {postableCategories.length === 0 ? (
+              <p style={{ color: "var(--ink3)", fontSize: 13.5 }}>You don&apos;t have permission to post in any forum category right now.</p>
+            ) : (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Title</div>
+                <input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="One clear question works best…"
+                  style={{ width: "100%", height: 44, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 11, fontSize: 14, fontFamily: "inherit", outline: "none", background: "var(--card)", boxSizing: "border-box" }}
+                />
+                <div style={{ fontSize: 12, fontWeight: 600, margin: "14px 0 6px" }}>Category</div>
+                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                  {postableCategories.map((c) => {
+                    const active = newCategoryId === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setNewCategoryId(c.id)}
+                        style={{
+                          padding: "7px 14px",
+                          borderRadius: 999,
+                          border: active ? "none" : "1px solid var(--line)",
+                          background: active ? "var(--ink)" : "var(--card)",
+                          color: active ? "#fff" : "var(--ink2)",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          fontFamily: "inherit",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 600, margin: "14px 0 6px" }}>Details</div>
+                <textarea
+                  value={newBody}
+                  onChange={(e) => setNewBody(e.target.value)}
+                  placeholder="What have you tried? Where exactly are you stuck?"
+                  style={{ width: "100%", minHeight: 110, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: 11, fontFamily: "inherit", fontSize: 13.5, lineHeight: 1.6, outline: "none", resize: "vertical", background: "var(--card)", boxSizing: "border-box" }}
+                />
+                <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => setView("list")}
+                    style={{ height: 42, padding: "0 18px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13.5, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={onCreateThread}
+                    disabled={!newTitle.trim() || !newBody.trim() || !newCategoryId || creating}
+                    style={{ height: 42, padding: "0 20px", background: !newTitle.trim() || !newBody.trim() || !newCategoryId || creating ? "var(--line)" : "var(--orange)", color: "#fff", border: "none", borderRadius: 10, fontSize: 13.5, fontWeight: 600, fontFamily: "inherit", cursor: creating ? "default" : "pointer" }}
+                  >
+                    {creating ? "Posting…" : "Post thread"}
+                  </button>
+                </div>
+              </>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
