@@ -12,14 +12,16 @@ const ROLE_HOME: Record<string, string> = {
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  margin: "8px 0 16px",
-  padding: "14px 16px",
+  margin: "6px 0 16px",
+  padding: "0 14px",
+  height: 44,
   border: "1px solid var(--line)",
-  borderRadius: 12,
+  borderRadius: 11,
   fontSize: 14,
   fontFamily: "inherit",
   outline: "none",
   background: "var(--card)",
+  boxSizing: "border-box",
 };
 
 export default function LoginPage() {
@@ -89,17 +91,18 @@ export default function LoginPage() {
         disabled={loading}
         style={{
           width: "100%",
-          padding: 15,
-          background: "var(--ink)",
+          height: 46,
+          background: "var(--orange)",
           color: "#fff",
           border: "none",
-          borderRadius: 13,
+          borderRadius: 12,
           fontSize: 15,
-          fontWeight: 700,
+          fontWeight: 600,
           fontFamily: "inherit",
           cursor: loading ? "default" : "pointer",
           opacity: loading ? 0.7 : 1,
           marginTop: 18,
+          boxShadow: "0 2px 8px rgba(242,106,27,.3)",
         }}
       >
         {loading ? "Signing in…" : "Sign in"}

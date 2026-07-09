@@ -483,8 +483,7 @@ export default function StudentCoursePlayerPage() {
   const [error, setError] = useState<string | null>(null);
   const [notEnrolled, setNotEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [viewMode, setViewMode] = useState<"lesson" | "flashcards" | "summary" | "cheatsheet">("lesson");
-  const [showChat, setShowChat] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "flashcards" | "summary" | "cheatsheet" | "notes" | "doubt">("overview");
   const [flashcardCount, setFlashcardCount] = useState<number | null>(null);
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [completingChapterId, setCompletingChapterId] = useState<string | null>(null);
@@ -520,8 +519,7 @@ export default function StudentCoursePlayerPage() {
   }, [courseId]);
 
   useEffect(() => {
-    setViewMode("lesson");
-    setShowChat(false);
+    setActiveTab("overview");
     setFlashcardCount(null);
   }, [selectedLessonId]);
 
@@ -633,6 +631,17 @@ export default function StudentCoursePlayerPage() {
   // not which lesson happens to be selected — otherwise it resets on every remount.
   const viewedCount = allLessons.filter((l) => l.viewed).length;
   const progressPct = allLessons.length > 0 ? Math.round((viewedCount / allLessons.length) * 100) : 0;
+
+  const tabs: { key: typeof activeTab; label: string }[] = selectedLesson
+    ? [
+        { key: "overview" as const, label: "Overview" },
+        ...(selectedLesson.flashcardsEnabled ? [{ key: "flashcards" as const, label: `Flashcards${flashcardCount !== null ? ` (${flashcardCount})` : ""}` }] : []),
+        ...(selectedLesson.summaryDeckEnabled ? [{ key: "summary" as const, label: "Deck" }] : []),
+        ...(selectedLesson.cheatSheetEnabled ? [{ key: "cheatsheet" as const, label: "Cheat Sheet" }] : []),
+        ...(selectedLesson.aiNotesEnabled && selectedLesson.type === "VIDEO" ? [{ key: "notes" as const, label: "Notes" }] : []),
+        ...(selectedLesson.askMeEnabled ? [{ key: "doubt" as const, label: "Doubt" }] : []),
+      ]
+    : [];
 
   return (
     <div style={{ display: "flex", margin: 0, height: "100%", background: "var(--bg)" }}>
@@ -855,128 +864,50 @@ export default function StudentCoursePlayerPage() {
                     {lessonMeta(selectedLesson, selectedChapter?.title ?? "")}
                   </div>
                 </div>
-                <div className="lesson-action-row" style={{ display: "flex", gap: 10, flex: "none", flexWrap: "wrap", marginLeft: "auto" }}>
-                  {selectedLesson.flashcardsEnabled && (
-                    <button
-                      onClick={() => setViewMode(viewMode === "flashcards" ? "lesson" : "flashcards")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 7,
-                        padding: "10px 14px",
-                        background: viewMode === "flashcards" ? "var(--orange)" : "var(--orange-soft)",
-                        color: viewMode === "flashcards" ? "#fff" : "var(--orange)",
-                        border: "none",
-                        borderRadius: 11,
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        fontFamily: "inherit",
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="5" width="14" height="16" rx="2" />
-                        <path d="M7 5V3h14v16h-2" />
-                      </svg>
-                      Flashcards{flashcardCount !== null ? ` (${flashcardCount})` : ""}
-                    </button>
-                  )}
-                  {selectedLesson.summaryDeckEnabled && (
-                    <button
-                      onClick={() => setViewMode(viewMode === "summary" ? "lesson" : "summary")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 7,
-                        padding: "10px 14px",
-                        background: viewMode === "summary" ? "var(--purple)" : "var(--purple-soft)",
-                        color: viewMode === "summary" ? "#fff" : "var(--purple)",
-                        border: "none",
-                        borderRadius: 11,
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        fontFamily: "inherit",
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M9 11l3 3L22 4" />
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                      </svg>
-                      Summary Deck
-                    </button>
-                  )}
-                  {selectedLesson.cheatSheetEnabled && (
-                    <button
-                      onClick={() => setViewMode(viewMode === "cheatsheet" ? "lesson" : "cheatsheet")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 7,
-                        padding: "10px 14px",
-                        background: viewMode === "cheatsheet" ? "var(--orange)" : "var(--orange-soft)",
-                        color: viewMode === "cheatsheet" ? "#fff" : "var(--orange)",
-                        border: "none",
-                        borderRadius: 11,
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        fontFamily: "inherit",
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6" />
-                      </svg>
-                      Cheat Sheet
-                    </button>
-                  )}
-                  {selectedLesson.askMeEnabled && (
-                    <button
-                      onClick={() => setShowChat((s) => !s)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 7,
-                        padding: "10px 15px",
-                        background: "var(--orange)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 11,
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        fontFamily: "inherit",
-                        cursor: "pointer",
-                        boxShadow: "0 4px 12px rgba(242,106,27,.32)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                      </svg>
-                      Ask a doubt
-                    </button>
-                  )}
-                </div>
               </div>
+            </div>
+
+            <div style={{ flex: "none", display: "flex", gap: 2, borderBottom: "1px solid var(--line)", padding: "0 26px", background: "var(--card)" }}>
+              {tabs.map((tb) => (
+                <div
+                  key={tb.key}
+                  onClick={() => setActiveTab(tb.key)}
+                  style={{
+                    padding: "12px 16px",
+                    fontSize: 13,
+                    fontWeight: activeTab === tb.key ? 700 : 500,
+                    color: activeTab === tb.key ? "var(--orange-deep)" : "var(--ink2)",
+                    borderBottom: activeTab === tb.key ? "2px solid var(--orange)" : "2px solid transparent",
+                    cursor: "pointer",
+                    userSelect: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {tb.label}
+                </div>
+              ))}
             </div>
 
             <div className="mobile-page-pad" style={{ flex: 1, overflowY: "auto", padding: 26, display: "flex" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                {viewMode === "flashcards" ? (
+                {activeTab === "flashcards" ? (
                   <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
-                ) : viewMode === "summary" ? (
+                ) : activeTab === "summary" ? (
                   <SummaryDeckReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
-                ) : viewMode === "cheatsheet" ? (
+                ) : activeTab === "cheatsheet" ? (
                   <CheatSheetReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
+                ) : activeTab === "notes" ? (
+                  <div style={{ maxWidth: 720, margin: "0 auto" }}>
+                    <LessonNotes lessonId={selectedLesson.id} />
+                  </div>
+                ) : activeTab === "doubt" ? (
+                  <div style={{ maxWidth: 720, margin: "0 auto", height: 560 }}>
+                    <AskMeChat key={selectedLesson.id} lessonId={selectedLesson.id} />
+                  </div>
                 ) : selectedLesson.type === "VIDEO" && (selectedChapter?.lessons.length ?? 0) > 1 ? (
                   <div className="lesson-video-grid" style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
                     <div style={{ display: "grid", gap: 18, minWidth: 0 }}>
                       <LessonViewer lesson={selectedLesson} />
-                      {selectedLesson.aiNotesEnabled && <LessonNotes lessonId={selectedLesson.id} />}
                     </div>
                     <div
                       className="fade-in-up"
@@ -1027,16 +958,9 @@ export default function StudentCoursePlayerPage() {
                 ) : (
                   <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 18 }}>
                     <LessonViewer lesson={selectedLesson} />
-                    {selectedLesson.aiNotesEnabled && selectedLesson.type === "VIDEO" && <LessonNotes lessonId={selectedLesson.id} />}
                   </div>
                 )}
               </div>
-
-              {showChat && selectedLesson.askMeEnabled && (
-                <div className="askme-panel" style={{ width: 360, flex: "none", marginLeft: 18, height: "calc(100% - 24px)", position: "sticky", top: 0 }}>
-                  <AskMeChat lessonId={selectedLesson.id} onClose={() => setShowChat(false)} />
-                </div>
-              )}
             </div>
           </>
         ) : (

@@ -385,13 +385,6 @@ button:active, a:active {
   .lesson-video-grid {
     grid-template-columns: 1fr !important;
   }
-  .lesson-action-row {
-    width: 100% !important;
-    margin-left: 0 !important;
-  }
-  .lesson-action-row button {
-    flex: 1 1 auto !important;
-  }
   .mobile-stack-grid {
     grid-template-columns: 1fr !important;
   }
@@ -404,14 +397,6 @@ button:active, a:active {
   }
   .mobile-stat-strip > button .mentor-cta-label {
     display: inline !important;
-  }
-  .askme-panel {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    margin-left: 0 !important;
-    z-index: 250;
   }
   .flip-card-face {
     padding: 22px !important;

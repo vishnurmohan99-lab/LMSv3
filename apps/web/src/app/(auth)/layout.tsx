@@ -4,7 +4,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div
         style={{
           flex: 1,
-          background: "#141414",
+          background: "linear-gradient(160deg,#3f238a 0%,#5a2ed6 60%,#7c5cfc 100%)",
           color: "#fff",
           padding: 56,
           display: "flex",
@@ -17,37 +17,57 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              width: 30,
-              height: 30,
-              borderRadius: 9,
-              background: "linear-gradient(135deg,#f7902b,#f24d1b)",
-              transform: "rotate(45deg)",
-            }}
-          />
-          <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>Elearning</span>
-        </div>
-        <div>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: 2,
-              color: "var(--orange)",
-              textTransform: "uppercase",
-              marginBottom: 18,
+              width: 32,
+              height: 32,
+              borderRadius: 10,
+              background: "var(--orange)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            AI Exam Prep
+            <div
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: "8px solid #fff",
+                borderTop: "5.5px solid transparent",
+                borderBottom: "5.5px solid transparent",
+                marginLeft: 2,
+                transform: "rotate(-90deg)",
+              }}
+            />
           </div>
-          <div style={{ fontSize: 44, fontWeight: 800, lineHeight: 1.08, letterSpacing: -1, maxWidth: 420 }}>
-            Learn smarter, not harder.
+          <span style={{ fontSize: 17, fontWeight: 800 }}>Elearning</span>
+        </div>
+        <div>
+          <div style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.15, letterSpacing: -0.5, maxWidth: 380 }}>
+            Study with intent.
+            <br />
+            Rank with proof.
           </div>
-          <p style={{ color: "#9a9a9a", fontSize: 15, lineHeight: 1.6, maxWidth: 380, marginTop: 18 }}>
+          <p style={{ color: "#dbcfff", fontSize: 14, lineHeight: 1.65, maxWidth: 340, marginTop: 14 }}>
             Adaptive flashcards, AI-narrated decks and an always-on doubt solver — built around your
             syllabus.
           </p>
+          <div
+            style={{
+              background: "rgba(255,255,255,.1)",
+              border: "1px solid rgba(255,255,255,.18)",
+              borderRadius: 16,
+              padding: 16,
+              marginTop: 28,
+            }}
+          >
+            <div style={{ fontSize: 15, color: "#ffce7a", letterSpacing: 2 }}>★★★★★</div>
+            <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.6, marginTop: 6 }}>
+              &ldquo;Went from the 61st to the 94th percentile in 3 months. The per-question review changed how I
+              study.&rdquo;
+            </div>
+            <div style={{ fontSize: 11, color: "#c0a9ff", marginTop: 8 }}>Sana L. · cleared CAT &apos;25</div>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 28, color: "#bdbdbd", fontSize: 13 }}>
+        <div style={{ display: "flex", gap: 28, color: "#c0a9ff", fontSize: 13 }}>
           <span>
             <b style={{ color: "#fff", fontSize: 20 }}>120k+</b>
             <br />
@@ -64,17 +84,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             Rating
           </span>
         </div>
-        <div
-          style={{
-            position: "absolute",
-            right: -90,
-            bottom: -90,
-            width: 280,
-            height: 280,
-            borderRadius: "50%",
-            background: "radial-gradient(circle,rgba(242,106,27,.35),transparent 70%)",
-          }}
-        />
       </div>
 
       <div style={{ flex: 1.05, display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>

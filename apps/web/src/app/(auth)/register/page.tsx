@@ -7,13 +7,15 @@ import { authApi, ApiError } from "@/lib/api";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "13px 15px",
+  height: 44,
+  padding: "0 14px",
   border: "1px solid var(--line)",
-  borderRadius: 12,
+  borderRadius: 11,
   fontSize: 14,
   fontFamily: "inherit",
   outline: "none",
   background: "var(--card)",
+  boxSizing: "border-box",
 };
 
 export default function RegisterPage() {
@@ -96,17 +98,18 @@ export default function RegisterPage() {
         disabled={loading}
         style={{
           width: "100%",
+          height: 46,
           marginTop: 20,
-          padding: 15,
-          background: "var(--ink)",
+          background: "var(--orange)",
           color: "#fff",
           border: "none",
-          borderRadius: 13,
+          borderRadius: 12,
           fontSize: 15,
-          fontWeight: 700,
+          fontWeight: 600,
           fontFamily: "inherit",
           cursor: loading ? "default" : "pointer",
           opacity: loading ? 0.7 : 1,
+          boxShadow: "0 2px 8px rgba(242,106,27,.3)",
         }}
       >
         {loading ? "Creating account…" : "Create account"}
