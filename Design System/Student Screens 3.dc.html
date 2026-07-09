@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceae4;font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;color:#1c1915}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.92)}70%{transform:scale(1.02)}100%{opacity:1;transform:scale(1)}}
+@keyframes shimmer{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 20px;display:flex;align-items:center;gap:14px">
+  <div style="width:36px;height:36px;border-radius:11px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:9px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+  <div style="font:800 20px 'Plus Jakarta Sans'">Ascent — Student Screens 3</div>
+  <div style="font:500 11px 'JetBrains Mono';color:#7c756c;border:1px solid #d0cabf;border-radius:999px;padding:4px 10px">NEW · feedback · faculty notes · profile</div>
+</div>
+
+<div style="padding:20px 56px 72px;display:flex;flex-direction:column;gap:44px;align-items:flex-start">
+
+<!-- ===== 1 · FEEDBACK ===== -->
+<div data-screen-label="Feedback">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">1 · FEEDBACK — switch tabs; click "Fill form" to open a form with all 5 question types</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+    <div style="height:64px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:28px;padding:0 32px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <span style="font:800 16px 'Plus Jakarta Sans'">Ascent</span>
+      </div>
+      <div style="display:flex;gap:4px;font:600 13px 'Plus Jakarta Sans'">
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Home</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">My courses</span>
+        <span style="padding:8px 14px;border-radius:9px;background:#fff6ef;color:#e0540e;cursor:pointer">Feedback</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Mentors</span>
+      </div>
+      <div style="flex:1"></div>
+      <div style="width:38px;height:38px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';cursor:pointer">AD</div>
+    </div>
+
+    <sc-if value="{{ fbList }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:760px;margin:0 auto;padding:36px 24px 48px;animation:fadeInUp .2s ease">
+        <div style="font:700 24px 'Plus Jakarta Sans';letter-spacing:-.01em">Feedback</div>
+        <div style="font:400 13.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:4px">Help us improve courses, faculty and mentorship.</div>
+        <div style="display:flex;gap:4px;background:#f4f1ed;border-radius:11px;padding:4px;margin-top:20px;width:fit-content">
+          <span onClick="{{ fbTabAllotted }}" style="{{ fbTabAllottedStyle }}">Allotted</span>
+          <span onClick="{{ fbTabSubmitted }}" style="{{ fbTabSubmittedStyle }}">Submitted</span>
+        </div>
+
+        <sc-if value="{{ fbShowAllotted }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <sc-if value="{{ fbPendingCount }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;gap:10px;background:#fff6ef;border:1px solid #ffd0ac;border-radius:14px;padding:12px 16px;margin-top:18px">
+                <span style="font:700 13px 'Plus Jakarta Sans';color:#b9400d">{{ fbPendingLabel }}</span>
+                <span style="font:400 12px 'Plus Jakarta Sans';color:#a35a06">Complete them before the deadline to keep faculty feedback flowing.</span>
+              </div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+              <sc-for list="{{ allottedRows }}" as="f" hint-placeholder-count="4">
+                <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:15px 18px;display:flex;align-items:center;gap:14px">
+                  <div style="{{ f.chip }}">{{ f.chipIcon }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font:700 14px 'Plus Jakarta Sans'">{{ f.title }}</div>
+                    <div style="font:400 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:2px">{{ f.subtitle }}</div>
+                  </div>
+                  <span style="font:500 10.5px 'JetBrains Mono';color:#aaa39a">{{ f.due }}</span>
+                  <button onClick="{{ f.fill }}" style="font:600 12.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:9px;height:36px;padding:0 16px;cursor:pointer" style-hover="background:#e0540e">Fill form</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ fbShowSubmitted }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;animation:fadeInUp .2s ease">
+            <sc-for list="{{ submittedRows }}" as="f" hint-placeholder-count="3">
+              <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:15px 18px;display:flex;align-items:center;gap:14px">
+                <div style="{{ f.chip }}">{{ f.chipIcon }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font:700 14px 'Plus Jakarta Sans'">{{ f.title }}</div>
+                  <div style="font:400 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:2px">{{ f.subtitle }}</div>
+                </div>
+                <span style="font:500 10.5px 'JetBrains Mono';color:#aaa39a">Submitted {{ f.submitted }}</span>
+                <button onClick="{{ f.view }}" style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;color:#403b35;border:1px solid #d8d2c9;border-radius:9px;height:36px;padding:0 16px;cursor:pointer" style-hover="background:#faf8f6">View</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ fbForm }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:660px;margin:0 auto;padding:32px 24px 48px;animation:fadeInUp .2s ease">
+        <span onClick="{{ fbBack }}" style="font:600 12.5px 'Plus Jakarta Sans';color:#7c756c;cursor:pointer" style-hover="color:#e0540e">← Back to feedback</span>
+        <div style="font:700 22px 'Plus Jakarta Sans';letter-spacing:-.01em;margin-top:14px">{{ curFbTitle }}</div>
+        <div style="font:400 13.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:4px">Share your feedback about {{ curFbTarget }}</div>
+
+        <sc-if value="{{ fbReadOnly }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:10px;background:#e6f6ee;border:1px solid #b7e4cd;border-radius:14px;padding:12px 16px;margin-top:18px">
+            <span style="font:700 13px 'Plus Jakarta Sans';color:#0e7a48">✓ Submitted</span>
+            <span style="font:400 12px 'Plus Jakarta Sans';color:#0e7a48">Your responses below are read-only.</span>
+          </div>
+        </sc-if>
+
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:8px 22px;margin-top:20px">
+          <sc-for list="{{ fbQuestions }}" as="q" hint-placeholder-count="5">
+            <div style="padding:18px 0;border-bottom:1px solid #f4f1ed">
+              <div style="font:600 13.5px 'Plus Jakarta Sans';margin-bottom:10px">{{ q.label }}<sc-if value="{{ q.required }}" hint-placeholder-val="{{ false }}"><span style="color:#dc4040"> *</span></sc-if></div>
+
+              <sc-if value="{{ q.isRating }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ q.stars }}" as="st" hint-placeholder-count="5"><span onClick="{{ st.pick }}" style="{{ st.style }}">★</span></sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ q.isParagraph }}" hint-placeholder-val="{{ false }}">
+                <textarea value="{{ q.val }}" onChange="{{ q.change }}" readOnly="{{ q.ro }}" placeholder="Type your answer…" style="font:400 13px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;min-height:80px;padding:12px 14px;border:1px solid #d8d2c9;border-radius:11px;outline:none;background:#fff;resize:vertical" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.12)"></textarea>
+              </sc-if>
+              <sc-if value="{{ q.isMc }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ q.options }}" as="o" hint-placeholder-count="3">
+                    <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                      <span style="{{ o.dot }}"></span><span style="font:400 13px 'Plus Jakarta Sans';color:#403b35">{{ o.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ q.isChecks }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ q.options }}" as="o" hint-placeholder-count="3">
+                    <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                      <span style="{{ o.box }}">{{ o.tick }}</span><span style="font:400 13px 'Plus Jakarta Sans';color:#403b35">{{ o.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ q.isDropdown }}" hint-placeholder-val="{{ false }}">
+                <select value="{{ q.val }}" onChange="{{ q.change }}" disabled="{{ q.ro }}" style="font:500 13px 'Plus Jakarta Sans';height:40px;padding:0 12px;border:1px solid #d8d2c9;border-radius:10px;background:#fff;color:#403b35;min-width:220px">
+                  <sc-for list="{{ q.options }}" as="o" hint-placeholder-count="3"><option value="{{ o.label }}">{{ o.label }}</option></sc-for>
+                </select>
+              </sc-if>
+              <sc-if value="{{ q.isText }}" hint-placeholder-val="{{ false }}">
+                <input value="{{ q.val }}" onChange="{{ q.change }}" readOnly="{{ q.ro }}" placeholder="Your answer…" style="font:400 13px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:40px;padding:0 14px;border:1px solid #d8d2c9;border-radius:10px;outline:none;background:#fff" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.12)">
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ fbEditable }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ fbSubmit }}" style="font:600 14px 'Plus Jakarta Sans';width:100%;height:46px;background:#f26a1b;color:#fff;border:none;border-radius:12px;margin-top:18px;cursor:pointer" style-hover="background:#e0540e">Submit feedback</button>
+          <div style="font:400 11.5px 'Plus Jakarta Sans';color:#aaa39a;text-align:center;margin-top:10px">Responses are reviewed by admin and shared anonymously with faculty.</div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+<!-- ===== 2 · FACULTY NOTES ===== -->
+<div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+<div data-screen-label="Faculty Notes">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">2 · FACULTY NOTES — search, filter by course/chapter, "Simulate loading" for skeleton</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+    <div style="height:64px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:28px;padding:0 32px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <span style="font:800 16px 'Plus Jakarta Sans'">Ascent</span>
+      </div>
+      <div style="display:flex;gap:4px;font:600 13px 'Plus Jakarta Sans'">
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Home</span>
+        <span style="padding:8px 14px;border-radius:9px;background:#fff6ef;color:#e0540e;cursor:pointer">My courses</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Mock tests</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Mentors</span>
+      </div>
+      <div style="flex:1"></div>
+      <div style="width:38px;height:38px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';cursor:pointer">AD</div>
+    </div>
+    <div style="padding:32px 32px 40px">
+      <div style="font:700 24px 'Plus Jakarta Sans';letter-spacing:-.01em">Faculty notes</div>
+      <div style="font:400 13.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:4px">Study notes shared by faculty across your enrolled batches.</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:20px">
+        <div style="flex:1;max-width:320px;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #d8d2c9;border-radius:11px;height:40px;padding:0 14px">
+          <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <input value="{{ notesQuery }}" onChange="{{ notesQueryChange }}" placeholder="Search notes…" style="font:400 13px 'Plus Jakarta Sans';border:none;outline:none;background:transparent;flex:1;color:#1c1915">
+        </div>
+        <select value="{{ notesCourse }}" onChange="{{ notesCourseChange }}" style="font:600 12.5px 'Plus Jakarta Sans';height:40px;padding:0 12px;border:1px solid #d8d2c9;border-radius:10px;background:#fff;color:#403b35">
+          <sc-for list="{{ courseOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.v }}</option></sc-for>
+        </select>
+        <select value="{{ notesChapter }}" onChange="{{ notesChapterChange }}" disabled="{{ chapterDisabled }}" style="{{ chapterSelectStyle }}">
+          <sc-for list="{{ chapterOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.v }}</option></sc-for>
+        </select>
+        <div style="flex:1"></div>
+        <button onClick="{{ notesSimulate }}" style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px dashed #d8d2c9;border-radius:9px;height:36px;padding:0 12px;cursor:pointer;color:#7c756c" style-hover="background:#faf8f6">↻ Simulate loading</button>
+      </div>
+
+      <sc-if value="{{ notesLoading }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+          <div style="height:66px;border-radius:14px;background:#f4f1ed;animation:shimmer 1.4s infinite"></div>
+          <div style="height:66px;border-radius:14px;background:#f4f1ed;animation:shimmer 1.4s infinite .15s"></div>
+          <div style="height:66px;border-radius:14px;background:#f4f1ed;animation:shimmer 1.4s infinite .3s"></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notesReady }}" hint-placeholder-val="{{ true }}">
+        <div key="{{ notesKey }}" style="display:flex;flex-direction:column;gap:10px;margin-top:20px;animation:fadeInUp .2s ease">
+          <sc-for list="{{ noteRows }}" as="n" hint-placeholder-count="5">
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:14px">
+              <div style="{{ n.chip }}">{{ n.ext }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:700 14px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.filename }}</div>
+                <div style="display:flex;gap:6px;margin-top:6px">
+                  <span style="font:600 10px 'Plus Jakarta Sans';background:#f4f1ed;color:#59534b;border-radius:999px;padding:3px 9px">{{ n.course }}</span>
+                  <span style="font:600 10px 'Plus Jakarta Sans';background:#f4f1ed;color:#59534b;border-radius:999px;padding:3px 9px">{{ n.chapter }}</span>
+                </div>
+              </div>
+              <span style="font:500 10.5px 'JetBrains Mono';color:#aaa39a">{{ n.size }}</span>
+              <a href="{{ n.href }}" target="_blank" style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;color:#403b35;border:1px solid #d8d2c9;border-radius:9px;height:36px;padding:0 16px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">Open ↗</a>
+            </div>
+          </sc-for>
+          <sc-if value="{{ notesEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 0">
+              <div style="width:56px;height:56px;border-radius:18px;background:#f4f1ed;display:flex;align-items:center;justify-content:center"><div style="width:22px;height:16px;border:2px dashed #aaa39a;border-radius:5px"></div></div>
+              <div style="font:700 15px 'Plus Jakarta Sans'">No notes match your filters</div>
+              <div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c">Try a different course, chapter or search term.</div>
+              <button onClick="{{ notesClear }}" style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:34px;padding:0 14px;cursor:pointer" style-hover="background:#faf8f6">Clear filters</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Faculty Notes — Mobile">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">2m · FACULTY NOTES — 390px</div>
+  <div style="width:390px;height:760px;background:#faf8f6;border-radius:32px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.16);display:flex;flex-direction:column">
+    <div style="height:56px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 16px;flex:none">
+      <div style="width:26px;height:26px;border-radius:8px;background:#f26a1b;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:0;height:0;border-left:6px solid #fff;border-top:4px solid transparent;border-bottom:4px solid transparent;margin-left:1px;transform:rotate(-90deg)"></div></div>
+      <span style="font:700 14px 'Plus Jakarta Sans'">Faculty notes</span>
+    </div>
+    <div style="padding:14px 16px;flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #d8d2c9;border-radius:11px;height:38px;padding:0 12px">
+        <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;flex:none"></div>
+        <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search notes…</span>
+      </div>
+      <sc-for list="{{ noteRowsMobile }}" as="n" hint-placeholder-count="5">
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+          <div style="{{ n.chip }}">{{ n.ext }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font:700 13px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.filename }}</div>
+            <div style="font:500 10px 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">{{ n.course }} · {{ n.chapter }}</div>
+          </div>
+          <span style="font:700 11px 'Plus Jakarta Sans';color:#e0540e">↗</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== 3 · PROFILE ===== -->
+<div data-screen-label="Profile">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">3 · PROFILE — pick a segment with a stream to reveal the subsegment field</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+    <div style="height:64px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:28px;padding:0 32px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <span style="font:800 16px 'Plus Jakarta Sans'">Ascent</span>
+      </div>
+      <div style="display:flex;gap:4px;font:600 13px 'Plus Jakarta Sans'">
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Home</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">My courses</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Mock tests</span>
+      </div>
+      <div style="flex:1"></div>
+      <div style="width:38px;height:38px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';cursor:pointer">AD</div>
+    </div>
+    <div style="max-width:680px;margin:0 auto;padding:44px 24px 56px">
+      <div style="font:700 24px 'Plus Jakarta Sans';letter-spacing:-.01em;text-align:center">Your profile</div>
+      <div style="font:400 13.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:4px;text-align:center">Keep your details up to date so faculty can reach the right cohort.</div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:32px;margin-top:24px">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+          <div style="width:56px;height:56px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 19px 'Plus Jakarta Sans'">AD</div>
+          <div>
+            <div style="font:700 15px 'Plus Jakarta Sans'">{{ profileName }}</div>
+            <div style="font:400 11.5px 'Plus Jakarta Sans';color:#7c756c">aditi.rao@gmail.com</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <div style="font:600 12px 'Plus Jakarta Sans';margin-bottom:6px">Full name</div>
+          <input value="{{ profileName }}" onChange="{{ profileNameChange }}" style="font:400 14px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:44px;padding:0 14px;border:1px solid #d8d2c9;border-radius:11px;outline:none;background:#fff" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.15)">
+        </div>
+        <div style="margin-bottom:18px">
+          <div style="font:600 12px 'Plus Jakarta Sans';margin-bottom:6px">Segment / class</div>
+          <select value="{{ profileSegment }}" onChange="{{ profileSegmentChange }}" style="font:400 14px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:44px;padding:0 14px;border:1px solid #d8d2c9;border-radius:11px;background:#fff;color:#1c1915">
+            <sc-for list="{{ segmentOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.v }}</option></sc-for>
+          </select>
+        </div>
+        <sc-if value="{{ showSubsegment }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:18px;animation:popIn .2s ease">
+            <div style="font:600 12px 'Plus Jakarta Sans';margin-bottom:6px">Stream / subsegment</div>
+            <select value="{{ profileSubsegment }}" onChange="{{ profileSubsegmentChange }}" style="font:400 14px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:44px;padding:0 14px;border:1px solid #d8d2c9;border-radius:11px;background:#fff;color:#1c1915">
+              <sc-for list="{{ subsegmentOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for>
+            </select>
+          </div>
+        </sc-if>
+        <button onClick="{{ profileSave }}" style="{{ profileSaveBtn }}">{{ profileSaveLabel }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1480}}">
+class Component extends DCLogic {
+  state = {
+    fbView: 'list', fbTab: 'allotted', curFb: 0,
+    fbAnswers: {},
+    notesQuery: '', notesCourse: 'All courses', notesChapter: 'All chapters', notesLoading: false,
+    profileName: 'Aditi Rao', profileSegment: 'Class 12 · NEET', profileSubsegment: 'PCB', profileSaving: false
+  };
+
+  renderVals() {
+    const S = this.state;
+    const sans = "'Plus Jakarta Sans'", mono = "'JetBrains Mono'";
+    const chip = (bg, c) => 'width:42px;height:42px;border-radius:12px;background:' + bg + ';color:' + c + ';display:flex;align-items:center;justify-content:center;font:700 13px ' + sans + ';flex:none';
+
+    // ---------- FEEDBACK ----------
+    const tabStyle = (on) => 'font:600 12.5px ' + sans + ';padding:7px 16px;border-radius:8px;cursor:pointer;transition:all .15s;' + (on ? 'background:#fff;box-shadow:0 1px 3px rgba(28,22,15,.12);color:#1c1915' : 'color:#7c756c');
+
+    const allottedData = [
+      { title: 'Course experience — Quantitative Aptitude Sprint', subtitle: 'Course · Quantitative Aptitude Sprint', type: 'COURSE', due: 'due in 3 days' },
+      { title: 'Faculty feedback — Prof. Khanna', subtitle: 'Faculty · Prof. Khanna, Physics', type: 'FACULTY', due: 'due in 5 days' },
+      { title: 'Mentor session feedback', subtitle: 'Mentor · Dr. Iyer', type: 'MENTOR', due: 'due tomorrow' },
+      { title: 'Platform experience survey', subtitle: 'System · Ascent app', type: 'SYSTEM', due: 'due in 9 days' }
+    ];
+    const submittedData = [
+      { title: 'Course experience — Foundations Batch 8', subtitle: 'Course · Foundations Batch 8', type: 'COURSE', submitted: '2 Jul' },
+      { title: 'Faculty feedback — Dr. Iyer', subtitle: 'Faculty · Dr. Iyer, Quant', type: 'FACULTY', submitted: '28 Jun' },
+      { title: 'Onboarding experience survey', subtitle: 'System · Ascent app', type: 'SYSTEM', submitted: '15 Jun' }
+    ];
+    const typeStyle = {
+      COURSE: [chip('#fff6ef', '#e0540e'), '📘'],
+      FACULTY: [chip('#e7f0ff', '#2563c9'), '🧑‍🏫'],
+      MENTOR: [chip('#f5f2ff', '#5a2ed6'), '🎯'],
+      SYSTEM: [chip('#e6f6ee', '#0e7a48'), '⚙️']
+    };
+    const allottedRows = allottedData.map((f, i) => ({
+      ...f, chip: typeStyle[f.type][0], chipIcon: typeStyle[f.type][1],
+      fill: () => this.setState({ fbView: 'form', curFb: i, fbSource: 'allotted' })
+    }));
+    const submittedRows = submittedData.map((f, i) => ({
+      ...f, chip: typeStyle[f.type][0], chipIcon: typeStyle[f.type][1],
+      view: () => this.setState({ fbView: 'form', curFb: i, fbSource: 'submitted' })
+    }));
+    const src = S.fbSource === 'submitted' ? submittedData : allottedData;
+    const cur = src[S.curFb] || allottedData[0];
+    const readOnly = S.fbSource === 'submitted';
+
+    const qDefs = [
+      { key: 'rating', label: 'How would you rate the overall experience?', type: 'rating', required: true },
+      { key: 'para', label: 'What did you like most?', type: 'paragraph', required: true },
+      { key: 'mc', label: 'How often did you attend live sessions?', type: 'mc', required: true, options: ['Every session', 'Most sessions', 'A few sessions', 'Rarely'] },
+      { key: 'checks', label: 'Which formats helped you learn? (select all that apply)', type: 'checks', options: ['Video lectures', 'PDF notes', 'Flashcards', 'Live doubt sessions'] },
+      { key: 'dropdown', label: 'Would you recommend this to a friend?', type: 'dropdown', required: true, options: ['Definitely', 'Probably', 'Not sure', 'No'] },
+      { key: 'text', label: 'Any other comments?', type: 'text' }
+    ];
+    const seedAnswers = { rating: 4, para: 'The DI caselet strategy sessions were the most useful part — clear frameworks I could reuse.', mc: 'Every session', checks: ['PDF notes', 'Flashcards'], dropdown: 'Definitely', text: 'Would love more mock-review walkthroughs.' };
+    const ansFor = (k) => {
+      if (readOnly) return seedAnswers[k];
+      const a = S.fbAnswers[k];
+      return a !== undefined ? a : (k === 'checks' ? [] : '');
+    };
+    const setAns = (k, v) => this.setState(s => ({ fbAnswers: { ...s.fbAnswers, [k]: v } }));
+
+    const fbQuestions = qDefs.map(q => {
+      const base = { label: q.label, required: !!q.required, ro: readOnly,
+        isRating: q.type === 'rating', isParagraph: q.type === 'paragraph', isMc: q.type === 'mc',
+        isChecks: q.type === 'checks', isDropdown: q.type === 'dropdown', isText: q.type === 'text' };
+      if (q.type === 'rating') {
+        const val = ansFor('rating') || 0;
+        base.stars = [1, 2, 3, 4, 5].map(n => ({
+          pick: () => !readOnly && setAns('rating', n),
+          style: 'font:400 26px sans-serif;cursor:' + (readOnly ? 'default' : 'pointer') + ';color:' + (n <= val ? '#f2a91b' : '#e9e4de')
+        }));
+      } else if (q.type === 'paragraph' || q.type === 'text' || q.type === 'dropdown') {
+        base.val = ansFor(q.key); base.change = (e) => setAns(q.key, e.target.value);
+        if (q.type === 'dropdown') base.options = q.options.map(v => ({ v }));
+      } else if (q.type === 'mc') {
+        const val = ansFor('mc');
+        base.options = q.options.map(o => ({
+          label: o, pick: () => !readOnly && setAns('mc', o),
+          dot: 'width:16px;height:16px;border-radius:999px;border:1.5px solid ' + (val === o ? '#f26a1b' : '#d8d2c9') + ';box-sizing:border-box;position:relative;flex:none;' + (val === o ? 'background:radial-gradient(circle,#f26a1b 34%,transparent 38%)' : '')
+        }));
+      } else if (q.type === 'checks') {
+        const val = ansFor('checks') || [];
+        base.options = q.options.map(o => {
+          const on = val.includes(o);
+          return {
+            label: o,
+            pick: () => !readOnly && setAns('checks', on ? val.filter(x => x !== o) : [...val, o]),
+            box: 'width:16px;height:16px;border-radius:5px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:700 10px ' + sans + ';flex:none;' + (on ? 'background:#f26a1b;color:#fff' : 'border:1.5px solid #d8d2c9;background:#fff'),
+            tick: on ? '✓' : ''
+          };
+        });
+      }
+      return base;
+    });
+
+    const pendingCount = allottedData.length;
+
+    // ---------- FACULTY NOTES ----------
+    const courseOpts = ['All courses', 'Quantitative Aptitude Sprint', 'Verbal Mastery', 'Foundations Batch 8'];
+    const chaptersByCourse = {
+      'Quantitative Aptitude Sprint': ['All chapters', 'Ch 1 — Ratios', 'Ch 4 — Percentages', 'Ch 6 — DI sets'],
+      'Verbal Mastery': ['All chapters', 'Ch 2 — Reading comp', 'Ch 3 — Para jumbles'],
+      'Foundations Batch 8': ['All chapters', 'Ch 1 — Basics', 'Ch 2 — Algebra']
+    };
+    const chapterDisabled = S.notesCourse === 'All courses';
+    const chapterOpts = (chapterDisabled ? ['All chapters'] : chaptersByCourse[S.notesCourse] || ['All chapters']).map(v => ({ v }));
+
+    const noteData = [
+      { filename: 'Ratios & Proportions — cheat sheet.pdf', course: 'Quant Sprint', chapter: 'Ch 1 — Ratios', size: '1.2 MB', ext: 'PDF', c: ['#f5f2ff', '#5a2ed6'], courseFull: 'Quantitative Aptitude Sprint' },
+      { filename: 'DI caselets — worked examples.pdf', course: 'Quant Sprint', chapter: 'Ch 6 — DI sets', size: '3.4 MB', ext: 'PDF', c: ['#f5f2ff', '#5a2ed6'], courseFull: 'Quantitative Aptitude Sprint' },
+      { filename: 'Percentages shortcuts.docx', course: 'Quant Sprint', chapter: 'Ch 4 — Percentages', size: '640 KB', ext: 'DOC', c: ['#e7f0ff', '#2563c9'], courseFull: 'Quantitative Aptitude Sprint' },
+      { filename: 'Reading comprehension frameworks.pdf', course: 'Verbal Mastery', chapter: 'Ch 2 — Reading comp', size: '2.1 MB', ext: 'PDF', c: ['#f5f2ff', '#5a2ed6'], courseFull: 'Verbal Mastery' },
+      { filename: 'Para jumbles — pattern bank.pdf', course: 'Verbal Mastery', chapter: 'Ch 3 — Para jumbles', size: '980 KB', ext: 'PDF', c: ['#f5f2ff', '#5a2ed6'], courseFull: 'Verbal Mastery' },
+      { filename: 'Algebra basics recap.pdf', course: 'Foundations B8', chapter: 'Ch 2 — Algebra', size: '1.5 MB', ext: 'PDF', c: ['#f5f2ff', '#5a2ed6'], courseFull: 'Foundations Batch 8' }
+    ];
+    const nq = S.notesQuery.trim().toLowerCase();
+    const filteredNotes = noteData.filter(n =>
+      (S.notesCourse === 'All courses' || n.courseFull === S.notesCourse) &&
+      (chapterDisabled || S.notesChapter === 'All chapters' || n.chapter === S.notesChapter) &&
+      (!nq || n.filename.toLowerCase().includes(nq)));
+    const mkNoteRow = (n) => ({ ...n, chip: chip(n.c[0], n.c[1]), href: '#' });
+    const noteRows = filteredNotes.map(mkNoteRow);
+    const noteRowsMobile = noteData.slice(0, 5).map(mkNoteRow);
+
+    // ---------- PROFILE ----------
+    const segmentOpts = ['Class 11 · Foundations', 'Class 12 · NEET', 'Class 12 · JEE', 'CAT Prep'].map(v => ({ v }));
+    const showSubsegment = S.profileSegment === 'Class 12 · NEET' || S.profileSegment === 'Class 12 · JEE';
+    const subOptsMap = { 'Class 12 · NEET': ['PCB', 'PCMB'], 'Class 12 · JEE': ['PCM', 'PCMB'] };
+    const subsegmentOpts = (subOptsMap[S.profileSegment] || ['PCB']).map(v => ({ v }));
+
+    return {
+      // feedback
+      fbList: S.fbView === 'list', fbForm: S.fbView === 'form',
+      fbTabAllotted: () => this.setState({ fbTab: 'allotted' }),
+      fbTabSubmitted: () => this.setState({ fbTab: 'submitted' }),
+      fbTabAllottedStyle: tabStyle(S.fbTab === 'allotted'),
+      fbTabSubmittedStyle: tabStyle(S.fbTab === 'submitted'),
+      fbShowAllotted: S.fbTab === 'allotted', fbShowSubmitted: S.fbTab === 'submitted',
+      fbPendingCount: pendingCount > 0, fbPendingLabel: pendingCount + ' forms pending',
+      allottedRows, submittedRows,
+      fbBack: () => this.setState({ fbView: 'list' }),
+      curFbTitle: cur.title, curFbTarget: cur.subtitle.split(' · ')[1] || cur.subtitle,
+      fbReadOnly: readOnly, fbEditable: !readOnly,
+      fbQuestions,
+      fbSubmit: () => this.setState({ fbView: 'list', fbAnswers: {} }),
+      // notes
+      notesQuery: S.notesQuery,
+      notesQueryChange: (e) => this.setState({ notesQuery: e.target.value }),
+      notesCourse: S.notesCourse,
+      notesCourseChange: (e) => this.setState({ notesCourse: e.target.value, notesChapter: 'All chapters' }),
+      notesChapter: chapterDisabled ? 'All chapters' : S.notesChapter,
+      notesChapterChange: (e) => this.setState({ notesChapter: e.target.value }),
+      chapterDisabled, chapterSelectStyle: 'font:600 12.5px ' + sans + ';height:40px;padding:0 12px;border:1px solid #d8d2c9;border-radius:10px;background:' + (chapterDisabled ? '#f4f1ed' : '#fff') + ';color:' + (chapterDisabled ? '#aaa39a' : '#403b35') + ';cursor:' + (chapterDisabled ? 'not-allowed' : 'pointer'),
+      courseOpts: courseOpts.map(v => ({ v })), chapterOpts,
+      notesSimulate: () => { this.setState({ notesLoading: true }); setTimeout(() => this.setState({ notesLoading: false }), 1400); },
+      notesLoading: S.notesLoading, notesReady: !S.notesLoading,
+      notesKey: 'n' + nq + S.notesCourse + S.notesChapter,
+      noteRows, noteRowsMobile, notesEmpty: noteRows.length === 0,
+      notesClear: () => this.setState({ notesQuery: '', notesCourse: 'All courses', notesChapter: 'All chapters' }),
+      // profile
+      profileName: S.profileName,
+      profileNameChange: (e) => this.setState({ profileName: e.target.value }),
+      profileSegment: S.profileSegment,
+      profileSegmentChange: (e) => this.setState({ profileSegment: e.target.value }),
+      segmentOpts,
+      showSubsegment,
+      profileSubsegment: S.profileSubsegment,
+      profileSubsegmentChange: (e) => this.setState({ profileSubsegment: e.target.value }),
+      subsegmentOpts,
+      profileSave: () => { this.setState({ profileSaving: true }); setTimeout(() => this.setState({ profileSaving: false }), 900); },
+      profileSaveLabel: S.profileSaving ? 'Saving…' : 'Save changes',
+      profileSaveBtn: 'font:600 14px ' + sans + ';width:100%;height:46px;color:#fff;border:none;border-radius:12px;cursor:pointer;transition:all .15s;' + (S.profileSaving ? 'background:#f4a877' : 'background:#f26a1b')
+    };
+  }
+}
+</script>
+</body>
+</html>
