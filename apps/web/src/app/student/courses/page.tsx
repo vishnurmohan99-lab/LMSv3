@@ -232,6 +232,9 @@ export default function StudentCoursesPage() {
   const [durationFilter, setDurationFilter] = useState<string | null>(null); // DURATION_BUCKETS id
   const [sort, setSort] = useState<SortKey>("popular");
   const [filtersOpen, setFiltersOpen] = useState(false); // mobile sheet
+  const [selectorOpen, setSelectorOpen] = useState(false); // storefront class/track selector
+  const [popSegmentId, setPopSegmentId] = useState<string | null>(null); // segment expanded in the selector
+  const [applyingScope, setApplyingScope] = useState(false);
 
   function load() {
     setLoading(true);
@@ -308,6 +311,25 @@ export default function StudentCoursesPage() {
 
   const nActive = (subjectFilter ? 1 : 0) + (freeOnly ? 1 : 0) + (levelFilter ? 1 : 0) + (minRating != null ? 1 : 0) + (durationFilter ? 1 : 0);
   const segmentContext = profile?.subsegmentId ? nameMap.get(profile.subsegmentId) : profile?.segmentId ? nameMap.get(profile.segmentId) : null;
+  const selectorLabel = segmentContext ?? "All classes";
+
+  // Persist a new class/track scope — the backend scopes every course list to the student's
+  // profile segment, so switching here re-scopes the whole app, not just this page.
+  async function applyScope(segId: string, subId: string | null) {
+    setApplyingScope(true);
+    setError(null);
+    try {
+      const updated = await usersApi.updateMe({ segmentId: segId, subsegmentId: subId });
+      setProfile(updated);
+      setSelectorOpen(false);
+      setSubjectFilter(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to switch class");
+    } finally {
+      setApplyingScope(false);
+    }
+  }
 
   async function onEnroll(courseId: string) {
     setEnrollingId(courseId);
@@ -454,7 +476,87 @@ export default function StudentCoursesPage() {
       <div className="mobile-stack-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, marginBottom: 22, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.7 }}>My Courses</div>
-          {segmentContext && <div style={{ fontSize: 13, color: "var(--ink3)", fontWeight: 600, marginTop: 2 }}>Scoped to {segmentContext}</div>}
+          {segments.length > 0 && (
+            <div style={{ position: "relative", marginTop: 6, width: "max-content" }}>
+              <button
+                onClick={() => {
+                  setPopSegmentId(profile?.segmentId ?? segments[0]?.id ?? null);
+                  setSelectorOpen((o) => !o);
+                }}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, height: 34, padding: "0 12px", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: 3, background: "var(--purple)", flex: "none" }} />
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{selectorLabel}</span>
+                <span style={{ fontSize: 9, color: "var(--ink2)" }}>{selectorOpen ? "▲" : "▼"}</span>
+              </button>
+              {selectorOpen && (
+                <>
+                  <div onClick={() => setSelectorOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 30 }} />
+                  <div
+                    className="pop-in"
+                    style={{ position: "absolute", left: 0, top: 40, width: 360, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, boxShadow: "0 20px 48px rgba(28,22,15,.16)", padding: 8, zIndex: 40, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.8, fontFamily: "var(--font-mono)", color: "var(--ink3)", padding: "7px 10px 5px" }}>YOUR CLASS</div>
+                      {segments.map((s) => {
+                        const active = profile?.segmentId === s.id;
+                        const expanded = popSegmentId === s.id;
+                        const hasTracks = s.subsegments.length > 0;
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => (hasTracks ? setPopSegmentId(s.id) : applyScope(s.id, null))}
+                            disabled={applyingScope}
+                            style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: 8, background: expanded ? "var(--line2)" : "transparent", color: active ? "var(--orange-deep)" : "var(--ink)", fontSize: 12.5, fontWeight: active ? 700 : 500, fontFamily: "inherit", cursor: "pointer" }}
+                          >
+                            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</span>
+                            {active && <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange-deep)" }}>✓</span>}
+                            {hasTracks && <span style={{ fontSize: 9, color: "var(--ink3)" }}>›</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div style={{ borderLeft: "1px solid var(--line2)", paddingLeft: 6 }}>
+                      <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.8, fontFamily: "var(--font-mono)", color: "var(--ink3)", padding: "7px 10px 5px" }}>TRACK</div>
+                      {(() => {
+                        const popSeg = segments.find((s) => s.id === popSegmentId);
+                        if (!popSeg || popSeg.subsegments.length === 0) {
+                          return <div style={{ fontSize: 11.5, lineHeight: 1.6, color: "var(--ink3)", padding: "8px 10px" }}>No tracks for this class — you&apos;ll see everything for {popSeg?.name ?? "it"}.</div>;
+                        }
+                        return (
+                          <>
+                            <button
+                              onClick={() => applyScope(popSeg.id, null)}
+                              disabled={applyingScope}
+                              style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: 8, background: "transparent", color: profile?.segmentId === popSeg.id && !profile?.subsegmentId ? "var(--orange-deep)" : "var(--ink)", fontSize: 12.5, fontWeight: 500, fontFamily: "inherit", cursor: "pointer" }}
+                            >
+                              <span style={{ flex: 1 }}>All of {popSeg.name}</span>
+                              {profile?.segmentId === popSeg.id && !profile?.subsegmentId && <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange-deep)" }}>✓</span>}
+                            </button>
+                            {popSeg.subsegments.map((sub) => {
+                              const active = profile?.subsegmentId === sub.id;
+                              return (
+                                <button
+                                  key={sub.id}
+                                  onClick={() => applyScope(popSeg.id, sub.id)}
+                                  disabled={applyingScope}
+                                  style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: 8, background: "transparent", color: active ? "var(--orange-deep)" : "var(--ink)", fontSize: 12.5, fontWeight: active ? 700 : 500, fontFamily: "inherit", cursor: "pointer" }}
+                                >
+                                  <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub.name}</span>
+                                  {active && <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange-deep)" }}>✓</span>}
+                                </button>
+                              );
+                            })}
+                          </>
+                        );
+                      })()}
+                      <div style={{ fontSize: 10.5, lineHeight: 1.5, color: "var(--ink3)", padding: "8px 10px 4px", borderTop: "1px solid var(--line2)", marginTop: 6 }}>Content updates instantly.</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="mobile-full-width" style={{ position: "relative", flex: "1 1 320px", maxWidth: 420 }}>
           <input
