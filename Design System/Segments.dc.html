@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceae4;font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;color:#1c1915}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.92)}70%{transform:scale(1.02)}100%{opacity:1;transform:scale(1)}}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(230,51,104,.45)}70%{box-shadow:0 0 0 9px rgba(230,51,104,0)}100%{box-shadow:0 0 0 0 rgba(230,51,104,0)}}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 20px;display:flex;align-items:center;gap:14px">
+  <div style="width:36px;height:36px;border-radius:11px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:9px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+  <div style="font:800 20px 'Plus Jakarta Sans'">Ascent — Class &amp; Segment layer</div>
+  <div style="font:500 11px 'JetBrains Mono';color:#7c756c;border:1px solid #d0cabf;border-radius:999px;padding:4px 10px">ARTIFACT ③ · extends ① tokens + ② shells</div>
+</div>
+
+<!-- ================= COMPONENTS ================= -->
+<div style="padding:20px 56px 56px;display:flex;flex-direction:column;gap:40px;align-items:flex-start">
+<div style="font:800 12px 'Plus Jakarta Sans';letter-spacing:.14em;background:#1c1915;color:#fff;border-radius:999px;padding:8px 18px">NEW COMPONENTS</div>
+
+<div data-screen-label="Segment Components">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">C1 · SEGMENT SELECTOR · BADGE · TILE</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.14);padding:36px 40px;display:grid;grid-template-columns:1fr 1fr;gap:36px;box-sizing:border-box;align-items:start">
+    <div>
+      <div style="font:700 15px 'Plus Jakarta Sans';margin-bottom:4px">Class/Segment selector — top-nav control</div>
+      <div style="font:400 12.5px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-bottom:18px">Collapsed · hover · open. Reuses the shell dropdown-menu; segment column first, tracks appear when the segment has them.</div>
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e9e4de;border-radius:10px;height:38px;padding:0 12px;cursor:pointer">
+            <span style="width:8px;height:8px;border-radius:3px;background:#7c5cfc;flex:none"></span>
+            <span style="font:600 12.5px 'Plus Jakarta Sans'">Class 12 · NEET</span>
+            <span style="font:400 9px 'Plus Jakarta Sans';color:#aaa39a">▼</span>
+          </div>
+          <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;text-align:center">collapsed</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;background:#faf8f6;border:1px solid #aaa39a;border-radius:10px;height:38px;padding:0 12px;cursor:pointer">
+            <span style="width:8px;height:8px;border-radius:3px;background:#7c5cfc;flex:none"></span>
+            <span style="font:600 12.5px 'Plus Jakarta Sans'">Class 12 · NEET</span>
+            <span style="font:400 9px 'Plus Jakarta Sans';color:#59534b">▼</span>
+          </div>
+          <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;text-align:center">hover</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="position:relative">
+            <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.15);border-radius:10px;height:38px;padding:0 12px;cursor:pointer">
+              <span style="width:8px;height:8px;border-radius:3px;background:#7c5cfc;flex:none"></span>
+              <span style="font:600 12.5px 'Plus Jakarta Sans'">Class 12 · NEET</span>
+              <span style="font:400 9px 'Plus Jakarta Sans';color:#59534b">▲</span>
+            </div>
+            <div style="position:absolute;left:0;top:46px;width:330px;background:#fff;border:1px solid #e9e4de;border-radius:14px;box-shadow:0 20px 48px rgba(28,22,15,.16);padding:8px;z-index:10;animation:popIn .2s cubic-bezier(.2,.8,.2,1);display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <div>
+                <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;padding:7px 10px 5px">YOUR CLASS</div>
+                <sc-for list="{{ demoSegs }}" as="s" hint-placeholder-count="5">
+                  <div style="{{ s.row }}"><span style="flex:1">{{ s.name }}</span><sc-if value="{{ s.on }}" hint-placeholder-val="{{ false }}"><span style="font:700 11px 'Plus Jakarta Sans';color:#e0540e">✓</span></sc-if><sc-if value="{{ s.hasTracks }}" hint-placeholder-val="{{ false }}"><span style="font:400 9px 'Plus Jakarta Sans';color:#aaa39a">›</span></sc-if></div>
+                </sc-for>
+              </div>
+              <div style="border-left:1px solid #f4f1ed;padding-left:6px">
+                <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;padding:7px 10px 5px">TRACK</div>
+                <div style="font:600 12.5px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;cursor:pointer"><span>NEET</span><span>✓</span></div>
+                <div style="font:500 12.5px 'Plus Jakarta Sans';color:#403b35;border-radius:8px;padding:8px 10px;cursor:pointer" style-hover="background:#f4f1ed">JEE</div>
+                <div style="font:500 12.5px 'Plus Jakarta Sans';color:#403b35;border-radius:8px;padding:8px 10px;cursor:pointer" style-hover="background:#f4f1ed">Boards</div>
+                <div style="font:400 10.5px/1.5 'Plus Jakarta Sans';color:#aaa39a;padding:8px 10px 4px;border-top:1px solid #f4f1ed;margin-top:6px">Content updates instantly for your class &amp; track.</div>
+              </div>
+            </div>
+          </div>
+          <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;text-align:center">open</span>
+        </div>
+      </div>
+      <div style="margin-top:210px">
+        <div style="font:700 15px 'Plus Jakarta Sans';margin-bottom:4px">Segment / track badge</div>
+        <div style="font:400 12.5px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-bottom:14px">Same pill grammar as the status pills; violet family = class, orange family = exam track.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="font:600 11px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:5px 12px">Class 11</span>
+          <span style="font:600 11px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:5px 12px">Class 12</span>
+          <span style="font:600 11px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:4px 11px">NEET</span>
+          <span style="font:600 11px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:4px 11px">JEE</span>
+          <span style="font:600 11px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:4px 11px">Boards</span>
+          <span style="display:inline-flex;gap:5px;align-items:center"><span style="font:600 11px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:5px 12px">Class 12</span><span style="font:600 11px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:4px 11px">NEET</span></span>
+          <span style="font:500 11px 'Plus Jakarta Sans';color:#aaa39a">← combined, on course cards</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font:700 15px 'Plus Jakarta Sans';margin-bottom:4px">Segment tile — onboarding gate</div>
+      <div style="font:400 12.5px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-bottom:18px">Default · hover · selected. Card radius lg-20, elevation e2, pop-in on select.</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:560px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="background:#fff;border:1.5px solid #e9e4de;border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer">
+            <div style="width:44px;height:44px;border-radius:14px;background:#f5f2ff;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font:800 15px 'Plus Jakarta Sans';color:#5a2ed6">11</div>
+            <div style="font:700 14px 'Plus Jakarta Sans'">Class 11</div>
+            <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">Foundations year</div>
+          </div>
+          <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;text-align:center">default</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="background:#fff;border:1.5px solid #aaa39a;border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer;box-shadow:0 8px 24px rgba(28,22,15,.10);transform:translateY(-2px)">
+            <div style="width:44px;height:44px;border-radius:14px;background:#f5f2ff;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font:800 15px 'Plus Jakarta Sans';color:#5a2ed6">11</div>
+            <div style="font:700 14px 'Plus Jakarta Sans'">Class 11</div>
+            <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">Foundations year</div>
+          </div>
+          <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;text-align:center">hover</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="background:#fff6ef;border:2px solid #f26a1b;border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer;position:relative;animation:popIn .25s cubic-bezier(.2,.8,.2,1)">
+            <span style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:999px;background:#f26a1b;color:#fff;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">✓</span>
+            <div style="width:44px;height:44px;border-radius:14px;background:#ffe9d8;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font:800 15px 'Plus Jakarta Sans';color:#e0540e">11</div>
+            <div style="font:700 14px 'Plus Jakarta Sans'">Class 11</div>
+            <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#b9400d;margin-top:3px">Foundations year</div>
+          </div>
+          <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;text-align:center">selected</span>
+        </div>
+      </div>
+      <div style="margin-top:28px">
+        <div style="font:700 15px 'Plus Jakarta Sans';margin-bottom:4px">Gate — loading &amp; error states</div>
+        <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap">
+          <button style="font:600 15px 'Plus Jakarta Sans';background:#e9e4de;color:#aaa39a;border:none;border-radius:12px;padding:0 24px;height:44px;cursor:not-allowed">Continue</button>
+          <button style="font:600 15px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:12px;padding:0 24px;height:44px;display:flex;align-items:center;gap:10px;cursor:wait;opacity:.85"><span style="width:15px;height:15px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:999px;display:inline-block;animation:spin .7s linear infinite"></span>Saving…</button>
+          <div style="display:flex;gap:10px;background:#fde9ea;border:1px solid #f5c2c6;border-radius:12px;padding:11px 14px;align-items:center;max-width:330px">
+            <span style="width:20px;height:20px;border-radius:999px;background:#dc4040;color:#fff;display:flex;align-items:center;justify-content:center;font:800 11px 'Plus Jakarta Sans';flex:none">!</span>
+            <span style="font:500 12.5px/1.45 'Plus Jakarta Sans';color:#ab2530">Couldn't save your class. Check your connection and try again.</span>
+            <span style="font:700 12px 'Plus Jakarta Sans';color:#ab2530;cursor:pointer;flex:none;text-decoration:underline">Retry</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:14px">
+          <div style="width:150px;height:104px;border-radius:20px;background:linear-gradient(90deg,#f4f1ed 25%,#e9e4de 50%,#f4f1ed 75%);background-size:200% 100%;animation:shimmer 1.4s infinite"></div>
+          <div style="width:150px;height:104px;border-radius:20px;background:linear-gradient(90deg,#f4f1ed 25%,#e9e4de 50%,#f4f1ed 75%);background-size:200% 100%;animation:shimmer 1.4s infinite"></div>
+          <div style="align-self:center;font:500 11px 'JetBrains Mono';color:#aaa39a">tile skeletons while segments load</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= GATE ================= -->
+<div style="font:800 12px 'Plus Jakarta Sans';letter-spacing:.14em;background:#5a2ed6;color:#fff;border-radius:999px;padding:8px 18px">SEGMENT ONBOARDING GATE — blocks the app until set</div>
+
+<div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+<div data-screen-label="Onboarding Gate">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">G1 · GATE — LIGHT · fully interactive (pick → continue → track → save)</div>
+  <div style="width:920px;height:640px;background:linear-gradient(160deg,#fff6ef 0%,#faf8f6 55%,#f5f2ff 100%);border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.14);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+    <div style="position:absolute;top:28px;left:32px;display:flex;align-items:center;gap:9px">
+      <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+      <span style="font:800 15px 'Plus Jakarta Sans'">Ascent</span>
+    </div>
+    <sc-if value="{{ gateDone }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;animation:popIn .35s cubic-bezier(.2,.8,.2,1)">
+        <div style="width:72px;height:72px;border-radius:999px;background:#14b077;color:#fff;display:flex;align-items:center;justify-content:center;font:800 30px 'Plus Jakarta Sans';margin:0 auto 18px;box-shadow:0 8px 24px rgba(20,176,119,.35)">✓</div>
+        <div style="font:700 26px 'Plus Jakarta Sans';letter-spacing:-.01em">You're all set!</div>
+        <div style="font:400 14px 'Plus Jakarta Sans';color:#59534b;margin-top:8px">Showing content for <span style="font:600 11px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:4px 11px">{{ gSegName }}</span> <sc-if value="{{ gTrackName }}" hint-placeholder-val="{{ false }}"><span style="font:600 11px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:3px 10px">{{ gTrackName }}</span></sc-if></div>
+        <button onClick="{{ gateReset }}" style="font:600 13px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:10px;height:38px;padding:0 18px;cursor:pointer;margin-top:22px" style-hover="background:#faf8f6">↺ Replay the flow</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ gateActive }}" hint-placeholder-val="{{ true }}">
+      <div key="{{ gStepKey }}" style="width:620px;background:#fff;border:1px solid #e9e4de;border-radius:24px;padding:36px 40px;box-shadow:0 8px 24px rgba(28,22,15,.10);animation:fadeInUp .35s cubic-bezier(.2,.8,.2,1);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font:700 10.5px 'JetBrains Mono';letter-spacing:.1em;color:#e0540e">{{ gStepLabel }}</span>
+          <div style="display:flex;gap:5px"><span style="{{ gDot1 }}"></span><span style="{{ gDot2 }}"></span></div>
+        </div>
+        <div style="font:700 26px/1.2 'Plus Jakarta Sans';letter-spacing:-.015em">{{ gTitle }}</div>
+        <div style="font:400 13.5px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-top:6px">{{ gSub }}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px">
+          <sc-for list="{{ gTiles }}" as="t" hint-placeholder-count="5">
+            <div onClick="{{ t.pick }}" style="{{ t.style }}">
+              <sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:999px;background:#f26a1b;color:#fff;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">✓</span></sc-if>
+              <div style="{{ t.icon }}">{{ t.glyph }}</div>
+              <div style="font:700 14px 'Plus Jakarta Sans'">{{ t.name }}</div>
+              <div style="{{ t.helpStyle }}">{{ t.help }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:26px">
+          <span style="font:400 12px 'Plus Jakarta Sans';color:#aaa39a">🔒 Required to personalize your syllabus — you can change it later in Settings.</span>
+          <div style="flex:1"></div>
+          <sc-if value="{{ gBackable }}" hint-placeholder-val="{{ false }}"><button onClick="{{ gBack }}" style="font:600 14px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:12px;height:44px;padding:0 18px;cursor:pointer" style-hover="background:#faf8f6">← Back</button></sc-if>
+          <button onClick="{{ gContinue }}" disabled="{{ gDisabled }}" style="{{ gCtaStyle }}"><sc-if value="{{ gSaving }}" hint-placeholder-val="{{ false }}"><span style="width:15px;height:15px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:999px;display:inline-block;animation:spin .7s linear infinite"></span></sc-if>{{ gCtaLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+<div data-screen-label="Onboarding Gate — Dark">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">G2 · GATE — DARK · same tokens, dark aliases</div>
+  <div style="width:920px;height:640px;background:linear-gradient(160deg,#231a2e 0%,#16131b 55%,#1a1420 100%);border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.3);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+    <div style="position:absolute;top:28px;left:32px;display:flex;align-items:center;gap:9px">
+      <div style="width:28px;height:28px;border-radius:9px;background:#fb8a44;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #16131b;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+      <span style="font:800 15px 'Plus Jakarta Sans';color:#f3f0f7">Ascent</span>
+    </div>
+    <div style="width:620px;background:#1f1b26;border:1px solid #2e2937;border-radius:24px;padding:36px 40px;box-shadow:0 20px 48px rgba(0,0,0,.4);box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font:700 10.5px 'JetBrains Mono';letter-spacing:.1em;color:#fb8a44">STEP 2 OF 2</span>
+        <div style="display:flex;gap:5px"><span style="width:22px;height:5px;border-radius:3px;background:#fb8a44"></span><span style="width:22px;height:5px;border-radius:3px;background:#fb8a44"></span></div>
+      </div>
+      <div style="font:700 26px/1.2 'Plus Jakarta Sans';letter-spacing:-.015em;color:#f3f0f7">Choose your track</div>
+      <div style="font:400 13.5px/1.6 'Plus Jakarta Sans';color:#a49cb3;margin-top:6px">Class 12 has three exam tracks — pick the one you're preparing for.</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px">
+        <div style="background:#3a2618;border:2px solid #fb8a44;border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer;position:relative">
+          <span style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:999px;background:#fb8a44;color:#16131b;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">✓</span>
+          <div style="width:44px;height:44px;border-radius:14px;background:#4a2f1c;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font:800 13px 'Plus Jakarta Sans';color:#fb8a44">Rx</div>
+          <div style="font:700 14px 'Plus Jakarta Sans';color:#f3f0f7">NEET</div>
+          <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#e0a883;margin-top:3px">Medical entrance</div>
+        </div>
+        <div style="background:#292433;border:1.5px solid #2e2937;border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer" style-hover="border-color:#6f6880">
+          <div style="width:44px;height:44px;border-radius:14px;background:#2e2740;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font:800 13px 'Plus Jakarta Sans';color:#a284ff">ƒx</div>
+          <div style="font:700 14px 'Plus Jakarta Sans';color:#f3f0f7">JEE</div>
+          <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#a49cb3;margin-top:3px">Engineering entrance</div>
+        </div>
+        <div style="background:#292433;border:1.5px solid #2e2937;border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer" style-hover="border-color:#6f6880">
+          <div style="width:44px;height:44px;border-radius:14px;background:#243b31;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font:800 13px 'Plus Jakarta Sans';color:#2cd396">Aa</div>
+          <div style="font:700 14px 'Plus Jakarta Sans';color:#f3f0f7">Boards</div>
+          <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#a49cb3;margin-top:3px">CBSE / State boards</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:26px">
+        <span style="font:400 12px 'Plus Jakarta Sans';color:#6f6880">🔒 Required — you can change it later in Settings.</span>
+        <div style="flex:1"></div>
+        <button style="font:600 14px 'Plus Jakarta Sans';background:#292433;border:1px solid #2e2937;color:#f3f0f7;border-radius:12px;height:44px;padding:0 18px;cursor:pointer">← Back</button>
+        <button style="font:600 15px 'Plus Jakarta Sans';background:#fb8a44;color:#16131b;border:none;border-radius:12px;padding:0 24px;height:44px;cursor:pointer;box-shadow:0 2px 8px rgba(251,138,68,.3)">Get started →</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ================= IN CONTEXT ================= -->
+<div style="font:800 12px 'Plus Jakarta Sans';letter-spacing:.14em;background:#1c1915;color:#fff;border-radius:999px;padding:8px 18px">SELECTOR IN CONTEXT — content scoped to class · track</div>
+
+<div style="display:flex;gap:40px;align-items:flex-start">
+<div data-screen-label="Storefront with Selector">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">X1 · STOREFRONT HOME — click the selector; the grid re-scopes live</div>
+  <div style="width:900px;background:#faf8f6;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.14);overflow:visible">
+    <div style="height:64px;background:#fff;border-bottom:1px solid #e9e4de;border-radius:24px 24px 0 0;display:flex;align-items:center;gap:18px;padding:0 26px;position:relative;z-index:5">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <span style="font:800 16px 'Plus Jakarta Sans'">Ascent</span>
+      </div>
+      <div onClick="{{ selToggle }}" style="{{ selStyle }}">
+        <span style="width:8px;height:8px;border-radius:3px;background:#7c5cfc;flex:none"></span>
+        <span style="font:600 12.5px 'Plus Jakarta Sans'">{{ selLabel }}</span>
+        <span style="font:400 9px 'Plus Jakarta Sans';color:#59534b">{{ selChevron }}</span>
+      </div>
+      <sc-if value="{{ selOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:150px;top:56px;width:340px;background:#fff;border:1px solid #e9e4de;border-radius:14px;box-shadow:0 20px 48px rgba(28,22,15,.16);padding:8px;z-index:40;animation:popIn .2s cubic-bezier(.2,.8,.2,1);display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div>
+            <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;padding:7px 10px 5px">YOUR CLASS</div>
+            <sc-for list="{{ liveSegs }}" as="s" hint-placeholder-count="5">
+              <div onClick="{{ s.pick }}" style="{{ s.row }}"><span style="flex:1">{{ s.name }}</span><sc-if value="{{ s.on }}" hint-placeholder-val="{{ false }}"><span style="font:700 11px 'Plus Jakarta Sans';color:#e0540e">✓</span></sc-if><sc-if value="{{ s.hasTracks }}" hint-placeholder-val="{{ false }}"><span style="font:400 9px 'Plus Jakarta Sans';color:#aaa39a">›</span></sc-if></div>
+            </sc-for>
+          </div>
+          <div style="border-left:1px solid #f4f1ed;padding-left:6px">
+            <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;padding:7px 10px 5px">TRACK</div>
+            <sc-if value="{{ hasLiveTracks }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ liveTracks }}" as="t" hint-placeholder-count="3">
+                <div onClick="{{ t.pick }}" style="{{ t.row }}"><span style="flex:1">{{ t.name }}</span><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span style="font:700 11px 'Plus Jakarta Sans';color:#e0540e">✓</span></sc-if></div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ noLiveTracks }}" hint-placeholder-val="{{ false }}">
+              <div style="font:400 11.5px/1.6 'Plus Jakarta Sans';color:#aaa39a;padding:8px 10px">No tracks for this class — you'll see everything for {{ curSegName }}.</div>
+            </sc-if>
+            <div style="font:400 10.5px/1.5 'Plus Jakarta Sans';color:#aaa39a;padding:8px 10px 4px;border-top:1px solid #f4f1ed;margin-top:6px">Content updates instantly.</div>
+          </div>
+        </div>
+      </sc-if>
+      <div style="flex:1"></div>
+      <div style="width:36px;height:36px;border:1px solid #e9e4de;background:#fff;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="15" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span></div>
+      <div style="width:36px;height:36px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 12px 'Plus Jakarta Sans'">AD</div>
+    </div>
+    <div style="padding:24px 26px 32px">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
+        <div style="font:700 19px 'Plus Jakarta Sans';letter-spacing:-.01em">For {{ selLabel }}</div>
+        <span key="{{ scopeKey }}" style="font:600 10.5px 'Plus Jakarta Sans';background:#e6f6ee;color:#0e7a48;border-radius:999px;padding:4px 10px;animation:popIn .3s cubic-bezier(.2,.8,.2,1)">{{ courseCount }} courses in scope</span>
+      </div>
+      <div key="{{ scopeKey2 }}" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;animation:fadeInUp .3s cubic-bezier(.2,.8,.2,1)">
+        <sc-for list="{{ scopedCourses }}" as="c" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;overflow:hidden;cursor:pointer;transition:all .2s" style-hover="box-shadow:0 8px 24px rgba(28,22,15,.10);transform:translateY(-2px)">
+            <div style="{{ c.thumb }}"><span style="font:500 9px 'JetBrains Mono';color:{{ c.ink }};background:rgba(255,255,255,.75);padding:3px 7px;border-radius:5px">thumbnail</span></div>
+            <div style="padding:13px">
+              <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+                <span style="font:600 10px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:4px 10px">{{ c.seg }}</span>
+                <sc-if value="{{ c.track }}" hint-placeholder-val="{{ false }}"><span style="font:600 10px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:3px 9px">{{ c.track }}</span></sc-if>
+              </div>
+              <div style="font:700 13px/1.4 'Plus Jakarta Sans';min-height:36px">{{ c.title }}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px">
+                <span style="display:flex;gap:5px;align-items:center"><span style="font:400 11px sans-serif;color:#f2a91b">★</span><span style="font:700 11px 'JetBrains Mono'">{{ c.rating }}</span></span>
+                <span style="{{ c.priceStyle }}">{{ c.price }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Mobile Selector">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">X2 · MOBILE — tap the pill; bottom-sheet picker</div>
+  <div style="width:390px;height:700px;background:#faf8f6;border-radius:32px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.16);position:relative;display:flex;flex-direction:column">
+    <div style="height:56px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:10px;padding:0 14px;flex:none">
+      <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+      <div onClick="{{ mSelToggle }}" style="display:flex;align-items:center;gap:7px;background:#f4f1ed;border-radius:999px;height:34px;padding:0 13px;cursor:pointer" style-hover="background:#e9e4de">
+        <span style="width:7px;height:7px;border-radius:2.5px;background:#7c5cfc;flex:none"></span>
+        <span style="font:600 12px 'Plus Jakarta Sans'">{{ selLabel }}</span>
+        <span style="font:400 8px 'Plus Jakarta Sans';color:#59534b">▼</span>
+      </div>
+      <div style="flex:1"></div>
+      <div style="width:34px;height:34px;border:1px solid #e9e4de;background:#fff;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center"><svg width="13" height="14" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span></div>
+      <div style="width:34px;height:34px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 11px 'Plus Jakarta Sans'">AD</div>
+    </div>
+    <div style="flex:1;overflow:hidden;padding:18px 14px 0">
+      <div style="font:700 17px 'Plus Jakarta Sans';letter-spacing:-.01em">For {{ selLabel }}</div>
+      <div key="{{ scopeKey3 }}" style="display:flex;flex-direction:column;gap:10px;margin-top:12px;animation:fadeInUp .3s ease">
+        <sc-for list="{{ scopedCoursesM }}" as="c" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center">
+            <div style="{{ c.thumbM }}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;gap:4px;margin-bottom:5px">
+                <span style="font:600 9px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:3px 8px">{{ c.seg }}</span>
+                <sc-if value="{{ c.track }}" hint-placeholder-val="{{ false }}"><span style="font:600 9px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:2px 7px">{{ c.track }}</span></sc-if>
+              </div>
+              <div style="font:700 12.5px/1.35 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.title }}</div>
+              <div style="font:500 10.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:2px">★ {{ c.rating }} · {{ c.price }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="height:64px;background:#fff;border-top:1px solid #e9e4de;display:grid;grid-template-columns:repeat(4,1fr);flex:none">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px"><span style="width:17px;height:17px;border-radius:6px;background:#f26a1b"></span><span style="font:700 10px 'Plus Jakarta Sans';color:#e0540e">Home</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px"><span style="width:17px;height:17px;border-radius:6px;border:2px solid #aaa39a;box-sizing:border-box"></span><span style="font:500 10px 'Plus Jakarta Sans';color:#7c756c">Courses</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px"><span style="width:17px;height:17px;border-radius:999px;border:2px solid #aaa39a;box-sizing:border-box"></span><span style="font:500 10px 'Plus Jakarta Sans';color:#7c756c">Tests</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px"><span style="width:17px;height:17px;border-radius:6px;transform:rotate(45deg);border:2px solid #aaa39a;box-sizing:border-box"></span><span style="font:500 10px 'Plus Jakarta Sans';color:#7c756c">Mentors</span></div>
+    </div>
+    <sc-if value="{{ mSelOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ mSelToggle }}" style="position:absolute;inset:0;background:rgba(28,25,21,.45);z-index:20"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;z-index:21;padding:18px 18px 26px;box-shadow:0 -12px 40px rgba(28,22,15,.2);animation:fadeInUp .25s cubic-bezier(.2,.8,.2,1)">
+        <div style="width:36px;height:4px;border-radius:2px;background:#d8d2c9;margin:0 auto 14px"></div>
+        <div style="font:700 15px 'Plus Jakarta Sans';margin-bottom:12px">Your class &amp; track</div>
+        <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;margin-bottom:7px">CLASS</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+          <sc-for list="{{ liveSegsM }}" as="s" hint-placeholder-count="5"><div onClick="{{ s.pick }}" style="{{ s.chip }}">{{ s.name }}</div></sc-for>
+        </div>
+        <sc-if value="{{ hasLiveTracks }}" hint-placeholder-val="{{ true }}">
+          <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;margin-bottom:7px">TRACK</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <sc-for list="{{ liveTracksM }}" as="t" hint-placeholder-count="3"><div onClick="{{ t.pick }}" style="{{ t.chip }}">{{ t.name }}</div></sc-for>
+          </div>
+        </sc-if>
+        <button onClick="{{ mSelToggle }}" style="font:600 14px 'Plus Jakarta Sans';width:100%;height:44px;background:#f26a1b;color:#fff;border:none;border-radius:12px;margin-top:18px;cursor:pointer" style-hover="background:#e0540e">Done</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</div>
+
+<!-- ================= ADMIN ================= -->
+<div style="font:800 12px 'Plus Jakarta Sans';letter-spacing:.14em;background:#403b35;color:#fff;border-radius:999px;padding:8px 18px">ADMIN — SEGMENTS &amp; SUBSEGMENTS</div>
+
+<div data-screen-label="Admin Segments Management">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">A1 · SEGMENT MANAGEMENT — same admin shell + dense table pattern</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:232px 1fr">
+    <div style="background:#fff;border-right:1px solid #e9e4de;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:760px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans'">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#7c756c">ADMIN PANEL</div></div>
+      </div>
+      <sc-for list="{{ admNav }}" as="n" hint-placeholder-count="8">
+        <div style="{{ n.style }}"><span style="{{ n.dot }}"></span><span style="flex:1">{{ n.label }}</span></div>
+      </sc-for>
+    </div>
+    <div style="min-width:0">
+      <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans'">Segments &amp; subsegments</div>
+        <span style="font:500 12px 'Plus Jakarta Sans';color:#aaa39a">·</span>
+        <span style="font:500 12.5px 'Plus Jakarta Sans';color:#7c756c">5 segments · 8 tracks</span>
+        <div style="flex:1"></div>
+        <button style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:34px;padding:0 14px;cursor:pointer" style-hover="background:#faf8f6">Preview as student</button>
+        <button style="font:600 12.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:9px;height:34px;padding:0 16px;cursor:pointer" style-hover="background:#e0540e">+ New segment</button>
+      </div>
+      <div style="padding:22px 26px 34px">
+        <div style="font:400 12.5px/1.6 'Plus Jakarta Sans';color:#7c756c;background:#f5f2ff;border-radius:12px;padding:12px 16px;margin-bottom:16px;max-width:720px"><b style="color:#5a2ed6">How scoping works:</b> every course is tagged to one segment (+ optional subsegment). Students only see content matching their selection. Order here controls order in the student selector.</div>
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:34px 1fr 130px 120px 110px 130px;gap:12px;padding:9px 18px;background:#faf8f6;border-bottom:1px solid #e9e4de;font:700 10px 'Plus Jakarta Sans';letter-spacing:.05em;color:#7c756c;text-transform:uppercase;align-items:center">
+            <span></span><span>Segment / subsegment</span><span>Students</span><span>Courses</span><span>Status</span><span style="text-align:right">Actions</span>
+          </div>
+          <sc-for list="{{ segRows }}" as="r" hint-placeholder-count="13">
+            <div style="{{ r.row }}">
+              <span style="font:400 13px 'Plus Jakarta Sans';color:#c5beb4;cursor:grab;letter-spacing:-1px;text-align:center">⠿</span>
+              <div style="display:flex;gap:9px;align-items:center;min-width:0;{{ r.indent }}">
+                <sc-if value="{{ r.isSub }}" hint-placeholder-val="{{ false }}"><span style="width:14px;height:14px;border-left:1.5px solid #d8d2c9;border-bottom:1.5px solid #d8d2c9;border-radius:0 0 0 5px;margin-top:-8px;flex:none"></span></sc-if>
+                <span style="{{ r.pillType }}">{{ r.typeTxt }}</span>
+                <span style="{{ r.name }}">{{ r.label }}</span>
+                <span style="font:500 10px 'JetBrains Mono';color:#aaa39a">{{ r.order }}</span>
+              </div>
+              <span style="font:600 12px 'JetBrains Mono'">{{ r.students }}</span>
+              <span style="font:600 12px 'JetBrains Mono'">{{ r.courses }}</span>
+              <span style="{{ r.status }}">{{ r.statusTxt }}</span>
+              <div style="display:flex;gap:4px;justify-content:flex-end">
+                <button title="Rename" style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#f4f1ed">✎</button>
+                <sc-if value="{{ r.canAddSub }}" hint-placeholder-val="{{ false }}"><button title="Add subsegment" style="font:600 12px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">+</button></sc-if>
+                <button title="Delete" style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#fde9ea;color:#ab2530">✕</button>
+              </div>
+            </div>
+          </sc-for>
+          <div style="padding:12px 18px;border-top:1px solid #f4f1ed;display:flex;align-items:center;gap:10px">
+            <div style="flex:1;border:1.5px dashed #d8d2c9;border-radius:10px;padding:9px;text-align:center;font:600 12px 'Plus Jakarta Sans';color:#7c756c;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">+ Add segment</div>
+            <span style="font:400 11.5px 'Plus Jakarta Sans';color:#aaa39a">Deleting a segment with enrolled students requires reassignment first.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultSegment&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Class 12&quot;,&quot;options&quot;:[&quot;Class 11&quot;,&quot;Class 12&quot;,&quot;Dropper&quot;],&quot;section&quot;:&quot;Demo content&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    gStep: 1, gSeg: null, gTrack: null, gSaving: false, gDone: false,
+    selOpen: false, mSelOpen: false, curSeg: null, curTrack: null
+  };
+  componentWillUnmount() { clearTimeout(this._sv); }
+
+  segData() {
+    return [
+      { id: 'c9', name: 'Class 9', help: 'Early foundations', glyph: '9', tracks: [] },
+      { id: 'c10', name: 'Class 10', help: 'Board year basics', glyph: '10', tracks: [] },
+      { id: 'c11', name: 'Class 11', help: 'Foundations year', glyph: '11', tracks: ['NEET', 'JEE', 'Boards'] },
+      { id: 'c12', name: 'Class 12', help: 'The big year', glyph: '12', tracks: ['NEET', 'JEE', 'Boards'] },
+      { id: 'dr', name: 'Dropper', help: 'Repeat attempt, full focus', glyph: '↻', tracks: ['NEET', 'JEE'] }
+    ];
+  }
+
+  renderVals() {
+    const S = this.state;
+    const sans = "'Plus Jakarta Sans'", mono = "'JetBrains Mono'";
+    const segs = this.segData();
+
+    // ------- static demo dropdown (component spec)
+    const ddRow = (on) => 'font:' + (on ? '600' : '500') + ' 12.5px ' + sans + ';border-radius:8px;padding:8px 10px;display:flex;gap:6px;align-items:center;cursor:pointer;' + (on ? 'background:#f5f2ff;color:#5a2ed6' : 'color:#403b35');
+    const demoSegs = segs.map(s => ({ name: s.name, on: s.id === 'c12', hasTracks: s.tracks.length > 0, row: ddRow(s.id === 'c12') }));
+
+    // ------- GATE
+    const gSegObj = segs.find(s => s.id === S.gSeg);
+    const step2 = S.gStep === 2;
+    const tileBase = 'position:relative;border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .15s;';
+    const iconBase = 'width:44px;height:44px;border-radius:14px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font:800 15px ' + sans + ';';
+    const mkTile = (name, help, glyph, on, pick) => ({
+      name, help, glyph, on, pick,
+      style: tileBase + (on ? 'background:#fff6ef;border:2px solid #f26a1b;animation:popIn .25s cubic-bezier(.2,.8,.2,1)' : 'background:#fff;border:1.5px solid #e9e4de'),
+      icon: iconBase + (on ? 'background:#ffe9d8;color:#e0540e' : 'background:#f5f2ff;color:#5a2ed6'),
+      helpStyle: 'font:400 11px/1.5 ' + sans + ';margin-top:3px;color:' + (on ? '#b9400d' : '#7c756c')
+    });
+    const trackHelp = { NEET: 'Medical entrance', JEE: 'Engineering entrance', Boards: 'CBSE / State boards' };
+    const trackGlyph = { NEET: 'Rx', JEE: 'ƒx', Boards: 'Aa' };
+    const gTiles = step2
+      ? (gSegObj ? gSegObj.tracks : []).map(t => mkTile(t, trackHelp[t], trackGlyph[t], S.gTrack === t, () => this.setState({ gTrack: t })))
+      : segs.map(s => mkTile(s.name, s.help, s.glyph, S.gSeg === s.id, () => this.setState({ gSeg: s.id, gTrack: null })));
+
+    const gPicked = step2 ? !!S.gTrack : !!S.gSeg;
+    const gDisabled = !gPicked || S.gSaving;
+    const gCtaStyle = 'font:600 15px ' + sans + ';border:none;border-radius:12px;padding:0 24px;height:44px;display:flex;align-items:center;gap:10px;transition:all .15s;' +
+      (gDisabled && !S.gSaving ? 'background:#e9e4de;color:#aaa39a;cursor:not-allowed' : S.gSaving ? 'background:#f26a1b;color:#fff;cursor:wait;opacity:.85' : 'background:#f26a1b;color:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(242,106,27,.3)');
+    const totalSteps = gSegObj && gSegObj.tracks.length > 0 ? 2 : 1;
+    const gContinue = () => {
+      if (gDisabled) return;
+      if (!step2 && gSegObj && gSegObj.tracks.length > 0) { this.setState({ gStep: 2 }); return; }
+      this.setState({ gSaving: true });
+      clearTimeout(this._sv);
+      this._sv = setTimeout(() => this.setState({ gSaving: false, gDone: true }), 1400);
+    };
+    const dotOn = 'width:22px;height:5px;border-radius:3px;background:#f26a1b', dotOff = 'width:22px;height:5px;border-radius:3px;background:#e9e4de';
+
+    // ------- LIVE selector (in-context)
+    const curSegId = S.curSeg ?? (this.props.defaultSegment === 'Class 11' ? 'c11' : this.props.defaultSegment === 'Dropper' ? 'dr' : 'c12');
+    const curSegObj = segs.find(s => s.id === curSegId);
+    const curTrack = S.curTrack === undefined || S.curTrack === null
+      ? (curSegObj.tracks.length ? (S.curTrack === null && S.curSeg !== null ? curSegObj.tracks[0] : 'NEET') : null)
+      : S.curTrack;
+    const effTrack = curSegObj.tracks.includes(curTrack) ? curTrack : (curSegObj.tracks[0] || null);
+    const selLabel = curSegObj.name + (effTrack ? ' · ' + effTrack : '');
+    const selStyle = 'display:flex;align-items:center;gap:8px;border-radius:10px;height:38px;padding:0 12px;cursor:pointer;transition:all .15s;' +
+      (S.selOpen ? 'background:#fff;border:1px solid #f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.15)' : 'background:#fff;border:1px solid #e9e4de');
+    const liveSegs = segs.map(s => ({
+      name: s.name, on: s.id === curSegId, hasTracks: s.tracks.length > 0, row: ddRow(s.id === curSegId),
+      pick: () => this.setState({ curSeg: s.id, curTrack: s.tracks[0] || null })
+    }));
+    const tRow = (on) => 'font:' + (on ? '600' : '500') + ' 12.5px ' + sans + ';border-radius:8px;padding:8px 10px;display:flex;gap:6px;align-items:center;cursor:pointer;' + (on ? 'background:#fff6ef;color:#e0540e' : 'color:#403b35');
+    const liveTracks = curSegObj.tracks.map(t => ({
+      name: t, on: t === effTrack, row: tRow(t === effTrack),
+      pick: () => this.setState({ curSeg: curSegId, curTrack: t, selOpen: false })
+    }));
+
+    // mobile chips
+    const chipStyle = (on) => 'font:600 12px ' + sans + ';border-radius:999px;padding:9px 15px;cursor:pointer;transition:all .15s;' + (on ? 'background:#1c1915;color:#fff' : 'background:#f4f1ed;color:#403b35');
+    const liveSegsM = segs.map(s => ({ name: s.name, chip: chipStyle(s.id === curSegId), pick: () => this.setState({ curSeg: s.id, curTrack: s.tracks[0] || null }) }));
+    const liveTracksM = curSegObj.tracks.map(t => ({ name: t, chip: chipStyle(t === effTrack), pick: () => this.setState({ curSeg: curSegId, curTrack: t }) }));
+
+    // scoped courses
+    const stripe = (a, b) => 'background:repeating-linear-gradient(45deg,' + a + ',' + a + ' 8px,' + b + ' 8px,' + b + ' 16px);';
+    const thumbs = [
+      { t: stripe('#ffe9d8', '#fff6ef'), ink: '#b9400d' },
+      { t: stripe('#ece6ff', '#f5f2ff'), ink: '#5a2ed6' },
+      { t: stripe('#e2f4ef', '#f0faf7'), ink: '#0c7a60' }
+    ];
+    const catalog = {
+      NEET: [['Biology — Human Physiology Sprint', '4.9', '₹649'], ['Organic Chemistry for NEET', '4.7', '₹549'], ['Physics — Previous-year drills', '4.6', 'FREE']],
+      JEE: [['Maths — Calculus Intensive', '4.8', '₹699'], ['Physics — Rotation & Rigid Body', '4.7', '₹549'], ['JEE Mains mock series', '4.6', '₹449']],
+      Boards: [['Board exam answer-writing lab', '4.7', '₹399'], ['Chemistry — NCERT line-by-line', '4.8', 'FREE'], ['Maths sample-paper marathon', '4.5', '₹299']],
+      none: [['Science foundations — full year', '4.8', '₹499'], ['Maths — concept bootcamp', '4.7', '₹449'], ['English & reasoning basics', '4.6', 'FREE']]
+    };
+    const list = catalog[effTrack || 'none'];
+    const scopedCourses = list.map(([title, rating, price], i) => ({
+      title, rating, price,
+      seg: curSegObj.name, track: effTrack || false,
+      thumb: 'height:96px;position:relative;display:flex;align-items:center;justify-content:center;' + thumbs[i].t, ink: thumbs[i].ink,
+      thumbM: 'width:64px;height:52px;border-radius:10px;flex:none;' + thumbs[i].t,
+      priceStyle: price === 'FREE' ? 'font:800 11px ' + sans + ';background:#1e9e5f;color:#fff;border-radius:5px;padding:2px 7px' : 'font:800 13.5px ' + sans
+    }));
+    const scopeKey = 'k' + curSegId + (effTrack || '');
+
+    // ------- admin nav + rows
+    const navRow = (active) => 'font:' + (active ? '600' : '500') + ' 13px ' + sans + ';border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer;' + (active ? 'background:#fff6ef;color:#e0540e' : 'color:#59534b');
+    const navDot = (active) => active ? 'width:8px;height:8px;border-radius:3px;background:#f26a1b;flex:none' : 'width:8px;height:8px;border-radius:999px;border:1.5px solid #aaa39a;flex:none;box-sizing:border-box';
+    const admNav = [['Overview'], ['Users'], ['Courses'], ['Segments'], ['Enrollments'], ['Payments'], ['Reports'], ['Settings']].map((it, i) => ({ label: it[0], style: navRow(i === 3), dot: navDot(i === 3) }));
+
+    const pill = (bg, c) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:4px 9px;justify-self:start';
+    const rowBase = 'display:grid;grid-template-columns:34px 1fr 130px 120px 110px 130px;gap:12px;padding:10px 18px;border-bottom:1px solid #f4f1ed;align-items:center;';
+    const segPill = pill('#ece6ff', '#5a2ed6'), subPill = 'font:600 10px ' + sans + ';background:#fff6ef;color:#e0540e;border:1px solid #ffd0ac;border-radius:999px;padding:3px 8px';
+    const live = pill('#e6f6ee', '#0e7a48'), draft = pill('#f4f1ed', '#7c756c');
+    const mk = (isSub, label, order, students, courses, statusTxt) => ({
+      isSub, label, order, students, courses, statusTxt,
+      row: rowBase + (isSub ? 'background:#fcfbf9' : 'background:#fff'),
+      indent: isSub ? 'padding-left:26px' : '',
+      pillType: isSub ? subPill : segPill, typeTxt: isSub ? 'TRACK' : 'SEGMENT',
+      name: 'font:' + (isSub ? '500 12.5px' : '700 13px') + ' ' + sans + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis',
+      status: statusTxt === 'Live' ? live : draft, canAddSub: !isSub
+    });
+    const segRows = [
+      mk(false, 'Class 9', '#1', '2,180', '38', 'Live'),
+      mk(false, 'Class 10', '#2', '3,644', '52', 'Live'),
+      mk(false, 'Class 11', '#3', '5,092', '84', 'Live'),
+      mk(true, 'NEET', '#3.1', '2,410', '31', 'Live'),
+      mk(true, 'JEE', '#3.2', '1,876', '29', 'Live'),
+      mk(true, 'Boards', '#3.3', '806', '24', 'Live'),
+      mk(false, 'Class 12', '#4', '8,921', '118', 'Live'),
+      mk(true, 'NEET', '#4.1', '4,102', '42', 'Live'),
+      mk(true, 'JEE', '#4.2', '3,340', '44', 'Live'),
+      mk(true, 'Boards', '#4.3', '1,479', '32', 'Live'),
+      mk(false, 'Dropper', '#5', '1,204', '26', 'Live'),
+      mk(true, 'NEET', '#5.1', '742', '14', 'Live'),
+      mk(true, 'JEE', '#5.2', '462', '12', 'Draft')
+    ];
+
+    return {
+      demoSegs,
+      // gate
+      gateActive: !S.gDone, gateDone: S.gDone,
+      gStepKey: 's' + S.gStep, gTiles, gDisabled, gCtaStyle, gContinue,
+      gStepLabel: 'STEP ' + S.gStep + ' OF ' + totalSteps,
+      gTitle: step2 ? 'Choose your track' : 'Which class are you in?',
+      gSub: step2 ? (gSegObj ? gSegObj.name : '') + ' has ' + (gSegObj ? gSegObj.tracks.length : 0) + ' exam tracks — pick the one you\u2019re preparing for.' : 'We\u2019ll tailor courses, mock tests and your syllabus to your class.',
+      gDot1: dotOn, gDot2: step2 ? dotOn : (totalSteps === 2 ? dotOff : dotOn),
+      gBackable: step2, gBack: () => this.setState({ gStep: 1, gTrack: null }),
+      gSaving: S.gSaving,
+      gCtaLabel: S.gSaving ? 'Saving…' : (step2 || totalSteps === 1 ? 'Get started →' : 'Continue →'),
+      gSegName: gSegObj ? gSegObj.name : '', gTrackName: S.gTrack || false,
+      gateReset: () => this.setState({ gStep: 1, gSeg: null, gTrack: null, gSaving: false, gDone: false }),
+      // live selector
+      selOpen: S.selOpen, selToggle: () => this.setState(s => ({ selOpen: !s.selOpen })),
+      selStyle, selLabel, selChevron: S.selOpen ? '▲' : '▼',
+      liveSegs, liveTracks, liveSegsM, liveTracksM,
+      hasLiveTracks: curSegObj.tracks.length > 0, noLiveTracks: curSegObj.tracks.length === 0,
+      curSegName: curSegObj.name,
+      scopedCourses, scopedCoursesM: scopedCourses,
+      courseCount: effTrack ? 24 + list[0][0].length : 38,
+      scopeKey, scopeKey2: scopeKey + 'b', scopeKey3: scopeKey + 'c',
+      mSelOpen: S.mSelOpen, mSelToggle: () => this.setState(s => ({ mSelOpen: !s.mSelOpen })),
+      // admin
+      admNav, segRows
+    };
+  }
+}
+</script>
+</body>
+</html>

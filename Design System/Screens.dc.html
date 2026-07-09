@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceae4;font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;color:#1c1915}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.92)}70%{transform:scale(1.02)}100%{opacity:1;transform:scale(1)}}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(230,51,104,.45)}70%{box-shadow:0 0 0 9px rgba(230,51,104,0)}100%{box-shadow:0 0 0 0 rgba(230,51,104,0)}}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 20px;display:flex;align-items:center;gap:14px">
+  <div style="width:36px;height:36px;border-radius:11px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:9px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+  <div style="font:800 20px 'Plus Jakarta Sans'">Ascent — Screens</div>
+  <div style="font:500 11px 'JetBrains Mono';color:#7c756c;border:1px solid #d0cabf;border-radius:999px;padding:4px 10px">ARTIFACT ② · Student → Instructor → Admin</div>
+</div>
+
+<!-- ================= STUDENT ================= -->
+<div style="padding:20px 56px 56px;display:flex;flex-direction:column;gap:40px;align-items:flex-start">
+<div style="font:800 12px 'Plus Jakarta Sans';letter-spacing:.14em;background:#1c1915;color:#fff;border-radius:999px;padding:8px 18px">STUDENT LEARNING APP</div>
+
+<!-- S0 · LOGIN -->
+<div data-screen-label="Login / Register">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S0 · LOGIN / REGISTER — role context</div>
+  <div style="width:1000px;height:620px;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:1fr 1.1fr">
+    <div style="background:linear-gradient(160deg,#3f238a 0%,#5a2ed6 60%,#7c5cfc 100%);padding:44px;display:flex;flex-direction:column;color:#fff">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:10px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:8px solid #fff;border-top:5.5px solid transparent;border-bottom:5.5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <span style="font:800 17px 'Plus Jakarta Sans'">Ascent</span>
+      </div>
+      <div style="flex:1"></div>
+      <div style="font:800 34px/1.15 'Plus Jakarta Sans';letter-spacing:-.02em">Study with intent.<br>Rank with proof.</div>
+      <div style="font:400 14px/1.65 'Plus Jakarta Sans';color:#dbcfff;margin-top:14px;max-width:340px">Mock tests that feel like the real exam, mentors who've cleared it, and progress you can actually see.</div>
+      <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:16px;margin-top:28px;backdrop-filter:blur(4px)">
+        <div style="font:400 15px sans-serif;color:#ffce7a;letter-spacing:2px">★★★★★</div>
+        <div style="font:500 13px/1.6 'Plus Jakarta Sans';margin-top:6px">“Went from the 61st to the 94th percentile in 3 months. The per-question review changed how I study.”</div>
+        <div style="font:400 11px 'Plus Jakarta Sans';color:#c0a9ff;margin-top:8px">Sana L. · cleared CAT '25</div>
+      </div>
+    </div>
+    <div style="padding:52px 60px;display:flex;flex-direction:column;justify-content:center">
+      <div style="font:700 26px 'Plus Jakarta Sans';letter-spacing:-.01em">Welcome back</div>
+      <div style="font:400 13.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:6px">Sign in to pick up where you left off.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;background:#f4f1ed;border-radius:12px;padding:4px;margin-top:24px">
+        <div onClick="{{ roleStudent }}" style="{{ roleStuStyle }}">🎓 I'm a student</div>
+        <div onClick="{{ roleInstructor }}" style="{{ roleInsStyle }}">📋 I'm an instructor</div>
+      </div>
+      <div style="margin-top:22px">
+        <div style="font:600 12px 'Plus Jakarta Sans';margin-bottom:6px">Email</div>
+        <input placeholder="you@example.com" style="font:400 14px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:44px;padding:0 14px;border:1px solid #d8d2c9;border-radius:11px;outline:none;background:#fff" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.15)">
+      </div>
+      <div style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font:600 12px 'Plus Jakarta Sans'">Password</span><span style="font:600 12px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Forgot?</span></div>
+        <input type="password" value="••••••••••" readOnly="{{ true }}" style="font:400 14px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:44px;padding:0 14px;border:1px solid #d8d2c9;border-radius:11px;outline:none;background:#fff">
+      </div>
+      <button style="font:600 15px 'Plus Jakarta Sans';width:100%;height:46px;background:#f26a1b;color:#fff;border:none;border-radius:12px;margin-top:22px;cursor:pointer;box-shadow:0 2px 8px rgba(242,106,27,.3)" style-hover="background:#e0540e">{{ loginCta }}</button>
+      <div style="display:flex;align-items:center;gap:12px;margin:18px 0"><div style="flex:1;height:1px;background:#e9e4de"></div><span style="font:500 11px 'Plus Jakarta Sans';color:#aaa39a">OR</span><div style="flex:1;height:1px;background:#e9e4de"></div></div>
+      <button style="font:600 13.5px 'Plus Jakarta Sans';width:100%;height:44px;background:#fff;border:1px solid #d8d2c9;border-radius:11px;cursor:pointer" style-hover="background:#faf8f6">Continue with Google</button>
+      <div style="font:400 13px 'Plus Jakarta Sans';color:#7c756c;text-align:center;margin-top:20px">New here? <span style="color:#e0540e;font-weight:600;cursor:pointer">Create an account</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- S1 · STUDENT HOME -->
+<div data-screen-label="Student Home">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S1 · STUDENT HOME / DASHBOARD — 1360px</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+    <!-- top nav -->
+    <div style="height:64px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:28px;padding:0 32px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <span style="font:800 16px 'Plus Jakarta Sans'">Ascent</span>
+      </div>
+      <div style="display:flex;gap:4px;font:600 13px 'Plus Jakarta Sans'">
+        <span style="padding:8px 14px;border-radius:9px;background:#fff6ef;color:#e0540e;cursor:pointer">Home</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">My courses</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Mock tests</span>
+        <span style="padding:8px 14px;border-radius:9px;color:#59534b;cursor:pointer" style-hover="background:#f4f1ed">Mentors</span>
+      </div>
+      <div style="flex:1;max-width:360px;margin-left:auto;display:flex;align-items:center;gap:9px;background:#f4f1ed;border-radius:11px;height:38px;padding:0 14px">
+        <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+        <span style="font:400 13px 'Plus Jakarta Sans';color:#aaa39a">Search courses, tests, mentors…</span>
+        <span style="margin-left:auto;font:600 10px 'JetBrains Mono';color:#aaa39a;border:1px solid #e0dbd3;border-radius:5px;padding:2px 6px">⌘K</span>
+      </div>
+      <div style="width:38px;height:38px;border:1px solid #e9e4de;background:#fff;border-radius:11px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#faf8f6">
+        <svg width="15" height="16" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path><path d="M6 13.5 A1.6 1.6 0 0 0 9 13.5" fill="none" stroke="#59534b" stroke-width="1.4"></path></svg>
+        <span style="position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span>
+      </div>
+      <div style="width:38px;height:38px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';cursor:pointer">AD</div>
+    </div>
+
+    <div style="padding:32px 32px 40px">
+      <!-- greeting -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <div style="font:500 13px 'Plus Jakarta Sans';color:#7c756c">Monday, 6 July · 82 days to exam day</div>
+          <div style="font:700 30px/1.15 'Plus Jakarta Sans';letter-spacing:-.02em;margin-top:4px">Good evening, {{ studentName }} 👋</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;background:#fff;border:1px solid #e9e4de;border-radius:14px;padding:10px 16px">
+          <span style="font:800 18px 'Plus Jakarta Sans';color:#e0540e">🔥 23</span>
+          <span style="font:500 12px/1.3 'Plus Jakarta Sans';color:#59534b">day study<br>streak</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+          <!-- continue learning -->
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+              <div style="font:700 19px 'Plus Jakarta Sans';letter-spacing:-.01em">Continue learning</div>
+              <span style="font:600 12.5px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">View all →</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:16px;display:flex;gap:14px;cursor:pointer;transition:all .2s" style-hover="box-shadow:0 8px 24px rgba(28,22,15,.10);transform:translateY(-2px)">
+                <div style="width:104px;height:74px;border-radius:12px;background:repeating-linear-gradient(45deg,#ffe9d8,#ffe9d8 8px,#fff6ef 8px,#fff6ef 16px);flex:none;display:flex;align-items:center;justify-content:center"><div style="width:28px;height:28px;border-radius:999px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.15)"><div style="width:0;height:0;border-left:8px solid #f26a1b;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px"></div></div></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+                  <div style="font:700 14px/1.35 'Plus Jakarta Sans'">Quantitative Aptitude — Complete Sprint</div>
+                  <div style="font:400 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">Ch 4 · Ratios shortcut · 19 min left</div>
+                  <div style="margin-top:auto;display:flex;align-items:center;gap:10px">
+                    <div style="flex:1;height:6px;background:#f4f1ed;border-radius:999px;overflow:hidden"><div style="width:43%;height:100%;background:#14b077;border-radius:999px"></div></div>
+                    <span style="font:700 11px 'JetBrains Mono';color:#0e7a48">43%</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:16px;display:flex;gap:14px;cursor:pointer;transition:all .2s" style-hover="box-shadow:0 8px 24px rgba(28,22,15,.10);transform:translateY(-2px)">
+                <div style="width:104px;height:74px;border-radius:12px;background:repeating-linear-gradient(45deg,#ece6ff,#ece6ff 8px,#f5f2ff 8px,#f5f2ff 16px);flex:none;display:flex;align-items:center;justify-content:center"><span style="font:700 10px 'JetBrains Mono';color:#5a2ed6;background:rgba(255,255,255,.8);border-radius:5px;padding:3px 7px">PDF</span></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+                  <div style="font:700 14px/1.35 'Plus Jakarta Sans'">Verbal Mastery — Reading Comprehension</div>
+                  <div style="font:400 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">Ch 2 · Inference questions · 40 cards due</div>
+                  <div style="margin-top:auto;display:flex;align-items:center;gap:10px">
+                    <div style="flex:1;height:6px;background:#f4f1ed;border-radius:999px;overflow:hidden"><div style="width:67%;height:100%;background:#14b077;border-radius:999px"></div></div>
+                    <span style="font:700 11px 'JetBrains Mono';color:#0e7a48">67%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- heatmap -->
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:20px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+              <div style="font:700 15px 'Plus Jakarta Sans'">Study activity</div>
+              <div style="font:500 12px 'Plus Jakarta Sans';color:#7c756c">412 hrs total · avg 2.1 hrs/day</div>
+            </div>
+            <div style="display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;gap:3.5px">
+              <sc-for list="{{ heat }}" as="h" hint-placeholder-count="140"><div style="{{ h.cell }}" title="{{ h.tip }}"></div></sc-for>
+            </div>
+          </div>
+
+          <!-- recommended -->
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+              <div style="font:700 19px 'Plus Jakarta Sans';letter-spacing:-.01em">Recommended for you</div>
+              <span style="font:600 12.5px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Browse all →</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+              <sc-for list="{{ recCourses }}" as="c" hint-placeholder-count="3">
+                <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;overflow:hidden;cursor:pointer;transition:all .2s" style-hover="box-shadow:0 8px 24px rgba(28,22,15,.10);transform:translateY(-2px)">
+                  <div style="{{ c.thumb }}">
+                    <span style="font:500 9px 'JetBrains Mono';color:{{ c.thumbInk }};background:rgba(255,255,255,.75);padding:3px 7px;border-radius:5px">thumbnail</span>
+                    <sc-if value="{{ c.badge }}" hint-placeholder-val="{{ false }}"><span style="{{ c.badgeStyle }}">{{ c.badge }}</span></sc-if>
+                    <span style="{{ c.lvl }}">{{ c.level }}</span>
+                  </div>
+                  <div style="padding:14px">
+                    <div style="font:700 13.5px/1.4 'Plus Jakarta Sans';min-height:38px">{{ c.title }}</div>
+                    <div style="display:flex;gap:7px;align-items:center;margin-top:7px">
+                      <div style="{{ c.av }}">{{ c.ini }}</div>
+                      <span style="font:500 11px 'Plus Jakarta Sans';color:#7c756c;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.inst }}</span>
+                      <span style="font:400 11px sans-serif;color:#f2a91b">★</span><span style="font:700 11px 'JetBrains Mono'">{{ c.rating }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:11px">
+                      <span style="{{ c.priceStyle }}">{{ c.price }}</span>
+                      <button style="font:600 11px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:8px;height:28px;padding:0 12px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">Enroll</button>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- right rail -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:20px;display:flex;gap:18px;align-items:center">
+            <svg width="88" height="88" viewBox="0 0 92 92" style="flex:none">
+              <circle cx="46" cy="46" r="38" fill="none" stroke="#f4f1ed" stroke-width="9"></circle>
+              <circle cx="46" cy="46" r="38" fill="none" stroke="#14b077" stroke-width="9" stroke-linecap="round" stroke-dasharray="167 239" transform="rotate(-90 46 46)"></circle>
+              <text x="46" y="44" text-anchor="middle" style="font:800 19px 'Plus Jakarta Sans';fill:#1c1915">70%</text>
+              <text x="46" y="60" text-anchor="middle" style="font:500 9px 'Plus Jakarta Sans';fill:#aaa39a">syllabus</text>
+            </svg>
+            <div>
+              <div style="font:700 15px 'Plus Jakarta Sans'">On track 🎯</div>
+              <div style="font:400 12px/1.55 'Plus Jakarta Sans';color:#7c756c;margin-top:4px">Percentile <b style="font-family:'JetBrains Mono';color:#1c1915">{{ percentile }}</b> on last mock. Weakest area: DI sets.</div>
+            </div>
+          </div>
+
+          <sc-if value="{{ liveNow }}" hint-placeholder-val="{{ true }}">
+            <div style="background:linear-gradient(135deg,#2b1220,#1c1915);border-radius:18px;padding:18px;color:#fff;animation:fadeInUp .4s cubic-bezier(.2,.8,.2,1)">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <span style="font:800 9px 'Plus Jakarta Sans';letter-spacing:.08em;background:#e63368;border-radius:5px;padding:4px 8px;animation:livePulse 2s infinite">● LIVE NOW</span>
+                <span style="font:500 11px 'Plus Jakarta Sans';color:#a8a29a">324 attending</span>
+              </div>
+              <div style="font:700 15px 'Plus Jakarta Sans'">Algebra Sprint — Doubt clinic</div>
+              <div style="font:400 11.5px 'Plus Jakarta Sans';color:#a8a29a;margin-top:2px">Prof. Khanna · started 4 min ago</div>
+              <button style="font:700 13px 'Plus Jakarta Sans';width:100%;height:38px;background:#fff;color:#1c1915;border:none;border-radius:10px;margin-top:14px;cursor:pointer" style-hover="background:#ffe9d8">Join class →</button>
+            </div>
+          </sc-if>
+
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+              <div style="font:700 15px 'Plus Jakarta Sans'">Today's schedule</div>
+              <span style="font:600 11.5px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Edit</span>
+            </div>
+            <sc-for list="{{ schedule }}" as="s" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid #f4f1ed">
+                <span style="font:700 10.5px 'JetBrains Mono';color:#7c756c;width:40px">{{ s.time }}</span>
+                <span style="{{ s.bar }}"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="{{ s.titleStyle }}">{{ s.title }}</div>
+                  <div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ s.meta }}</div>
+                </div>
+                <span style="{{ s.chip }}">{{ s.tag }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:linear-gradient(140deg,#fffdf6,#fff6ef);border:1px solid #ffd0ac;border-radius:18px;padding:16px">
+            <div style="font:700 13px 'Plus Jakarta Sans';color:#b9400d;margin-bottom:8px">Evening reflection</div>
+            <div style="display:flex;gap:8px;align-items:flex-start;font:400 12px/1.5 'Plus Jakarta Sans';color:#403b35"><span>🌱</span>DI accuracy up to 74% — new best.</div>
+            <div style="display:flex;gap:8px;align-items:flex-start;font:400 12px/1.5 'Plus Jakarta Sans';color:#403b35;margin-top:6px"><span>🎯</span>Trust first read on marked questions.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S1m · MOBILE -->
+<div style="display:flex;gap:40px;align-items:flex-start">
+<div data-screen-label="Student Home — Mobile">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S1m · STUDENT HOME — 390px · tap ☰</div>
+  <div style="width:390px;height:760px;background:#faf8f6;border-radius:32px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.16);position:relative;display:flex;flex-direction:column">
+    <div style="height:56px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 16px;flex:none">
+      <button onClick="{{ toggleDrawer }}" style="width:38px;height:38px;border:none;background:transparent;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center" style-hover="background:#f4f1ed">
+        <span style="width:16px;height:2px;background:#1c1915;border-radius:2px"></span><span style="width:16px;height:2px;background:#1c1915;border-radius:2px"></span><span style="width:10px;height:2px;background:#1c1915;border-radius:2px;align-self:flex-start;margin-left:11px"></span>
+      </button>
+      <span style="font:800 15px 'Plus Jakarta Sans'">Ascent</span>
+      <div style="flex:1"></div>
+      <div style="width:36px;height:36px;border:1px solid #e9e4de;background:#fff;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center">
+        <svg width="14" height="15" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        <span style="position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span>
+      </div>
+      <div style="width:36px;height:36px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 12px 'Plus Jakarta Sans'">AD</div>
+    </div>
+    <div style="flex:1;overflow:hidden;padding:20px 16px 0">
+      <div style="font:500 11.5px 'Plus Jakarta Sans';color:#7c756c">82 days to exam · 🔥 23-day streak</div>
+      <div style="font:700 22px 'Plus Jakarta Sans';letter-spacing:-.01em;margin-top:2px">Evening, {{ studentName }} 👋</div>
+      <div style="background:linear-gradient(135deg,#2b1220,#1c1915);border-radius:16px;padding:14px;color:#fff;margin-top:14px;display:flex;align-items:center;gap:12px">
+        <span style="font:800 8.5px 'Plus Jakarta Sans';letter-spacing:.06em;background:#e63368;border-radius:4px;padding:3px 7px;animation:livePulse 2s infinite;flex:none">● LIVE</span>
+        <div style="flex:1;min-width:0"><div style="font:700 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Algebra Sprint — Doubt clinic</div><div style="font:400 10.5px 'Plus Jakarta Sans';color:#a8a29a">started 4 min ago</div></div>
+        <button style="font:700 11px 'Plus Jakarta Sans';background:#fff;color:#1c1915;border:none;border-radius:8px;height:30px;padding:0 12px;cursor:pointer;flex:none">Join</button>
+      </div>
+      <div style="font:700 15px 'Plus Jakarta Sans';margin:18px 0 10px">Continue learning</div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:13px;display:flex;gap:12px">
+        <div style="width:84px;height:60px;border-radius:10px;background:repeating-linear-gradient(45deg,#ffe9d8,#ffe9d8 7px,#fff6ef 7px,#fff6ef 14px);flex:none;display:flex;align-items:center;justify-content:center"><div style="width:24px;height:24px;border-radius:999px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.15)"><div style="width:0;height:0;border-left:7px solid #f26a1b;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;margin-left:1px"></div></div></div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+          <div style="font:700 12.5px/1.35 'Plus Jakarta Sans'">Quant Sprint — Ratios shortcut</div>
+          <div style="font:400 10.5px 'Plus Jakarta Sans';color:#7c756c">19 min left</div>
+          <div style="margin-top:auto;display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:5px;background:#f4f1ed;border-radius:999px;overflow:hidden"><div style="width:43%;height:100%;background:#14b077"></div></div>
+            <span style="font:700 10px 'JetBrains Mono';color:#0e7a48">43%</span>
+          </div>
+        </div>
+      </div>
+      <div style="font:700 15px 'Plus Jakarta Sans';margin:18px 0 10px">Today</div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:4px 14px">
+        <sc-for list="{{ scheduleM }}" as="s" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f4f1ed">
+            <span style="font:700 10px 'JetBrains Mono';color:#7c756c;width:38px">{{ s.time }}</span>
+            <span style="{{ s.bar }}"></span>
+            <div style="flex:1;min-width:0;font:600 12px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.title }}</div>
+            <span style="{{ s.chip }}">{{ s.tag }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <!-- bottom tabs -->
+    <div style="height:66px;background:#fff;border-top:1px solid #e9e4de;display:grid;grid-template-columns:repeat(4,1fr);flex:none">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer"><span style="width:18px;height:18px;border-radius:6px;background:#f26a1b"></span><span style="font:700 10px 'Plus Jakarta Sans';color:#e0540e">Home</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer"><span style="width:18px;height:18px;border-radius:6px;border:2px solid #aaa39a;box-sizing:border-box"></span><span style="font:500 10px 'Plus Jakarta Sans';color:#7c756c">Courses</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer"><span style="width:18px;height:18px;border-radius:999px;border:2px solid #aaa39a;box-sizing:border-box"></span><span style="font:500 10px 'Plus Jakarta Sans';color:#7c756c">Tests</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer"><span style="width:18px;height:18px;border-radius:6px;transform:rotate(45deg);border:2px solid #aaa39a;box-sizing:border-box"></span><span style="font:500 10px 'Plus Jakarta Sans';color:#7c756c">Mentors</span></div>
+    </div>
+    <!-- drawer -->
+    <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ toggleDrawer }}" style="position:absolute;inset:0;background:rgba(28,25,21,.45);z-index:20"></div>
+      <div style="position:absolute;top:0;left:0;bottom:0;width:280px;background:#fff;z-index:21;padding:20px;box-shadow:8px 0 32px rgba(28,22,15,.2);animation:fadeInUp .2s ease;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:10px;padding-bottom:16px;border-bottom:1px solid #f4f1ed;margin-bottom:10px">
+          <div style="width:42px;height:42px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 14px 'Plus Jakarta Sans'">AD</div>
+          <div><div style="font:700 14px 'Plus Jakarta Sans'">{{ studentName }} Rao</div><div style="font:400 11px 'Plus Jakarta Sans';color:#aaa39a">Serious Prep plan</div></div>
+        </div>
+        <div style="font:600 13.5px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border-radius:10px;padding:12px 14px;cursor:pointer">Home</div>
+        <div style="font:500 13.5px 'Plus Jakarta Sans';color:#403b35;border-radius:10px;padding:12px 14px;cursor:pointer" style-hover="background:#f4f1ed">My courses</div>
+        <div style="font:500 13.5px 'Plus Jakarta Sans';color:#403b35;border-radius:10px;padding:12px 14px;cursor:pointer" style-hover="background:#f4f1ed">Mock tests</div>
+        <div style="font:500 13.5px 'Plus Jakarta Sans';color:#403b35;border-radius:10px;padding:12px 14px;cursor:pointer" style-hover="background:#f4f1ed">Flashcards</div>
+        <div style="font:500 13.5px 'Plus Jakarta Sans';color:#403b35;border-radius:10px;padding:12px 14px;cursor:pointer" style-hover="background:#f4f1ed">Mentors</div>
+        <div style="font:500 13.5px 'Plus Jakarta Sans';color:#403b35;border-radius:10px;padding:12px 14px;cursor:pointer" style-hover="background:#f4f1ed">Settings</div>
+        <div style="margin-top:auto;font:500 13.5px 'Plus Jakarta Sans';color:#dc4040;border-radius:10px;padding:12px 14px;cursor:pointer" style-hover="background:#fde9ea">Sign out</div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+<!-- S2 · COURSE DETAIL + PLAYER -->
+<div data-screen-label="Course Detail + Player" style="min-width:0">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S2 · COURSE DETAIL + LESSON PLAYER — tabs are clickable</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+    <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:16px;padding:0 28px">
+      <div style="width:28px;height:28px;border-radius:8px;background:#f26a1b;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+      <div style="display:flex;gap:7px;align-items:center;font:500 12.5px 'Plus Jakarta Sans'">
+        <span style="color:#7c756c;cursor:pointer" style-hover="color:#e0540e">My courses</span><span style="color:#d8d2c9">/</span>
+        <span style="color:#7c756c;cursor:pointer" style-hover="color:#e0540e">Quantitative Aptitude</span><span style="color:#d8d2c9">/</span>
+        <span style="font-weight:600">Ch 4 · Percentages</span>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="font:500 12px 'Plus Jakarta Sans';color:#7c756c">Course progress</span>
+        <div style="width:120px;height:6px;background:#f4f1ed;border-radius:999px;overflow:hidden"><div style="width:43%;height:100%;background:#14b077"></div></div>
+        <span style="font:700 12px 'JetBrains Mono';color:#0e7a48">43%</span>
+      </div>
+      <button style="font:600 13px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:10px;height:36px;padding:0 18px;cursor:pointer" style-hover="background:#e0540e">Continue →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 340px;align-items:start">
+      <div style="padding:24px 28px 36px;min-width:0">
+        <!-- player -->
+        <div style="background:#1c1915;border-radius:18px;overflow:hidden">
+          <div style="height:430px;background:linear-gradient(160deg,#2a2620,#1c1915);display:flex;align-items:center;justify-content:center;position:relative">
+            <span style="position:absolute;top:16px;left:18px;font:500 11px 'JetBrains Mono';color:#a8a29a;background:rgba(0,0,0,.4);border-radius:6px;padding:4px 9px">lesson video 16:9 — drop file</span>
+            <div style="width:72px;height:72px;border-radius:999px;background:rgba(255,255,255,.96);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,.4)" style-hover="transform:scale(1.06)"><div style="width:0;height:0;border-left:22px solid #f26a1b;border-top:14px solid transparent;border-bottom:14px solid transparent;margin-left:5px"></div></div>
+            <span style="position:absolute;bottom:16px;right:18px;font:600 10px 'Plus Jakarta Sans';color:#fff;background:rgba(0,0,0,.5);border-radius:6px;padding:4px 9px">HD · CC on</span>
+          </div>
+          <div style="padding:14px 18px 12px">
+            <div style="position:relative;height:5px;background:#403b35;border-radius:999px;cursor:pointer;margin-bottom:11px">
+              <div style="position:absolute;left:0;top:0;height:100%;width:38%;background:#f26a1b;border-radius:999px"></div>
+              <div style="position:absolute;left:38%;top:50%;width:13px;height:13px;background:#fff;border-radius:999px;transform:translate(-50%,-50%)"></div>
+              <div style="position:absolute;left:22%;top:-3px;width:2px;height:11px;background:#a8a29a;border-radius:2px"></div>
+              <div style="position:absolute;left:55%;top:-3px;width:2px;height:11px;background:#a8a29a;border-radius:2px"></div>
+              <div style="position:absolute;left:81%;top:-3px;width:2px;height:11px;background:#a8a29a;border-radius:2px"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="width:0;height:0;border-left:12px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent;cursor:pointer"></div>
+              <span style="font:500 12px 'JetBrains Mono';color:#e8e5e0">12:04 / 31:30</span>
+              <div style="flex:1"></div>
+              <span style="font:700 10px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border-radius:6px;padding:4px 8px;cursor:pointer">CC</span>
+              <span style="font:600 12px 'JetBrains Mono';color:#e8e5e0;border:1px solid #403b35;border-radius:6px;padding:3px 8px;cursor:pointer">1.5×</span>
+              <span style="font:500 13px 'Plus Jakarta Sans';color:#e8e5e0;cursor:pointer">⛶</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:20px;gap:20px">
+          <div>
+            <div style="font:700 22px/1.25 'Plus Jakarta Sans';letter-spacing:-.01em">Ratios shortcut masterclass</div>
+            <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+              <div style="display:flex;gap:8px;align-items:center">
+                <div style="width:30px;height:30px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 11px 'Plus Jakarta Sans'">PK</div>
+                <span style="font:500 12.5px 'Plus Jakarta Sans';color:#59534b">Taught by <b>Prof. Khanna</b></span>
+              </div>
+              <span style="font:400 13px sans-serif;color:#f2a91b;letter-spacing:1px">★★★★★</span>
+              <span style="font:700 12.5px 'JetBrains Mono'">4.8</span>
+              <span style="font:400 12px 'Plus Jakarta Sans';color:#aaa39a">(2,340 reviews)</span>
+              <span style="font:600 10.5px 'Plus Jakarta Sans';background:#fdf0dd;color:#a35a06;border-radius:999px;padding:4px 10px">Medium</span>
+            </div>
+          </div>
+          <button style="font:600 13px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:10px;height:38px;padding:0 16px;cursor:pointer;flex:none" style-hover="background:#f4f1ed">⤓ Resources</button>
+        </div>
+
+        <!-- tabs -->
+        <div style="display:flex;gap:2px;border-bottom:1px solid #e9e4de;margin-top:20px">
+          <sc-for list="{{ courseTabs }}" as="tb" hint-placeholder-count="5"><div onClick="{{ tb.pick }}" style="{{ tb.style }}">{{ tb.label }}</div></sc-for>
+        </div>
+        <div style="padding-top:20px;min-height:230px">
+          <sc-if value="{{ tabOverview }}" hint-placeholder-val="{{ true }}">
+            <div style="animation:fadeInUp .25s ease both">
+              <div style="font:400 14.5px/1.7 'Plus Jakarta Sans';color:#403b35;max-width:640px">Stop solving ratios longhand. This lesson builds the three-step multiplier method: normalize, chain, and collapse. By the end you'll handle any A:B:C recombination in under 40 seconds — the pace the exam actually demands.</div>
+              <div style="display:flex;gap:26px;margin-top:18px">
+                <div><div style="font:800 18px 'JetBrains Mono'">31:30</div><div style="font:500 11px 'Plus Jakarta Sans';color:#7c756c">duration</div></div>
+                <div><div style="font:800 18px 'JetBrains Mono'">4</div><div style="font:500 11px 'Plus Jakarta Sans';color:#7c756c">chapters</div></div>
+                <div><div style="font:800 18px 'JetBrains Mono'">15</div><div style="font:500 11px 'Plus Jakarta Sans';color:#7c756c">practice Qs</div></div>
+                <div><div style="font:800 18px 'JetBrains Mono'">40</div><div style="font:500 11px 'Plus Jakarta Sans';color:#7c756c">flashcards</div></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
+                <span style="font:500 11.5px 'Plus Jakarta Sans';background:#fff6ef;border:1px solid #ffd0ac;color:#e0540e;border-radius:999px;padding:6px 12px;cursor:pointer">00:00 Intro</span>
+                <span style="font:500 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #e9e4de;border-radius:999px;padding:6px 12px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">06:55 The multiplier method</span>
+                <span style="font:500 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #e9e4de;border-radius:999px;padding:6px 12px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">17:20 Worked examples</span>
+                <span style="font:500 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #e9e4de;border-radius:999px;padding:6px 12px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">25:30 Common traps</span>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ tabFlash }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:440px;animation:fadeInUp .25s ease both">
+              <div onClick="{{ flip }}" style="perspective:900px;cursor:pointer">
+                <div style="{{ flipInner }}">
+                  <div style="position:absolute;inset:0;backface-visibility:hidden;background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:24px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:0 2px 8px rgba(28,22,15,.07)">
+                    <span style="font:700 9px 'JetBrains Mono';letter-spacing:.1em;color:#5a2ed6;background:#f5f2ff;border-radius:5px;padding:3px 8px;margin-bottom:12px">RATIOS · 3/40</span>
+                    <div style="font:700 18px/1.4 'Plus Jakarta Sans'">If A:B = 2:3 and B:C = 4:5, what is A:B:C?</div>
+                    <div style="font:400 11px 'Plus Jakarta Sans';color:#aaa39a;margin-top:12px">tap to reveal</div>
+                  </div>
+                  <div style="position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);background:#1c1915;border-radius:18px;padding:24px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+                    <div style="font:700 22px 'JetBrains Mono';color:#ffab72">8 : 12 : 15</div>
+                    <div style="font:400 12px/1.5 'Plus Jakarta Sans';color:#a8a29a;margin-top:10px">scale both ratios to B = 12</div>
+                  </div>
+                  <div style="visibility:hidden;padding:24px"><div style="font:700 18px/1.4 'Plus Jakarta Sans'">If A:B = 2:3 and B:C = 4:5, what is A:B:C?</div><div style="height:44px"></div></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
+                <button style="font:600 12px 'Plus Jakarta Sans';background:#fde9ea;color:#ab2530;border:none;border-radius:999px;padding:8px 18px;cursor:pointer">Again</button>
+                <button style="font:600 12px 'Plus Jakarta Sans';background:#fdf0dd;color:#a35a06;border:none;border-radius:999px;padding:8px 18px;cursor:pointer">Hard</button>
+                <button style="font:600 12px 'Plus Jakarta Sans';background:#e6f6ee;color:#0e7a48;border:none;border-radius:999px;padding:8px 18px;cursor:pointer">Got it</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ tabDeck }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:440px;position:relative;height:180px;animation:fadeInUp .25s ease both">
+              <div style="position:absolute;inset:12px -6px -6px 18px;background:#fff;border:1px solid #e9e4de;border-radius:18px;transform:rotate(2deg)"></div>
+              <div style="position:absolute;inset:6px 2px 2px 8px;background:#fff;border:1px solid #e9e4de;border-radius:18px;transform:rotate(1deg)"></div>
+              <div key="{{ deckKey }}" style="position:absolute;inset:0 10px 10px 0;background:linear-gradient(140deg,#7c5cfc,#5a2ed6);border-radius:18px;padding:20px;color:#fff;animation:popIn .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column">
+                <div style="font:700 9px 'JetBrains Mono';letter-spacing:.1em;color:#d9cfff">KEY IDEA {{ deckNum }} / 5</div>
+                <div style="font:700 17px/1.4 'Plus Jakarta Sans';margin-top:10px;flex:1">{{ deckText }}</div>
+                <div style="display:flex;justify-content:flex-end;gap:8px">
+                  <button onClick="{{ deckPrev }}" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;cursor:pointer;font:600 13px 'Plus Jakarta Sans'">‹</button>
+                  <button onClick="{{ deckNext }}" style="width:30px;height:30px;border-radius:999px;border:none;background:#fff;color:#5a2ed6;cursor:pointer;font:700 13px 'Plus Jakarta Sans'">›</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ tabNotes }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:620px;animation:fadeInUp .25s ease both">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><span style="font:800 9px 'Plus Jakarta Sans';letter-spacing:.08em;background:#7c5cfc;color:#fff;border-radius:5px;padding:3px 8px">AI</span><span style="font:500 12px 'Plus Jakarta Sans';color:#7c756c">Generated from this lesson · reviewed by Prof. Khanna</span></div>
+              <div style="background:#fff;border:1px solid #e9e4de;border-radius:14px;padding:18px;font:400 13.5px/1.8 'Plus Jakarta Sans';color:#403b35">
+                <b>1. Normalize first.</b> Rewrite every ratio so the shared term matches (LCM of the two B values).<br>
+                <b>2. Chain multipliers.</b> Ratios compose by multiplication — never add ratio terms across statements.<br>
+                <b>3. Collapse at the end.</b> Only reduce to lowest terms after the full chain, or you lose the common base.
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ tabDoubt }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:620px;animation:fadeInUp .25s ease both;display:flex;flex-direction:column;gap:10px">
+              <div style="align-self:flex-end;max-width:75%;background:#f26a1b;color:#fff;border-radius:16px 16px 4px 16px;padding:11px 15px;font:400 13.5px/1.5 'Plus Jakarta Sans'">At 17:20, why do we scale to B = 12 instead of 6?</div>
+              <div style="align-self:flex-start;max-width:78%;background:#fff;border:1px solid #e9e4de;border-radius:16px 16px 16px 4px;padding:11px 15px;font:400 13.5px/1.6 'Plus Jakarta Sans';color:#403b35"><b style="color:#5a2ed6">TA · Meera:</b> 12 is the LCM of 3 and 4 — with 6 you'd get fractional parts for A. Try A:B = 2:3 → 4:6 and B:C = 4:5 → 6:7.5. See the problem?</div>
+              <div style="display:flex;gap:8px;margin-top:6px">
+                <input placeholder="Ask a doubt about this lesson…" style="font:400 13px 'Plus Jakarta Sans';flex:1;height:42px;padding:0 14px;border:1px solid #d8d2c9;border-radius:11px;outline:none;background:#fff" style-focus="border-color:#f26a1b">
+                <button style="font:600 13px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border:none;border-radius:11px;height:42px;padding:0 18px;cursor:pointer" style-hover="background:#403b35">Send</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- chapter sidebar -->
+      <div style="border-left:1px solid #e9e4de;background:#fff;padding:20px 0;align-self:stretch">
+        <div style="padding:0 20px 14px;display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font:700 14px 'Plus Jakarta Sans'">Course content</div>
+          <span style="font:500 11px 'JetBrains Mono';color:#aaa39a">18/42</span>
+        </div>
+        <div style="padding:10px 20px 6px;font:700 10px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;background:#faf8f6;border-top:1px solid #f4f1ed;border-bottom:1px solid #f4f1ed">CH 4 · PERCENTAGES &amp; RATIOS · 5/8 done</div>
+        <sc-for list="{{ lessons }}" as="l" hint-placeholder-count="5">
+          <div style="{{ l.row }}">
+            <div style="{{ l.chip }}">{{ l.type }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="{{ l.title }}">{{ l.name }}</div>
+              <div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ l.meta }}</div>
+            </div>
+            <sc-if value="{{ l.now }}" hint-placeholder-val="{{ false }}"><span style="font:800 8.5px 'Plus Jakarta Sans';letter-spacing:.06em;background:#f26a1b;color:#fff;border-radius:4px;padding:3px 6px;flex:none">NOW</span></sc-if>
+            <div style="{{ l.state }}">{{ l.stateGlyph }}</div>
+          </div>
+        </sc-for>
+        <div style="padding:10px 20px 6px;font:700 10px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;background:#faf8f6;border-top:1px solid #f4f1ed;border-bottom:1px solid #f4f1ed">CH 5 · MIXTURES &amp; ALLIGATION · locked</div>
+        <div style="display:flex;align-items:center;gap:11px;padding:11px 20px;opacity:.6">
+          <div style="font:700 9px 'JetBrains Mono';flex:none;width:36px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:#f4f1ed;color:#aaa39a">VID</div>
+          <div style="flex:1;font:500 12.5px 'Plus Jakarta Sans';color:#aaa39a">Alligation cross method</div>
+          <span style="font:600 11px 'Plus Jakarta Sans';color:#aaa39a">🔒</span>
+        </div>
+        <div style="padding:18px 20px 4px">
+          <button style="font:600 13.5px 'Plus Jakarta Sans';width:100%;height:42px;background:#f26a1b;color:#fff;border:none;border-radius:11px;cursor:pointer;box-shadow:0 2px 8px rgba(242,106,27,.3)" style-hover="background:#e0540e">Continue — 19 min left</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S3 · MOCK TEST -->
+<div data-screen-label="Mock Test">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+    <div style="font:700 12px 'JetBrains Mono';color:#7c756c">S3 · MOCK TEST</div>
+    <div style="display:flex;background:#e0dbd3;border-radius:999px;padding:3px">
+      <div onClick="{{ showTaking }}" style="{{ mockTabTaking }}">Taking view</div>
+      <div onClick="{{ showResults }}" style="{{ mockTabResults }}">Results view</div>
+    </div>
+  </div>
+
+  <sc-if value="{{ mockTaking }}" hint-placeholder-val="{{ true }}">
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+    <div style="height:58px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:16px;padding:0 28px">
+      <span style="font:700 14px 'Plus Jakarta Sans'">Mock Test 09 — Full syllabus</span>
+      <span style="font:600 10.5px 'Plus Jakarta Sans';background:#f4f1ed;color:#59534b;border-radius:999px;padding:4px 10px">Section 2 of 3 · Quant</span>
+      <div style="flex:1"></div>
+      <span style="{{ timerStyle }}">⏱ {{ timerStr }}</span>
+      <button style="font:600 13px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border:none;border-radius:10px;height:36px;padding:0 18px;cursor:pointer" style-hover="background:#403b35">Submit test</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:0;align-items:start">
+      <div style="padding:26px 28px 36px;display:flex;flex-direction:column;gap:22px;min-width:0">
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:20px;padding:26px;box-shadow:0 2px 8px rgba(28,22,15,.07)">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+            <span style="font:700 10px 'JetBrains Mono';letter-spacing:.08em;background:#f4f1ed;color:#59534b;border-radius:6px;padding:4px 8px">Q 12 / 30</span>
+            <span style="font:600 11px 'Plus Jakarta Sans';background:#fdf0dd;color:#a35a06;border-radius:999px;padding:4px 10px">Medium</span>
+            <span style="font:700 11px 'JetBrains Mono';background:#e6f6ee;color:#0e7a48;border-radius:6px;padding:4px 8px">+4.0</span>
+            <span style="font:700 11px 'JetBrains Mono';background:#fde9ea;color:#ab2530;border-radius:6px;padding:4px 8px">−1.0</span>
+            <div style="flex:1"></div>
+            <span style="font:500 11px 'Plus Jakarta Sans';color:#aaa39a">avg. time on this Q: 1:10</span>
+          </div>
+          <div style="font:600 17px/1.55 'Plus Jakarta Sans';margin-bottom:18px;max-width:680px">A shopkeeper marks an item 40% above cost price and then offers a 20% discount on the marked price. His overall profit percentage is:</div>
+          <div style="display:flex;flex-direction:column;gap:9px;max-width:560px">
+            <sc-for list="{{ quizOpts }}" as="o" hint-placeholder-count="4">
+              <div onClick="{{ o.pick }}" style="{{ o.style }}">
+                <span style="{{ o.key }}">{{ o.letter }}</span>
+                <span style="font:500 14.5px 'Plus Jakarta Sans'">{{ o.text }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;align-items:center">
+            <button onClick="{{ markQ }}" style="{{ markStyle }}">{{ markLabel }}</button>
+            <button onClick="{{ clearQ }}" style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#59534b;border-radius:9px;height:34px;padding:0 14px;cursor:pointer" style-hover="background:#faf8f6">Clear response</button>
+            <div style="flex:1"></div>
+            <button style="font:600 13px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:10px;height:38px;padding:0 16px;cursor:pointer" style-hover="background:#faf8f6">← Previous</button>
+            <button style="font:600 13px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:10px;height:38px;padding:0 18px;cursor:pointer" style-hover="background:#e0540e">Save &amp; next →</button>
+          </div>
+        </div>
+
+        <!-- comprehension variant -->
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:20px;overflow:hidden">
+          <div style="font:700 10px 'JetBrains Mono';letter-spacing:.1em;color:#5a2ed6;background:#f5f2ff;padding:12px 20px;border-bottom:1px solid #e9e4de">COMPREHENSION VARIANT · PASSAGE Q1 (a–c) · sub-questions numbered against the passage</div>
+          <div style="display:grid;grid-template-columns:1.1fr 1fr">
+            <div style="padding:20px;border-right:1px solid #e9e4de">
+              <div style="font:400 13.5px/1.8 'Plus Jakarta Sans';color:#403b35">The migration of monarch butterflies spans four generations, no single insect completing the round trip. Researchers long assumed a purely genetic compass, yet recent evidence suggests the antennae house an independent circadian clock that calibrates the sun compass hour by hour…</div>
+            </div>
+            <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;gap:10px;align-items:flex-start;background:#faf8f6;border-radius:12px;padding:11px 12px">
+                <span style="font:700 11px 'JetBrains Mono';background:#14b077;color:#fff;border-radius:6px;padding:4px 7px;flex:none">1-a</span>
+                <div style="font:500 12.5px/1.5 'Plus Jakarta Sans'">The primary purpose of the passage is to… <span style="color:#0e7a48;font-weight:700">✓</span></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;background:#fff9f4;border:1.5px solid #ffd0ac;border-radius:12px;padding:11px 12px">
+                <span style="font:700 11px 'JetBrains Mono';background:#f26a1b;color:#fff;border-radius:6px;padding:4px 7px;flex:none">1-b</span>
+                <div style="font:600 12.5px/1.5 'Plus Jakarta Sans'">"Calibrates" (line 6) most nearly means…</div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;background:#faf8f6;border-radius:12px;padding:11px 12px">
+                <span style="font:700 11px 'JetBrains Mono';background:#f4f1ed;color:#7c756c;border-radius:6px;padding:4px 7px;flex:none">1-c</span>
+                <div style="font:400 12.5px/1.5 'Plus Jakarta Sans';color:#7c756c">The author would most likely agree that…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- palette rail -->
+      <div style="border-left:1px solid #e9e4de;background:#fff;padding:22px 20px;align-self:stretch">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font:700 13px 'Plus Jakarta Sans'">Question palette</div>
+          <span style="font:500 10.5px 'JetBrains Mono';color:#aaa39a">SEC 2</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">
+          <sc-for list="{{ palette }}" as="p" hint-placeholder-count="30"><div onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.n }}</div></sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+          <span style="display:flex;gap:7px;align-items:center;font:500 11px 'Plus Jakarta Sans';color:#7c756c"><span style="width:11px;height:11px;border-radius:4px;background:#14b077"></span>Answered · {{ nAnswered }}</span>
+          <span style="display:flex;gap:7px;align-items:center;font:500 11px 'Plus Jakarta Sans';color:#7c756c"><span style="width:11px;height:11px;border-radius:4px;background:#fff;border:1px solid #d8d2c9;box-sizing:border-box"></span>Unanswered · {{ nUnanswered }}</span>
+          <span style="display:flex;gap:7px;align-items:center;font:500 11px 'Plus Jakarta Sans';color:#7c756c"><span style="width:11px;height:11px;border-radius:4px;background:#7c5cfc"></span>Marked · {{ nMarked }}</span>
+        </div>
+        <div style="height:1px;background:#f4f1ed;margin:18px 0 14px"></div>
+        <div style="font:700 10px 'JetBrains Mono';letter-spacing:.08em;color:#aaa39a;margin-bottom:8px">SECTION TIME</div>
+        <div style="height:8px;background:#f4f1ed;border-radius:999px;overflow:hidden"><div style="{{ timeBar }}"></div></div>
+        <div style="display:flex;justify-content:space-between;font:500 10.5px 'JetBrains Mono';color:#7c756c;margin-top:6px"><span>{{ timerStr }} left</span><span>45:00</span></div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ mockResults }}" hint-placeholder-val="{{ false }}">
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);animation:fadeInUp .3s ease both">
+    <div style="background:linear-gradient(160deg,#1c1915,#2a2620);padding:36px 40px;color:#fff;display:flex;align-items:center;gap:36px">
+      <svg width="132" height="132" viewBox="0 0 132 132" style="flex:none">
+        <circle cx="66" cy="66" r="55" fill="none" stroke="#403b35" stroke-width="11"></circle>
+        <circle cx="66" cy="66" r="55" fill="none" stroke="#14b077" stroke-width="11" stroke-linecap="round" stroke-dasharray="249 346" transform="rotate(-90 66 66)"></circle>
+        <text x="66" y="62" text-anchor="middle" style="font:800 28px 'Plus Jakarta Sans';fill:#fff">144</text>
+        <text x="66" y="82" text-anchor="middle" style="font:500 11px 'Plus Jakarta Sans';fill:#a8a29a">/ 200</text>
+      </svg>
+      <div style="flex:1">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="font:700 26px 'Plus Jakarta Sans';letter-spacing:-.01em">Mock Test 09 — Results</div>
+          <span style="font:800 11px 'Plus Jakarta Sans';letter-spacing:.06em;background:#14b077;color:#fff;border-radius:999px;padding:6px 14px">✓ PASSED</span>
+        </div>
+        <div style="font:400 13.5px 'Plus Jakarta Sans';color:#a8a29a;margin-top:6px">Cutoff 120 · attempted 26/30 · negative marks −3.0</div>
+        <div style="display:flex;gap:0;margin-top:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden">
+          <div style="padding:14px 24px;border-right:1px solid rgba(255,255,255,.1)"><div style="font:800 19px 'JetBrains Mono'">02:41:07</div><div style="font:500 10.5px 'Plus Jakarta Sans';color:#a8a29a">time taken</div></div>
+          <div style="padding:14px 24px;border-right:1px solid rgba(255,255,255,.1)"><div style="font:800 19px 'JetBrains Mono';color:#ffab72">{{ percentile }}<span style="font-size:12px">th</span></div><div style="font:500 10.5px 'Plus Jakarta Sans';color:#a8a29a">percentile</div></div>
+          <div style="padding:14px 24px;border-right:1px solid rgba(255,255,255,.1)"><div style="font:800 19px 'JetBrains Mono'">#412</div><div style="font:500 10.5px 'Plus Jakarta Sans';color:#a8a29a">rank of 18,240</div></div>
+          <div style="padding:14px 24px"><div style="font:800 19px 'JetBrains Mono';color:#2cd396">77%</div><div style="font:500 10.5px 'Plus Jakarta Sans';color:#a8a29a">accuracy</div></div>
+        </div>
+      </div>
+      <button style="font:600 13.5px 'Plus Jakarta Sans';background:#fff;color:#1c1915;border:none;border-radius:11px;height:44px;padding:0 20px;cursor:pointer;flex:none" style-hover="background:#ffe9d8">Re-attempt errors</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:24px;padding:28px 40px 40px;align-items:start">
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:22px">
+        <div style="font:700 15px 'Plus Jakarta Sans';margin-bottom:16px">Accuracy by question type</div>
+        <sc-for list="{{ accBars }}" as="a" hint-placeholder-count="5">
+          <div style="margin-bottom:13px">
+            <div style="display:flex;justify-content:space-between;font:500 12px 'Plus Jakarta Sans';margin-bottom:5px"><span>{{ a.name }}</span><span style="font-family:'JetBrains Mono';font-weight:700;color:{{ a.ink }}">{{ a.pct }}%</span></div>
+            <div style="height:8px;background:#f4f1ed;border-radius:999px;overflow:hidden"><div style="{{ a.bar }}"></div></div>
+          </div>
+        </sc-for>
+        <div style="font:400 12px/1.6 'Plus Jakarta Sans';color:#7c756c;background:#f5f2ff;border-radius:12px;padding:12px 14px;margin-top:16px"><b style="color:#5a2ed6">Insight:</b> DI sets cost you 11 marks — mostly on speed, not method. Drill 2 sets daily this week.</div>
+      </div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #f4f1ed">
+          <div style="font:700 15px 'Plus Jakarta Sans'">Per-question review</div>
+          <div style="display:flex;gap:6px">
+            <span style="font:600 11px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border-radius:999px;padding:5px 12px;cursor:pointer">All</span>
+            <span style="font:600 11px 'Plus Jakarta Sans';background:#fff;border:1px solid #e9e4de;color:#59534b;border-radius:999px;padding:5px 12px;cursor:pointer" style-hover="background:#faf8f6">Wrong only</span>
+            <span style="font:600 11px 'Plus Jakarta Sans';background:#fff;border:1px solid #e9e4de;color:#59534b;border-radius:999px;padding:5px 12px;cursor:pointer" style-hover="background:#faf8f6">Skipped</span>
+          </div>
+        </div>
+        <sc-for list="{{ reviewRows }}" as="r" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid #f4f1ed" style-hover="background:#faf8f6">
+            <span style="font:700 11px 'JetBrains Mono';color:#7c756c;width:30px">Q{{ r.n }}</span>
+            <span style="{{ r.dot }}"></span>
+            <div style="flex:1;min-width:0;font:500 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.topic }}</div>
+            <span style="{{ r.diff }}">{{ r.diffTxt }}</span>
+            <span style="font:700 11.5px 'JetBrains Mono';color:{{ r.markInk }};width:38px;text-align:right">{{ r.marks }}</span>
+            <span style="font:500 11px 'JetBrains Mono';color:#aaa39a;width:40px;text-align:right">{{ r.time }}</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Review →</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</div>
+
+<!-- ================= INSTRUCTOR ================= -->
+<div style="padding:8px 56px 56px;display:flex;flex-direction:column;gap:40px;align-items:flex-start">
+<div style="font:800 12px 'Plus Jakarta Sans';letter-spacing:.14em;background:#5a2ed6;color:#fff;border-radius:999px;padding:8px 18px">INSTRUCTOR · TEACHING CENTRAL — shared app-shell with Admin</div>
+
+<!-- S4 · INSTRUCTOR DASH -->
+<div data-screen-label="Instructor Dashboard">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S4 · INSTRUCTOR DASHBOARD</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:232px 1fr">
+    <!-- shared shell sidebar -->
+    <div style="background:#fff;border-right:1px solid #e9e4de;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:820px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans'">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#5a2ed6">TEACHING CENTRAL</div></div>
+      </div>
+      <sc-for list="{{ insNav }}" as="n" hint-placeholder-count="7">
+        <div style="{{ n.style }}"><span style="{{ n.dot }}"></span><span style="flex:1">{{ n.label }}</span><sc-if value="{{ n.count }}" hint-placeholder-val="{{ false }}"><span style="font:700 10px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border-radius:999px;padding:2px 7px">{{ n.count }}</span></sc-if></div>
+      </sc-for>
+      <div style="margin-top:auto;background:#f5f2ff;border-radius:14px;padding:14px">
+        <div style="font:700 12.5px 'Plus Jakarta Sans';color:#3f238a">Pending payout</div>
+        <div style="font:800 20px 'JetBrains Mono';color:#5a2ed6;margin-top:4px">₹18,240</div>
+        <div style="font:400 10.5px 'Plus Jakarta Sans';color:#7c756c">clears Fri, 10 Jul</div>
+      </div>
+    </div>
+    <div style="min-width:0">
+      <!-- shared shell topbar -->
+      <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:14px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans'">Dashboard</div>
+        <div style="flex:1;max-width:340px;margin-left:12px;display:flex;align-items:center;gap:8px;background:#f4f1ed;border-radius:10px;height:36px;padding:0 12px">
+          <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search students, courses…</span>
+        </div>
+        <div style="flex:1"></div>
+        <span style="font:800 9px 'Plus Jakarta Sans';letter-spacing:.06em;background:#e63368;color:#fff;border-radius:5px;padding:4px 9px;animation:livePulse 2s infinite">● LIVE IN 25 MIN</span>
+        <div style="width:36px;height:36px;border:1px solid #e9e4de;background:#fff;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="15" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span></div>
+        <div style="display:flex;align-items:center;gap:8px;border:1px solid #e9e4de;border-radius:10px;height:36px;padding:0 10px;cursor:pointer" style-hover="background:#faf8f6"><div style="width:24px;height:24px;border-radius:999px;background:#fff6ef;color:#e0540e;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">PK</div><span style="font:600 12px 'Plus Jakarta Sans'">Prof. Khanna</span></div>
+      </div>
+      <div style="padding:24px 26px 34px">
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <sc-for list="{{ insKpis }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start"><span style="font:600 11.5px 'Plus Jakarta Sans';color:#7c756c">{{ k.label }}</span><span style="{{ k.deltaStyle }}">{{ k.delta }}</span></div>
+              <div style="font:800 26px 'Plus Jakarta Sans';letter-spacing:-.02em;margin-top:6px">{{ k.value }}</div>
+              <div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ k.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-top:20px;align-items:start">
+          <!-- grading queue -->
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:15px 18px;border-bottom:1px solid #f4f1ed">
+              <div style="font:700 14.5px 'Plus Jakarta Sans'">Grading queue <span style="font:700 11px 'Plus Jakarta Sans';background:#fde9ea;color:#ab2530;border-radius:999px;padding:3px 9px;margin-left:6px">12 waiting</span></div>
+              <span style="font:600 12px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Open queue →</span>
+            </div>
+            <sc-for list="{{ gradeRows }}" as="g" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #f4f1ed" style-hover="background:#faf8f6">
+                <div style="{{ g.av }}">{{ g.ini }}</div>
+                <div style="flex:1;min-width:0"><div style="font:600 12.5px 'Plus Jakarta Sans'">{{ g.name }}</div><div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ g.sub }}</div></div>
+                <span style="{{ g.ai }}">{{ g.aiTxt }}</span>
+                <sc-if value="{{ g.hasOver }}" hint-placeholder-val="{{ false }}"><span style="font:400 10px 'Plus Jakarta Sans';color:#aaa39a">→</span><span style="font:700 10.5px 'JetBrains Mono';background:#1c1915;color:#fff;border-radius:6px;padding:4px 7px">{{ g.overTxt }}</span></sc-if>
+                <span style="{{ g.pill }}">{{ g.status }}</span>
+                <button style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:8px;height:28px;padding:0 12px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">Review</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <!-- sessions -->
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:18px">
+              <div style="font:700 14.5px 'Plus Jakarta Sans';margin-bottom:14px">Upcoming mentor sessions</div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:9px;height:9px;border-radius:999px;background:#f26a1b;margin-top:4px;box-shadow:0 0 0 3px #ffe9d8"></span><span style="width:1.5px;flex:1;background:#e9e4de"></span></div><div style="padding-bottom:14px;flex:1"><div style="display:flex;justify-content:space-between"><span style="font:600 12.5px 'Plus Jakarta Sans'">Aditi Rao — weak areas</span><span style="font:700 11px 'JetBrains Mono';color:#e0540e">10:00</span></div><div style="font:400 11px 'Plus Jakarta Sans';color:#7c756c">Thu 9 Jul · 45 min · DI sets</div></div></div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:9px;height:9px;border-radius:999px;border:1.5px solid #d8d2c9;box-sizing:border-box;margin-top:4px"></span><span style="width:1.5px;flex:1;background:#e9e4de"></span></div><div style="padding-bottom:14px;flex:1"><div style="display:flex;justify-content:space-between"><span style="font:600 12.5px 'Plus Jakarta Sans'">Jay Mehta — essay review</span><span style="font:700 11px 'JetBrains Mono';color:#7c756c">11:30</span></div><div style="font:400 11px 'Plus Jakarta Sans';color:#7c756c">Thu 9 Jul · 30 min</div></div></div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:9px;height:9px;border-radius:999px;border:1.5px solid #d8d2c9;box-sizing:border-box;margin-top:4px"></span></div><div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font:600 12.5px 'Plus Jakarta Sans'">Group clinic — percentages</span><span style="font:700 11px 'JetBrains Mono';color:#7c756c">16:00</span></div><div style="font:400 11px 'Plus Jakarta Sans';color:#7c756c">Fri 10 Jul · 8 booked</div></div></div>
+            </div>
+            <!-- my courses -->
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:18px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><div style="font:700 14.5px 'Plus Jakarta Sans'">My courses</div><span style="font:600 11.5px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Manage →</span></div>
+              <sc-for list="{{ myCourses }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid #f4f1ed">
+                  <div style="{{ m.sw }}"></div>
+                  <div style="flex:1;min-width:0"><div style="font:600 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.title }}</div><div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ m.meta }}</div></div>
+                  <span style="{{ m.pill }}">{{ m.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S5 · CONTENT MGMT -->
+<div data-screen-label="Question Bank Editor">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S5 · CONTENT MANAGEMENT — question bank &amp; test editor</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:232px 1fr">
+    <div style="background:#fff;border-right:1px solid #e9e4de;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:780px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans'">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#5a2ed6">TEACHING CENTRAL</div></div>
+      </div>
+      <sc-for list="{{ insNav2 }}" as="n" hint-placeholder-count="7">
+        <div style="{{ n.style }}"><span style="{{ n.dot }}"></span><span style="flex:1">{{ n.label }}</span></div>
+      </sc-for>
+    </div>
+    <div style="min-width:0">
+      <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans'">Question bank</div>
+        <span style="font:500 12px 'Plus Jakarta Sans';color:#aaa39a">·</span>
+        <span style="font:500 12.5px 'Plus Jakarta Sans';color:#7c756c">Mock Test 10 (draft)</span>
+        <div style="flex:1"></div>
+        <button style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:34px;padding:0 14px;cursor:pointer" style-hover="background:#faf8f6">Preview test</button>
+        <button style="font:600 12.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:9px;height:34px;padding:0 16px;cursor:pointer" style-hover="background:#e0540e">Publish</button>
+      </div>
+      <div style="display:grid;grid-template-columns:290px 1fr;align-items:start">
+        <!-- tree -->
+        <div style="border-right:1px solid #e9e4de;background:#fff;padding:18px 14px;align-self:stretch;min-height:720px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 6px">
+            <div style="font:700 12.5px 'Plus Jakarta Sans'">Structure</div>
+            <button style="font:600 11px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:none;border-radius:7px;height:26px;padding:0 10px;cursor:pointer">+ Section</button>
+          </div>
+          <sc-for list="{{ tree }}" as="t" hint-placeholder-count="8">
+            <div style="{{ t.row }}">
+              <span style="font:400 12px 'Plus Jakarta Sans';color:#c5beb4;cursor:grab;letter-spacing:-1px">⠿</span>
+              <sc-if value="{{ t.isChapter }}" hint-placeholder-val="{{ false }}"><span style="font:600 9px 'Plus Jakarta Sans';color:#aaa39a">▾</span></sc-if>
+              <span style="{{ t.chip }}">{{ t.type }}</span>
+              <span style="{{ t.label }}">{{ t.name }}</span>
+              <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;margin-left:auto">{{ t.meta }}</span>
+            </div>
+          </sc-for>
+          <div style="border:1.5px dashed #d8d2c9;border-radius:10px;padding:10px;text-align:center;font:600 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:10px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">+ Add lesson or quiz</div>
+        </div>
+        <!-- table -->
+        <div style="padding:18px 22px 30px;min-width:0">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;max-width:300px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #d8d2c9;border-radius:10px;height:36px;padding:0 12px">
+              <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+              <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search 1,204 questions…</span>
+            </div>
+            <select style="font:600 12px 'Plus Jakarta Sans';height:36px;padding:0 10px;border:1px solid #d8d2c9;border-radius:10px;background:#fff;color:#403b35"><option>All difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+            <select style="font:600 12px 'Plus Jakarta Sans';height:36px;padding:0 10px;border:1px solid #d8d2c9;border-radius:10px;background:#fff;color:#403b35"><option>All types</option><option>MCQ</option><option>True/False</option><option>Fill-in</option></select>
+            <span style="font:600 11px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:5px 11px;cursor:pointer">#percentages ✕</span>
+            <div style="flex:1"></div>
+            <button style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:34px;padding:0 13px;cursor:pointer" style-hover="background:#faf8f6">⤓ Add from bank</button>
+            <button style="font:600 12px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border:none;border-radius:9px;height:34px;padding:0 14px;cursor:pointer" style-hover="background:#403b35">+ New question</button>
+          </div>
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:14px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:44px 1fr 92px 76px 150px 96px;gap:10px;padding:9px 16px;background:#faf8f6;border-bottom:1px solid #e9e4de;font:700 10px 'Plus Jakarta Sans';letter-spacing:.05em;color:#7c756c;text-transform:uppercase;align-items:center">
+              <span>ID</span><span>Question</span><span>Difficulty</span><span>Marks</span><span>Tags</span><span style="text-align:right">Actions</span>
+            </div>
+            <sc-for list="{{ qRows }}" as="q" hint-placeholder-count="7">
+              <div style="display:grid;grid-template-columns:44px 1fr 92px 76px 150px 96px;gap:10px;padding:9px 16px;border-bottom:1px solid #f4f1ed;align-items:center" style-hover="background:#faf8f6">
+                <span style="font:500 10px 'JetBrains Mono';color:#aaa39a">{{ q.id }}</span>
+                <div style="min-width:0;display:flex;gap:8px;align-items:center">
+                  <span style="{{ q.typeChip }}">{{ q.type }}</span>
+                  <span style="font:500 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ q.text }}</span>
+                </div>
+                <span style="{{ q.diff }}">{{ q.diffTxt }}</span>
+                <span style="font:700 11px 'JetBrains Mono'"><span style="color:#0e7a48">+{{ q.plus }}</span> <span style="color:#ab2530">−{{ q.minus }}</span></span>
+                <div style="display:flex;gap:4px;overflow:hidden">
+                  <sc-for list="{{ q.tags }}" as="tg"><span style="font:500 10px 'Plus Jakarta Sans';background:#f4f1ed;color:#59534b;border-radius:999px;padding:3px 8px;white-space:nowrap">{{ tg }}</span></sc-for>
+                </div>
+                <div style="display:flex;gap:4px;justify-content:flex-end">
+                  <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#f4f1ed">✎</button>
+                  <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#f4f1ed">⧉</button>
+                  <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#fde9ea;color:#ab2530">✕</button>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display:flex;align-items:center;gap:6px;padding:12px 16px">
+              <span style="font:500 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-right:auto">Showing 7 of 128 in this filter</span>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer">‹</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:none;background:#1c1915;color:#fff;border-radius:7px;cursor:pointer">1</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#59534b;cursor:pointer" style-hover="background:#faf8f6">2</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#59534b;cursor:pointer" style-hover="background:#faf8f6">3</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ================= ADMIN ================= -->
+<div style="padding:8px 56px 72px;display:flex;flex-direction:column;gap:40px;align-items:flex-start">
+<div style="font:800 12px 'Plus Jakarta Sans';letter-spacing:.14em;background:#403b35;color:#fff;border-radius:999px;padding:8px 18px">ADMIN PANEL — same shell, denser data</div>
+
+<!-- S6 · ADMIN -->
+<div data-screen-label="Admin Dashboard">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S6 · ADMIN DASHBOARD — light</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:232px 1fr">
+    <div style="background:#fff;border-right:1px solid #e9e4de;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:840px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans'">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#7c756c">ADMIN PANEL</div></div>
+      </div>
+      <sc-for list="{{ admNav }}" as="n" hint-placeholder-count="8">
+        <div style="{{ n.style }}"><span style="{{ n.dot }}"></span><span style="flex:1">{{ n.label }}</span><sc-if value="{{ n.count }}" hint-placeholder-val="{{ false }}"><span style="font:700 10px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border-radius:999px;padding:2px 7px">{{ n.count }}</span></sc-if></div>
+      </sc-for>
+    </div>
+    <div style="min-width:0">
+      <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:14px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans'">Overview</div>
+        <div style="flex:1;max-width:340px;margin-left:12px;display:flex;align-items:center;gap:8px;background:#f4f1ed;border-radius:10px;height:36px;padding:0 12px">
+          <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search users, courses, orders…</span>
+        </div>
+        <div style="flex:1"></div>
+        <select style="font:600 12px 'Plus Jakarta Sans';height:34px;padding:0 10px;border:1px solid #d8d2c9;border-radius:9px;background:#fff;color:#403b35"><option>Last 30 days</option><option>Last quarter</option></select>
+        <div style="width:36px;height:36px;border:1px solid #e9e4de;background:#fff;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="15" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span></div>
+        <div style="display:flex;align-items:center;gap:8px;border:1px solid #e9e4de;border-radius:10px;height:36px;padding:0 10px;cursor:pointer" style-hover="background:#faf8f6"><div style="width:24px;height:24px;border-radius:999px;background:#e2f4ef;color:#0c7a60;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">NM</div><span style="font:600 12px 'Plus Jakarta Sans'">Nadia M.</span></div>
+      </div>
+      <div style="padding:24px 26px 34px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <sc-for list="{{ admKpis }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start"><span style="font:600 11.5px 'Plus Jakarta Sans';color:#7c756c">{{ k.label }}</span><span style="{{ k.deltaStyle }}">{{ k.delta }}</span></div>
+              <div style="font:800 26px 'Plus Jakarta Sans';letter-spacing:-.02em;margin-top:6px">{{ k.value }}</div>
+              <div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ k.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-top:20px;align-items:stretch">
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div style="font:700 14.5px 'Plus Jakarta Sans'">Revenue &amp; enrollments</div>
+              <div style="display:flex;gap:14px;font:500 11px 'Plus Jakarta Sans';color:#7c756c">
+                <span style="display:flex;gap:6px;align-items:center"><span style="width:10px;height:3px;border-radius:2px;background:#f26a1b"></span>Enrollments</span>
+                <span style="display:flex;gap:6px;align-items:center"><span style="width:10px;height:3px;border-radius:2px;background:#7c5cfc"></span>Revenue ₹</span>
+              </div>
+            </div>
+            <svg width="100%" height="200" viewBox="0 0 620 200" preserveAspectRatio="none">
+              <line x1="0" y1="46" x2="620" y2="46" stroke="#f4f1ed" stroke-width="1"></line>
+              <line x1="0" y1="96" x2="620" y2="96" stroke="#f4f1ed" stroke-width="1"></line>
+              <line x1="0" y1="146" x2="620" y2="146" stroke="#f4f1ed" stroke-width="1"></line>
+              <line x1="0" y1="196" x2="620" y2="196" stroke="#e9e4de" stroke-width="1"></line>
+              <polygon points="0,150 88,128 176,136 264,102 352,110 440,70 528,80 620,38 620,196 0,196" fill="rgba(242,106,27,.07)"></polygon>
+              <polyline points="0,150 88,128 176,136 264,102 352,110 440,70 528,80 620,38" fill="none" stroke="#f26a1b" stroke-width="2.5" stroke-linecap="round"></polyline>
+              <polyline points="0,168 88,158 176,148 264,154 352,128 440,122 528,100 620,84" fill="none" stroke="#7c5cfc" stroke-width="2.5" stroke-linecap="round"></polyline>
+              <circle cx="440" cy="70" r="4.5" fill="#fff" stroke="#f26a1b" stroke-width="2.5"></circle>
+            </svg>
+            <div style="display:flex;justify-content:space-between;font:500 10px 'JetBrains Mono';color:#aaa39a;margin-top:8px"><span>DEC</span><span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span><span>JUL</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:20px;display:flex;flex-direction:column">
+            <div style="font:700 14.5px 'Plus Jakarta Sans';margin-bottom:8px">Enrollment status</div>
+            <div style="display:flex;align-items:center;gap:18px;flex:1">
+              <svg width="128" height="128" viewBox="0 0 130 130">
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#f4f1ed" stroke-width="16"></circle>
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#f26a1b" stroke-width="16" stroke-dasharray="173 314" transform="rotate(-90 65 65)" stroke-linecap="round"></circle>
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#7c5cfc" stroke-width="16" stroke-dasharray="82 314" transform="rotate(109 65 65)" stroke-linecap="round"></circle>
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#14b077" stroke-width="16" stroke-dasharray="38 314" transform="rotate(205 65 65)" stroke-linecap="round"></circle>
+                <text x="65" y="62" text-anchor="middle" style="font:800 22px 'Plus Jakarta Sans';fill:#1c1915">8.2k</text>
+                <text x="65" y="80" text-anchor="middle" style="font:500 9px 'Plus Jakarta Sans';fill:#aaa39a">this month</text>
+              </svg>
+              <div style="display:flex;flex-direction:column;gap:8px;font:500 12px 'Plus Jakarta Sans'">
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#f26a1b"></span>Active <b style="font-family:'JetBrains Mono'">55%</b></span>
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#7c5cfc"></span>Completed <b style="font-family:'JetBrains Mono'">26%</b></span>
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#14b077"></span>New <b style="font-family:'JetBrains Mono'">12%</b></span>
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#e9e4de"></span>Lapsed <b style="font-family:'JetBrains Mono'">7%</b></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- recent enrollments -->
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;overflow:hidden;margin-top:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:15px 18px;border-bottom:1px solid #f4f1ed">
+            <div style="font:700 14.5px 'Plus Jakarta Sans'">Recent enrollments</div>
+            <span style="font:600 12px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">All users →</span>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1.6fr 1fr 1fr 1fr 88px;gap:12px;padding:9px 18px;background:#faf8f6;border-bottom:1px solid #e9e4de;font:700 10px 'Plus Jakarta Sans';letter-spacing:.05em;color:#7c756c;text-transform:uppercase">
+            <span>User</span><span>Course</span><span>Plan</span><span>Amount</span><span>Status</span><span></span>
+          </div>
+          <sc-for list="{{ enrollRows }}" as="r" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:2fr 1.6fr 1fr 1fr 1fr 88px;gap:12px;padding:9px 18px;border-bottom:1px solid #f4f1ed;align-items:center" style-hover="background:#faf8f6">
+              <div style="display:flex;gap:10px;align-items:center;min-width:0">
+                <div style="{{ r.av }}">{{ r.ini }}</div>
+                <div style="min-width:0"><div style="font:600 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font:400 10.5px 'JetBrains Mono';color:#aaa39a">{{ r.email }}</div></div>
+              </div>
+              <span style="font:500 12px 'Plus Jakarta Sans';color:#403b35">{{ r.course }}</span>
+              <span style="font:500 12px 'Plus Jakarta Sans';color:#59534b">{{ r.plan }}</span>
+              <span style="font:700 12px 'JetBrains Mono'">{{ r.amount }}</span>
+              <span style="{{ r.pill }}">{{ r.status }}</span>
+              <div style="display:flex;gap:4px;justify-content:flex-end">
+                <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#f4f1ed">✎</button>
+                <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#f4f1ed">⋯</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S6d · ADMIN DARK -->
+<div data-screen-label="Admin Dashboard — Dark">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S6d · DARK MODE PREVIEW — same tokens, dark aliases</div>
+  <div style="width:1360px;background:#16131b;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.3);display:grid;grid-template-columns:232px 1fr">
+    <div style="background:#1f1b26;border-right:1px solid #2e2937;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:620px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#fb8a44;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #16131b;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans';color:#f3f0f7">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#a49cb3">ADMIN PANEL</div></div>
+      </div>
+      <div style="font:600 13px 'Plus Jakarta Sans';background:#3a2618;color:#fb8a44;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer"><span style="width:8px;height:8px;border-radius:3px;background:#fb8a44"></span>Overview</div>
+      <div style="font:500 13px 'Plus Jakarta Sans';color:#a49cb3;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer" style-hover="background:#292433"><span style="width:8px;height:8px;border-radius:999px;border:1.5px solid #6f6880"></span>Users</div>
+      <div style="font:500 13px 'Plus Jakarta Sans';color:#a49cb3;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer" style-hover="background:#292433"><span style="width:8px;height:8px;border-radius:999px;border:1.5px solid #6f6880"></span>Courses</div>
+      <div style="font:500 13px 'Plus Jakarta Sans';color:#a49cb3;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;cursor:pointer" style-hover="background:#292433"><span style="display:flex;gap:10px;align-items:center"><span style="width:8px;height:8px;border-radius:999px;border:1.5px solid #6f6880"></span>Payments</span><span style="font:700 10px 'Plus Jakarta Sans';background:#fb8a44;color:#16131b;border-radius:999px;padding:2px 7px">3</span></div>
+      <div style="font:500 13px 'Plus Jakarta Sans';color:#a49cb3;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer" style-hover="background:#292433"><span style="width:8px;height:8px;border-radius:999px;border:1.5px solid #6f6880"></span>Reports</div>
+    </div>
+    <div style="min-width:0">
+      <div style="height:60px;background:#1f1b26;border-bottom:1px solid #2e2937;display:flex;align-items:center;gap:14px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans';color:#f3f0f7">Overview</div>
+        <div style="flex:1;max-width:340px;margin-left:12px;display:flex;align-items:center;gap:8px;background:#292433;border-radius:10px;height:36px;padding:0 12px">
+          <div style="width:11px;height:11px;border:1.5px solid #6f6880;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#6f6880;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <span style="font:400 12.5px 'Plus Jakarta Sans';color:#6f6880">Search…</span>
+        </div>
+        <div style="flex:1"></div>
+        <span style="font:600 11px 'Plus Jakarta Sans';border:1px solid #2e2937;color:#a49cb3;border-radius:999px;padding:6px 12px;cursor:pointer">☀ Light</span>
+        <div style="display:flex;align-items:center;gap:8px;border:1px solid #2e2937;border-radius:10px;height:36px;padding:0 10px;cursor:pointer"><div style="width:24px;height:24px;border-radius:999px;background:#243b31;color:#2cd396;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">NM</div><span style="font:600 12px 'Plus Jakarta Sans';color:#f3f0f7">Nadia M.</span></div>
+      </div>
+      <div style="padding:24px 26px 34px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <sc-for list="{{ admKpisDark }}" as="k" hint-placeholder-count="4">
+            <div style="background:#1f1b26;border:1px solid #2e2937;border-radius:16px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start"><span style="font:600 11.5px 'Plus Jakarta Sans';color:#a49cb3">{{ k.label }}</span><span style="{{ k.deltaStyle }}">{{ k.delta }}</span></div>
+              <div style="font:800 26px 'Plus Jakarta Sans';letter-spacing:-.02em;margin-top:6px;color:#f3f0f7">{{ k.value }}</div>
+              <div style="font:400 10.5px 'Plus Jakarta Sans';color:#6f6880">{{ k.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-top:20px">
+          <div style="background:#1f1b26;border:1px solid #2e2937;border-radius:18px;padding:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div style="font:700 14.5px 'Plus Jakarta Sans';color:#f3f0f7">Revenue &amp; enrollments</div>
+              <div style="display:flex;gap:14px;font:500 11px 'Plus Jakarta Sans';color:#a49cb3">
+                <span style="display:flex;gap:6px;align-items:center"><span style="width:10px;height:3px;border-radius:2px;background:#fb8a44"></span>Enrollments</span>
+                <span style="display:flex;gap:6px;align-items:center"><span style="width:10px;height:3px;border-radius:2px;background:#a284ff"></span>Revenue ₹</span>
+              </div>
+            </div>
+            <svg width="100%" height="180" viewBox="0 0 620 200" preserveAspectRatio="none">
+              <line x1="0" y1="46" x2="620" y2="46" stroke="#292433" stroke-width="1"></line>
+              <line x1="0" y1="96" x2="620" y2="96" stroke="#292433" stroke-width="1"></line>
+              <line x1="0" y1="146" x2="620" y2="146" stroke="#292433" stroke-width="1"></line>
+              <polygon points="0,150 88,128 176,136 264,102 352,110 440,70 528,80 620,38 620,196 0,196" fill="rgba(251,138,68,.1)"></polygon>
+              <polyline points="0,150 88,128 176,136 264,102 352,110 440,70 528,80 620,38" fill="none" stroke="#fb8a44" stroke-width="2.5" stroke-linecap="round"></polyline>
+              <polyline points="0,168 88,158 176,148 264,154 352,128 440,122 528,100 620,84" fill="none" stroke="#a284ff" stroke-width="2.5" stroke-linecap="round"></polyline>
+              <circle cx="440" cy="70" r="4.5" fill="#1f1b26" stroke="#fb8a44" stroke-width="2.5"></circle>
+            </svg>
+          </div>
+          <div style="background:#1f1b26;border:1px solid #2e2937;border-radius:18px;padding:20px;display:flex;flex-direction:column">
+            <div style="font:700 14.5px 'Plus Jakarta Sans';color:#f3f0f7;margin-bottom:8px">Enrollment status</div>
+            <div style="display:flex;align-items:center;gap:18px;flex:1">
+              <svg width="120" height="120" viewBox="0 0 130 130">
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#292433" stroke-width="16"></circle>
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#fb8a44" stroke-width="16" stroke-dasharray="173 314" transform="rotate(-90 65 65)" stroke-linecap="round"></circle>
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#a284ff" stroke-width="16" stroke-dasharray="82 314" transform="rotate(109 65 65)" stroke-linecap="round"></circle>
+                <circle cx="65" cy="65" r="50" fill="none" stroke="#2cd396" stroke-width="16" stroke-dasharray="38 314" transform="rotate(205 65 65)" stroke-linecap="round"></circle>
+                <text x="65" y="62" text-anchor="middle" style="font:800 22px 'Plus Jakarta Sans';fill:#f3f0f7">8.2k</text>
+                <text x="65" y="80" text-anchor="middle" style="font:500 9px 'Plus Jakarta Sans';fill:#6f6880">this month</text>
+              </svg>
+              <div style="display:flex;flex-direction:column;gap:8px;font:500 12px 'Plus Jakarta Sans';color:#f3f0f7">
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#fb8a44"></span>Active <b style="font-family:'JetBrains Mono'">55%</b></span>
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#a284ff"></span>Completed <b style="font-family:'JetBrains Mono'">26%</b></span>
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#2cd396"></span>New <b style="font-family:'JetBrains Mono'">12%</b></span>
+                <span style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:4px;background:#2e2937"></span>Lapsed <b style="font-family:'JetBrains Mono'">7%</b></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;studentName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Aditi&quot;,&quot;section&quot;:&quot;Demo content&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;liveNow&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;section&quot;:&quot;Demo content&quot;,&quot;tsType&quot;:&quot;boolean&quot;},&quot;percentile&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:91,&quot;min&quot;:1,&quot;max&quot;:99,&quot;section&quot;:&quot;Demo content&quot;,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = {
+    role: 'student', drawerOpen: false,
+    courseTab: 'Overview', flipped: false, deck: 0,
+    mockView: 'taking', quizPick: null, marked: false, secs: 0
+  };
+
+  componentDidMount() { this._iv = setInterval(() => this.setState(s => ({ secs: s.secs + 1 })), 1000); }
+  componentWillUnmount() { clearInterval(this._iv); }
+  fmt(t) { const m = Math.floor(t / 60), s = t % 60; return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'); }
+
+  renderVals() {
+    const S = this.state;
+    const sans = "'Plus Jakarta Sans'", mono = "'JetBrains Mono'";
+
+    // login role toggle
+    const segBase = 'font:600 13px ' + sans + ';height:38px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;cursor:pointer;transition:all .15s;';
+    const roleStuStyle = segBase + (S.role === 'student' ? 'background:#fff;box-shadow:0 1px 3px rgba(28,22,15,.12);color:#1c1915' : 'color:#7c756c');
+    const roleInsStyle = segBase + (S.role === 'instructor' ? 'background:#fff;box-shadow:0 1px 3px rgba(28,22,15,.12);color:#1c1915' : 'color:#7c756c');
+
+    // heatmap
+    const heat = [];
+    const cols = ['#f4f1ed', '#ffe9d8', '#ffd0ac', '#fb8a44', '#e0540e'];
+    for (let i = 0; i < 25 * 7; i++) {
+      const v = Math.floor(Math.abs(Math.sin(i * 12.9898) * 43758.5453 % 1) * 5);
+      heat.push({ cell: 'width:11px;height:11px;border-radius:3px;background:' + cols[v], tip: v * 25 + ' min' });
+    }
+
+    // schedule
+    const chip = (bg, c) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:3px 9px;flex:none';
+    const schedule = [
+      { time: '07:00', bar: 'width:3px;height:26px;border-radius:2px;background:#7c5cfc;flex:none', title: 'Revise: Ratio & Proportion', titleStyle: 'font:600 12.5px ' + sans, meta: '40 flashcards due', tag: '45 min', chip: chip('#ece6ff', '#5a2ed6') },
+      { time: '12:30', bar: 'width:3px;height:26px;border-radius:2px;background:#14b077;flex:none', title: 'Mock Test 09 review', titleStyle: 'font:600 12.5px ' + sans + ';text-decoration:line-through;color:#aaa39a', meta: 'done · 74% accuracy', tag: '✓ done', chip: chip('#e6f6ee', '#0e7a48') },
+      { time: '18:30', bar: 'width:3px;height:26px;border-radius:2px;background:#e63368;flex:none', title: 'Live: Algebra Sprint', titleStyle: 'font:600 12.5px ' + sans, meta: 'Prof. Khanna · Room 2', tag: 'LIVE', chip: 'font:800 9px ' + sans + ';letter-spacing:.05em;background:#e63368;color:#fff;border-radius:5px;padding:3px 8px;flex:none;animation:dotPulse 1.6s infinite' },
+      { time: '21:00', bar: 'width:3px;height:26px;border-radius:2px;background:#d8d2c9;flex:none', title: 'Reflection journal', titleStyle: 'font:600 12.5px ' + sans, meta: '2 prompts', tag: '10 min', chip: chip('#f4f1ed', '#59534b') }
+    ];
+    const scheduleM = schedule.slice(0, 3);
+
+    // recommended courses
+    const av = (bg, c) => 'width:20px;height:20px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font:700 8px ' + sans + ';background:' + bg + ';color:' + c;
+    const thumbBase = 'height:118px;position:relative;display:flex;align-items:center;justify-content:center;';
+    const stripe = (a, b) => 'background:repeating-linear-gradient(45deg,' + a + ',' + a + ' 8px,' + b + ' 8px,' + b + ' 16px);';
+    const lvlChip = (bg, c) => 'position:absolute;bottom:10px;left:10px;font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:3px 9px';
+    const badgeS = (bg) => 'position:absolute;top:10px;left:10px;font:800 9px ' + sans + ';letter-spacing:.07em;background:' + bg + ';color:#fff;border-radius:5px;padding:3px 7px';
+    const recCourses = [
+      { title: 'Data Interpretation — Speed Sets', inst: 'R. Iyer', ini: 'RI', av: av('#e2f4ef', '#0c7a60'), rating: '4.7', level: 'Hard', lvl: lvlChip('#fde9ea', '#ab2530'), thumb: thumbBase + stripe('#ffe9d8', '#fff6ef'), thumbInk: '#b9400d', badge: 'BESTSELLER', badgeStyle: badgeS('#f26a1b'), price: '₹649', priceStyle: 'font:800 15px ' + sans },
+      { title: 'Logical Reasoning Bootcamp', inst: 'M. D\u2019Souza', ini: 'MD', av: av('#ece6ff', '#5a2ed6'), rating: '4.9', level: 'Medium', lvl: lvlChip('#fdf0dd', '#a35a06'), thumb: thumbBase + stripe('#ece6ff', '#f5f2ff'), thumbInk: '#5a2ed6', badge: 'NEW', badgeStyle: badgeS('#7c5cfc'), price: '₹549', priceStyle: 'font:800 15px ' + sans },
+      { title: 'Vocab in Context — 30 days', inst: 'S. Pillai', ini: 'SP', av: av('#fdf0dd', '#a35a06'), rating: '4.5', level: 'Easy', lvl: lvlChip('#e2f4ef', '#0c7a60'), thumb: thumbBase + stripe('#e2f4ef', '#f0faf7'), thumbInk: '#0c7a60', badge: null, badgeStyle: '', price: 'FREE', priceStyle: 'font:800 13px ' + sans + ';background:#1e9e5f;color:#fff;border-radius:6px;padding:3px 9px' }
+    ];
+
+    // course tabs
+    const tabNames = ['Overview', 'Flashcards', 'Summary deck', 'AI notes', 'Ask a doubt'];
+    const courseTabs = tabNames.map(label => ({
+      label, pick: () => this.setState({ courseTab: label }),
+      style: 'font:600 13px ' + sans + ';padding:10px 16px;cursor:pointer;border-bottom:2.5px solid ' + (S.courseTab === label ? '#f26a1b;color:#1c1915' : 'transparent;color:#7c756c')
+    }));
+
+    // lessons (course sidebar)
+    const chipBase = 'font:700 9px ' + mono + ';flex:none;width:36px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;';
+    const rowBase = 'display:flex;align-items:center;gap:11px;padding:11px 20px;';
+    const lessons = [
+      { type: 'VID', name: 'Percentages — the 3 core moves', meta: '31 min', done: true },
+      { type: 'PDF', name: 'Formula sheet & shortcuts', meta: '6 pages', done: true },
+      { type: 'VID', name: 'Ratios shortcut masterclass', meta: '24 min · 38% watched', now: true },
+      { type: 'QZ', name: 'Chapter quiz — 15 questions', meta: '+4 / −1 marking', open: true },
+      { type: 'VID', name: 'Percent-change chains', meta: '28 min', locked: true }
+    ].map(l => {
+      const typeChip = chipBase + (l.type === 'VID' ? 'background:#fff6ef;color:#e0540e' : l.type === 'PDF' ? 'background:#f5f2ff;color:#5a2ed6' : 'background:#e2f4ef;color:#0c7a60');
+      let state, glyph;
+      if (l.done) { state = 'width:22px;height:22px;border-radius:999px;background:#14b077;color:#fff;display:flex;align-items:center;justify-content:center;font:700 10px ' + sans + ';flex:none'; glyph = '✓'; }
+      else if (l.now) { state = 'width:22px;height:22px;border-radius:999px;background:#fff;border:2px solid #f26a1b;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:700 8px ' + sans + ';color:#f26a1b;flex:none'; glyph = '▶'; }
+      else if (l.locked) { state = 'font:600 11px ' + sans + ';color:#aaa39a;flex:none'; glyph = '🔒'; }
+      else { state = 'width:22px;height:22px;border-radius:999px;border:1.5px solid #d8d2c9;box-sizing:border-box;flex:none'; glyph = ''; }
+      return { ...l, chip: typeChip, row: rowBase + (l.now ? 'background:#fff9f4;border-left:3px solid #f26a1b;padding-left:17px' : l.locked ? 'opacity:.65' : ''), state, stateGlyph: glyph, title: 'font:600 12.5px ' + sans + (l.locked ? ';color:#aaa39a' : ''), now: !!l.now };
+    });
+
+    // flashcard + deck
+    const flipInner = 'position:relative;transition:transform .5s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;transform:rotateY(' + (S.flipped ? 180 : 0) + 'deg)';
+    const deckTexts = [
+      'Percent change chains multiply, they never add.',
+      'A discount of x% needs a markup of x⁄(100−x) to recover.',
+      'Successive discounts: a + b − ab⁄100.',
+      'Profit % is always on cost price unless stated.',
+      'Convert everything to multipliers first — then chain.'
+    ];
+
+    // mock toggle
+    const mtBase = 'font:600 12px ' + sans + ';padding:7px 16px;border-radius:999px;cursor:pointer;transition:all .15s;';
+    const mockTabTaking = mtBase + (S.mockView === 'taking' ? 'background:#1c1915;color:#fff' : 'color:#59534b');
+    const mockTabResults = mtBase + (S.mockView === 'results' ? 'background:#1c1915;color:#fff' : 'color:#59534b');
+
+    // timer
+    const total = 45 * 60, left = Math.max(0, total - 32 * 60 - S.secs);
+    const timerStr = this.fmt(left);
+    const low = left < 300;
+    const timerStyle = 'font:700 13.5px ' + mono + ';border-radius:9px;padding:6px 12px;' + (low ? 'background:#fde9ea;color:#ab2530;animation:dotPulse 1.2s infinite' : 'background:#f4f1ed;color:#403b35');
+    const timeBar = 'height:100%;border-radius:999px;background:' + (low ? '#dc4040' : '#f26a1b') + ';width:' + Math.round(left / total * 100) + '%';
+
+    // quiz
+    const optBase = 'display:flex;gap:12px;align-items:center;padding:13px 15px;border-radius:12px;cursor:pointer;transition:all .12s;';
+    const keyBase = 'font:700 12px ' + sans + ';width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;';
+    const quizOpts = ['8%', '12%', '15%', '20%'].map((text, i) => {
+      const picked = S.quizPick === i;
+      return {
+        text, letter: 'ABCD'[i], pick: () => this.setState({ quizPick: i }),
+        style: optBase + (picked ? 'background:#fff6ef;border:1.5px solid #f26a1b' : 'background:#faf8f6;border:1.5px solid #e9e4de'),
+        key: keyBase + (picked ? 'background:#f26a1b;color:#fff' : 'background:#fff;border:1px solid #d8d2c9;color:#59534b')
+      };
+    });
+    const markStyle = 'font:600 12.5px ' + sans + ';border-radius:9px;height:34px;padding:0 14px;cursor:pointer;transition:all .15s;' + (S.marked ? 'background:#7c5cfc;color:#fff;border:none' : 'background:#fff;border:1px solid #c0a9ff;color:#5a2ed6');
+
+    // palette
+    const stArr = ['a','a','a','m','a','a','u','a','a','m','a','c','u','u','a','a','a','a','u','a','u','u','u','u','u','u','u','u','u','u'];
+    const cellBase = 'height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:700 11px ' + mono + ';cursor:pointer;box-sizing:border-box;';
+    const palette = stArr.map((k, i) => {
+      let s = k;
+      if (i === 11) { // current Q, reflect live state
+        s = 'c';
+      }
+      return {
+        n: i + 1, pick: () => {},
+        style: cellBase + (s === 'a' ? 'background:#14b077;color:#fff' : s === 'm' ? 'background:#7c5cfc;color:#fff' : s === 'c' ? 'background:#fff;border:2px solid #f26a1b;color:#e0540e' : 'background:#fff;border:1px solid #d8d2c9;color:#59534b')
+      };
+    });
+    const nAnswered = stArr.filter(x => x === 'a').length + (S.quizPick !== null ? 1 : 0);
+    const nMarked = stArr.filter(x => x === 'm').length + (S.marked ? 1 : 0);
+    const nUnanswered = 30 - nAnswered - nMarked;
+
+    // results
+    const accBar = (pct, c) => 'height:100%;border-radius:999px;background:' + c + ';width:' + pct + '%';
+    const accBars = [
+      { name: 'Arithmetic', pct: 88, bar: accBar(88, '#14b077'), ink: '#0e7a48' },
+      { name: 'Algebra', pct: 79, bar: accBar(79, '#14b077'), ink: '#0e7a48' },
+      { name: 'Reading comprehension', pct: 74, bar: accBar(74, '#7c5cfc'), ink: '#5a2ed6' },
+      { name: 'Data interpretation', pct: 52, bar: accBar(52, '#dd8b12'), ink: '#a35a06' },
+      { name: 'Geometry', pct: 45, bar: accBar(45, '#dc4040'), ink: '#ab2530' }
+    ];
+    const dot = (c) => 'width:11px;height:11px;border-radius:999px;background:' + c + ';flex:none';
+    const dChip = (bg, c) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:3px 9px;flex:none';
+    const reviewRows = [
+      { n: 8, dot: dot('#14b077'), topic: 'Percentages — successive discount', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', marks: '+4.0', markInk: '#0e7a48', time: '0:48' },
+      { n: 12, dot: dot('#dc4040'), topic: 'Profit & loss — marked price trap', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Med', marks: '−1.0', markInk: '#ab2530', time: '2:31' },
+      { n: 15, dot: dot('#14b077'), topic: 'RC — inference (passage 2)', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Med', marks: '+4.0', markInk: '#0e7a48', time: '1:22' },
+      { n: 19, dot: dot('#d8d2c9'), topic: 'DI — caselet on market share', diff: dChip('#fde9ea', '#ab2530'), diffTxt: 'Hard', marks: '0.0', markInk: '#7c756c', time: '—' },
+      { n: 23, dot: dot('#dc4040'), topic: 'Geometry — circle & tangent', diff: dChip('#fde9ea', '#ab2530'), diffTxt: 'Hard', marks: '−1.0', markInk: '#ab2530', time: '3:04' }
+    ];
+
+    // nav builders
+    const navRow = (active) => 'font:' + (active ? '600' : '500') + ' 13px ' + sans + ';border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer;' + (active ? 'background:#fff6ef;color:#e0540e' : 'color:#59534b');
+    const navDot = (active) => active ? 'width:8px;height:8px;border-radius:3px;background:#f26a1b;flex:none' : 'width:8px;height:8px;border-radius:999px;border:1.5px solid #aaa39a;flex:none;box-sizing:border-box';
+    const mkNav = (items, activeIdx) => items.map((it, i) => ({
+      label: it[0], count: it[1] || false, style: navRow(i === activeIdx), dot: navDot(i === activeIdx)
+    }));
+    const insItems = [['Dashboard'], ['My courses'], ['Content', false], ['Grading', '12'], ['Students'], ['Live classes'], ['Earnings']];
+    const insNav = mkNav(insItems, 0);
+    const insNav2 = mkNav(insItems, 2);
+    const admNav = mkNav([['Overview'], ['Users'], ['Courses'], ['Enrollments'], ['Payments', '3'], ['Subscriptions'], ['Reports'], ['Settings']], 0);
+
+    // KPIs
+    const deltaUp = 'font:700 10.5px ' + sans + ';background:#e6f6ee;color:#0e7a48;border-radius:999px;padding:3px 8px';
+    const deltaDown = 'font:700 10.5px ' + sans + ';background:#fde9ea;color:#ab2530;border-radius:999px;padding:3px 8px';
+    const insKpis = [
+      { label: 'My courses', value: '6', sub: '4 published · 2 draft', delta: '+1', deltaStyle: deltaUp },
+      { label: 'Enrolled students', value: '3,482', sub: 'vs 3,105 last month', delta: '▲ 12%', deltaStyle: deltaUp },
+      { label: 'To grade', value: '12', sub: 'oldest waiting 2 hrs', delta: '+8 today', deltaStyle: deltaDown },
+      { label: 'Earnings (Jun)', value: '₹84,120', sub: 'payout Fri 10 Jul', delta: '▲ 9%', deltaStyle: deltaUp }
+    ];
+    const admKpis = [
+      { label: 'Active students', value: '24,618', sub: 'vs 21,902 last month', delta: '▲ 12.4%', deltaStyle: deltaUp },
+      { label: 'Enrollments (30d)', value: '8,204', sub: '55% paid · 45% free', delta: '▲ 6.1%', deltaStyle: deltaUp },
+      { label: 'Subscription revenue', value: '₹41.2L', sub: 'MRR · churn 2.3%', delta: '▲ 8.9%', deltaStyle: deltaUp },
+      { label: 'Courses published', value: '312', sub: '14 pending review', delta: '+9', deltaStyle: deltaUp }
+    ];
+    const deltaUpD = 'font:700 10.5px ' + sans + ';background:#1d3a2d;color:#2cd396;border-radius:999px;padding:3px 8px';
+    const admKpisDark = admKpis.map(k => ({ ...k, deltaStyle: deltaUpD }));
+
+    // grading rows
+    const gAv = (bg, c) => 'width:32px;height:32px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font:700 11px ' + sans + ';background:' + bg + ';color:' + c;
+    const aiChip = 'font:700 10.5px ' + mono + ';border-radius:6px;padding:4px 7px;background:#f5f2ff;color:#5a2ed6;flex:none;';
+    const pill = (bg, c, extra) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:4px 9px;flex:none;' + (extra || '');
+    const gradeRows = [
+      { ini: 'AR', av: gAv('#ece6ff', '#5a2ed6'), name: 'Aditi Rao', sub: 'Mock 09 · Essay · 14 min ago', ai: aiChip + 'opacity:.5', aiTxt: 'AI …', hasOver: false, status: 'Processing', pill: pill('#fdf0dd', '#a35a06', 'animation:dotPulse 1.6s infinite') },
+      { ini: 'JM', av: gAv('#fff6ef', '#e0540e'), name: 'Jay Mehta', sub: 'Mock 09 · Essay · 1 hr ago', ai: aiChip, aiTxt: 'AI 7.5', hasOver: false, status: 'Graded', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'SL', av: gAv('#e2f4ef', '#0c7a60'), name: 'Sana Lakhani', sub: 'Mock 09 · Essay · 2 hrs ago', ai: aiChip + 'text-decoration:line-through;opacity:.6', aiTxt: 'AI 6.0', hasOver: true, overTxt: '8.0', status: 'Needs review', pill: pill('#fde9ea', '#ab2530') },
+      { ini: 'VK', av: gAv('#fdf0dd', '#a35a06'), name: 'Vikram Kulkarni', sub: 'Mock 08 · Essay · 5 hrs ago', ai: aiChip, aiTxt: 'AI 8.5', hasOver: false, status: 'Graded', pill: pill('#e6f6ee', '#0e7a48') }
+    ];
+
+    // my courses
+    const sw = (a, b) => 'width:40px;height:30px;border-radius:9px;flex:none;background:repeating-linear-gradient(45deg,' + a + ',' + a + ' 6px,' + b + ' 6px,' + b + ' 12px)';
+    const myCourses = [
+      { title: 'Quantitative Aptitude — Complete Sprint', meta: '2,204 students · ★ 4.8', status: 'Published', pill: pill('#e6f6ee', '#0e7a48'), sw: sw('#ffe9d8', '#fff6ef') },
+      { title: 'Percentages Micro-course', meta: '881 students · ★ 4.6', status: 'Published', pill: pill('#e6f6ee', '#0e7a48'), sw: sw('#ece6ff', '#f5f2ff') },
+      { title: 'DI Speed Sets Vol. 2', meta: '18 lessons drafted', status: 'Draft', pill: pill('#f4f1ed', '#7c756c'), sw: sw('#e2f4ef', '#f0faf7') }
+    ];
+
+    // tree
+    const tRow = (active, indent) => 'display:flex;gap:8px;align-items:center;padding:8px 8px 8px ' + (indent ? 26 : 8) + 'px;border-radius:9px;cursor:pointer;' + (active ? 'background:#fff6ef' : '');
+    const tChip = (bg, c) => 'font:700 8px ' + mono + ';background:' + bg + ';color:' + c + ';border-radius:5px;padding:3px 5px;flex:none';
+    const tree = [
+      { isChapter: true, type: 'SEC', chip: tChip('#1c1915', '#fff'), name: 'Section 1 · Verbal', label: 'font:700 12px ' + sans, meta: '30 Q', row: tRow(false, false) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'Reading comprehension set', label: 'font:500 12px ' + sans, meta: '12 Q', row: tRow(false, true) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'Vocab in context', label: 'font:500 12px ' + sans, meta: '18 Q', row: tRow(false, true) },
+      { isChapter: true, type: 'SEC', chip: tChip('#1c1915', '#fff'), name: 'Section 2 · Quant', label: 'font:700 12px ' + sans, meta: '30 Q', row: tRow(false, false) },
+      { isChapter: false, type: 'QZ', chip: tChip('#fff6ef', '#e0540e'), name: 'Percentages & ratios', label: 'font:600 12px ' + sans + ';color:#e0540e', meta: '15 Q', row: tRow(true, true) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'DI caselets', label: 'font:500 12px ' + sans, meta: '15 Q', row: tRow(false, true) },
+      { isChapter: true, type: 'SEC', chip: tChip('#1c1915', '#fff'), name: 'Section 3 · Reasoning', label: 'font:700 12px ' + sans, meta: '20 Q', row: tRow(false, false) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'Puzzles & arrangements', label: 'font:500 12px ' + sans, meta: '20 Q', row: tRow(false, true) }
+    ];
+
+    // question rows
+    const qType = (bg, c) => 'font:700 8px ' + mono + ';background:' + bg + ';color:' + c + ';border-radius:5px;padding:3px 5px;flex:none';
+    const qRows = [
+      { id: '#1204', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'A shopkeeper marks an item 40% above cost…', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Medium', plus: '4', minus: '1', tags: ['percentages', 'profit-loss'] },
+      { id: '#1198', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'If A:B = 2:3 and B:C = 4:5, then A:B:C equals…', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', plus: '4', minus: '1', tags: ['ratios'] },
+      { id: '#1187', type: 'T/F', typeChip: qType('#f5f2ff', '#5a2ed6'), text: 'Successive discounts of 10% and 20% equal 30%.', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', plus: '2', minus: '0.5', tags: ['percentages'] },
+      { id: '#1179', type: 'FIB', typeChip: qType('#e2f4ef', '#0c7a60'), text: 'The value of 15% of 240 is ____.', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', plus: '2', minus: '0', tags: ['percentages'] },
+      { id: '#1164', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'A vessel contains milk and water in ratio 7:3…', diff: dChip('#fde9ea', '#ab2530'), diffTxt: 'Hard', plus: '4', minus: '1', tags: ['mixtures', 'ratios'] },
+      { id: '#1160', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'Population grows 8% yearly; after 2 years…', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Medium', plus: '4', minus: '1', tags: ['percent-change'] },
+      { id: '#1152', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'Two partners split profit in capital ratio…', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Medium', plus: '4', minus: '1', tags: ['partnership', 'ratios'] }
+    ];
+
+    // admin enroll rows
+    const enrollRows = [
+      { ini: 'AR', av: gAv('#ece6ff', '#5a2ed6'), name: 'Aditi Rao', email: 'aditi@…', course: 'Quant Sprint', plan: 'Serious Prep', amount: '₹399', status: '● Active', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'JM', av: gAv('#fff6ef', '#e0540e'), name: 'Jay Mehta', email: 'jay.m@…', course: 'Verbal Mastery', plan: 'One-time', amount: '₹549', status: '● Active', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'VK', av: gAv('#fdf0dd', '#a35a06'), name: 'Vikram Kulkarni', email: 'vik.k@…', course: 'Quant Sprint', plan: 'One-time', amount: '₹499', status: '● Pending', pill: pill('#fdf0dd', '#a35a06') },
+      { ini: 'SL', av: gAv('#e2f4ef', '#0c7a60'), name: 'Sana Lakhani', email: 'sana@…', course: 'Full Prep Bundle', plan: 'Serious Prep', amount: '₹399', status: '● Active', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'NP', av: gAv('#fde9ea', '#ab2530'), name: 'Neel Patel', email: 'neel@…', course: 'Vocab in Context', plan: 'Free', amount: '₹0', status: '● Refunded', pill: pill('#f4f1ed', '#7c756c') }
+    ];
+
+    return {
+      studentName: this.props.studentName ?? 'Aditi',
+      percentile: this.props.percentile ?? 91,
+      liveNow: this.props.liveNow ?? true,
+      roleStudent: () => this.setState({ role: 'student' }),
+      roleInstructor: () => this.setState({ role: 'instructor' }),
+      roleStuStyle, roleInsStyle,
+      loginCta: S.role === 'student' ? 'Continue studying →' : 'Open Teaching Central →',
+      drawerOpen: S.drawerOpen, toggleDrawer: () => this.setState(s => ({ drawerOpen: !s.drawerOpen })),
+      heat, schedule, scheduleM, recCourses, courseTabs, lessons,
+      tabOverview: S.courseTab === 'Overview', tabFlash: S.courseTab === 'Flashcards',
+      tabDeck: S.courseTab === 'Summary deck', tabNotes: S.courseTab === 'AI notes', tabDoubt: S.courseTab === 'Ask a doubt',
+      flip: () => this.setState(s => ({ flipped: !s.flipped })), flipInner,
+      deckNum: S.deck + 1, deckText: deckTexts[S.deck], deckKey: 'd' + S.deck,
+      deckNext: () => this.setState(s => ({ deck: (s.deck + 1) % 5 })),
+      deckPrev: () => this.setState(s => ({ deck: (s.deck + 4) % 5 })),
+      mockTaking: S.mockView === 'taking', mockResults: S.mockView === 'results',
+      showTaking: () => this.setState({ mockView: 'taking' }),
+      showResults: () => this.setState({ mockView: 'results' }),
+      mockTabTaking, mockTabResults,
+      timerStr, timerStyle, timeBar, quizOpts,
+      markQ: () => this.setState(s => ({ marked: !s.marked })),
+      clearQ: () => this.setState({ quizPick: null }),
+      markStyle, markLabel: S.marked ? '✓ Marked for review' : 'Mark for review',
+      palette, nAnswered, nUnanswered, nMarked,
+      accBars, reviewRows,
+      insNav, insNav2, admNav, insKpis, admKpis, admKpisDark,
+      gradeRows, myCourses, tree, qRows, enrollRows
+    };
+  }
+}
+</script>
+</body>
+</html>
