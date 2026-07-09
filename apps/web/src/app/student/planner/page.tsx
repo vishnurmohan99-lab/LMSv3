@@ -447,27 +447,25 @@ export default function StudentPlannerPage() {
 
   return (
     <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 760, margin: "0 auto" }}>
-      <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, marginBottom: 22 }}>Study Planner</div>
+      <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4 }}>Planner</div>
 
-      <div style={{ display: "flex", gap: 6, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 13, padding: 5, width: "max-content", marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 2, borderBottom: "1px solid var(--line)", marginTop: 14, marginBottom: 22 }}>
         {tabs.map((t) => (
-          <button
+          <div
             key={t.key}
             onClick={() => setTab(t.key)}
             style={{
-              padding: "9px 18px",
-              borderRadius: 9,
-              border: "none",
-              background: tab === t.key ? "var(--ink)" : "transparent",
-              color: tab === t.key ? "#fff" : "var(--ink2)",
+              padding: "12px 16px",
               fontSize: 13,
-              fontWeight: 700,
-              fontFamily: "inherit",
+              fontWeight: tab === t.key ? 700 : 500,
+              color: tab === t.key ? "var(--orange-deep)" : "var(--ink2)",
+              borderBottom: tab === t.key ? "2px solid var(--orange)" : "2px solid transparent",
               cursor: "pointer",
+              userSelect: "none",
             }}
           >
             {t.label}
-          </button>
+          </div>
         ))}
       </div>
 

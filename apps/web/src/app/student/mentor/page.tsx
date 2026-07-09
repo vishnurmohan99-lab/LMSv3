@@ -29,6 +29,7 @@ export default function StudentMentorPage() {
   const [bookings, setBookings] = useState<MentorBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
+  const [justBooked, setJustBooked] = useState<{ mentorName: string; date: string; time: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const confirm = useConfirm();
 
@@ -49,6 +50,7 @@ export default function StudentMentorPage() {
     setSlots([]);
     setSelectedDate("");
     setSelectedSlot(null);
+    setJustBooked(null);
     mentorApi
       .getSlots(mentorId, 14)
       .then((s) => {
@@ -84,6 +86,7 @@ export default function StudentMentorPage() {
       const [s, b] = await Promise.all([mentorApi.getSlots(mentor.id, 14), mentorApi.listBookingsAsStudent()]);
       setSlots(s);
       setBookings(b);
+      setJustBooked({ mentorName: mentor.fullName, date: selectedSlot.date, time: selectedSlot.time });
       setSelectedSlot(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to book session");
@@ -124,112 +127,92 @@ export default function StudentMentorPage() {
       ) : (
         <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 20 }}>
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 26 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.3, marginBottom: 18 }}>Book a 1:1 Mentor</div>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.3, marginBottom: 16 }}>Pick a mentor</div>
 
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>Select mentor</label>
-            <select
-              value={mentorId}
-              onChange={(e) => setMentorId(e.target.value)}
-              style={{
-                width: "100%",
-                margin: "8px 0 12px",
-                padding: "12px 14px",
-                border: "1px solid var(--line)",
-                borderRadius: 11,
-                fontFamily: "inherit",
-                fontSize: 13.5,
-                background: "var(--bg)",
-                color: "var(--ink)",
-              }}
-            >
-              {mentors.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.fullName} {m.mentorSpecialty ? `— ${m.mentorSpecialty}` : ""}
-                </option>
-              ))}
-            </select>
-
-            {mentor && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  margin: "0 0 22px",
-                  padding: "12px 14px",
-                  border: "1px solid var(--line)",
-                  borderRadius: 13,
-                  background: "var(--bg)",
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 12,
-                    background: "linear-gradient(135deg,#f7902b,#f24d1b)",
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: 13,
-                    flex: "none",
-                  }}
-                >
-                  {initials(mentor.fullName)}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{mentor.fullName}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {mentor.mentorSpecialty ?? "Mentor"}
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="mentor-card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 22 }}>
+              {mentors.map((m) => {
+                const active = mentorId === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setMentorId(m.id)}
+                    style={{
+                      textAlign: "left",
+                      border: active ? "1.5px solid var(--orange)" : "1px solid var(--line)",
+                      background: active ? "var(--orange-soft)" : "var(--card)",
+                      borderRadius: 14,
+                      padding: 14,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    <div style={{ position: "relative", width: 40, height: 40, flex: "none", marginBottom: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--purple-soft)", color: "var(--purple-ink)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>
+                        {initials(m.fullName)}
+                      </div>
+                      <div style={{ position: "absolute", bottom: -5, left: "50%", transform: "translateX(-50%)", fontSize: 7, fontWeight: 800, letterSpacing: 0.4, background: "var(--orange)", color: "#fff", borderRadius: 4, padding: "2px 4px", whiteSpace: "nowrap" }}>
+                        MENTOR
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.fullName}</div>
+                    <div style={{ fontSize: 11, color: "var(--ink3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.mentorSpecialty ?? "Mentor"}</div>
+                  </button>
+                );
+              })}
+            </div>
 
             {availableDates.length === 0 ? (
-              <p style={{ color: "var(--ink3)", fontSize: 13 }}>This mentor has no open availability in the next two weeks.</p>
+              <div style={{ border: "1.5px dashed var(--line)", borderRadius: 16, padding: 26, textAlign: "center" }}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>No open slots</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--ink3)", marginTop: 4 }}>
+                  {mentor?.fullName ?? "This mentor"} has no availability in the next two weeks. Try another mentor.
+                </div>
+              </div>
             ) : (
               <>
-                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>Date</label>
-                <div style={{ display: "flex", gap: 10, margin: "8px 0 22px", flexWrap: "wrap" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Pick a day</div>
+                <div style={{ display: "flex", gap: 8, margin: "0 0 22px", flexWrap: "wrap" }}>
                   {availableDates.map((d) => {
                     const sel = selectedDate === d;
+                    const dObj = new Date(d);
                     return (
                       <button
                         key={d}
                         onClick={() => {
                           setSelectedDate(d);
                           setSelectedSlot(null);
+                          setJustBooked(null);
                         }}
                         style={{
-                          padding: "12px 16px",
+                          minWidth: 52,
+                          padding: "8px 0",
                           borderRadius: 12,
-                          border: `1.5px solid ${sel ? "var(--ink)" : "var(--line)"}`,
-                          background: sel ? "var(--ink)" : "var(--card)",
-                          color: sel ? "#fff" : "var(--ink)",
+                          border: `1.5px solid ${sel ? "var(--orange)" : "var(--line)"}`,
+                          background: sel ? "var(--orange-soft)" : "var(--card)",
+                          color: sel ? "var(--orange-deep)" : "var(--ink)",
                           cursor: "pointer",
                           fontFamily: "inherit",
-                          fontSize: 13,
-                          fontWeight: 700,
                         }}
                       >
-                        {dateLabel(d)}
+                        <div style={{ fontSize: 10, fontWeight: 600, opacity: 0.75 }}>{dObj.toLocaleDateString(undefined, { weekday: "short" })}</div>
+                        <div style={{ fontSize: 15, fontWeight: 800, fontFamily: "var(--font-mono)" }}>{dObj.getDate()}</div>
                       </button>
                     );
                   })}
                 </div>
 
-                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink2)" }}>Time slot</label>
-                <div className="mentor-slot-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, margin: "8px 0 4px" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Available slots</div>
+                <div className="mentor-slot-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, maxWidth: 480 }}>
                   {slotsForDate.map((s) => {
                     const sel = selectedSlot?.availabilityId === s.availabilityId && selectedSlot?.date === s.date;
                     return (
                       <button
                         key={s.availabilityId}
                         disabled={s.booked}
-                        onClick={() => setSelectedSlot(s)}
+                        onClick={() => {
+                          setSelectedSlot(s);
+                          setJustBooked(null);
+                        }}
                         style={{
                           padding: 11,
                           borderRadius: 10,
@@ -265,6 +248,24 @@ export default function StudentMentorPage() {
             }}
           >
             <div style={{ fontSize: 13, opacity: 0.6, letterSpacing: 0.5, textTransform: "uppercase" }}>Booking Summary</div>
+            {justBooked ? (
+              <div className="pop-in" style={{ textAlign: "center", padding: "10px 0" }}>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--green)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, margin: "0 auto 12px" }}>✓</div>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>Session booked!</div>
+                <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255,255,255,.66)", marginTop: 6 }}>
+                  {justBooked.mentorName} · {dateLabel(justBooked.date)} · {justBooked.time}
+                  <br />
+                  Added to your sessions below.
+                </div>
+                <button
+                  onClick={() => setJustBooked(null)}
+                  style={{ marginTop: 14, height: 34, padding: "0 14px", background: "#2a2620", color: "#e8e5e0", border: "1px solid #403b35", borderRadius: 9, fontSize: 12, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}
+                >
+                  Book another
+                </button>
+              </div>
+            ) : (
+              <>
             {mentor && (
               <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0" }}>
                 <div
@@ -330,6 +331,8 @@ export default function StudentMentorPage() {
             >
               {booking ? "Booking…" : "Confirm Booking"}
             </button>
+              </>
+            )}
           </div>
         </div>
       )}

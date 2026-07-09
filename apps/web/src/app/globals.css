@@ -426,6 +426,9 @@ button:active, a:active {
   .mentor-slot-grid {
     grid-template-columns: repeat(3, 1fr) !important;
   }
+  .mentor-card-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
   .mentor-summary-card {
     position: static !important;
   }
