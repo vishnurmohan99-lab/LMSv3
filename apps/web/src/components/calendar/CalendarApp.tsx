@@ -76,6 +76,60 @@ function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+// Same live-window heuristic the dashboard uses: a LIVE_LESSON counts as "live now"
+// from 10 min before its start until 90 min after.
+const LIVE_WINDOW_BEFORE_MIN = 10;
+const LIVE_WINDOW_AFTER_MIN = 90;
+function isCurrentlyLive(event: CalendarEvent, now: Date) {
+  if (event.type !== "LIVE_LESSON") return false;
+  const diffMin = (now.getTime() - new Date(event.date).getTime()) / 60000;
+  return diffMin >= -LIVE_WINDOW_BEFORE_MIN && diffMin <= LIVE_WINDOW_AFTER_MIN;
+}
+
+const squareNavBtn: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  border: "1px solid var(--line)",
+  background: "var(--card)",
+  borderRadius: 8,
+  color: "var(--ink3)",
+  fontSize: 14,
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const LEGEND: { label: string; color: string }[] = [
+  { label: "Live", color: "var(--live)" },
+  { label: "Mentor", color: "var(--purple)" },
+  { label: "Test", color: "var(--orange)" },
+  { label: "Unlock", color: "var(--green)" },
+];
+
+/** Dark gradient "LIVE NOW" card matching the calendar mockup's today panel. */
+function LiveNowCard({ event, role }: { event: CalendarEvent; role: "student" | "faculty" }) {
+  const time = new Date(event.date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  const href = event.courseId ? (role === "student" ? `/student/courses/${event.courseId}` : `/faculty/courses/${event.courseId}`) : null;
+  return (
+    <div style={{ background: "linear-gradient(135deg,#2b1220,#1c1915)", borderRadius: 14, padding: 14, color: "#fff" }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+        <span className="live-pulse" style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.6, background: "var(--live)", borderRadius: 4, padding: "3px 7px" }}>● LIVE NOW</span>
+        <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)", color: "#ff87ac" }}>{time}</span>
+      </div>
+      <div style={{ fontSize: 13, fontWeight: 700 }}>{event.title}</div>
+      {event.courseTitle && <div style={{ fontSize: 10.5, color: "#a8a29a", marginTop: 1 }}>{event.courseTitle}</div>}
+      {href && (
+        <Link href={href} style={{ display: "inline-block", textDecoration: "none", fontSize: 11.5, fontWeight: 700, background: "#fff", color: "var(--ink)", borderRadius: 8, height: 30, lineHeight: "30px", padding: "0 13px", marginTop: 10 }}>
+          Join →
+        </Link>
+      )}
+    </div>
+  );
+}
+
 function EventRow({ event, role }: { event: CalendarEvent; role: "student" | "faculty" }) {
   const time = new Date(event.date).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   const content = (
@@ -305,14 +359,24 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
   return (
     <div className="fade-in-up mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 22, alignItems: "start" }}>
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>{monthLabel}</div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => changeMonth(-1)} style={inputStyle}>‹ Prev</button>
-            <button onClick={() => { setCursor(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; }); setSelectedDate(new Date()); }} style={inputStyle}>
-              Today
-            </button>
-            <button onClick={() => changeMonth(1)} style={inputStyle}>Next ›</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.2 }}>{monthLabel}</div>
+          <button onClick={() => changeMonth(-1)} style={squareNavBtn} aria-label="Previous month">‹</button>
+          <button onClick={() => changeMonth(1)} style={squareNavBtn} aria-label="Next month">›</button>
+          <button
+            onClick={() => { setCursor(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; }); setSelectedDate(new Date()); }}
+            style={{ ...squareNavBtn, width: "auto", padding: "0 12px", fontSize: 11.5, fontWeight: 600 }}
+          >
+            Today
+          </button>
+          <div style={{ flex: 1 }} />
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {LEGEND.map((l) => (
+              <span key={l.label} style={{ display: "flex", gap: 5, alignItems: "center", fontSize: 10.5, fontWeight: 500, color: "var(--ink3)" }}>
+                <span style={{ width: 9, height: 9, borderRadius: 3, background: l.color }} />
+                {l.label}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -373,16 +437,24 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
 
       <div style={{ display: "grid", gap: 16 }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
-            {selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+          <div style={{ fontSize: 15, fontWeight: 700 }}>
+            {sameDay(selectedDate, today) ? "Today · " : ""}
+            {selectedDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 14, marginTop: 2 }}>
+            {selectedEvents.length === 0 ? "No events" : `${selectedEvents.length} event${selectedEvents.length === 1 ? "" : "s"}`}
           </div>
           {selectedEvents.length === 0 ? (
             <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>Nothing scheduled this day.</p>
           ) : (
-            <div style={{ display: "grid", gap: 8 }}>
-              {selectedEvents.map((e) => (
-                <EventRow key={e.id} event={e} role={role} />
-              ))}
+            <div style={{ display: "grid", gap: 10 }}>
+              {selectedEvents.map((e) =>
+                isCurrentlyLive(e, today) ? (
+                  <LiveNowCard key={e.id} event={e} role={role} />
+                ) : (
+                  <EventRow key={e.id} event={e} role={role} />
+                ),
+              )}
             </div>
           )}
         </div>
