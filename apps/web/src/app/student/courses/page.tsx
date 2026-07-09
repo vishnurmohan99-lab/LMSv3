@@ -117,6 +117,24 @@ function CardBanner({ url, name, badge }: { url: string | null; name: string; ba
   );
 }
 
+// Deterministic placeholder difficulty (no real course-difficulty field exists yet) — mirrors dashboard's pseudoLevel.
+const LEVELS = [
+  { label: "Easy", ink: "var(--diff-easy)", bg: "var(--diff-easy-soft)" },
+  { label: "Medium", ink: "var(--diff-med)", bg: "var(--diff-med-soft)" },
+  { label: "Hard", ink: "var(--diff-hard)", bg: "var(--diff-hard-soft)" },
+];
+function pseudoLevel(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return LEVELS[h % 3];
+}
+
+const DURATION_BUCKETS = [
+  { id: "short", label: "Under 10 hrs", test: (m: number | null) => m != null && m < 600 },
+  { id: "mid", label: "10–30 hrs", test: (m: number | null) => m != null && m >= 600 && m <= 1800 },
+  { id: "long", label: "30+ hrs", test: (m: number | null) => m != null && m > 1800 },
+];
+
 function SearchIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" strokeWidth="2">
@@ -153,9 +171,11 @@ function EnrolledCard({ course, badge, index }: { course: Course; badge: string 
 
 function CatalogCard({ course, badge, onEnroll, enrolling, index }: { course: Course; badge: string | null; onEnroll: (id: string) => void; enrolling: boolean; index: number }) {
   const paid = course.type === "PAID";
+  const level = pseudoLevel(course.id);
   return (
-    <div className="entity-card fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden", animationDelay: `${index * 40}ms` }}>
+    <div className="entity-card fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden", animationDelay: `${index * 40}ms`, position: "relative" }}>
       <CardBanner url={course.thumbnailUrl} name={course.title} badge={badge} />
+      <span style={{ position: "absolute", top: 10, right: 10, fontSize: 9.5, fontWeight: 700, color: level.ink, background: level.bg, borderRadius: 5, padding: "3px 8px" }}>{level.label}</span>
       <div style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, minHeight: 20 }}>{course.title}</div>
         {course.description && <p style={{ fontSize: 12.5, color: "var(--ink2)", marginBottom: 12, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{course.description}</p>}
@@ -207,6 +227,9 @@ export default function StudentCoursesPage() {
   const [search, setSearch] = useState("");
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null); // segmentId | subsegmentId
   const [freeOnly, setFreeOnly] = useState(false);
+  const [levelFilter, setLevelFilter] = useState<string | null>(null); // "Easy" | "Medium" | "Hard"
+  const [minRating, setMinRating] = useState<number | null>(null);
+  const [durationFilter, setDurationFilter] = useState<string | null>(null); // DURATION_BUCKETS id
   const [sort, setSort] = useState<SortKey>("popular");
   const [filtersOpen, setFiltersOpen] = useState(false); // mobile sheet
 
@@ -265,19 +288,25 @@ export default function StudentCoursesPage() {
     let list = browsableAll.filter((c) => c.title.toLowerCase().includes(search.toLowerCase()));
     if (subjectFilter) list = list.filter((c) => (c.subsegmentId ?? c.segmentId) === subjectFilter);
     if (freeOnly) list = list.filter((c) => c.type === "FREE" || !c.priceCents);
+    if (levelFilter) list = list.filter((c) => pseudoLevel(c.id).label === levelFilter);
+    if (minRating != null) list = list.filter((c) => (c.avgRating ?? 0) >= minRating);
+    if (durationFilter) {
+      const bucket = DURATION_BUCKETS.find((b) => b.id === durationFilter);
+      if (bucket) list = list.filter((c) => bucket.test(c.durationMinutes));
+    }
     const sorted = [...list];
     if (sort === "rating") sorted.sort((a, b) => (b.avgRating ?? -1) - (a.avgRating ?? -1));
     else if (sort === "newest") sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     else sorted.sort((a, b) => (b._count?.enrollments ?? 0) - (a._count?.enrollments ?? 0) || (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
     return sorted;
-  }, [browsableAll, search, subjectFilter, freeOnly, sort]);
+  }, [browsableAll, search, subjectFilter, freeOnly, levelFilter, minRating, durationFilter, sort]);
 
   const enrolledCourses = useMemo(
     () => enrollments.map((e) => e.course).filter((c) => c.title.toLowerCase().includes(search.toLowerCase()) && courseMatchesProfile(c, profile)),
     [enrollments, search, profile],
   );
 
-  const nActive = (subjectFilter ? 1 : 0) + (freeOnly ? 1 : 0);
+  const nActive = (subjectFilter ? 1 : 0) + (freeOnly ? 1 : 0) + (levelFilter ? 1 : 0) + (minRating != null ? 1 : 0) + (durationFilter ? 1 : 0);
   const segmentContext = profile?.subsegmentId ? nameMap.get(profile.subsegmentId) : profile?.segmentId ? nameMap.get(profile.segmentId) : null;
 
   async function onEnroll(courseId: string) {
@@ -295,7 +324,18 @@ export default function StudentCoursesPage() {
   function clearFilters() {
     setSubjectFilter(null);
     setFreeOnly(false);
+    setLevelFilter(null);
+    setMinRating(null);
+    setDurationFilter(null);
   }
+
+  const activeChips = [
+    ...(subjectFilter ? [{ id: "subject", label: nameMap.get(subjectFilter) ?? "Subject", clear: () => setSubjectFilter(null) }] : []),
+    ...(freeOnly ? [{ id: "free", label: "Free only", clear: () => setFreeOnly(false) }] : []),
+    ...(levelFilter ? [{ id: "level", label: levelFilter, clear: () => setLevelFilter(null) }] : []),
+    ...(minRating != null ? [{ id: "rating", label: `★ ${minRating}+`, clear: () => setMinRating(null) }] : []),
+    ...(durationFilter ? [{ id: "duration", label: DURATION_BUCKETS.find((b) => b.id === durationFilter)?.label ?? "Duration", clear: () => setDurationFilter(null) }] : []),
+  ];
 
   const filterPanel = (
     <div style={{ display: "grid", gap: 22 }}>
@@ -343,11 +383,68 @@ export default function StudentCoursesPage() {
       )}
 
       <div>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Level</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {LEVELS.map((l) => {
+            const on = levelFilter === l.label;
+            return (
+              <button
+                key={l.label}
+                onClick={() => setLevelFilter(on ? null : l.label)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  border: on ? "1px solid var(--orange)" : "1px solid var(--line)",
+                  background: on ? "var(--orange-soft)" : "var(--card)",
+                  color: on ? "var(--orange-deep)" : "var(--ink2)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                }}
+              >
+                {l.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
         <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Price</div>
         <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>
           <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} style={{ width: 16, height: 16, accentColor: "var(--orange)" }} />
           Free only
         </label>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Rating</div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {[4.5, 4.0].map((r) => (
+            <label key={r} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>
+              <input type="radio" name="minRating" checked={minRating === r} onChange={() => setMinRating(minRating === r ? null : r)} style={{ width: 15, height: 15, accentColor: "var(--orange)" }} />
+              ★ {r.toFixed(1)} &amp; up
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Duration</div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {DURATION_BUCKETS.map((b) => (
+            <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>
+              <input
+                type="checkbox"
+                checked={durationFilter === b.id}
+                onChange={() => setDurationFilter(durationFilter === b.id ? null : b.id)}
+                style={{ width: 16, height: 16, accentColor: "var(--orange)" }}
+              />
+              {b.label}
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -425,6 +522,23 @@ export default function StudentCoursesPage() {
                   </select>
                 </div>
               </div>
+
+              {activeChips.length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16, alignItems: "center" }}>
+                  {activeChips.map((c) => (
+                    <span
+                      key={c.id}
+                      onClick={c.clear}
+                      style={{ fontSize: 11.5, fontWeight: 700, background: "var(--ink)", color: "#fff", borderRadius: 999, padding: "6px 12px", cursor: "pointer" }}
+                    >
+                      {c.label} ✕
+                    </span>
+                  ))}
+                  <span onClick={clearFilters} style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange-deep)", cursor: "pointer", padding: "6px 4px" }}>
+                    Clear
+                  </span>
+                </div>
+              )}
 
               {enrollments.length === 0 && enrolledCourses.length === 0 && (
                 <p style={{ color: "var(--ink2)", marginBottom: 20, fontSize: 13.5 }}>You haven&apos;t enrolled in any courses yet — browse below.</p>
