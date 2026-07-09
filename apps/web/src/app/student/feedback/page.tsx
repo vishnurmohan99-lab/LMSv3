@@ -9,11 +9,11 @@ function targetName(f: FeedbackForm) {
   return f.targetFaculty?.fullName ?? "—";
 }
 
-const TARGET_META: Record<string, { label: string; color: string; soft: string }> = {
-  COURSE: { label: "COURSE", color: "var(--orange)", soft: "var(--orange-soft)" },
-  FACULTY: { label: "FACULTY", color: "var(--blue)", soft: "var(--blue-soft)" },
-  MENTOR: { label: "MENTOR", color: "var(--purple)", soft: "var(--purple-soft)" },
-  SYSTEM: { label: "SYSTEM", color: "var(--green)", soft: "var(--green-soft)" },
+const TARGET_META: Record<string, { icon: string; color: string; soft: string }> = {
+  COURSE: { icon: "📘", color: "var(--orange-deep)", soft: "var(--orange-soft)" },
+  FACULTY: { icon: "🧑‍🏫", color: "var(--blue)", soft: "var(--blue-soft)" },
+  MENTOR: { icon: "🎯", color: "var(--purple-ink)", soft: "var(--purple-soft)" },
+  SYSTEM: { icon: "⚙️", color: "var(--green)", soft: "var(--green-soft)" },
 };
 
 function Stars({ value, onPick, size = 18 }: { value: number; onPick?: (n: number) => void; size?: number }) {
@@ -262,17 +262,20 @@ export default function StudentFeedbackPage() {
 
   return (
     <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px", maxWidth: 760, margin: "0 auto" }}>
-      <div style={{ display: "flex", gap: 8, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 13, padding: 5, width: "max-content", marginBottom: 20 }}>
+      <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.4 }}>Feedback</div>
+      <p style={{ fontSize: 13.5, color: "var(--ink3)", marginTop: 4, marginBottom: 20 }}>Help us improve courses, faculty and mentorship.</p>
+      <div style={{ display: "flex", gap: 4, background: "var(--line2)", borderRadius: 11, padding: 4, width: "max-content", marginBottom: 20 }}>
         <button
           onClick={() => setTab("allotted")}
           style={{
-            padding: "9px 18px",
-            borderRadius: 9,
+            padding: "7px 16px",
+            borderRadius: 8,
             border: "none",
-            background: tab === "allotted" ? "var(--ink)" : "transparent",
-            color: tab === "allotted" ? "#fff" : "var(--ink2)",
-            fontSize: 13,
-            fontWeight: 700,
+            background: tab === "allotted" ? "var(--card)" : "transparent",
+            color: tab === "allotted" ? "var(--ink)" : "var(--ink3)",
+            boxShadow: tab === "allotted" ? "0 1px 3px rgba(28,22,15,.12)" : "none",
+            fontSize: 12.5,
+            fontWeight: 600,
             fontFamily: "inherit",
             cursor: "pointer",
           }}
@@ -282,13 +285,14 @@ export default function StudentFeedbackPage() {
         <button
           onClick={() => setTab("submitted")}
           style={{
-            padding: "9px 18px",
-            borderRadius: 9,
+            padding: "7px 16px",
+            borderRadius: 8,
             border: "none",
-            background: tab === "submitted" ? "var(--ink)" : "transparent",
-            color: tab === "submitted" ? "#fff" : "var(--ink2)",
-            fontSize: 13,
-            fontWeight: 700,
+            background: tab === "submitted" ? "var(--card)" : "transparent",
+            color: tab === "submitted" ? "var(--ink)" : "var(--ink3)",
+            boxShadow: tab === "submitted" ? "0 1px 3px rgba(28,22,15,.12)" : "none",
+            fontSize: 12.5,
+            fontWeight: 600,
             fontFamily: "inherit",
             cursor: "pointer",
           }}
@@ -332,7 +336,7 @@ export default function StudentFeedbackPage() {
                 return (
                   <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 16, padding: "18px 22px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", flexWrap: "wrap" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 12, background: m.soft, color: m.color, display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontWeight: 700, fontSize: 11 }}>
-                      {m.label.slice(0, 3)}
+                      {m.icon}
                     </div>
                     <div style={{ flex: 1, minWidth: 150 }}>
                       <div style={{ fontSize: 15, fontWeight: 700 }}>{f.title}</div>
@@ -362,7 +366,7 @@ export default function StudentFeedbackPage() {
               return (
                 <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 16, padding: "18px 22px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", flexWrap: "wrap" }}>
                   <div style={{ width: 44, height: 44, borderRadius: 12, background: m.soft, color: m.color, display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontWeight: 700, fontSize: 11 }}>
-                    {m.label.slice(0, 3)}
+                    {m.icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 150 }}>
                     <div style={{ fontSize: 15, fontWeight: 700 }}>{f.title}</div>
