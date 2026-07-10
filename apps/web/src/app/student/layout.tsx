@@ -1,7 +1,6 @@
 import AuthGuard from "@/components/AuthGuard";
 import ConfirmProvider from "@/components/ConfirmProvider";
 import ImageLightboxProvider from "@/components/ImageLightboxProvider";
-import OnboardingGate from "@/components/OnboardingGate";
 import StudentShell from "@/components/StudentShell";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -9,9 +8,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     <AuthGuard allowedRoles={["STUDENT"]}>
       <ConfirmProvider>
         <ImageLightboxProvider>
-          <OnboardingGate>
-            <StudentShell>{children}</StudentShell>
-          </OnboardingGate>
+          <StudentShell>{children}</StudentShell>
         </ImageLightboxProvider>
       </ConfirmProvider>
     </AuthGuard>

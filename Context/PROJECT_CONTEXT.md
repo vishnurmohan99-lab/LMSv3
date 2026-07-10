@@ -756,6 +756,48 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Ascent Design System pixel-match pass (2026-07-09 → 07-10).** New `Design System/`
+  mockup export (`.dc.html`) replaced the old `design-reference/` folder (`5a9b53a`
+  removed old, `e32dbe0` added new; `a67f9dc` added `Student Screens 3.dc.html` for the
+  three previously-undesigned screens Feedback/Faculty Notes/Profile). Student web+mobile
+  pixel-matched to the mockups, one screen per commit, each verified live and deployed:
+  - `cd09c3d` — Login/Register (purple gradient brand panel + testimonial) + Course-detail
+    **tab-strip rebuild** (Overview/Flashcards/Deck/Cheat Sheet/Notes/Doubt built from each
+    lesson's enabled features; Notes + Doubt-chat moved inline into their own tabs).
+  - `edc4dc3` — Catalog: added Level/Rating/Duration filter facets + active-filter chip row.
+  - `a450390` — Mock Test: mark-for-review toggle + clear-response + purple palette state;
+    Subscription: bundle cards restyled (elevated, checkmark list, CURRENT PLAN badge).
+    Did NOT build the mockup's fixed 3-tier pricing/switch flow — no price field on the
+    admin-defined `Subscription` model.
+  - `0e8d6de` — Feedback (white-active tab pills, emoji chip icons) + Profile (avatar
+    header, larger fields, orange CTA). Faculty Notes already matched.
+  - `4518fd1` — Calendar: square nav buttons, Live/Mentor/Test/Unlock legend, "N events"
+    count, dark LIVE-NOW card for currently-live events. Messenger already matched, left as-is.
+  - `1ddf100` — Forum: vertical category sidebar → horizontal chips; thread list as rows in
+    one card; derived HOT badge (≥5 replies); "answered"/green-border MENTOR replies from
+    real post author role. Removed dead `forum-shell`/`forum-categories` CSS.
+  - `7e22f16` — Workout: step-header ("Ungraded practice" badge + 3-dot indicator), count
+    chips (was slider), orange CTA, session progress bar, "Nice reps 💪" done screen. No
+    difficulty filter — workout API only supports chapter/types/count/comprehension.
+  - `43afa02` — Planner: pill-toggle tabs → underline tabs, title "Study Planner"→"Planner"
+    (no dark variant — app has no dark-mode toggle). Mentor: mentor **card grid** (MENTOR
+    badge) replacing dropdown, dow/num day chips, dashed no-slots card, green "Session
+    booked!" success state in the dark summary. No exp/rating chips — not on `Mentor` model.
+  - `a8eb4a7` + **gate-consolidation follow-up** — Storefront Selector: catalog's static
+    "Scoped to {class}" is now an interactive class/track pill + two-column popover (YOUR
+    CLASS / TRACK) that **persists** the switch via `updateMe` and re-scopes the app (the
+    only honest behavior — students can't browse other classes' courses server-side).
+    Onboarding: `a8eb4a7` wrongly ADDED a duplicate `OnboardingGate.tsx` in the student
+    layout — there was already a `SegmentOnboardingGate.tsx` wired into `StudentShell`
+    (`a91da3c`). Follow-up fix: ported the mockup's 2-step class→track tile design INTO the
+    existing `SegmentOnboardingGate` (keeps its `onDone`→`loadProfile` callback, no full
+    reload), deleted the duplicate `OnboardingGate.tsx`, reverted the layout wrapper.
+  - **Ops:** Vercel git-integration auto-deploy stalled this session (last auto-deploy was
+    a day stale); deployed each commit manually via `npx vercel --prod --yes` from
+    `apps/web`. Added `apps/api` to `.claude/launch.json` for local preview. **Remaining
+    student mockup: Answer Correction — Student.** Then all remaining screens are
+    admin/faculty (deprioritized per user — student web+mobile first).
+
 - **Study Plan feature + course-image fix (2026-07-08).**
   - **Course image now editable** (`85d967f`, deployed): thumbnail could only be set at course
     CREATE — added a "Course image" upload/replace card to admin + faculty course settings
@@ -947,4 +989,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-06 (audit pass over the 2026-07-02 state, latest commit `1af982c`).*
+*Last updated: 2026-07-10 (Ascent Design System pixel-match pass, latest commit `a8eb4a7` + gate-consolidation follow-up).*
