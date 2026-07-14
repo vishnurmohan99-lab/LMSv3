@@ -756,7 +756,7 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
-- **Admin edit-in-modal conversion (2026-07-14, `<pending>`).** Every admin entity's
+- **Admin edit-in-modal conversion (2026-07-14, `4925d46` + type-fix `c23e87a`).** Every admin entity's
   "Edit" now opens a Design-System `Modal` popup editing the entity's full own-settings,
   instead of inline row-edit or navigating to the detail page; each card/row keeps a
   separate "View" (eye) affordance to reach the builder/detail page. Converted:
