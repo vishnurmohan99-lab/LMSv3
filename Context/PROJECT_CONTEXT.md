@@ -756,6 +756,24 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Fix: mobile login didn't work + broken auth-page layout on mobile (2026-07-14).**
+  Two issues on `/login` (and `/register`): (1) the `(auth)` layout was a two-column
+  flex split (purple hero + form) with no responsive rule, so on phones both columns
+  squeezed into unreadable half-width strips — now the hero is hidden below 860px and
+  the form fills the screen (`apps/web/.../(auth)/layout.tsx` + `.auth-*` rules in
+  `globals.css`). (2) Login succeeded but never persisted on mobile Safari/Chrome
+  because the session is a cross-domain (vercel.app↔onrender.com) **third-party cookie**,
+  which those browsers block by default. Fix: **token-based auth alongside cookies**.
+  API now returns `accessToken`/`refreshToken` in the login/register/refresh body and
+  the JWT strategies accept the token from the `Authorization: Bearer` header OR the
+  cookie (`ExtractJwt.fromExtractors`). Both frontends' `lib/api.ts` (duplicated — web
+  + admin) store the tokens in `localStorage`, send the access token as a Bearer header
+  on every request (incl. the raw `enrollCsv` fetch), refresh via a Bearer refresh
+  header, and clear on logout. Cookies remain as a fallback; CORS already reflects the
+  `Authorization` header. Verified locally: header-only `/auth/me` and `/auth/refresh`
+  → 200 with cookies omitted, browser login stores tokens + reaches dashboard; all
+  three apps `tsc --noEmit` clean. NOTE: this is the interim fix; a shared custom
+  domain remains the cleaner long-term option.
 - **Fix: monorepo build failed on Vercel — API Prisma client not generated (2026-07-14).**
   A Vercel project builds from the repo ROOT, running the root `build` (`web && admin &&
   api`). `apps/api`'s build was just `nest build` — no `prisma generate` — so the API
@@ -1045,4 +1063,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-14 (student app PWA; admin edit-in-modal conversion across all entities).*
+*Last updated: 2026-07-14 (mobile login fix: token-based auth + responsive auth-page layout).*

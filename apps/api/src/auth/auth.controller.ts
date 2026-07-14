@@ -19,7 +19,9 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.authService.register(dto);
     this.setAuthCookies(res, accessToken, refreshToken);
-    return { user };
+    // Tokens are also returned in the body so header-based clients (mobile, where
+    // the cross-domain cookie is blocked) can store and send them themselves.
+    return { user, accessToken, refreshToken };
   }
 
   @Post('login')
@@ -27,7 +29,7 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.authService.login(dto);
     this.setAuthCookies(res, accessToken, refreshToken);
-    return { user };
+    return { user, accessToken, refreshToken };
   }
 
   @UseGuards(JwtRefreshGuard)
@@ -36,7 +38,7 @@ export class AuthController {
   async refresh(@CurrentUser() payload: JwtPayload, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.authService.refresh(payload);
     this.setAuthCookies(res, accessToken, refreshToken);
-    return { user };
+    return { user, accessToken, refreshToken };
   }
 
   @Post('logout')

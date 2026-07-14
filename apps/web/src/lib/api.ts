@@ -6,15 +6,64 @@ export class ApiError extends Error {
   }
 }
 
+// ===================== Token storage =====================
+// The API also sets httpOnly cookies, but mobile Safari/Chrome block the
+// cross-domain (third-party) cookie, so login there never persists. We store the
+// tokens returned in the login/register/refresh body in localStorage and send the
+// access token as an Authorization: Bearer header, which is not subject to
+// third-party-cookie blocking. Cookies remain as a fallback for older sessions.
+const ACCESS_KEY = 'access_token';
+const REFRESH_KEY = 'refresh_token';
+
+function getToken(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function setTokens(accessToken?: string, refreshToken?: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (accessToken) window.localStorage.setItem(ACCESS_KEY, accessToken);
+    if (refreshToken) window.localStorage.setItem(REFRESH_KEY, refreshToken);
+  } catch {
+    /* storage unavailable (private mode) — cookie fallback still applies */
+  }
+}
+
+function clearTokens() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(ACCESS_KEY);
+    window.localStorage.removeItem(REFRESH_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 let refreshPromise: Promise<boolean> | null = null;
 
-// The access_token cookie expires after 15 minutes; the refresh_token lives for 7 days.
+// The access token expires after 15 minutes; the refresh token lives for 7 days.
 // On a 401 we silently exchange it for a fresh access token and retry once, instead of
 // forcing the user back to the login page just because they were idle for >15 minutes.
+// The refresh token is sent as a Bearer header (with a cookie fallback for older sessions).
 function refreshAccessToken(): Promise<boolean> {
   if (!refreshPromise) {
-    refreshPromise = fetch(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include' })
-      .then((res) => res.ok)
+    const refreshToken = getToken(REFRESH_KEY);
+    refreshPromise = fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: refreshToken ? { Authorization: `Bearer ${refreshToken}` } : {},
+    })
+      .then(async (res) => {
+        if (!res.ok) return false;
+        const body = await res.json().catch(() => null);
+        setTokens(body?.accessToken, body?.refreshToken);
+        return true;
+      })
       .catch(() => false)
       .finally(() => {
         refreshPromise = null;
@@ -24,11 +73,13 @@ function refreshAccessToken(): Promise<boolean> {
 }
 
 async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
+  const accessToken = getToken(ACCESS_KEY);
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...options.headers,
     },
   });
@@ -56,12 +107,26 @@ export interface AuthUser {
   role: 'STUDENT' | 'FACULTY' | 'ADMIN';
 }
 
+type AuthResponse = { user: AuthUser; accessToken?: string; refreshToken?: string };
+
 export const authApi = {
-  register: (data: { fullName: string; email: string; password: string }) =>
-    request<{ user: AuthUser }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
-  login: (data: { email: string; password: string }) =>
-    request<{ user: AuthUser }>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
-  logout: () => request<{ success: boolean }>('/auth/logout', { method: 'POST' }),
+  register: async (data: { fullName: string; email: string; password: string }) => {
+    const res = await request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+    setTokens(res.accessToken, res.refreshToken);
+    return res;
+  },
+  login: async (data: { email: string; password: string }) => {
+    const res = await request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) });
+    setTokens(res.accessToken, res.refreshToken);
+    return res;
+  },
+  logout: async () => {
+    try {
+      return await request<{ success: boolean }>('/auth/logout', { method: 'POST' });
+    } finally {
+      clearTokens();
+    }
+  },
 };
 
 export interface Profile {
@@ -989,9 +1054,11 @@ export const batchesApi = {
   enrollCsv: async (batchId: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
+    const accessToken = getToken(ACCESS_KEY);
     const res = await fetch(`${API_URL}/batches/${batchId}/enroll/csv`, {
       method: 'POST',
       credentials: 'include',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       body: formData,
     });
     const body = await res.json().catch(() => null);

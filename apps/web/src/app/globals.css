@@ -368,6 +368,21 @@ button:active, a:active {
   }
 }
 
+/* ===================== Auth pages (login/register) =====================
+   The auth layout is a two-column split (purple marketing hero + form). On
+   tablet/phone the two flex:1 columns squeeze into unreadable half-width
+   strips, so below 860px we drop the hero entirely and let the form pane fill
+   the screen. */
+@media (max-width: 860px) {
+  .auth-hero {
+    display: none !important;
+  }
+  .auth-form-pane {
+    flex: 1 !important;
+    padding: 32px 20px !important;
+  }
+}
+
 /* Course detail: mobile drill-down (chapter list <-> lesson player), mirrors the
    mockup's separate Course/Lesson screens instead of the desktop split-pane. */
 .mobile-back-btn {
