@@ -11,13 +11,19 @@ export default function ServiceWorkerRegister() {
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
-    const onLoad = () => {
+    const register = () => {
       navigator.serviceWorker.register("/sw.js").catch(() => {
         /* registration is best-effort; the app works without it */
       });
     };
-    window.addEventListener("load", onLoad);
-    return () => window.removeEventListener("load", onLoad);
+    // If the page already finished loading before this effect ran (common on fast
+    // connections), the "load" event won't fire again — register immediately.
+    if (document.readyState === "complete") {
+      register();
+    } else {
+      window.addEventListener("load", register, { once: true });
+      return () => window.removeEventListener("load", register);
+    }
   }, []);
 
   return null;
