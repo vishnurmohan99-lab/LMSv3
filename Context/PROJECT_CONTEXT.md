@@ -756,6 +756,20 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Deploys are now CLI-only (2026-07-14, `86c9f8f`).** Vercel's Git integration was
+  auto-deploying BOTH projects (web + admin) on every push to `main`, racing the CLI
+  deploys and producing failing "0/2" commit checks. Disabled Git-triggered deploys for
+  `main` via `git.deploymentEnabled.main: false` in `apps/web/vercel.json` +
+  `apps/admin/vercel.json`. **The ONLY deploy path now is the CLI:** from the app dir run
+  `npx vercel --prod --yes` (web from `apps/web`, admin from `apps/admin`). CLI/manual
+  deploys are unaffected by the setting. To re-enable auto-deploy later, flip those flags
+  to `true` (and fix the underlying monorepo cross-trigger — each project rebuilt on the
+  other's changes; a per-project `ignoreCommand` git-diff would scope that).
+- **PWA SW registration race fix (`79f6383`).** `ServiceWorkerRegister` waited for the
+  `window` `load` event, which had already fired on fast loads so the SW never registered;
+  now registers immediately when `document.readyState === "complete"`. Verified live: SW
+  active + controlling the page on the prod alias.
+
 - **Student app is now an installable PWA (2026-07-14).** apps/web only (student+faculty
   web app). Added: `src/app/manifest.ts` (→ `/manifest.webmanifest`, standalone display,
   theme #f26a1b, bg #faf8f6), generated icons in `public/icons/` (192/512/maskable-512 +
