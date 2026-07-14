@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment, type CourseType, type DripType } from "@/lib/api";
+import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment, type CourseType, type DripType, type CompletionRule } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useImageLightbox } from "@/components/ImageLightboxProvider";
