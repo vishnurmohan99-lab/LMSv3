@@ -133,8 +133,13 @@ export default function AdminQuestionBanksPage() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
+  // Edit-in-modal state
+  const [editBank, setEditBank] = useState<QuestionBank | null>(null);
+  const [eTitle, setETitle] = useState("");
+  const [eDescription, setEDescription] = useState("");
+  const [eBannerFile, setEBannerFile] = useState<File | null>(null);
+  const [ePublished, setEPublished] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   function load() {
     setLoading(true);
@@ -170,13 +175,34 @@ export default function AdminQuestionBanksPage() {
     }
   }
 
-  async function onSaveRename(id: string) {
+  function openEdit(b: QuestionBank) {
+    setError(null);
+    setEditBank(b);
+    setETitle(b.title);
+    setEDescription(b.description ?? "");
+    setEBannerFile(null);
+    setEPublished(b.published);
+  }
+
+  async function onUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editBank) return;
+    setError(null);
+    setSaving(true);
     try {
-      await questionBanksApi.update(id, { title: editingTitle });
-      setEditingId(null);
+      const bannerUrl = eBannerFile ? await uploadsApi.uploadFile(eBannerFile) : undefined;
+      await questionBanksApi.update(editBank.id, {
+        title: eTitle,
+        description: eDescription,
+        published: ePublished,
+        ...(bannerUrl ? { bannerUrl } : {}),
+      });
+      setEditBank(null);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to rename question bank");
+      setError(err instanceof ApiError ? err.message : "Failed to save question bank");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -260,6 +286,56 @@ export default function AdminQuestionBanksPage() {
         </Modal>
       )}
 
+      {editBank && (
+        <Modal title="Edit question bank" onClose={() => setEditBank(null)}>
+          <form onSubmit={onUpdate} style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Title</div>
+              <input required autoFocus value={eTitle} onChange={(e) => setETitle(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Description</div>
+              <textarea value={eDescription} onChange={(e) => setEDescription(e.target.value)} rows={3} style={{ ...inputStyle, width: "100%", resize: "vertical", lineHeight: 1.5 }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Banner image</div>
+              {editBank.bannerUrl && !eBannerFile && (
+                <div style={{ height: 90, borderRadius: 10, marginBottom: 8, background: `url(${editBank.bannerUrl}) center/cover` }} />
+              )}
+              <input type="file" accept="image/*" onChange={(e) => setEBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--ink2)", cursor: "pointer" }}>
+              <input type="checkbox" checked={ePublished} onChange={(e) => setEPublished(e.target.checked)} />
+              Published
+            </label>
+            <p style={{ color: "var(--ink3)", fontSize: 12, margin: 0 }}>Questions are managed from the question-bank page (View).</p>
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "11px 20px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: saving ? "default" : "pointer",
+                opacity: saving ? 0.6 : 1,
+              }}
+            >
+              {saving && <Spinner />}
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </form>
+        </Modal>
+      )}
+
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       <input
@@ -288,17 +364,7 @@ export default function AdminQuestionBanksPage() {
             >
               <CardBanner url={bank.bannerUrl} name={bank.title} />
               <div style={{ padding: 16 }}>
-                {editingId === bank.id ? (
-                  <input
-                    autoFocus
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && onSaveRename(bank.id)}
-                    style={{ ...inputStyle, padding: "6px 10px", marginBottom: 8 }}
-                  />
-                ) : (
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{bank.title}</div>
-                )}
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{bank.title}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                   <StatusBadge published={bank.published} />
                   <span style={{ fontSize: 12, color: "var(--ink2)" }}>
@@ -306,24 +372,12 @@ export default function AdminQuestionBanksPage() {
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  {editingId === bank.id ? (
-                    <button
-                      onClick={() => onSaveRename(bank.id)}
-                      style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, background: "none", border: "none", cursor: "pointer" }}
-                    >
-                      Save
-                    </button>
-                  ) : (
-                    <Link href={`/admin/question-banks/${bank.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                      <EyeIcon /> View
-                    </Link>
-                  )}
+                  <Link href={`/admin/question-banks/${bank.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                    <EyeIcon /> View
+                  </Link>
                   <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
                     <button
-                      onClick={() => {
-                        setEditingId(bank.id);
-                        setEditingTitle(bank.title);
-                      }}
+                      onClick={() => openEdit(bank)}
                       title="Edit"
                       style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >

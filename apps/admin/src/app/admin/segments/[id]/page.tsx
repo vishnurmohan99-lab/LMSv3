@@ -39,6 +39,14 @@ function TrashIcon() {
   );
 }
 
+function EditIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+
 function StatusBadge({ published }: { published: boolean }) {
   return (
     <span
@@ -314,6 +322,9 @@ export default function SegmentDetailPage() {
   const [addingSub, setAddingSub] = useState(false);
   const [expandedSub, setExpandedSub] = useState<string | null>(null);
   const [expandedSubTests, setExpandedSubTests] = useState<string | null>(null);
+  const [editSubId, setEditSubId] = useState<string | null>(null);
+  const [editSubName, setEditSubName] = useState("");
+  const [savingSub, setSavingSub] = useState(false);
 
   function load() {
     setLoading(true);
@@ -348,6 +359,28 @@ export default function SegmentDetailPage() {
     if (!(await confirm({ message: "Delete this sub-segment? This cannot be undone." }))) return;
     await segmentsApi.removeSubsegment(id);
     load();
+  }
+
+  function openEditSub(id: string, name: string) {
+    setError(null);
+    setEditSubId(id);
+    setEditSubName(name);
+  }
+
+  async function onUpdateSubsegment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editSubId) return;
+    setSavingSub(true);
+    setError(null);
+    try {
+      await segmentsApi.updateSubsegment(editSubId, { name: editSubName });
+      setEditSubId(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to rename sub-segment");
+    } finally {
+      setSavingSub(false);
+    }
   }
 
   async function onAssignToSegment(courseId: string) {
@@ -445,6 +478,39 @@ export default function SegmentDetailPage() {
           </Modal>
         )}
 
+        {editSubId && (
+          <Modal title="Edit sub-segment" onClose={() => setEditSubId(null)}>
+            <form onSubmit={onUpdateSubsegment}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Sub-segment name</div>
+              <input
+                required
+                autoFocus
+                value={editSubName}
+                onChange={(e) => setEditSubName(e.target.value)}
+                style={{ ...inputStyle, width: "100%", marginBottom: 14 }}
+              />
+              <button
+                type="submit"
+                disabled={savingSub}
+                style={{
+                  ...smallBtn,
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "11px 18px",
+                  fontSize: 14,
+                  opacity: savingSub ? 0.7 : 1,
+                }}
+              >
+                {savingSub && <Spinner />}
+                {savingSub ? "Saving…" : "Save changes"}
+              </button>
+            </form>
+          </Modal>
+        )}
+
         {segment.subsegments.length === 0 ? (
           <p style={{ color: "var(--ink2)", fontSize: 13.5 }}>No sub-segments yet.</p>
         ) : (
@@ -475,6 +541,9 @@ export default function SegmentDetailPage() {
                         style={{ background: "none", border: "none", color: "var(--purple)", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}
                       >
                         {expandedTests ? "Hide tests" : "Manage tests"}
+                      </button>
+                      <button onClick={() => openEditSub(sub.id, sub.name)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                        <EditIcon />
                       </button>
                       <button onClick={() => onDeleteSubsegment(sub.id)} title="Delete" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                         <TrashIcon />

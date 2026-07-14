@@ -37,6 +37,23 @@ function PlusIcon() {
   );
 }
 
+function EyeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+
 export default function AdminSubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +64,12 @@ export default function AdminSubscriptionsPage() {
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Edit-in-modal state
+  const [editSub, setEditSub] = useState<Subscription | null>(null);
+  const [eTitle, setETitle] = useState("");
+  const [eDescription, setEDescription] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   function load() {
     setLoading(true);
@@ -78,6 +101,29 @@ export default function AdminSubscriptionsPage() {
       setSaveError(err instanceof ApiError ? err.message : "Failed to create subscription");
     } finally {
       setSaving(false);
+    }
+  }
+
+  function openEdit(sub: Subscription) {
+    setEditSub(sub);
+    setETitle(sub.title);
+    setEDescription(sub.description ?? "");
+    setSaveError(null);
+  }
+
+  async function onUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editSub) return;
+    setSavingEdit(true);
+    setSaveError(null);
+    try {
+      await subscriptionsApi.update(editSub.id, { title: eTitle, description: eDescription });
+      setEditSub(null);
+      load();
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Failed to save subscription");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -121,6 +167,31 @@ export default function AdminSubscriptionsPage() {
         </Modal>
       )}
 
+      {editSub && (
+        <Modal title="Edit subscription" onClose={() => setEditSub(null)}>
+          <form onSubmit={onUpdate} style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Title</div>
+              <input required autoFocus value={eTitle} onChange={(e) => setETitle(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Description</div>
+              <textarea value={eDescription} onChange={(e) => setEDescription(e.target.value)} style={{ ...inputStyle, minHeight: 90, resize: "vertical" }} />
+            </div>
+            <p style={{ color: "var(--ink3)", fontSize: 12, margin: 0 }}>Bundle contents (courses &amp; tests) are managed from the subscription page (View).</p>
+            <button
+              type="submit"
+              disabled={!eTitle.trim() || savingEdit}
+              style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: !eTitle.trim() || savingEdit ? 0.7 : 1 }}
+            >
+              {savingEdit && <Spinner />}
+              {savingEdit ? "Saving…" : "Save changes"}
+            </button>
+            {saveError && <span style={{ color: "var(--red)", fontSize: 12 }}>{saveError}</span>}
+          </form>
+        </Modal>
+      )}
+
       {loading ? (
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
       ) : subscriptions.length === 0 ? (
@@ -128,9 +199,8 @@ export default function AdminSubscriptionsPage() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
           {subscriptions.map((sub) => (
-            <Link
+            <div
               key={sub.id}
-              href={`/admin/subscriptions/${sub.id}`}
               className="entity-card"
               style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 8 }}
             >
@@ -140,7 +210,15 @@ export default function AdminSubscriptionsPage() {
                 {sub._count.courses} course{sub._count.courses === 1 ? "" : "s"} · {sub._count.tests} test{sub._count.tests === 1 ? "" : "s"} · {sub._count.enrollments} subscriber
                 {sub._count.enrollments === 1 ? "" : "s"}
               </div>
-            </Link>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                <Link href={`/admin/subscriptions/${sub.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <EyeIcon /> View
+                </Link>
+                <button onClick={() => openEdit(sub)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  <EditIcon />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}

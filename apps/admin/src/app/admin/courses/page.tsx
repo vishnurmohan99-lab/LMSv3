@@ -112,6 +112,19 @@ export default function AdminCoursesPage() {
   const [newPublished, setNewPublished] = useState(false);
   const [creating, setCreating] = useState(false);
 
+  // Edit-in-modal state
+  const [editCourse, setEditCourse] = useState<Course | null>(null);
+  const [eTitle, setETitle] = useState("");
+  const [eDescription, setEDescription] = useState("");
+  const [eBannerFile, setEBannerFile] = useState<File | null>(null);
+  const [eType, setEType] = useState<CourseType>("FREE");
+  const [ePrice, setEPrice] = useState(""); // rupees, string for input
+  const [eDurationHours, setEDurationHours] = useState("");
+  const [eDripType, setEDripType] = useState<DripType>("NONE");
+  const [eCompletionRule, setECompletionRule] = useState<CompletionRule>("MANUAL");
+  const [ePublished, setEPublished] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   function load() {
     setLoading(true);
     Promise.all([coursesApi.list(), segmentsApi.list()])
@@ -164,6 +177,49 @@ export default function AdminCoursesPage() {
       setError(err instanceof ApiError ? err.message : "Failed to create course");
     } finally {
       setCreating(false);
+    }
+  }
+
+  function openEdit(c: Course) {
+    setError(null);
+    setEditCourse(c);
+    setETitle(c.title);
+    setEDescription(c.description ?? "");
+    setEBannerFile(null);
+    setEType(c.type);
+    setEPrice(c.priceCents != null ? String(Math.round(c.priceCents / 100)) : "");
+    setEDurationHours(c.durationMinutes != null ? String(c.durationMinutes / 60) : "");
+    setEDripType(c.dripType);
+    setECompletionRule(c.completionRule);
+    setEPublished(c.published);
+  }
+
+  async function onUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editCourse) return;
+    setError(null);
+    setSaving(true);
+    try {
+      const thumbnailUrl = eBannerFile ? await uploadsApi.uploadFile(eBannerFile) : undefined;
+      const priceCents = eType === "PAID" && ePrice.trim() ? Math.round(Number(ePrice) * 100) : null;
+      const durationMinutes = eDurationHours.trim() ? Math.round(Number(eDurationHours) * 60) : null;
+      await coursesApi.update(editCourse.id, {
+        title: eTitle,
+        description: eDescription,
+        type: eType,
+        priceCents,
+        durationMinutes,
+        dripType: eDripType,
+        completionRule: eCompletionRule,
+        published: ePublished,
+        ...(thumbnailUrl ? { thumbnailUrl } : {}),
+      });
+      setEditCourse(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to save course");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -265,6 +321,109 @@ export default function AdminCoursesPage() {
         </Modal>
       )}
 
+      {editCourse && (
+        <Modal title="Edit course" onClose={() => setEditCourse(null)} maxWidth={520}>
+          <form onSubmit={onUpdate}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Course name</div>
+            <input
+              required
+              autoFocus
+              placeholder="Course name"
+              value={eTitle}
+              onChange={(e) => setETitle(e.target.value)}
+              style={{ ...inputStyle, width: "100%", marginBottom: 12 }}
+            />
+
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Description</div>
+            <textarea
+              placeholder="Short description shown on the catalog"
+              value={eDescription}
+              onChange={(e) => setEDescription(e.target.value)}
+              rows={3}
+              style={{ ...inputStyle, width: "100%", marginBottom: 12, resize: "vertical", lineHeight: 1.5 }}
+            />
+
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Banner image</div>
+            {editCourse.thumbnailUrl && !eBannerFile && (
+              <div style={{ height: 90, borderRadius: 10, marginBottom: 8, background: `url(${editCourse.thumbnailUrl}) center/cover` }} />
+            )}
+            <input type="file" accept="image/*" onChange={(e) => setEBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13, marginBottom: 12 }} />
+
+            <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Type</div>
+                <select value={eType} onChange={(e) => setEType(e.target.value as CourseType)} style={{ ...inputStyle, width: "100%" }}>
+                  <option value="FREE">Free</option>
+                  <option value="PAID">Paid</option>
+                  <option value="PRIVATE">Private</option>
+                </select>
+              </div>
+              {eType === "PAID" && (
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Price (₹)</div>
+                  <input type="number" min={0} value={ePrice} onChange={(e) => setEPrice(e.target.value)} placeholder="0" style={{ ...inputStyle, width: "100%" }} />
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Duration (hrs)</div>
+                <input type="number" min={0} step="0.5" value={eDurationHours} onChange={(e) => setEDurationHours(e.target.value)} placeholder="—" style={{ ...inputStyle, width: "100%" }} />
+              </div>
+            </div>
+
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Dripping</div>
+            <select value={eDripType} onChange={(e) => setEDripType(e.target.value as DripType)} style={{ ...inputStyle, width: "100%", marginBottom: eDripType === "SEQUENTIAL" ? 12 : 0 }}>
+              <option value="NONE">Off — all chapters open</option>
+              <option value="CALENDAR">Calendar — unlock on a fixed date</option>
+              <option value="ENROLLMENT_RELATIVE">Enrollment-relative — unlock N days after joining</option>
+              <option value="SEQUENTIAL">Sequential — unlock next chapter when previous is finished</option>
+            </select>
+            {eDripType === "SEQUENTIAL" && (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", margin: "12px 0 6px" }}>A chapter counts as finished when</div>
+                <select value={eCompletionRule} onChange={(e) => setECompletionRule(e.target.value as CompletionRule)} style={{ ...inputStyle, width: "100%" }}>
+                  <option value="MANUAL">Student marks it done</option>
+                  <option value="ALL_LESSONS_VIEWED">Student opens every lesson</option>
+                  <option value="PASS_TEST">Student passes the chapter&apos;s test</option>
+                </select>
+              </>
+            )}
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, margin: "16px 0", fontSize: 13, fontWeight: 700, color: "var(--ink2)", cursor: "pointer" }}>
+              <input type="checkbox" checked={ePublished} onChange={(e) => setEPublished(e.target.checked)} />
+              Published
+            </label>
+
+            <p style={{ color: "var(--ink3)", fontSize: 12, marginBottom: 16 }}>
+              Segment/sub-segment assignment and chapters are managed from the course page (View).
+            </p>
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "11px 18px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: saving ? "default" : "pointer",
+                opacity: saving ? 0.7 : 1,
+              }}
+            >
+              {saving && <Spinner />}
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </form>
+        </Modal>
+      )}
+
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
@@ -319,12 +478,16 @@ export default function AdminCoursesPage() {
                   {categoryLabel(c)}
                 </div>
                 <div style={{ display: "flex", gap: 14 }}>
-                  <Link href={`/admin/courses/${c.id}`} title="View" style={{ display: "flex" }}>
+                  <Link href={`/admin/courses/${c.id}`} title="View / build" style={{ display: "flex" }}>
                     <EyeIcon />
                   </Link>
-                  <Link href={`/admin/courses/${c.id}`} title="Edit" style={{ display: "flex" }}>
+                  <button
+                    onClick={() => openEdit(c)}
+                    title="Edit"
+                    style={{ display: "flex", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                  >
                     <EditIcon />
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>

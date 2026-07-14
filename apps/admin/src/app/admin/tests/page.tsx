@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { testsApi, uploadsApi, ApiError, type Test, type TestType } from "@/lib/api";
+import { testsApi, uploadsApi, ApiError, type Test, type TestType, type TestPublishMode } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useConfirm } from "@/components/ConfirmProvider";
@@ -12,6 +12,14 @@ const BANNER_HEIGHT = 110;
 
 function initials(name: string) {
   return name.trim().slice(0, 2).toUpperCase();
+}
+
+/** ISO string → value for <input type="datetime-local"> (local time, minute precision). */
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function CardBanner({ url, name }: { url: string | null; name: string }) {
@@ -134,8 +142,19 @@ export default function AdminTestsPage() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
+  // Edit-in-modal state
+  const [editTest, setEditTest] = useState<Test | null>(null);
+  const [eTitle, setETitle] = useState("");
+  const [eDescription, setEDescription] = useState("");
+  const [eBannerFile, setEBannerFile] = useState<File | null>(null);
+  const [eType, setEType] = useState<TestType>("FREE");
+  const [ePublishMode, setEPublishMode] = useState<TestPublishMode>("MANUAL");
+  const [eFrom, setEFrom] = useState("");
+  const [eUntil, setEUntil] = useState("");
+  const [eDuration, setEDuration] = useState("");
+  const [ePassPercent, setEPassPercent] = useState("");
+  const [ePublished, setEPublished] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   function load() {
     setLoading(true);
@@ -172,13 +191,47 @@ export default function AdminTestsPage() {
     }
   }
 
-  async function onSaveRename(id: string) {
+  function openEdit(t: Test) {
+    setError(null);
+    setEditTest(t);
+    setETitle(t.title);
+    setEDescription(t.description ?? "");
+    setEBannerFile(null);
+    setEType(t.type);
+    setEPublishMode(t.publishMode);
+    setEFrom(toLocalInput(t.availableFrom));
+    setEUntil(toLocalInput(t.availableUntil));
+    setEDuration(t.durationMinutes != null ? String(t.durationMinutes) : "");
+    setEPassPercent(String(t.passPercent));
+    setEPublished(t.published);
+  }
+
+  async function onUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editTest) return;
+    setError(null);
+    setSaving(true);
     try {
-      await testsApi.update(id, { title: editingTitle });
-      setEditingId(null);
+      const bannerUrl = eBannerFile ? await uploadsApi.uploadFile(eBannerFile) : undefined;
+      const timed = ePublishMode === "TIMED";
+      await testsApi.update(editTest.id, {
+        title: eTitle,
+        description: eDescription,
+        type: eType,
+        publishMode: ePublishMode,
+        availableFrom: timed && eFrom ? new Date(eFrom).toISOString() : null,
+        availableUntil: timed && eUntil ? new Date(eUntil).toISOString() : null,
+        durationMinutes: timed && eDuration.trim() ? Math.round(Number(eDuration)) : null,
+        passPercent: ePassPercent.trim() ? Math.round(Number(ePassPercent)) : 50,
+        published: ePublished,
+        ...(bannerUrl ? { bannerUrl } : {}),
+      });
+      setEditTest(null);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to rename test");
+      setError(err instanceof ApiError ? err.message : "Failed to save test");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -270,6 +323,94 @@ export default function AdminTestsPage() {
         </Modal>
       )}
 
+      {editTest && (
+        <Modal title="Edit test" onClose={() => setEditTest(null)} maxWidth={520}>
+          <form onSubmit={onUpdate} style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Test title</div>
+              <input required autoFocus value={eTitle} onChange={(e) => setETitle(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Description</div>
+              <textarea value={eDescription} onChange={(e) => setEDescription(e.target.value)} rows={3} style={{ ...inputStyle, width: "100%", resize: "vertical", lineHeight: 1.5 }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Banner image</div>
+              {editTest.bannerUrl && !eBannerFile && (
+                <div style={{ height: 90, borderRadius: 10, marginBottom: 8, background: `url(${editTest.bannerUrl}) center/cover` }} />
+              )}
+              <input type="file" accept="image/*" onChange={(e) => setEBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Type</div>
+                <select value={eType} onChange={(e) => setEType(e.target.value as TestType)} style={{ ...inputStyle, width: "100%" }}>
+                  <option value="FREE">Free</option>
+                  <option value="PAID">Paid — part of a subscription plan</option>
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Pass mark (%)</div>
+                <input type="number" min={0} max={100} value={ePassPercent} onChange={(e) => setEPassPercent(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Availability</div>
+              <select value={ePublishMode} onChange={(e) => setEPublishMode(e.target.value as TestPublishMode)} style={{ ...inputStyle, width: "100%" }}>
+                <option value="MANUAL">Manual — open whenever it&apos;s published</option>
+                <option value="TIMED">Timed — only within a window, with a duration</option>
+              </select>
+            </div>
+            {ePublishMode === "TIMED" && (
+              <div style={{ display: "grid", gap: 10, padding: "12px 14px", background: "var(--bg)", borderRadius: 10 }}>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Available from</div>
+                    <input type="datetime-local" value={eFrom} onChange={(e) => setEFrom(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Available until</div>
+                    <input type="datetime-local" value={eUntil} onChange={(e) => setEUntil(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Duration (minutes)</div>
+                  <input type="number" min={1} value={eDuration} onChange={(e) => setEDuration(e.target.value)} placeholder="e.g. 60" style={{ ...inputStyle, width: "100%" }} />
+                </div>
+              </div>
+            )}
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--ink2)", cursor: "pointer" }}>
+              <input type="checkbox" checked={ePublished} onChange={(e) => setEPublished(e.target.checked)} />
+              Published
+            </label>
+            <p style={{ color: "var(--ink3)", fontSize: 12, margin: 0 }}>Questions and segment/course assignment are managed from the test page (View).</p>
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "11px 20px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: saving ? "default" : "pointer",
+                opacity: saving ? 0.6 : 1,
+              }}
+            >
+              {saving && <Spinner />}
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </form>
+        </Modal>
+      )}
+
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       <input
@@ -298,17 +439,7 @@ export default function AdminTestsPage() {
             >
               <CardBanner url={test.bannerUrl} name={test.title} />
               <div style={{ padding: 16 }}>
-                {editingId === test.id ? (
-                  <input
-                    autoFocus
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && onSaveRename(test.id)}
-                    style={{ ...inputStyle, padding: "6px 10px", marginBottom: 8 }}
-                  />
-                ) : (
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{test.title}</div>
-                )}
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{test.title}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                   <StatusBadge published={test.published} />
                   <span
@@ -340,24 +471,12 @@ export default function AdminTestsPage() {
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  {editingId === test.id ? (
-                    <button
-                      onClick={() => onSaveRename(test.id)}
-                      style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, background: "none", border: "none", cursor: "pointer" }}
-                    >
-                      Save
-                    </button>
-                  ) : (
-                    <Link href={`/admin/tests/${test.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                      <EyeIcon /> View
-                    </Link>
-                  )}
+                  <Link href={`/admin/tests/${test.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                    <EyeIcon /> View
+                  </Link>
                   <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
                     <button
-                      onClick={() => {
-                        setEditingId(test.id);
-                        setEditingTitle(test.title);
-                      }}
+                      onClick={() => openEdit(test)}
                       title="Edit"
                       style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >

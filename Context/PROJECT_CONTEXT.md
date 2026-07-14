@@ -756,6 +756,24 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Admin edit-in-modal conversion (2026-07-14, `<pending>`).** Every admin entity's
+  "Edit" now opens a Design-System `Modal` popup editing the entity's full own-settings,
+  instead of inline row-edit or navigating to the detail page; each card/row keeps a
+  separate "View" (eye) affordance to reach the builder/detail page. Converted:
+  **Courses** (title, description, banner, type, price[PAID], duration, dripType,
+  completionRule[SEQUENTIAL], published — was a detail-page link), **Segments** (name +
+  banner — was inline), **Sub-segments** (name — had no edit before; new EditIcon in
+  `segments/[id]`), **Tests** (title, description, banner, type, publishMode + TIMED
+  window/duration, passPercent, published — was inline), **Question banks** (title,
+  description, banner, published — was inline), **Subscriptions** (title, description —
+  card restructured Link→div+View/Edit footer), **Batches** (name, status, start/end
+  dates, faculty; segment fixed at creation — card restructured), **Notes banks** (title,
+  batch assignment, published — new edit modal, card gained View/Edit/Delete footer).
+  Verified live on the admin app (each modal opens prefilled + saves) with no console
+  errors. Deployed via `npx vercel --prod` from apps/admin (Vercel git auto-deploy still
+  stalled). Also: earlier this session the web gate-consolidation fix (`5c5d39c`) and the
+  Ascent student-screen pixel-match pass were deployed via CLI.
+
 - **Ascent Design System pixel-match pass (2026-07-09 → 07-10).** New `Design System/`
   mockup export (`.dc.html`) replaced the old `design-reference/` folder (`5a9b53a`
   removed old, `e32dbe0` added new; `a67f9dc` added `Student Screens 3.dc.html` for the
@@ -989,4 +1007,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-10 (Ascent Design System pixel-match pass, latest commit `a8eb4a7` + gate-consolidation follow-up).*
+*Last updated: 2026-07-14 (admin edit-in-modal conversion across all entities).*

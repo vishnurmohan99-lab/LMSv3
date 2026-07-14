@@ -47,6 +47,28 @@ function PlusIcon() {
   );
 }
 
+function EyeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+
+/** ISO string → value for <input type="date"> (YYYY-MM-DD). */
+function toDateInput(iso: string | null): string {
+  return iso ? iso.slice(0, 10) : "";
+}
+
 export default function AdminBatchesPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -65,6 +87,15 @@ export default function AdminBatchesPage() {
   const [facultyId, setFacultyId] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Edit-in-modal state
+  const [editBatch, setEditBatch] = useState<Batch | null>(null);
+  const [eName, setEName] = useState("");
+  const [eStatusId, setEStatusId] = useState("");
+  const [eStartDate, setEStartDate] = useState("");
+  const [eEndDate, setEEndDate] = useState("");
+  const [eFacultyId, setEFacultyId] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   function load() {
     setLoading(true);
@@ -125,6 +156,38 @@ export default function AdminBatchesPage() {
   }
 
   const canSave = name.trim().length > 0 && startDate && !!segmentId && (!hasSubsegments || !!subsegmentId);
+
+  function openEdit(batch: Batch) {
+    setEditBatch(batch);
+    setEName(batch.name);
+    setEStatusId(batch.statusId);
+    setEStartDate(toDateInput(batch.startDate));
+    setEEndDate(toDateInput(batch.endDate));
+    setEFacultyId(batch.facultyId ?? "");
+    setSaveError(null);
+  }
+
+  async function onUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editBatch) return;
+    setSavingEdit(true);
+    setSaveError(null);
+    try {
+      await batchesApi.update(editBatch.id, {
+        name: eName,
+        statusId: eStatusId,
+        startDate: new Date(eStartDate).toISOString(),
+        endDate: eEndDate ? new Date(eEndDate).toISOString() : null,
+        facultyId: eFacultyId || null,
+      });
+      setEditBatch(null);
+      load();
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Failed to save batch");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   return (
     <div className="fade-in" style={{ padding: "30px 40px 60px", maxWidth: 1100, margin: "0 auto" }}>
@@ -220,6 +283,54 @@ export default function AdminBatchesPage() {
         </Modal>
       )}
 
+      {editBatch && (
+        <Modal title="Edit batch" onClose={() => setEditBatch(null)}>
+          <form onSubmit={onUpdate} style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Batch name</div>
+              <input required autoFocus value={eName} onChange={(e) => setEName(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Status</div>
+              <select value={eStatusId} onChange={(e) => setEStatusId(e.target.value)} style={inputStyle}>
+                {statusTypes.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Start date</div>
+                <input required type="date" value={eStartDate} onChange={(e) => setEStartDate(e.target.value)} style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>End date (optional)</div>
+                <input type="date" value={eEndDate} onChange={(e) => setEEndDate(e.target.value)} style={inputStyle} />
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Lead faculty (optional)</div>
+              <select value={eFacultyId} onChange={(e) => setEFacultyId(e.target.value)} style={inputStyle}>
+                <option value="">— None —</option>
+                {facultyUsers.map((f) => (
+                  <option key={f.id} value={f.id}>{f.fullName} ({f.email})</option>
+                ))}
+              </select>
+            </div>
+            <p style={{ color: "var(--ink3)", fontSize: 12, margin: 0 }}>Segment/sub-segment is fixed at creation. Students &amp; sessions are managed from the batch page (View).</p>
+            <button
+              type="submit"
+              disabled={!eName.trim() || !eStartDate || savingEdit}
+              style={{ ...btnStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: !eName.trim() || !eStartDate || savingEdit ? 0.7 : 1 }}
+            >
+              {savingEdit && <Spinner />}
+              {savingEdit ? "Saving…" : "Save changes"}
+            </button>
+            {saveError && <span style={{ color: "var(--red)", fontSize: 12 }}>{saveError}</span>}
+          </form>
+        </Modal>
+      )}
+
       {loading ? (
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
       ) : batches.length === 0 ? (
@@ -227,9 +338,8 @@ export default function AdminBatchesPage() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
           {batches.map((batch) => (
-            <Link
+            <div
               key={batch.id}
-              href={`/admin/batches/${batch.id}`}
               className="entity-card"
               style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18, display: "grid", gap: 10 }}
             >
@@ -256,7 +366,15 @@ export default function AdminBatchesPage() {
                 {batch.faculty ? `Faculty: ${batch.faculty.fullName}` : "No faculty assigned"} · {batch._count?.enrollments ?? 0} student
                 {(batch._count?.enrollments ?? 0) === 1 ? "" : "s"}
               </div>
-            </Link>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                <Link href={`/admin/batches/${batch.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <EyeIcon /> View
+                </Link>
+                <button onClick={() => openEdit(batch)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  <EditIcon />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}

@@ -119,8 +119,10 @@ export default function AdminSegmentsPage() {
   const [needsSubsegments, setNeedsSubsegments] = useState<boolean | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
+  const [editSegment, setEditSegment] = useState<Segment | null>(null);
+  const [eName, setEName] = useState("");
+  const [eBannerFile, setEBannerFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
   function load() {
     setLoading(true);
@@ -162,13 +164,27 @@ export default function AdminSegmentsPage() {
     }
   }
 
-  async function onSaveRename(id: string) {
+  function openEdit(segment: Segment) {
+    setError(null);
+    setEditSegment(segment);
+    setEName(segment.name);
+    setEBannerFile(null);
+  }
+
+  async function onUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editSegment) return;
+    setError(null);
+    setSaving(true);
     try {
-      await segmentsApi.update(id, { name: editingName });
-      setEditingId(null);
+      const bannerUrl = eBannerFile ? await uploadsApi.uploadFile(eBannerFile) : undefined;
+      await segmentsApi.update(editSegment.id, { name: eName, ...(bannerUrl ? { bannerUrl } : {}) });
+      setEditSegment(null);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to rename segment");
+      setError(err instanceof ApiError ? err.message : "Failed to save segment");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -298,6 +314,48 @@ export default function AdminSegmentsPage() {
         </Modal>
       )}
 
+      {editSegment && (
+        <Modal title="Edit segment" onClose={() => setEditSegment(null)}>
+          <form onSubmit={onUpdate} style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Segment name</div>
+              <input required autoFocus value={eName} onChange={(e) => setEName(e.target.value)} style={{ ...inputStyle, width: "100%" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Banner image</div>
+              {editSegment.bannerUrl && !eBannerFile && (
+                <div style={{ height: 90, borderRadius: 10, marginBottom: 8, background: `url(${editSegment.bannerUrl}) center/cover` }} />
+              )}
+              <input type="file" accept="image/*" onChange={(e) => setEBannerFile(e.target.files?.[0] ?? null)} style={{ fontSize: 13 }} />
+            </div>
+            <p style={{ color: "var(--ink3)", fontSize: 12, margin: 0 }}>Sub-segments and course assignments are managed from the segment page (View).</p>
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "11px 20px",
+                background: "var(--ink)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: saving ? "default" : "pointer",
+                opacity: saving ? 0.6 : 1,
+              }}
+            >
+              {saving && <Spinner />}
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </form>
+        </Modal>
+      )}
+
       {error && <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       <input
@@ -326,40 +384,18 @@ export default function AdminSegmentsPage() {
             >
               <CardBanner url={segment.bannerUrl} name={segment.name} />
               <div style={{ padding: 16 }}>
-                {editingId === segment.id ? (
-                  <input
-                    autoFocus
-                    value={editingName}
-                    onChange={(e) => setEditingName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && onSaveRename(segment.id)}
-                    style={{ ...inputStyle, padding: "6px 10px", marginBottom: 8 }}
-                  />
-                ) : (
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{segment.name}</div>
-                )}
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{segment.name}</div>
                 <div style={{ fontSize: 12, color: "var(--ink2)", marginBottom: 12 }}>
                   {segment.subsegments.length} sub-segment{segment.subsegments.length === 1 ? "" : "s"} ·{" "}
                   {segment._count?.courses ?? 0} course{segment._count?.courses === 1 ? "" : "s"}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  {editingId === segment.id ? (
-                    <button
-                      onClick={() => onSaveRename(segment.id)}
-                      style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, background: "none", border: "none", cursor: "pointer" }}
-                    >
-                      Save
-                    </button>
-                  ) : (
-                    <Link href={`/admin/segments/${segment.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                      <EyeIcon /> View
-                    </Link>
-                  )}
+                  <Link href={`/admin/segments/${segment.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                    <EyeIcon /> View
+                  </Link>
                   <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
                     <button
-                      onClick={() => {
-                        setEditingId(segment.id);
-                        setEditingName(segment.name);
-                      }}
+                      onClick={() => openEdit(segment)}
                       title="Edit"
                       style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >

@@ -5,6 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { facultyNotesApi, batchesApi, ApiError, type NotesBank, type Batch } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmProvider";
+import Modal from "@/components/Modal";
+import Spinner from "@/components/Spinner";
+
+function EyeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="1.8">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -30,6 +49,14 @@ export default function AdminNotesPage() {
   const [selectedBatches, setSelectedBatches] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+
+  // Edit-in-modal state
+  const [editBank, setEditBank] = useState<NotesBank | null>(null);
+  const [eTitle, setETitle] = useState("");
+  const [eBatches, setEBatches] = useState<Set<string>>(new Set());
+  const [ePublished, setEPublished] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   function load() {
     setLoading(true);
@@ -69,6 +96,41 @@ export default function AdminNotesPage() {
       setModalError(e instanceof ApiError ? e.message : "Failed to create notes bank");
     } finally {
       setSaving(false);
+    }
+  }
+
+  function openEdit(bank: NotesBank) {
+    setEditBank(bank);
+    setETitle(bank.title);
+    setEBatches(new Set(bank.batches.map((b) => b.batch.id)));
+    setEPublished(bank.published);
+    setEditError(null);
+  }
+
+  function toggleEditBatch(id: string) {
+    setEBatches((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  async function onUpdate() {
+    if (!editBank) return;
+    if (!eTitle.trim()) {
+      setEditError("Title is required");
+      return;
+    }
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      await facultyNotesApi.updateBank(editBank.id, { title: eTitle.trim(), published: ePublished, batchIds: [...eBatches] });
+      setEditBank(null);
+      load();
+    } catch (e) {
+      setEditError(e instanceof ApiError ? e.message : "Failed to save notes bank");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -121,8 +183,16 @@ export default function AdminNotesPage() {
                 </div>
                 <div style={{ fontSize: 12.5, color: "var(--ink3)", fontWeight: 600 }}>{bank._count?.notes ?? 0} note{(bank._count?.notes ?? 0) === 1 ? "" : "s"}</div>
               </Link>
-              <div style={{ borderTop: "1px solid var(--line)", padding: "10px 18px", display: "flex", justifyContent: "flex-end" }}>
-                <button onClick={() => onDelete(bank)} style={{ background: "none", border: "none", color: "var(--red)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Delete</button>
+              <div style={{ borderTop: "1px solid var(--line)", padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Link href={`/admin/notes/${bank.id}`} style={{ color: "var(--orange)", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <EyeIcon /> View
+                </Link>
+                <span style={{ display: "inline-flex", gap: 14, alignItems: "center" }}>
+                  <button onClick={() => openEdit(bank)} title="Edit" style={{ display: "flex", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    <EditIcon />
+                  </button>
+                  <button onClick={() => onDelete(bank)} style={{ background: "none", border: "none", color: "var(--red)", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Delete</button>
+                </span>
               </div>
             </div>
           ))}
@@ -155,6 +225,45 @@ export default function AdminNotesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {editBank && (
+        <Modal title="Edit notes bank" onClose={() => setEditBank(null)}>
+          <div style={{ display: "grid", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Title</div>
+              <input autoFocus value={eTitle} onChange={(e) => setETitle(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink2)", marginBottom: 8 }}>Share with batches</div>
+              <div style={{ display: "grid", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+                {batches.length === 0 ? (
+                  <div style={{ fontSize: 13, color: "var(--ink3)" }}>No batches exist yet.</div>
+                ) : (
+                  batches.map((b) => (
+                    <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", border: "1px solid var(--line)", borderRadius: "var(--rs)", cursor: "pointer", fontSize: 13.5 }}>
+                      <input type="checkbox" checked={eBatches.has(b.id)} onChange={() => toggleEditBatch(b.id)} style={{ width: 16, height: 16, accentColor: "var(--orange)" }} />
+                      {b.name}
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--ink2)", cursor: "pointer" }}>
+              <input type="checkbox" checked={ePublished} onChange={(e) => setEPublished(e.target.checked)} style={{ width: 16, height: 16, accentColor: "var(--orange)" }} />
+              Published (visible to students in assigned batches)
+            </label>
+            {editError && <p style={{ color: "var(--red)", fontSize: 12.5, margin: 0 }}>{editError}</p>}
+            <button
+              onClick={onUpdate}
+              disabled={savingEdit || !eTitle.trim()}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "11px 18px", background: "var(--ink)", color: "#fff", border: "none", borderRadius: "var(--rs)", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: savingEdit ? "default" : "pointer", opacity: savingEdit || !eTitle.trim() ? 0.7 : 1 }}
+            >
+              {savingEdit && <Spinner />}
+              {savingEdit ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </Modal>
       )}
     </main>
   );
