@@ -756,6 +756,19 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Fix: monorepo build failed on Vercel — API Prisma client not generated (2026-07-14).**
+  A Vercel project builds from the repo ROOT, running the root `build` (`web && admin &&
+  api`). `apps/api`'s build was just `nest build` — no `prisma generate` — so the API
+  failed with hundreds of `Cannot find module '../../generated/prisma/client'` /
+  `Property X does not exist on PrismaService` errors (web+admin compiled fine). Render
+  only worked because its buildCommand runs `prisma generate` first. Fix: `apps/api`
+  `build` is now `prisma generate && nest build` (self-sufficient wherever it runs;
+  harmless double-generate on Render). Also added a **root `vercel.json`** with
+  `git.deploymentEnabled.main: false` to stop that redundant repo-root project from
+  auto-deploying (there are now root + apps/web + apps/admin vercel.jsons, all disabling
+  main auto-deploy → CLI is the single deploy path). Verified `npm run build` (full root)
+  exits 0.
+
 - **Deploys are now CLI-only (2026-07-14, `86c9f8f`).** Vercel's Git integration was
   auto-deploying BOTH projects (web + admin) on every push to `main`, racing the CLI
   deploys and producing failing "0/2" commit checks. Disabled Git-triggered deploys for
