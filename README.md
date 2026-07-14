@@ -1,6 +1,6 @@
-# Duvex LMS
+#LMS
 
-Monorepo for the Duvex eLearning platform: Student / Faculty / Admin experiences.
+Monorepo for the  eLearning platform: Student / Faculty / Admin experiences.
 
 ## Structure
 
