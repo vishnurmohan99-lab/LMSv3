@@ -388,6 +388,16 @@ button:active, a:active {
 .mobile-back-btn {
   display: none;
 }
+
+/* Horizontally scrollable tab strips: functional scroll, no visible scrollbar. */
+.lesson-tabbar {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.lesson-tabbar::-webkit-scrollbar {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .course-pane-list {
     width: 100% !important;
@@ -404,6 +414,13 @@ button:active, a:active {
   }
   .mobile-back-btn {
     display: flex !important;
+  }
+  /* Lesson tab bar (Overview / Flashcards / Cheat Sheet / Doubt) can be wider than
+     a phone screen — let it scroll horizontally on its own instead of pushing the
+     whole lesson pane sideways. Tighter side padding to match the mobile rhythm. */
+  .lesson-tabbar {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
   .lesson-video-grid {
     grid-template-columns: 1fr !important;

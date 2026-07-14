@@ -28,6 +28,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +48,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const { user } = await authApi.login({ email, password });
+      const { user } = await authApi.login({ email, password }, rememberMe);
       router.push(ROLE_HOME[user.role] ?? "/login");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
@@ -73,14 +75,59 @@ export default function LoginPage() {
       />
 
       <label style={{ fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>Password</label>
-      <input
-        type="password"
-        required
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="••••••••"
-        style={{ ...inputStyle, marginBottom: 8 }}
-      />
+      <div style={{ position: "relative" }}>
+        <input
+          type={showPassword ? "text" : "password"}
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••••"
+          style={{ ...inputStyle, marginBottom: 8, paddingRight: 52 }}
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword((v) => !v)}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-pressed={showPassword}
+          style={{
+            position: "absolute",
+            right: 6,
+            top: 6,
+            height: 32,
+            padding: "0 10px",
+            border: "none",
+            background: "transparent",
+            color: "var(--ink2)",
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: "inherit",
+            cursor: "pointer",
+          }}
+        >
+          {showPassword ? "Hide" : "Show"}
+        </button>
+      </div>
+
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 13,
+          color: "var(--ink2)",
+          margin: "4px 0 2px",
+          cursor: "pointer",
+          userSelect: "none",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={rememberMe}
+          onChange={(e) => setRememberMe(e.target.checked)}
+          style={{ width: 16, height: 16, accentColor: "var(--orange)", cursor: "pointer" }}
+        />
+        Remember me on this device
+      </label>
 
       {error && (
         <p style={{ color: "var(--red)", fontSize: 13, marginBottom: 14 }}>{error}</p>

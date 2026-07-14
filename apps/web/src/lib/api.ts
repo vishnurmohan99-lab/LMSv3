@@ -15,20 +15,47 @@ export class ApiError extends Error {
 const ACCESS_KEY = 'access_token';
 const REFRESH_KEY = 'refresh_token';
 
+// "Remember me" chooses where tokens live: localStorage persists across browser
+// restarts (until the 3-day refresh token expires), while sessionStorage is wiped
+// when the tab/browser closes. getToken reads whichever holds the token.
 function getToken(key: string): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return window.localStorage.getItem(key);
+    return window.localStorage.getItem(key) ?? window.sessionStorage.getItem(key);
   } catch {
     return null;
   }
 }
 
-function setTokens(accessToken?: string, refreshToken?: string) {
+// Where the current session's tokens are stored — used so a silent refresh writes
+// the new tokens back to the same place the user's "remember me" choice picked.
+function activeStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    if (window.sessionStorage.getItem(REFRESH_KEY)) return window.sessionStorage;
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function setTokens(accessToken?: string, refreshToken?: string, remember?: boolean) {
   if (typeof window === 'undefined') return;
   try {
-    if (accessToken) window.localStorage.setItem(ACCESS_KEY, accessToken);
-    if (refreshToken) window.localStorage.setItem(REFRESH_KEY, refreshToken);
+    // On login `remember` is explicit; on refresh it's undefined, so keep using
+    // whichever storage the session already lives in.
+    const store = remember === undefined ? activeStorage() : remember ? window.localStorage : window.sessionStorage;
+    if (!store) return;
+    // Ensure the other storage never keeps a stale copy that getToken would find.
+    const other = store === window.localStorage ? window.sessionStorage : window.localStorage;
+    if (accessToken) {
+      store.setItem(ACCESS_KEY, accessToken);
+      other.removeItem(ACCESS_KEY);
+    }
+    if (refreshToken) {
+      store.setItem(REFRESH_KEY, refreshToken);
+      other.removeItem(REFRESH_KEY);
+    }
   } catch {
     /* storage unavailable (private mode) — cookie fallback still applies */
   }
@@ -39,6 +66,8 @@ function clearTokens() {
   try {
     window.localStorage.removeItem(ACCESS_KEY);
     window.localStorage.removeItem(REFRESH_KEY);
+    window.sessionStorage.removeItem(ACCESS_KEY);
+    window.sessionStorage.removeItem(REFRESH_KEY);
   } catch {
     /* ignore */
   }
@@ -110,14 +139,14 @@ export interface AuthUser {
 type AuthResponse = { user: AuthUser; accessToken?: string; refreshToken?: string };
 
 export const authApi = {
-  register: async (data: { fullName: string; email: string; password: string }) => {
+  register: async (data: { fullName: string; email: string; password: string }, remember = true) => {
     const res = await request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(data) });
-    setTokens(res.accessToken, res.refreshToken);
+    setTokens(res.accessToken, res.refreshToken, remember);
     return res;
   },
-  login: async (data: { email: string; password: string }) => {
+  login: async (data: { email: string; password: string }, remember = true) => {
     const res = await request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) });
-    setTokens(res.accessToken, res.refreshToken);
+    setTokens(res.accessToken, res.refreshToken, remember);
     return res;
   },
   logout: async () => {

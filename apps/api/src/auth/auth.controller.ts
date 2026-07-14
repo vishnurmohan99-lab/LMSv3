@@ -9,7 +9,8 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import type { JwtPayload } from './jwt-payload.interface';
 
 const ACCESS_COOKIE_MAX_AGE_MS = 15 * 60 * 1000;
-const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// Keep in sync with REFRESH_TOKEN_TTL in auth.service.ts (3-day session).
+const REFRESH_COOKIE_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
 @Controller('auth')
 export class AuthController {

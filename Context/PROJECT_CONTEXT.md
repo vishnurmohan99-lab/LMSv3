@@ -756,6 +756,23 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Login UX (show password + remember me + 3-day session) & course-page mobile fixes (2026-07-14).**
+  Login page (`apps/web/.../(auth)/login/page.tsx`): added a Show/Hide password toggle
+  and a "Remember me on this device" checkbox (default checked). "Remember me" now
+  controls token storage in both frontends' `lib/api.ts`: checked → `localStorage`
+  (persists across restarts), unchecked → `sessionStorage` (cleared when the tab/browser
+  closes); a silent refresh writes new tokens back to whichever storage the session lives
+  in. Session lifetime shortened to **3 days**: `REFRESH_TOKEN_TTL` `'7d'→'3d'` in
+  `auth.service.ts` + matching `REFRESH_COOKIE_MAX_AGE_MS` in `auth.controller.ts`.
+  Course page (`apps/web/.../student/courses/[id]/page.tsx`): fixed horizontal
+  "screen slides left" overflow — the lesson tab strip (Overview/Flashcards/Cheat
+  Sheet/Doubt) was wider than a phone and pushed the whole pane sideways; it now scrolls
+  internally (`.lesson-tabbar` `overflow-x:auto` + hidden scrollbar, tabs `flex:none`),
+  the content scroller is clamped (`overflowX:hidden` + `maxWidth:100%`). PDF lessons now
+  render inside a `maxWidth:100%` wrapper and gained an "Open PDF" link (native full-screen
+  viewer) since inline PDF-in-iframe is unreliable on iOS Safari. Verified at 375px:
+  document no longer overflows X, tab strip scrolls internally, tokens land in
+  sessionStorage when remember unchecked; all three apps `tsc --noEmit` clean.
 - **Fix: mobile login didn't work + broken auth-page layout on mobile (2026-07-14).**
   Two issues on `/login` (and `/register`): (1) the `(auth)` layout was a two-column
   flex split (purple hero + form) with no responsive rule, so on phones both columns
@@ -1063,4 +1080,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-14 (mobile login fix: token-based auth + responsive auth-page layout).*
+*Last updated: 2026-07-14 (login show-password/remember-me/3-day session + course-page mobile overflow & PDF fixes).*

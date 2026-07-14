@@ -7,7 +7,9 @@ import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './jwt-payload.interface';
 
 const ACCESS_TOKEN_TTL = '15m';
-const REFRESH_TOKEN_TTL = '7d';
+// Session lifetime: after 3 days of inactivity the refresh token expires and the
+// user must log in again. The 15m access token is silently refreshed until then.
+const REFRESH_TOKEN_TTL = '3d';
 
 @Injectable()
 export class AuthService {

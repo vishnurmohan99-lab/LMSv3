@@ -299,16 +299,44 @@ function LessonViewer({ lesson }: { lesson: Lesson }) {
 
   if (lesson.type === "PDF") {
     return lesson.contentUrl ? (
-      <div
-        className="fade-in-up"
-        style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden", boxShadow: "0 8px 28px rgba(0,0,0,.06)" }}
-      >
-        {/* view=FitH fits the page to the frame width so portrait PDFs fill it instead of
-            being letterboxed on the viewer's dark background; white bg covers any gaps. */}
-        <iframe
-          src={`${lesson.contentUrl}#toolbar=0&navpanes=0&view=FitH`}
-          style={{ width: "100%", height: "85vh", border: "none", display: "block", background: "#fff" }}
-        />
+      <div className="fade-in-up" style={{ maxWidth: "100%" }}>
+        <div
+          style={{ background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--rm)", overflow: "hidden", boxShadow: "0 8px 28px rgba(0,0,0,.06)" }}
+        >
+          {/* view=FitH fits the page to the frame width so portrait PDFs fill it instead of
+              being letterboxed on the viewer's dark background; white bg covers any gaps.
+              Inline PDF-in-iframe is unreliable on iOS Safari, so the "Open PDF" link below
+              is the dependable fallback (native full-screen viewer with pan/zoom). */}
+          <iframe
+            src={`${lesson.contentUrl}#toolbar=0&navpanes=0&view=FitH`}
+            style={{ width: "100%", height: "85vh", border: "none", display: "block", background: "#fff" }}
+          />
+        </div>
+        <a
+          href={lesson.contentUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 12,
+            padding: "9px 16px",
+            background: "var(--orange)",
+            color: "#fff",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            boxShadow: "0 2px 8px rgba(242,106,27,.3)",
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <path d="M15 3h6v6" />
+            <path d="M10 14 21 3" />
+          </svg>
+          Open PDF
+        </a>
       </div>
     ) : (
       <div className="fade-in-up" style={{ padding: 24, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", color: "var(--ink2)" }}>
@@ -867,7 +895,10 @@ export default function StudentCoursePlayerPage() {
               </div>
             </div>
 
-            <div style={{ flex: "none", display: "flex", gap: 2, borderBottom: "1px solid var(--line)", padding: "0 26px", background: "var(--card)" }}>
+            <div
+              className="lesson-tabbar"
+              style={{ flex: "none", display: "flex", gap: 2, borderBottom: "1px solid var(--line)", padding: "0 26px", background: "var(--card)", overflowX: "auto" }}
+            >
               {tabs.map((tb) => (
                 <div
                   key={tb.key}
@@ -881,6 +912,7 @@ export default function StudentCoursePlayerPage() {
                     cursor: "pointer",
                     userSelect: "none",
                     whiteSpace: "nowrap",
+                    flex: "none",
                   }}
                 >
                   {tb.label}
@@ -888,8 +920,8 @@ export default function StudentCoursePlayerPage() {
               ))}
             </div>
 
-            <div className="mobile-page-pad" style={{ flex: 1, overflowY: "auto", padding: 26, display: "flex" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="mobile-page-pad" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: 26, display: "flex" }}>
+              <div style={{ flex: 1, minWidth: 0, maxWidth: "100%" }}>
                 {activeTab === "flashcards" ? (
                   <FlashcardReview key={selectedLesson.id} lessonId={selectedLesson.id} lessonTitle={selectedLesson.title} />
                 ) : activeTab === "summary" ? (
