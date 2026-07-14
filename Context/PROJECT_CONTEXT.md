@@ -756,6 +756,17 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Student app is now an installable PWA (2026-07-14).** apps/web only (student+faculty
+  web app). Added: `src/app/manifest.ts` (→ `/manifest.webmanifest`, standalone display,
+  theme #f26a1b, bg #faf8f6), generated icons in `public/icons/` (192/512/maskable-512 +
+  apple-touch-icon 180, orange square + white play triangle via a one-off sharp script),
+  `public/sw.js` (conservative service worker — same-origin GET only, so the cross-origin
+  API is never cached; navigations network-first w/ `/offline` fallback; `/_next/static` +
+  `/icons` cache-first), `src/components/ServiceWorkerRegister.tsx` (registers on window
+  load, **production only** — dev SWs break HMR), `src/app/offline/page.tsx`, and
+  PWA/`viewport` metadata (manifest link, appleWebApp, apple-touch-icon, theme-color) in
+  `layout.tsx`. Verify PWA on the Vercel prod deploy, not localhost (SW is prod-gated).
+
 - **Admin edit-in-modal conversion (2026-07-14, `4925d46` + type-fix `c23e87a`).** Every admin entity's
   "Edit" now opens a Design-System `Modal` popup editing the entity's full own-settings,
   instead of inline row-edit or navigating to the detail page; each card/row keeps a
@@ -1007,4 +1018,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-14 (admin edit-in-modal conversion across all entities).*
+*Last updated: 2026-07-14 (student app PWA; admin edit-in-modal conversion across all entities).*
