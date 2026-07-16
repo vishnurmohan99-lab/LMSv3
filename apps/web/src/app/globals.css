@@ -389,6 +389,323 @@ button:active, a:active {
   display: none;
 }
 
+/* ===================== Calendar (student + faculty CalendarApp) =====================
+   Mirrors Design System "5 · CALENDAR" (desktop) and "5m · CALENDAR MOBILE — stacked".
+   One card split 1fr/300px by an internal divider — not two separate cards. Month cells
+   carry labelled event chips on desktop and collapse to dots on mobile (5m). */
+
+.cal-shell {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--e2);
+  align-items: start;
+}
+
+.cal-left {
+  padding: 24px 26px 30px;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+
+.cal-right {
+  padding: 24px 22px;
+  background: var(--card);
+  align-self: stretch;
+  min-width: 0;
+}
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.cal-month {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.cal-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cal-dow-row,
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.cal-dow-row {
+  margin-bottom: 5px;
+}
+
+.cal-dow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--ink3);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.calendar-day-cell {
+  min-height: 104px;
+  padding: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cal-daynum {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex: none;
+}
+
+.cal-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  min-width: 0;
+}
+
+.cal-chip {
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 3px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A chip for a lesson that is live right now pulses, per the C2 component sheet. */
+.cal-chip-live {
+  animation: dotPulse 1.6s infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+
+/* Dots are the mobile (5m) representation — hidden on desktop. */
+.cal-dots {
+  display: none;
+}
+
+.cal-event-row {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  min-height: 56px;
+}
+
+/* LIVE NOW card — dark gradient panel from screen 5 / 5m. */
+.cal-live-card {
+  background: linear-gradient(135deg, #2b1220, #1c1915);
+  border-radius: 14px;
+  padding: 14px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-live-top {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.cal-live-badge {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: var(--live);
+  border-radius: 4px;
+  padding: 3px 7px;
+  flex: none;
+  white-space: nowrap;
+}
+
+.cal-live-time {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #ff87ac;
+}
+
+.cal-live-body {
+  min-width: 0;
+}
+
+.cal-live-title {
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-live-meta {
+  font-size: 10.5px;
+  color: #a8a29a;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Desktop shows the time in the top row, so it's redundant in the meta line. */
+.cal-live-metatime {
+  display: none;
+}
+
+.cal-live-join {
+  text-decoration: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #fff;
+  color: var(--ink);
+  border-radius: 8px;
+  height: 30px;
+  line-height: 30px;
+  padding: 0 13px;
+  margin-top: 10px;
+  align-self: flex-start;
+  flex: none;
+}
+
+@media (max-width: 860px) {
+  /* 5m: single stacked column, no divider, tighter rhythm. */
+  .cal-shell {
+    grid-template-columns: 1fr;
+    border-radius: var(--rl);
+  }
+  .cal-left {
+    padding: 16px 14px 18px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .cal-right {
+    padding: 16px 14px 18px;
+  }
+  .cal-month {
+    font-size: 17px;
+  }
+  /* The legend is redundant once chips collapse to dots. */
+  .cal-legend {
+    display: none;
+  }
+  .cal-dow-row,
+  .cal-grid {
+    gap: 3px;
+  }
+  .cal-dow {
+    font-size: 9px;
+    padding: 2px 0;
+  }
+  .calendar-day-cell {
+    min-height: 44px;
+    padding: 4px;
+    align-items: center;
+    justify-content: center;
+  }
+  .calendar-day-cell > div:first-child {
+    justify-content: center !important;
+  }
+  .cal-daynum {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+  .cal-chips {
+    display: none;
+  }
+  .cal-dots {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    margin-top: 1px;
+    min-height: 4px;
+  }
+  .cal-event-row {
+    border-radius: 12px;
+    padding: 11px 13px;
+    gap: 10px;
+    min-height: 50px;
+  }
+  /* 5m: the LIVE card becomes one row — badge · title+meta · Join. */
+  .cal-live-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 13px;
+  }
+  .cal-live-top {
+    margin-bottom: 0;
+    flex: none;
+  }
+  .cal-live-badge {
+    font-size: 8px;
+    padding: 3px 6px;
+  }
+  /* Mobile badge reads "● LIVE", the time moves into the meta line, and the CTA is
+     bare "Join" — all per 5m. */
+  .cal-live-nowword,
+  .cal-live-time,
+  .cal-live-arrow {
+    display: none;
+  }
+  .cal-live-body {
+    flex: 1;
+  }
+  .cal-live-title {
+    font-size: 12px;
+  }
+  .cal-live-meta {
+    font-size: 10px;
+  }
+  .cal-live-metatime {
+    display: inline;
+  }
+  .cal-live-join {
+    margin-top: 0;
+    align-self: center;
+    font-size: 11px;
+    height: 28px;
+    line-height: 28px;
+    padding: 0 11px;
+    border-radius: 7px;
+  }
+}
+
 /* Horizontally scrollable tab strips: functional scroll, no visible scrollbar. */
 .lesson-tabbar {
   -webkit-overflow-scrolling: touch;
@@ -444,17 +761,9 @@ button:active, a:active {
   .flip-card-question-text {
     font-size: 19px !important;
   }
-  /* Calendar (student + faculty CalendarApp) and Book a Mentor: stack the
-     month-grid/sidebar and date/sidebar split-panes, shrink calendar day
-     cells, and drop the booking-summary sticky positioning so it doesn't
-     pin oddly once stacked above the date/time pickers. */
-  .calendar-day-cell {
-    min-height: 40px !important;
-    padding: 4px !important;
-  }
-  .calendar-day-cell > span:first-child {
-    font-size: 11px !important;
-  }
+  /* Book a Mentor: stack the date/sidebar split-pane and drop the booking-summary
+     sticky positioning so it doesn't pin oddly once stacked above the pickers.
+     (Calendar's own mobile rules live in the calendar block below.) */
   .mentor-slot-grid {
     grid-template-columns: repeat(3, 1fr) !important;
   }

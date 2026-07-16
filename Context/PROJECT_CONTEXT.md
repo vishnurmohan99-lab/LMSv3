@@ -756,6 +756,25 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Calendar redesigned to match Design System screens 5 / 5m (2026-07-15).**
+  `components/calendar/CalendarApp.tsx` + `.cal-*` rules in `globals.css`. Shared by
+  student AND faculty (the design is explicitly "shell-agnostic"), so both changed.
+  Desktop (screen 5): one card split `1fr/300px` by an internal divider (was two separate
+  cards + gap), radius 24, `--bg` body / white right rail. Month cells now render labelled
+  event chips (`600 10px`, soft tint + 3px left border, radius 4, ellipsis; live chips
+  pulse via `dotPulse`) instead of dots; day number moved top-right with today as a 24px
+  orange pill in mono. Agenda rows are white + 1px `--line` + a 3px colour bar (was tinted
+  bg + icon + type label) with a "· done" + green ✓ past state. Mobile (5m): stacks to one
+  column, divider moves to bottom, 44px centred cells, chips collapse to dots, legend
+  hidden, and the LIVE card reflows to a single row (`● LIVE | title | time · who | Join`).
+  Right rail keeps To-do + Upcoming stacked under the agenda (user's call — the design
+  shows agenda only, but both are wired to real APIs).
+  **Bug fixed:** `eventColor()` returned `--orange` for `LIVE_LESSON` while the legend
+  drew Live as `--live` — live events showed orange dots under a pink key. All type colours
+  now derive from one `EVENT_STYLE` map that the legend also reads, so they can't drift.
+  Unlock moved to `--progress` (#14b077) per the design. NOTE: mentor `#ece6ff` and test
+  `#fff6ef` chip tints are design-sourced literals, deliberately deeper than
+  `--purple-soft`/`--orange-soft` (which wash out at 10px) — promote to tokens if reused.
 - **Login UX (show password + remember me + 3-day session) & course-page mobile fixes (2026-07-14).**
   Login page (`apps/web/.../(auth)/login/page.tsx`): added a Show/Hide password toggle
   and a "Remember me on this device" checkbox (default checked). "Remember me" now
@@ -1080,4 +1099,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-14 (login show-password/remember-me/3-day session + course-page mobile overflow & PDF fixes).*
+*Last updated: 2026-07-15 (calendar redesigned to Design System screens 5 / 5m).*

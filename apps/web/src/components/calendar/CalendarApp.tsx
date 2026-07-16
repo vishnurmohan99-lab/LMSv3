@@ -15,61 +15,21 @@ const inputStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-function LiveIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2">
-      <path d="m23 7-7 5 7 5V7z" />
-      <rect x="1" y="5" width="15" height="14" rx="2" />
-    </svg>
-  );
-}
-
-function MentorIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="2">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21v-1a8 8 0 0 1 16 0v1" />
-    </svg>
-  );
-}
-
-function UnlockIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
-      <rect x="5" y="11" width="14" height="9" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 7.5-2" />
-    </svg>
-  );
-}
-
-function TestIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2">
-      <path d="M9 11l3 3L22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-    </svg>
-  );
-}
+/**
+ * Per-type chip palette, taken from the design system's C2 "Calendar cell + event rows"
+ * sheet. `tint` is deliberately deeper than the matching --*-soft token (e.g. mentor is
+ * #ece6ff, not --purple-soft #f5f2ff) so 10px chip text stays legible — the soft tokens
+ * wash out at that size. `bar`/`ink` are on-token.
+ */
+const EVENT_STYLE: Record<CalendarEvent["type"], { bar: string; tint: string; ink: string; short: string; label: string }> = {
+  LIVE_LESSON: { bar: "var(--live)", tint: "var(--live-soft)", ink: "var(--live)", short: "Live", label: "Live class" },
+  MENTOR_SESSION: { bar: "var(--purple)", tint: "#ece6ff", ink: "var(--purple-ink)", short: "Mentor", label: "Mentor session" },
+  TEST: { bar: "var(--orange)", tint: "#fff6ef", ink: "var(--orange-deep)", short: "Test", label: "Mock test" },
+  CHAPTER_UNLOCK: { bar: "var(--progress)", tint: "var(--green-soft)", ink: "var(--green)", short: "Unlock", label: "Content unlock" },
+};
 
 function eventColor(type: CalendarEvent["type"]) {
-  if (type === "LIVE_LESSON") return "var(--orange)";
-  if (type === "CHAPTER_UNLOCK") return "var(--green)";
-  if (type === "TEST") return "var(--orange)";
-  return "var(--purple)";
-}
-
-function eventBg(type: CalendarEvent["type"]) {
-  if (type === "LIVE_LESSON") return "var(--orange-soft)";
-  if (type === "CHAPTER_UNLOCK") return "var(--green-soft)";
-  if (type === "TEST") return "var(--orange-soft)";
-  return "var(--purple-soft)";
-}
-
-function eventLabel(type: CalendarEvent["type"]) {
-  if (type === "LIVE_LESSON") return "Live class";
-  if (type === "CHAPTER_UNLOCK") return "Course unlock";
-  if (type === "TEST") return "Test";
-  return "Mentor session";
+  return EVENT_STYLE[type].bar;
 }
 
 function sameDay(a: Date, b: Date) {
@@ -103,27 +63,34 @@ const squareNavBtn: React.CSSProperties = {
 };
 
 const LEGEND: { label: string; color: string }[] = [
-  { label: "Live", color: "var(--live)" },
-  { label: "Mentor", color: "var(--purple)" },
-  { label: "Test", color: "var(--orange)" },
-  { label: "Unlock", color: "var(--green)" },
+  { label: "Live", color: EVENT_STYLE.LIVE_LESSON.bar },
+  { label: "Mentor", color: EVENT_STYLE.MENTOR_SESSION.bar },
+  { label: "Test", color: EVENT_STYLE.TEST.bar },
+  { label: "Unlock", color: EVENT_STYLE.CHAPTER_UNLOCK.bar },
 ];
 
 /** Dark gradient "LIVE NOW" card matching the calendar mockup's today panel. */
 function LiveNowCard({ event, role }: { event: CalendarEvent; role: "student" | "faculty" }) {
   const time = new Date(event.date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
   const href = event.courseId ? (role === "student" ? `/student/courses/${event.courseId}` : `/faculty/courses/${event.courseId}`) : null;
+  // Desktop (screen 5) stacks badge+time / title / meta / Join. Mobile (5m) is one row:
+  // badge · title+meta · Join — reflowed in CSS rather than duplicating the markup.
   return (
-    <div style={{ background: "linear-gradient(135deg,#2b1220,#1c1915)", borderRadius: 14, padding: 14, color: "#fff" }}>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-        <span className="live-pulse" style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.6, background: "var(--live)", borderRadius: 4, padding: "3px 7px" }}>● LIVE NOW</span>
-        <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)", color: "#ff87ac" }}>{time}</span>
+    <div className="cal-live-card">
+      <div className="cal-live-top">
+        <span className="live-pulse cal-live-badge">● LIVE<span className="cal-live-nowword"> NOW</span></span>
+        <span className="cal-live-time">{time}</span>
       </div>
-      <div style={{ fontSize: 13, fontWeight: 700 }}>{event.title}</div>
-      {event.courseTitle && <div style={{ fontSize: 10.5, color: "#a8a29a", marginTop: 1 }}>{event.courseTitle}</div>}
+      <div className="cal-live-body">
+        <div className="cal-live-title">{event.title}</div>
+        <div className="cal-live-meta">
+          <span className="cal-live-metatime">{time}{event.courseTitle ? " · " : ""}</span>
+          {event.courseTitle ?? ""}
+        </div>
+      </div>
       {href && (
-        <Link href={href} style={{ display: "inline-block", textDecoration: "none", fontSize: 11.5, fontWeight: 700, background: "#fff", color: "var(--ink)", borderRadius: 8, height: 30, lineHeight: "30px", padding: "0 13px", marginTop: 10 }}>
-          Join →
+        <Link href={href} className="cal-live-join">
+          Join<span className="cal-live-arrow"> →</span>
         </Link>
       )}
     </div>
@@ -131,42 +98,19 @@ function LiveNowCard({ event, role }: { event: CalendarEvent; role: "student" | 
 }
 
 function EventRow({ event, role }: { event: CalendarEvent; role: "student" | "faculty" }) {
-  const time = new Date(event.date).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const time = new Date(event.date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  const done = new Date(event.date).getTime() < Date.now();
+  const meta = [time, done ? "done" : null, event.courseTitle || event.otherPartyName || null].filter(Boolean).join(" · ");
   const content = (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 12px",
-        background: eventBg(event.type),
-        borderRadius: 10,
-        fontSize: 12.5,
-      }}
-    >
-      <span style={{ display: "flex" }}>
-        {event.type === "LIVE_LESSON" ? (
-          <LiveIcon />
-        ) : event.type === "CHAPTER_UNLOCK" ? (
-          <UnlockIcon />
-        ) : event.type === "TEST" ? (
-          <TestIcon />
-        ) : (
-          <MentorIcon />
-        )}
-      </span>
+    <div className="cal-event-row">
+      <span style={{ width: 3, borderRadius: 2, background: eventColor(event.type), flex: "none", alignSelf: "stretch" }} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {event.title}
         </div>
-        <div style={{ color: "var(--ink3)", fontSize: 11, marginTop: 1 }}>
-          {time}
-          {event.courseTitle ? ` · ${event.courseTitle}` : ""}
-        </div>
+        <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 1 }}>{meta}</div>
       </div>
-      <span style={{ fontWeight: 700, fontSize: 10.5, color: eventColor(event.type), whiteSpace: "nowrap" }}>
-        {eventLabel(event.type)}
-      </span>
+      {done && <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green)", flex: "none" }}>✓</span>}
     </div>
   );
 
@@ -357,10 +301,10 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
   if (error) return <p style={{ color: "var(--red)" }}>{error}</p>;
 
   return (
-    <div className="fade-in-up mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 22, alignItems: "start" }}>
-      <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 22 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.2 }}>{monthLabel}</div>
+    <div className="fade-in-up cal-shell">
+      <div className="cal-left">
+        <div className="cal-head">
+          <span className="cal-month">{monthLabel}</span>
           <button onClick={() => changeMonth(-1)} style={squareNavBtn} aria-label="Previous month">‹</button>
           <button onClick={() => changeMonth(1)} style={squareNavBtn} aria-label="Next month">›</button>
           <button
@@ -370,7 +314,7 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
             Today
           </button>
           <div style={{ flex: 1 }} />
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div className="cal-legend">
             {LEGEND.map((l) => (
               <span key={l.label} style={{ display: "flex", gap: 5, alignItems: "center", fontSize: 10.5, fontWeight: 500, color: "var(--ink3)" }}>
                 <span style={{ width: 9, height: 9, borderRadius: 3, background: l.color }} />
@@ -380,19 +324,17 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, marginBottom: 6 }}>
+        <div className="cal-dow-row">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 700, color: "var(--ink3)", padding: "4px 0" }}>
-              {d}
-            </div>
+            <div key={d} className="cal-dow">{d}</div>
           ))}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+        <div className="cal-grid">
           {gridDays.map((d) => {
             const inMonth = d.getMonth() === cursor.getMonth();
             const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-            const dayEvents = eventsByDay.get(key) ?? [];
+            const dayEvents = (eventsByDay.get(key) ?? []).slice().sort((a, b) => a.date.localeCompare(b.date));
             const isToday = sameDay(d, today);
             const isSelected = sameDay(d, selectedDate);
             return (
@@ -401,32 +343,51 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
                 onClick={() => setSelectedDate(d)}
                 className="calendar-day-cell"
                 style={{
-                  minHeight: 64,
-                  padding: "6px 6px",
                   border: isSelected ? "1.5px solid var(--orange)" : "1px solid var(--line)",
-                  borderRadius: 10,
-                  background: isSelected ? "var(--orange-soft)" : "var(--bg)",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  textAlign: "left",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                  opacity: inMonth ? 1 : 0.4,
+                  background: isSelected ? "var(--orange-soft)" : "var(--card)",
+                  opacity: inMonth ? 1 : 0.45,
                 }}
               >
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: isToday ? 800 : 600,
-                    color: isToday ? "var(--orange)" : "var(--ink2)",
-                  }}
-                >
-                  {d.getDate()}
-                </span>
-                <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-                  {dayEvents.slice(0, 3).map((e) => (
-                    <span key={e.id} style={{ width: 6, height: 6, borderRadius: "50%", background: eventColor(e.type) }} />
+                {/* Day number sits top-right per the design; today is an orange pill. */}
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <span
+                    className="cal-daynum"
+                    style={
+                      isToday
+                        ? { background: "var(--orange)", color: "#fff", borderRadius: 999, fontFamily: "var(--font-mono)" }
+                        : { color: "var(--ink2)" }
+                    }
+                  >
+                    {d.getDate()}
+                  </span>
+                </div>
+
+                {/* Desktop: labelled chips. Mobile: dots — swapped in CSS at 860px. */}
+                <div className="cal-chips">
+                  {dayEvents.slice(0, 3).map((e) => {
+                    const st = EVENT_STYLE[e.type];
+                    const t = new Date(e.date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+                    return (
+                      <div
+                        key={e.id}
+                        className={`cal-chip${isCurrentlyLive(e, today) ? " cal-chip-live" : ""}`}
+                        style={{ background: st.tint, color: st.ink, borderLeft: `3px solid ${st.bar}` }}
+                        title={`${t} ${st.label}${e.courseTitle ? ` · ${e.courseTitle}` : ""}`}
+                      >
+                        {t} {st.short}
+                        {e.courseTitle ? ` · ${e.courseTitle}` : ""}
+                      </div>
+                    );
+                  })}
+                  {dayEvents.length > 3 && (
+                    <div style={{ fontSize: 9.5, fontWeight: 600, color: "var(--ink3)", paddingLeft: 2 }}>
+                      +{dayEvents.length - 3} more
+                    </div>
+                  )}
+                </div>
+                <div className="cal-dots">
+                  {dayEvents.slice(0, 4).map((e) => (
+                    <span key={e.id} style={{ width: 4, height: 4, borderRadius: "50%", background: eventColor(e.type) }} />
                   ))}
                 </div>
               </button>
@@ -435,43 +396,45 @@ export default function CalendarApp({ role }: { role: "student" | "faculty" }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: 16 }}>
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18 }}>
-          <div style={{ fontSize: 15, fontWeight: 700 }}>
-            {sameDay(selectedDate, today) ? "Today · " : ""}
-            {selectedDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 14, marginTop: 2 }}>
-            {selectedEvents.length === 0 ? "No events" : `${selectedEvents.length} event${selectedEvents.length === 1 ? "" : "s"}`}
-          </div>
-          {selectedEvents.length === 0 ? (
-            <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>Nothing scheduled this day.</p>
-          ) : (
-            <div style={{ display: "grid", gap: 10 }}>
-              {selectedEvents.map((e) =>
-                isCurrentlyLive(e, today) ? (
-                  <LiveNowCard key={e.id} event={e} role={role} />
-                ) : (
-                  <EventRow key={e.id} event={e} role={role} />
-                ),
-              )}
-            </div>
-          )}
+      {/* Right rail: the design specifies the day agenda only; To-do + Upcoming are kept
+          stacked beneath it so the existing todosApi wiring isn't lost. */}
+      <div className="cal-right">
+        <div style={{ fontSize: 15, fontWeight: 700 }}>
+          {sameDay(selectedDate, today) ? "Today · " : ""}
+          {selectedDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
         </div>
-
-        <TodoPanel selectedDate={selectedDate} />
-
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Upcoming</div>
-          {upcoming.length === 0 ? (
-            <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>Nothing upcoming.</p>
-          ) : (
-            <div style={{ display: "grid", gap: 8 }}>
-              {upcoming.map((e) => (
+        <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 16, marginTop: 2 }}>
+          {selectedEvents.length === 0 ? "No events" : `${selectedEvents.length} event${selectedEvents.length === 1 ? "" : "s"}`}
+        </div>
+        {selectedEvents.length === 0 ? (
+          <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>Nothing scheduled this day.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {selectedEvents.map((e) =>
+              isCurrentlyLive(e, today) ? (
+                <LiveNowCard key={e.id} event={e} role={role} />
+              ) : (
                 <EventRow key={e.id} event={e} role={role} />
-              ))}
-            </div>
-          )}
+              ),
+            )}
+          </div>
+        )}
+
+        <div style={{ display: "grid", gap: 16, marginTop: 18 }}>
+          <TodoPanel selectedDate={selectedDate} />
+
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 18 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Upcoming</div>
+            {upcoming.length === 0 ? (
+              <p style={{ color: "var(--ink3)", fontSize: 12.5 }}>Nothing upcoming.</p>
+            ) : (
+              <div style={{ display: "grid", gap: 8 }}>
+                {upcoming.map((e) => (
+                  <EventRow key={e.id} event={e} role={role} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
