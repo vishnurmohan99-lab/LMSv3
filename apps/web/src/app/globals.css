@@ -389,6 +389,302 @@ button:active, a:active {
   display: none;
 }
 
+/* ===================== Planner ("4 · PLANNER" in the Design System) =====================
+   Reflection is a two-column split (today's warm card + past entries); Tasks is a
+   single bordered list card with the add-row above it. The warm tints below
+   (#fffdf6/#fff6ef/#ffd0ac/#e9d9c8) are design-sourced and have no token equivalent —
+   a one-off "journal paper" treatment used only on this card. */
+
+/* Timetable: Month · Week · Day segmented switcher. */
+.tt-switch {
+  display: flex;
+  background: var(--bg-sunk);
+  border-radius: 11px;
+  padding: 3px;
+  flex: none;
+}
+
+.tt-switch-item {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s ease, color .15s ease;
+}
+
+.tt-switch-on {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--e1);
+}
+
+.tt-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Week view: 7 columns of stacked plan cards. */
+.tt-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  animation: fadeInUp .2s ease;
+}
+
+.tt-week-head {
+  border-radius: 10px;
+  padding: 6px 0;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tt-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 9px;
+}
+
+/* Two-line clamp keeps every card in a week column the same shape. */
+.tt-card-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 5px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.tt-month-dows,
+.tt-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.tt-month-dows {
+  margin-bottom: 5px;
+}
+
+.tt-month-dow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--ink3);
+  text-align: center;
+  padding: 3px 0;
+}
+
+.tt-month-grid {
+  animation: fadeInUp .2s ease;
+}
+
+.tt-month-cell {
+  min-height: 92px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tt-day-empty {
+  background: var(--card);
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 26px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink3);
+}
+
+.tt-day-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 14px;
+}
+
+.tt-add-input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  outline: none;
+  background: var(--bg);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.tt-add-input:focus {
+  border-color: var(--orange);
+  background: var(--card);
+  box-shadow: 0 0 0 3px rgba(242, 106, 27, .13);
+}
+
+.tt-chip-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  color: var(--ink3);
+  margin-right: 2px;
+}
+
+.tt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink2);
+  border-radius: 999px;
+  padding: 5px 11px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .12s ease, background .12s ease;
+}
+
+.tt-chip:hover {
+  border-color: var(--ink3);
+}
+
+.tt-chip-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.pl-reflect-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  align-items: start;
+  animation: fadeInUp 0.25s ease;
+}
+
+.pl-reflect-card {
+  background: linear-gradient(140deg, #fffdf6, #fff6ef);
+  border: 1px solid #ffd0ac;
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.pl-reflect-area {
+  width: 100%;
+  box-sizing: border-box;
+  height: 64px;
+  padding: 10px 12px;
+  border: 1px solid #e9d9c8;
+  border-radius: 10px;
+  background: var(--card);
+  outline: none;
+  resize: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pl-reflect-area:focus {
+  border-color: var(--orange);
+}
+
+.pl-task-input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  outline: none;
+  background: var(--card);
+  font-family: inherit;
+  font-size: 13.5px;
+}
+
+.pl-task-input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(242, 106, 27, .15);
+}
+
+.pl-task-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line2);
+  transition: background .12s ease;
+}
+
+.pl-task-row:last-child {
+  border-bottom: none;
+}
+
+.pl-task-row:hover {
+  background: var(--bg);
+}
+
+.pl-task-del {
+  margin-left: auto;
+  flex: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #c5beb4;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color .12s ease;
+}
+
+.pl-task-del:hover {
+  color: var(--red-ink);
+}
+
+@media (max-width: 860px) {
+  .pl-reflect-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  /* Week's 7 columns can't hold cards on a phone — scroll them rather than
+     crush each to ~45px. Month cells shrink; the day view already stacks. */
+  .tt-week {
+    grid-template-columns: repeat(7, 116px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tt-week::-webkit-scrollbar {
+    display: none;
+  }
+  .tt-month-cell {
+    min-height: 58px;
+    padding: 4px;
+  }
+  .tt-legend {
+    display: none;
+  }
+}
+
 /* ===================== Calendar (student + faculty CalendarApp) =====================
    Mirrors Design System "5 · CALENDAR" (desktop) and "5m · CALENDAR MOBILE — stacked".
    One card split 1fr/300px by an internal divider — not two separate cards. Month cells

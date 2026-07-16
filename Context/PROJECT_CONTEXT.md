@@ -756,6 +756,34 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Planner redesigned to match Design System screen 4 (2026-07-16).**
+  The design was previously STALE — it showed a "Weekly" tab (per-chapter % bars) that
+  `a707d79` had already replaced with Timetable (Study Plan: batch timetables + personal
+  `planApi` items), and the design had zero mention of "timetable". The designer has now
+  redrawn it as **"4 · PLANNER — Timetable (Month · Week · Day) / Reflection / Tasks"**,
+  matching reality, so the app follows the new design rather than regressing to Weekly.
+  `app/student/planner/page.tsx` + `.tt-*` / `.pl-*` rules in `globals.css`.
+  Timetable: Month·Week·Day segmented switcher, ‹ › range nav + label, 5-type legend;
+  Week = 7 clickable day columns of cards (type chip + ✕ + 2-line-clamped title +
+  "time · by"); Month = 42 cells with chips + today pill + "Tap a date to open its day
+  view."; Day = "time · chip · title · by · ✕" rows with a dashed empty state. "Add your
+  own plan" now takes its date from the grid selection ("adds to <day> · pick any date
+  above to change") with TYPE + TIME chip rows replacing the old date/time inputs.
+  TIME presets (06:00/09:00/14:00/19:00) are a local choice — the design only shows four
+  placeholders. Reflection: 2-col (1.15fr/.85fr) warm gradient card
+  (#fffdf6→#fff6ef, #ffd0ac border) with a "✓ Saved" pill + Past-entries column.
+  Tasks: add-row + black "+ Add" above a bordered list card ("Today | N left", ✕ delete,
+  "All clear — add your first task above 🌤" empty).
+  **Two bugs fixed:** (1) week/day labels rendered "Week of 13–Jul 19" because a
+  month-first locale reorders parts — now built by hand ("13–19 Jul", month-spanning
+  "29 Jun–5 Jul"). (2) **Reflections were saved to the previous day** east of UTC:
+  `ReflectionsService.dayOnly` truncates to UTC midnight but the client sent LOCAL
+  midnight (IST 16 Jul 00:00 = 15 Jul 18:30Z → filed as 15 Jul), so today's entry never
+  pre-filled and appeared under "Past entries". Client now sends UTC midnight of the
+  local date (`utcDayIso`) and reads back UTC parts (`utcDayKey`/`utcDayLabel`). Todos
+  are unaffected (TodosService stores the raw instant, no truncation).
+  **KNOWN DATA ISSUE:** reflection rows written before this fix are still stored one day
+  early — a one-off migration would be needed to correct them.
 - **Calendar redesigned to match Design System screens 5 / 5m (2026-07-15).**
   `components/calendar/CalendarApp.tsx` + `.cal-*` rules in `globals.css`. Shared by
   student AND faculty (the design is explicitly "shell-agnostic"), so both changed.
@@ -1099,4 +1127,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-15 (calendar redesigned to Design System screens 5 / 5m).*
+*Last updated: 2026-07-16 (planner redesigned to Design System screen 4 + reflection UTC-day fix).*
