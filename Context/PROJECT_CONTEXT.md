@@ -756,6 +756,25 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Course detail: implement Design System S2 markers ①②③ (2026-07-16).**
+  The designer annotated "S2 · COURSE DETAIL + LESSON PLAYER" with the exact deltas from
+  the gap analysis. `app/student/courses/[id]/page.tsx` + `.cd-*` in `globals.css`.
+  ① Course progress + "Continue →" in the lesson header (track 120×6 `--line2` r999,
+  fill `--progress`, % in `--green` mono). Continue targets the first unlocked+unviewed
+  lesson via `nextLesson`, and hides once everything is viewed.
+  ② "⤓ Resources" — downloads the lesson's own presigned `contentUrl`; only rendered for
+  VIDEO/PDF (LIVE/FLASHCARD have no file).
+  ③ "Chapters" heading → "Course content" + `viewedCount/allLessons.length`; per-chapter
+  meta now "5/8 done" instead of "N lessons".
+  ④ Flashcards → 3-way SRS: **NOT DONE — user decided to keep flashcards as-is.** The
+  design itself stamps it "⚠ NEEDS API — no interval/scheduling model" (only three flat
+  statuses NEW/LEARNING/KNOWN exist, nothing schedules intervals).
+  **Untouched on purpose** (the design says so explicitly): the lesson tab-strip internal
+  scroll and the PDF "Open PDF" fallback — both are earlier deliberate fixes; verified
+  still intact. On mobile `.cd-progress` is hidden (the sidebar card already shows the
+  same %). KNOWN DIFF (not a marker, left alone): the design puts the course-content
+  sidebar on the RIGHT (`1fr/340px`, border-left); the app has it on the LEFT, and
+  flipping it would also mean reworking the mobile drill-down CSS.
 - **Planner redesigned to match Design System screen 4 (2026-07-16).**
   The design was previously STALE — it showed a "Weekly" tab (per-chapter % bars) that
   `a707d79` had already replaced with Timetable (Study Plan: batch timetables + personal
@@ -1127,4 +1146,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (planner redesigned to Design System screen 4 + reflection UTC-day fix).*
+*Last updated: 2026-07-16 (course detail S2 markers ①②③: progress+Continue, Resources, content counter).*

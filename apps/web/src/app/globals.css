@@ -389,6 +389,39 @@ button:active, a:active {
   display: none;
 }
 
+/* ===================== Course detail (S2 header additions) =====================
+   Design S2 puts course progress + Continue → and a Resources download in the lesson
+   header. On a phone the progress bar + label eat the whole row, so it's dropped there —
+   the sidebar's own progress card already carries the same number. */
+
+.cd-resources {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  height: 38px;
+  padding: 0 16px;
+  color: var(--ink);
+  cursor: pointer;
+  flex: none;
+  transition: background .12s ease;
+}
+
+.cd-resources:hover {
+  background: var(--bg-sunk);
+}
+
+@media (max-width: 860px) {
+  .cd-progress {
+    display: none !important;
+  }
+}
+
 /* ===================== Planner ("4 · PLANNER" in the Design System) =====================
    Reflection is a two-column split (today's warm card + past entries); Tasks is a
    single bordered list card with the add-row above it. The warm tints below

@@ -660,6 +660,10 @@ export default function StudentCoursePlayerPage() {
   const viewedCount = allLessons.filter((l) => l.viewed).length;
   const progressPct = allLessons.length > 0 ? Math.round((viewedCount / allLessons.length) * 100) : 0;
 
+  // "Continue →" targets the first unlocked lesson the student hasn't viewed; once
+  // everything is viewed there's nothing to continue to, so the button is hidden.
+  const nextLesson = allLessons.find((l) => !l.viewed && l.unlocked !== false) ?? null;
+
   const tabs: { key: typeof activeTab; label: string }[] = selectedLesson
     ? [
         { key: "overview" as const, label: "Overview" },
@@ -707,7 +711,13 @@ export default function StudentCoursePlayerPage() {
 
         <CourseRatingCard courseId={course.id} avgRating={course.avgRating} reviewCount={course.reviewCount} />
 
-        <div style={{ padding: "4px 18px 8px", fontSize: 13.5, fontWeight: 800 }}>Chapters</div>
+        {/* ③ "Course content" + viewed/total counter (design S2 sidebar). */}
+        <div style={{ padding: "4px 18px 8px", display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 800 }}>Course content</div>
+          <span style={{ fontSize: 11, fontWeight: 500, fontFamily: "var(--font-mono)", color: "var(--ink3)" }}>
+            {viewedCount}/{allLessons.length}
+          </span>
+        </div>
 
         {course.chapters.map((chapter: Chapter, chapterIdx: number) => {
           const open = expandedChapterId === chapter.id;
@@ -775,15 +785,16 @@ export default function StudentCoursePlayerPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{chapter.title}</div>
                   <div style={{ fontSize: 11.5, color: locked ? "var(--ink3)" : isActiveChapter ? "var(--orange)" : "var(--ink3)", marginTop: 1, fontWeight: isActiveChapter ? 700 : 400 }}>
+                    {/* ③ Design shows a per-chapter "5/8 done" count, not just "N lessons". */}
                     {locked
                       ? chapter.unlocksAt
                         ? `Unlocks ${new Date(chapter.unlocksAt).toLocaleDateString()}`
                         : "Locked"
                       : chapter.finished
                       ? "Completed"
-                      : viewedInChapter > 0
-                      ? `In progress · ${viewedInChapter}/${lessonItems.length}`
-                      : `${chapter.lessons.length} lessons`}
+                      : chapter.lessons.length > 0
+                      ? `${viewedInChapter}/${chapter.lessons.length} done`
+                      : "No lessons"}
                   </div>
                 </div>
                 <svg
@@ -892,6 +903,51 @@ export default function StudentCoursePlayerPage() {
                     {lessonMeta(selectedLesson, selectedChapter?.title ?? "")}
                   </div>
                 </div>
+
+                {/* ② Resources — downloads the lesson's own file (the presigned
+                    contentUrl). Hidden for LIVE/FLASHCARD lessons, which have no file. */}
+                {selectedLesson.contentUrl && (selectedLesson.type === "VIDEO" || selectedLesson.type === "PDF") && (
+                  <a
+                    href={selectedLesson.contentUrl}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cd-resources"
+                  >
+                    ⤓ Resources
+                  </a>
+                )}
+
+                {/* ① Course progress + Continue → (design S2 header). */}
+                {allLessons.length > 0 && (
+                  <div className="cd-progress" style={{ display: "flex", alignItems: "center", gap: 9, flex: "none" }}>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--ink2)" }}>Course progress</span>
+                    <div style={{ width: 120, height: 6, background: "var(--line2)", borderRadius: 999, overflow: "hidden", flex: "none" }}>
+                      <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--progress)", transition: "width .4s ease" }} />
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--green)" }}>{progressPct}%</span>
+                  </div>
+                )}
+                {nextLesson && (
+                  <button
+                    onClick={() => openLesson(nextLesson.id)}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      background: "var(--orange)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 10,
+                      height: 36,
+                      padding: "0 18px",
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                      flex: "none",
+                    }}
+                  >
+                    Continue →
+                  </button>
+                )}
               </div>
             </div>
 
