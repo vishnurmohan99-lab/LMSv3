@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceae4;font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;color:#1c1915}
+a{color:inherit;text-decoration:none}a:hover{color:#e0540e}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 16px;display:flex;align-items:center;gap:14px">
+  <div style="width:36px;height:36px;border-radius:11px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:9px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+  <div style="font:800 20px 'Plus Jakarta Sans'">Ascent — Flow Map</div>
+  <div style="font:500 11px 'JetBrains Mono';color:#7c756c;border:1px solid #d0cabf;border-radius:999px;padding:4px 10px">all 8 files · structured by user flow · click any row to open its file</div>
+</div>
+<div style="padding:0 56px;font:400 13px/1.6 'Plus Jakarta Sans';color:#59534b;max-width:820px">Every screen in the project, ordered the way a user meets it: foundations → entry → the student loop (learn → practice → track) → community → faculty → admin. Legend: <span style="font:600 10px 'JetBrains Mono';color:#0e7a48;background:#e6f6ee;border-radius:5px;padding:2px 7px">WEB</span> <span style="font:600 10px 'JetBrains Mono';color:#5a2ed6;background:#f5f2ff;border-radius:5px;padding:2px 7px">MOBILE</span> <span style="font:600 10px 'JetBrains Mono';color:#a35a06;background:#fdf0dd;border-radius:5px;padding:2px 7px">STATE</span> <span style="font:600 10px 'JetBrains Mono';color:#59534b;background:#f4f1ed;border-radius:5px;padding:2px 7px">DARK</span></div>
+
+<div style="padding:28px 56px 72px;display:flex;flex-direction:column;gap:0;align-items:flex-start">
+  <sc-for list="{{ stages }}" as="st" hint-placeholder-count="8">
+    <div style="display:flex;flex-direction:column">
+      <div style="display:flex;gap:20px;align-items:stretch">
+        <div style="display:flex;flex-direction:column;align-items:center;width:44px;flex:none">
+          <div style="{{ st.num }}">{{ st.n }}</div>
+          <sc-if value="{{ st.notLast }}" hint-placeholder-val="{{ true }}"><div style="width:2px;flex:1;background:#d8d2c9;margin:6px 0"></div></sc-if>
+        </div>
+        <div style="padding-bottom:30px">
+          <div style="display:flex;align-items:baseline;gap:12px">
+            <div style="font:800 19px 'Plus Jakarta Sans';letter-spacing:-.01em">{{ st.title }}</div>
+            <div style="font:500 11px 'JetBrains Mono';color:#aaa39a">{{ st.count }}</div>
+          </div>
+          <div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:2px;max-width:640px">{{ st.desc }}</div>
+          <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;max-width:1240px">
+            <sc-for list="{{ st.groups }}" as="g" hint-placeholder-count="3">
+              <div style="background:#fff;border:1px solid #e9e4de;border-radius:14px;box-shadow:0 1px 2px rgba(28,22,15,.06);width:294px;overflow:hidden">
+                <a href="{{ g.file }}"><div style="display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid #f4f1ed;cursor:pointer" style-hover="background:#fff6ef">
+                  <span style="font:700 13px 'Plus Jakarta Sans'">{{ g.name }}</span>
+                  <span style="font:500 9.5px 'JetBrains Mono';color:#aaa39a">{{ g.fileShort }} ↗</span>
+                </div></a>
+                <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+                  <a href="{{ g.file }}"><div style="display:flex;align-items:center;gap:8px;padding:8px 15px;border-bottom:1px solid #f4f1ed;cursor:pointer" style-hover="background:#faf8f6">
+                    <span style="font:500 12px 'Plus Jakarta Sans';flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.label }}</span>
+                    <sc-for list="{{ r.tags }}" as="t" hint-placeholder-count="1"><span style="{{ t.chip }}">{{ t.label }}</span></sc-for>
+                  </div></a>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const W = ['WEB', '#0e7a48', '#e6f6ee'], M = ['MOBILE', '#5a2ed6', '#f5f2ff'], S = ['STATE', '#a35a06', '#fdf0dd'], D = ['DARK', '#59534b', '#f4f1ed'], C = ['KIT', '#e0540e', '#fff6ef'];
+    const tag = (t) => ({ label: t[0], chip: `font:600 8.5px 'JetBrains Mono';color:${t[1]};background:${t[2]};border-radius:4px;padding:2px 6px;flex:none` });
+    const row = (label, ...tags) => ({ label, tags: tags.map(tag) });
+    const STU = 'Student - All Screens.dc.html', FAC = 'Faculty - All Screens.dc.html', ADM = 'Admin - All Screens.dc.html';
+    const files = { ds: 'Design System.dc.html', s1: STU, s2: STU, s3: STU, s4: STU, seg: STU, sf: FAC, ao: ADM };
+    const short = { ds: 'Design System', s1: 'Student', s2: 'Student', s3: 'Student', s4: 'Student', seg: 'Student', sf: 'Faculty', ao: 'Admin' };
+    const grp = (name, f, rows) => ({ name, file: encodeURI(files[f]), fileShort: short[f], rows });
+
+    const stagesData = [
+      { title: 'Foundations', desc: 'Tokens, primitives and the component sheets every screen is built from.', groups: [
+        grp('Design system', 'ds', [row('Tokens · type · color · components', C)]),
+        grp('Component sheets', 's2', [row('Chips · calendar cell · dropzone · rubric', C), row('Segment selector · badge · tile', C)]),
+        grp('More primitives', 'sf', [row('Messenger & forum primitives', C), row('Admin ops primitives — Admin page', C)]),
+      ] },
+      { title: 'Entry & onboarding', desc: 'First touch: sign in, pick a segment/goal, calibrate, land in the store.', groups: [
+        grp('Sign in', 's1', [row('Login / Register', W)]),
+        grp('Goal & segment gate', 'seg', [row('Onboarding gate', W), row('Onboarding gate — dark', D), row('Storefront with selector', W), row('Mobile selector — bottom sheet', M)]),
+        grp('Guided setup', 's4', [row('Onboarding — 3-step wizard', W), row('Onboarding — step 1', M)]),
+      ] },
+      { title: 'Student — home & learn', desc: 'The daily loop: dashboard, find courses, watch lessons, read notes.', groups: [
+        grp('Home', 's1', [row('Student home / dashboard', W), row('Student home — drawer', M)]),
+        grp('Discover & enroll', 's2', [row('Course catalog', W), row('Catalog', M), row('Catalog — loading · empty', S), row('Subscription / plans', W)]),
+        grp('Learn', 's1', [row('Course detail + lesson player', W)]),
+        grp('Faculty notes', 's3', [row('Notes — search & filters', W), row('Notes', M), row('Notes — skeleton', S)]),
+      ] },
+      { title: 'Student — practice & assess', desc: 'Drills, mocks, corrections — and what the numbers say afterwards.', groups: [
+        grp('Practice', 's2', [row('Practice session — setup → done', W), row('Answer correction — upload → rubric', W)]),
+        grp('Mock tests', 's1', [row('Mock test — in-exam UI', W)]),
+        grp('Results & analytics', 's4', [row('Performance — trend · subjects · attempts', W), row('Results', M), row('Loading · empty', S)]),
+        grp('Leaderboard', 's4', [row('All learners / my batch', W), row('Leaderboard', M)]),
+      ] },
+      { title: 'Student — plan & track', desc: 'Owning the schedule: planner, calendar, profile.', groups: [
+        grp('Planner', 's2', [row('Weekly · reflection · tasks', W), row('Planner — dark', D)]),
+        grp('Calendar', 's2', [row('Shared calendar', W), row('Calendar — stacked', M)]),
+        grp('Profile', 's3', [row('Profile — segment & stream', W)]),
+      ] },
+      { title: 'Community & support', desc: 'People around the prep: mentors, messages, doubts, announcements.', groups: [
+        grp('Mentors', 's2', [row('Book a mentor — pick → confirm', W)]),
+        grp('Messaging', 'sf', [row('Messenger', W), row('Messenger — drill-down', M)]),
+        grp('Inbox & notifications', 's4', [row('Inbox — messages · announcements', W), row('Inbox', M), row('Inbox — empty', S), row('Notifications panel', W), row('Notifications', M)]),
+        grp('Doubts & forum', 's4', [row('Doubt forum + thread preview', W), row('Forum', M), row('Forum — error', S)]),
+        grp('Community forum', 'sf', [row('Forum — categories & threads', W), row('Forum — chip row', M)]),
+        grp('Feedback', 's3', [row('Feedback — allotted / submitted', W), row('5 question types form', W)]),
+      ] },
+      { title: 'Faculty', desc: 'Teaching central: dashboards, content authoring, grading queues.', groups: [
+        grp('Teach', 'sf', [row('Instructor dashboard', W), row('Question bank & test editor', W)]),
+        grp('Grade', 'sf', [row('Answer correction — review & override', W)]),
+      ] },
+      { title: 'Admin', desc: 'Operations: people, batches, segments, money, settings, reporting.', groups: [
+        grp('Overview', 'ao', [row('Admin dashboard', W), row('Admin dashboard — dark', D)]),
+        grp('People & cohorts', 'ao', [row('Users management', W), row('Users — dark', D), row('Batches — roster & statuses', W)]),
+        grp('Catalog structure', 'ao', [row('Segments & subsegments', W)]),
+        grp('Revenue & insight', 'ao', [row('Subscriptions — lifecycle & plans', W), row('Reports — segmented · skeleton', W, S), row('Planner oversight', W)]),
+        grp('Settings', 'ao', [row('AI models — providers & keys', W)]),
+      ] },
+    ];
+    return { stages: stagesData.map((s, i) => ({
+      ...s, n: String(i + 1).padStart(2, '0'), notLast: i < stagesData.length - 1,
+      count: s.groups.reduce((a, g) => a + g.rows.length, 0) + ' screens',
+      num: `width:44px;height:44px;border-radius:14px;background:#1c1915;color:#fff;display:flex;align-items:center;justify-content:center;font:800 14px 'JetBrains Mono';flex:none`,
+    })) };
+  }
+}
+</script>
+</body>
+</html>

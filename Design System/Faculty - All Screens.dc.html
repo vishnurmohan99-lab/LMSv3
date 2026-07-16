@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceae4;font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;color:#1c1915}
+a{color:#e0540e;text-decoration:none}a:hover{color:#b9400d}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.92)}70%{transform:scale(1.02)}100%{opacity:1;transform:scale(1)}}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(230,51,104,.45)}70%{box-shadow:0 0 0 9px rgba(230,51,104,0)}100%{box-shadow:0 0 0 0 rgba(230,51,104,0)}}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes shimmerO{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 20px;display:flex;align-items:center;gap:14px">
+  <div style="width:36px;height:36px;border-radius:11px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:9px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+  <div style="font:800 20px 'Plus Jakarta Sans'">Ascent — Faculty, All Screens</div>
+  <div style="font:500 11px 'JetBrains Mono';color:#7c756c;border:1px solid #d0cabf;border-radius:999px;padding:4px 10px">every faculty screen · ordered by flow · all interactions live</div>
+</div>
+
+<div style="padding:20px 56px 72px;display:flex;flex-direction:column;gap:44px;align-items:flex-start">
+
+<div style="display:flex;align-items:center;gap:14px;margin-top:0">
+  <div style="width:40px;height:40px;border-radius:13px;background:#1c1915;color:#fff;display:flex;align-items:center;justify-content:center;font:800 13px 'JetBrains Mono'">01</div>
+  <div><div style="font:800 22px 'Plus Jakarta Sans';letter-spacing:-.01em">Teach</div><div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c">Dashboards and content authoring.</div></div>
+</div>
+
+<div data-screen-label="Instructor Dashboard">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S4 · INSTRUCTOR DASHBOARD</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:232px 1fr">
+    <!-- shared shell sidebar -->
+    <div style="background:#fff;border-right:1px solid #e9e4de;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:820px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans'">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#5a2ed6">TEACHING CENTRAL</div></div>
+      </div>
+      <sc-for list="{{ insNav }}" as="n" hint-placeholder-count="7">
+        <div style="{{ n.style }}"><span style="{{ n.dot }}"></span><span style="flex:1">{{ n.label }}</span><sc-if value="{{ n.count }}" hint-placeholder-val="{{ false }}"><span style="font:700 10px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border-radius:999px;padding:2px 7px">{{ n.count }}</span></sc-if></div>
+      </sc-for>
+      <div style="margin-top:auto;background:#f5f2ff;border-radius:14px;padding:14px">
+        <div style="font:700 12.5px 'Plus Jakarta Sans';color:#3f238a">Pending payout</div>
+        <div style="font:800 20px 'JetBrains Mono';color:#5a2ed6;margin-top:4px">₹18,240</div>
+        <div style="font:400 10.5px 'Plus Jakarta Sans';color:#7c756c">clears Fri, 10 Jul</div>
+      </div>
+    </div>
+    <div style="min-width:0">
+      <!-- shared shell topbar -->
+      <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:14px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans'">Dashboard</div>
+        <div style="flex:1;max-width:340px;margin-left:12px;display:flex;align-items:center;gap:8px;background:#f4f1ed;border-radius:10px;height:36px;padding:0 12px">
+          <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search students, courses…</span>
+        </div>
+        <div style="flex:1"></div>
+        <span style="font:800 9px 'Plus Jakarta Sans';letter-spacing:.06em;background:#e63368;color:#fff;border-radius:5px;padding:4px 9px;animation:livePulse 2s infinite">● LIVE IN 25 MIN</span>
+        <div style="width:36px;height:36px;border:1px solid #e9e4de;background:#fff;border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="14" height="15" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path></svg><span style="position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span></div>
+        <div style="display:flex;align-items:center;gap:8px;border:1px solid #e9e4de;border-radius:10px;height:36px;padding:0 10px;cursor:pointer" style-hover="background:#faf8f6"><div style="width:24px;height:24px;border-radius:999px;background:#fff6ef;color:#e0540e;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">PK</div><span style="font:600 12px 'Plus Jakarta Sans'">Prof. Khanna</span></div>
+      </div>
+      <div style="padding:24px 26px 34px">
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <sc-for list="{{ insKpis }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start"><span style="font:600 11.5px 'Plus Jakarta Sans';color:#7c756c">{{ k.label }}</span><span style="{{ k.deltaStyle }}">{{ k.delta }}</span></div>
+              <div style="font:800 26px 'Plus Jakarta Sans';letter-spacing:-.02em;margin-top:6px">{{ k.value }}</div>
+              <div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ k.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-top:20px;align-items:start">
+          <!-- grading queue -->
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:15px 18px;border-bottom:1px solid #f4f1ed">
+              <div style="font:700 14.5px 'Plus Jakarta Sans'">Grading queue <span style="font:700 11px 'Plus Jakarta Sans';background:#fde9ea;color:#ab2530;border-radius:999px;padding:3px 9px;margin-left:6px">12 waiting</span></div>
+              <span style="font:600 12px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Open queue →</span>
+            </div>
+            <sc-for list="{{ gradeRows }}" as="g" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #f4f1ed" style-hover="background:#faf8f6">
+                <div style="{{ g.av }}">{{ g.ini }}</div>
+                <div style="flex:1;min-width:0"><div style="font:600 12.5px 'Plus Jakarta Sans'">{{ g.name }}</div><div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ g.sub }}</div></div>
+                <span style="{{ g.ai }}">{{ g.aiTxt }}</span>
+                <sc-if value="{{ g.hasOver }}" hint-placeholder-val="{{ false }}"><span style="font:400 10px 'Plus Jakarta Sans';color:#aaa39a">→</span><span style="font:700 10.5px 'JetBrains Mono';background:#1c1915;color:#fff;border-radius:6px;padding:4px 7px">{{ g.overTxt }}</span></sc-if>
+                <span style="{{ g.pill }}">{{ g.status }}</span>
+                <button style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:8px;height:28px;padding:0 12px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">Review</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <!-- sessions -->
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:18px">
+              <div style="font:700 14.5px 'Plus Jakarta Sans';margin-bottom:14px">Upcoming mentor sessions</div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:9px;height:9px;border-radius:999px;background:#f26a1b;margin-top:4px;box-shadow:0 0 0 3px #ffe9d8"></span><span style="width:1.5px;flex:1;background:#e9e4de"></span></div><div style="padding-bottom:14px;flex:1"><div style="display:flex;justify-content:space-between"><span style="font:600 12.5px 'Plus Jakarta Sans'">Aditi Rao — weak areas</span><span style="font:700 11px 'JetBrains Mono';color:#e0540e">10:00</span></div><div style="font:400 11px 'Plus Jakarta Sans';color:#7c756c">Thu 9 Jul · 45 min · DI sets</div></div></div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:9px;height:9px;border-radius:999px;border:1.5px solid #d8d2c9;box-sizing:border-box;margin-top:4px"></span><span style="width:1.5px;flex:1;background:#e9e4de"></span></div><div style="padding-bottom:14px;flex:1"><div style="display:flex;justify-content:space-between"><span style="font:600 12.5px 'Plus Jakarta Sans'">Jay Mehta — essay review</span><span style="font:700 11px 'JetBrains Mono';color:#7c756c">11:30</span></div><div style="font:400 11px 'Plus Jakarta Sans';color:#7c756c">Thu 9 Jul · 30 min</div></div></div>
+              <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:9px;height:9px;border-radius:999px;border:1.5px solid #d8d2c9;box-sizing:border-box;margin-top:4px"></span></div><div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font:600 12.5px 'Plus Jakarta Sans'">Group clinic — percentages</span><span style="font:700 11px 'JetBrains Mono';color:#7c756c">16:00</span></div><div style="font:400 11px 'Plus Jakarta Sans';color:#7c756c">Fri 10 Jul · 8 booked</div></div></div>
+            </div>
+            <!-- my courses -->
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:18px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px"><div style="font:700 14.5px 'Plus Jakarta Sans'">My courses</div><span style="font:600 11.5px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Manage →</span></div>
+              <sc-for list="{{ myCourses }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid #f4f1ed">
+                  <div style="{{ m.sw }}"></div>
+                  <div style="flex:1;min-width:0"><div style="font:600 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.title }}</div><div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ m.meta }}</div></div>
+                  <span style="{{ m.pill }}">{{ m.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Question Bank Editor">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">S5 · CONTENT MANAGEMENT — question bank &amp; test editor</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:232px 1fr">
+    <div style="background:#fff;border-right:1px solid #e9e4de;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:780px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans'">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#5a2ed6">TEACHING CENTRAL</div></div>
+      </div>
+      <sc-for list="{{ insNav2 }}" as="n" hint-placeholder-count="7">
+        <div style="{{ n.style }}"><span style="{{ n.dot }}"></span><span style="flex:1">{{ n.label }}</span></div>
+      </sc-for>
+    </div>
+    <div style="min-width:0">
+      <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans'">Question bank</div>
+        <span style="font:500 12px 'Plus Jakarta Sans';color:#aaa39a">·</span>
+        <span style="font:500 12.5px 'Plus Jakarta Sans';color:#7c756c">Mock Test 10 (draft)</span>
+        <div style="flex:1"></div>
+        <button style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:34px;padding:0 14px;cursor:pointer" style-hover="background:#faf8f6">Preview test</button>
+        <button style="font:600 12.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:9px;height:34px;padding:0 16px;cursor:pointer" style-hover="background:#e0540e">Publish</button>
+      </div>
+      <div style="display:grid;grid-template-columns:290px 1fr;align-items:start">
+        <!-- tree -->
+        <div style="border-right:1px solid #e9e4de;background:#fff;padding:18px 14px;align-self:stretch;min-height:720px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 6px">
+            <div style="font:700 12.5px 'Plus Jakarta Sans'">Structure</div>
+            <button style="font:600 11px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border:none;border-radius:7px;height:26px;padding:0 10px;cursor:pointer">+ Section</button>
+          </div>
+          <sc-for list="{{ tree }}" as="t" hint-placeholder-count="8">
+            <div style="{{ t.row }}">
+              <span style="font:400 12px 'Plus Jakarta Sans';color:#c5beb4;cursor:grab;letter-spacing:-1px">⠿</span>
+              <sc-if value="{{ t.isChapter }}" hint-placeholder-val="{{ false }}"><span style="font:600 9px 'Plus Jakarta Sans';color:#aaa39a">▾</span></sc-if>
+              <span style="{{ t.chip }}">{{ t.type }}</span>
+              <span style="{{ t.label }}">{{ t.name }}</span>
+              <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;margin-left:auto">{{ t.meta }}</span>
+            </div>
+          </sc-for>
+          <div style="border:1.5px dashed #d8d2c9;border-radius:10px;padding:10px;text-align:center;font:600 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:10px;cursor:pointer" style-hover="border-color:#f26a1b;color:#e0540e">+ Add lesson or quiz</div>
+        </div>
+        <!-- table -->
+        <div style="padding:18px 22px 30px;min-width:0">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;max-width:300px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #d8d2c9;border-radius:10px;height:36px;padding:0 12px">
+              <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+              <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search 1,204 questions…</span>
+            </div>
+            <select style="font:600 12px 'Plus Jakarta Sans';height:36px;padding:0 10px;border:1px solid #d8d2c9;border-radius:10px;background:#fff;color:#403b35"><option>All difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+            <select style="font:600 12px 'Plus Jakarta Sans';height:36px;padding:0 10px;border:1px solid #d8d2c9;border-radius:10px;background:#fff;color:#403b35"><option>All types</option><option>MCQ</option><option>True/False</option><option>Fill-in</option></select>
+            <span style="font:600 11px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:5px 11px;cursor:pointer">#percentages ✕</span>
+            <div style="flex:1"></div>
+            <button style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:34px;padding:0 13px;cursor:pointer" style-hover="background:#faf8f6">⤓ Add from bank</button>
+            <button style="font:600 12px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border:none;border-radius:9px;height:34px;padding:0 14px;cursor:pointer" style-hover="background:#403b35">+ New question</button>
+          </div>
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:14px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:44px 1fr 92px 76px 150px 96px;gap:10px;padding:9px 16px;background:#faf8f6;border-bottom:1px solid #e9e4de;font:700 10px 'Plus Jakarta Sans';letter-spacing:.05em;color:#7c756c;text-transform:uppercase;align-items:center">
+              <span>ID</span><span>Question</span><span>Difficulty</span><span>Marks</span><span>Tags</span><span style="text-align:right">Actions</span>
+            </div>
+            <sc-for list="{{ qRows }}" as="q" hint-placeholder-count="7">
+              <div style="display:grid;grid-template-columns:44px 1fr 92px 76px 150px 96px;gap:10px;padding:9px 16px;border-bottom:1px solid #f4f1ed;align-items:center" style-hover="background:#faf8f6">
+                <span style="font:500 10px 'JetBrains Mono';color:#aaa39a">{{ q.id }}</span>
+                <div style="min-width:0;display:flex;gap:8px;align-items:center">
+                  <span style="{{ q.typeChip }}">{{ q.type }}</span>
+                  <span style="font:500 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ q.text }}</span>
+                </div>
+                <span style="{{ q.diff }}">{{ q.diffTxt }}</span>
+                <span style="font:700 11px 'JetBrains Mono'"><span style="color:#0e7a48">+{{ q.plus }}</span> <span style="color:#ab2530">−{{ q.minus }}</span></span>
+                <div style="display:flex;gap:4px;overflow:hidden">
+                  <sc-for list="{{ q.tags }}" as="tg"><span style="font:500 10px 'Plus Jakarta Sans';background:#f4f1ed;color:#59534b;border-radius:999px;padding:3px 8px;white-space:nowrap">{{ tg }}</span></sc-for>
+                </div>
+                <div style="display:flex;gap:4px;justify-content:flex-end">
+                  <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#f4f1ed">✎</button>
+                  <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#f4f1ed">⧉</button>
+                  <button style="font:600 11px 'Plus Jakarta Sans';width:26px;height:26px;border:1px solid #e9e4de;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer" style-hover="background:#fde9ea;color:#ab2530">✕</button>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display:flex;align-items:center;gap:6px;padding:12px 16px">
+              <span style="font:500 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-right:auto">Showing 7 of 128 in this filter</span>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer">‹</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:none;background:#1c1915;color:#fff;border-radius:7px;cursor:pointer">1</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#59534b;cursor:pointer" style-hover="background:#faf8f6">2</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#59534b;cursor:pointer" style-hover="background:#faf8f6">3</button>
+              <button style="font:600 12px 'Plus Jakarta Sans';width:28px;height:28px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#7c756c;cursor:pointer">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;gap:14px;margin-top:24px">
+  <div style="width:40px;height:40px;border-radius:13px;background:#1c1915;color:#fff;display:flex;align-items:center;justify-content:center;font:800 13px 'JetBrains Mono'">02</div>
+  <div><div style="font:800 22px 'Plus Jakarta Sans';letter-spacing:-.01em">Grade</div><div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c">Answer-correction review queue.</div></div>
+</div>
+
+<div data-screen-label="Faculty Answer Correction">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">10 · ANSWER CORRECTION (FACULTY) — open a “Needs review” row; adjust the override and save</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:grid;grid-template-columns:232px 1fr">
+    <div style="background:#fff;border-right:1px solid #e9e4de;padding:20px 14px;display:flex;flex-direction:column;gap:2px;min-height:720px">
+      <div style="display:flex;align-items:center;gap:9px;padding:4px 10px 18px">
+        <div style="width:28px;height:28px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <div><div style="font:800 14px 'Plus Jakarta Sans'">Ascent</div><div style="font:600 8.5px 'JetBrains Mono';letter-spacing:.08em;color:#5a2ed6">TEACHING CENTRAL</div></div>
+      </div>
+      <sc-for list="{{ facNav }}" as="n" hint-placeholder-count="7">
+        <div style="{{ n.style }}"><span style="{{ n.dot }}"></span><span style="flex:1">{{ n.label }}</span><sc-if value="{{ n.count }}" hint-placeholder-val="{{ false }}"><span style="font:700 10px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border-radius:999px;padding:2px 7px">{{ n.count }}</span></sc-if></div>
+      </sc-for>
+    </div>
+    <div style="min-width:0">
+      <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 26px">
+        <div style="font:700 15px 'Plus Jakarta Sans'">Answer correction</div>
+        <span style="font:600 10.5px 'Plus Jakarta Sans';background:#fde9ea;color:#ab2530;border-radius:999px;padding:4px 10px">{{ needsReviewCount }} need review</span>
+        <div style="flex:1"></div>
+        <select style="font:600 12px 'Plus Jakarta Sans';height:34px;padding:0 10px;border:1px solid #d8d2c9;border-radius:9px;background:#fff;color:#403b35"><option>All statuses</option><option>Needs review</option><option>Processing</option><option>Graded</option></select>
+        <div style="display:flex;align-items:center;gap:8px;border:1px solid #e9e4de;border-radius:10px;height:36px;padding:0 10px;cursor:pointer" style-hover="background:#faf8f6"><div style="width:24px;height:24px;border-radius:999px;background:#fff6ef;color:#e0540e;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">PK</div><span style="font:600 12px 'Plus Jakarta Sans'">Prof. Khanna</span></div>
+      </div>
+
+      <sc-if value="{{ gQueue }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:22px 26px 34px;animation:fadeInUp .2s ease">
+          <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:1.8fr 1.6fr 120px 110px 120px 90px;gap:12px;padding:9px 18px;background:#faf8f6;border-bottom:1px solid #e9e4de;font:700 10px 'Plus Jakarta Sans';letter-spacing:.05em;color:#7c756c;text-transform:uppercase;align-items:center">
+              <span>Student</span><span>Question</span><span>AI grade</span><span>Submitted</span><span>Status</span><span style="text-align:right">Action</span>
+            </div>
+            <sc-for list="{{ gRows }}" as="r" hint-placeholder-count="5">
+              <div style="display:grid;grid-template-columns:1.8fr 1.6fr 120px 110px 120px 90px;gap:12px;padding:10px 18px;border-bottom:1px solid #f4f1ed;align-items:center" style-hover="background:#faf8f6">
+                <div style="display:flex;gap:10px;align-items:center;min-width:0">
+                  <div style="{{ r.av }}">{{ r.ini }}</div>
+                  <div style="min-width:0"><div style="font:600 12.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font:400 10.5px 'JetBrains Mono';color:#aaa39a">{{ r.id }}</div></div>
+                </div>
+                <span style="font:500 12px 'Plus Jakarta Sans';color:#403b35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.q }}</span>
+                <span style="{{ r.ai }}">{{ r.aiTxt }}</span>
+                <span style="font:500 11px 'JetBrains Mono';color:#7c756c">{{ r.when }}</span>
+                <span style="{{ r.pill }}">{{ r.status }}</span>
+                <div style="display:flex;justify-content:flex-end">
+                  <button onClick="{{ r.openIt }}" style="{{ r.btn }}">{{ r.btnTxt }}</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ gDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:22px 26px 34px;animation:fadeInUp .25s ease">
+          <span onClick="{{ gBack }}" style="font:600 12.5px 'Plus Jakarta Sans';color:#7c756c;cursor:pointer" style-hover="color:#e0540e">← Back to queue</span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:14px;align-items:start">
+            <div>
+              <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:18px">
+                <div style="display:flex;gap:11px;align-items:center;margin-bottom:12px">
+                  <div style="width:38px;height:38px;border-radius:999px;background:#e2f4ef;color:#0c7a60;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans'">SL</div>
+                  <div><div style="font:700 14px 'Plus Jakarta Sans'">Sana Lakhani</div><div style="font:400 11px 'Plus Jakarta Sans';color:#aaa39a">#ST-2107 · Mock 09 · Q12 · submitted 2h ago</div></div>
+                  <span style="font:600 10px 'Plus Jakarta Sans';background:#fde9ea;color:#ab2530;border-radius:999px;padding:4px 9px;margin-left:auto">Needs review</span>
+                </div>
+                <div style="height:250px;border-radius:12px;background:repeating-linear-gradient(45deg,#f4f1ed,#f4f1ed 10px,#faf8f6 10px,#faf8f6 20px);display:flex;align-items:center;justify-content:center">
+                  <span style="font:500 10px 'JetBrains Mono';color:#7c756c;background:rgba(255,255,255,.8);padding:4px 9px;border-radius:6px">handwritten answer scan — thermo-derivation-q12.pdf</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                  <button style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:8px;height:30px;padding:0 12px;cursor:pointer" style-hover="background:#faf8f6">⛶ Full screen</button>
+                  <button style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:8px;height:30px;padding:0 12px;cursor:pointer" style-hover="background:#faf8f6">Model answer</button>
+                  <button style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:8px;height:30px;padding:0 12px;cursor:pointer" style-hover="background:#faf8f6">Message student</button>
+                </div>
+              </div>
+              <div style="background:#f5f2ff;border-radius:14px;padding:13px 16px;margin-top:14px;font:400 12px/1.6 'Plus Jakarta Sans';color:#403b35"><b style="color:#5a2ed6">Why flagged:</b> AI confidence 61% on criterion 3 — handwriting ambiguity on the sign of W. Human review required before releasing the grade.</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;overflow:hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #f4f1ed">
+                <span style="font:700 13.5px 'Plus Jakarta Sans'">Rubric — finalize grade</span>
+                <span style="display:flex;gap:6px;align-items:center"><span style="font:700 10.5px 'JetBrains Mono';background:#f5f2ff;color:#5a2ed6;border-radius:6px;padding:4px 8px;{{ aiStrike }}">AI 6.5</span><span style="font:400 10px 'Plus Jakarta Sans';color:#aaa39a">→</span><span key="{{ overrideKey }}" style="font:700 12px 'JetBrains Mono';background:#1c1915;color:#fff;border-radius:6px;padding:4px 9px;animation:popIn .2s ease">{{ overrideTotal }} / 10</span></span>
+              </div>
+              <sc-for list="{{ gRubric }}" as="r" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid #f4f1ed">
+                  <span style="{{ r.icon }}">{{ r.glyph }}</span>
+                  <div style="flex:1;min-width:0"><div style="font:600 12.5px 'Plus Jakarta Sans'">{{ r.name }}</div><div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">{{ r.note }}</div></div>
+                  <div style="display:flex;gap:5px;align-items:center">
+                    <button onClick="{{ r.dec }}" style="width:24px;height:24px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#59534b;cursor:pointer;font:700 12px 'Plus Jakarta Sans'" style-hover="background:#f4f1ed">−</button>
+                    <span style="font:700 12px 'JetBrains Mono';width:52px;text-align:center">{{ r.val }} / {{ r.max }}</span>
+                    <button onClick="{{ r.inc }}" style="width:24px;height:24px;border:1px solid #d8d2c9;background:#fff;border-radius:7px;color:#59534b;cursor:pointer;font:700 12px 'Plus Jakarta Sans'" style-hover="background:#f4f1ed">+</button>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="padding:14px 18px">
+                <div style="font:600 12px 'Plus Jakarta Sans';margin-bottom:6px">Comment to student</div>
+                <textarea value="{{ gComment }}" onChange="{{ gCommentChange }}" style="font:400 12.5px/1.6 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:72px;padding:10px 12px;border:1px solid #d8d2c9;border-radius:10px;outline:none;resize:none;background:#fff" style-focus="border-color:#f26a1b"></textarea>
+                <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+                  <span style="font:400 11px 'Plus Jakarta Sans';color:#aaa39a">Saving releases the grade to the student.</span>
+                  <div style="flex:1"></div>
+                  <button onClick="{{ gBack }}" style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:38px;padding:0 14px;cursor:pointer" style-hover="background:#faf8f6">Cancel</button>
+                  <button onClick="{{ gSave }}" style="font:600 13px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:9px;height:38px;padding:0 18px;cursor:pointer" style-hover="background:#e0540e">Save &amp; release {{ overrideTotal }}/10</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;gap:14px;margin-top:24px">
+  <div style="width:40px;height:40px;border-radius:13px;background:#1c1915;color:#fff;display:flex;align-items:center;justify-content:center;font:800 13px 'JetBrains Mono'">03</div>
+  <div><div style="font:800 22px 'Plus Jakarta Sans';letter-spacing:-.01em">Shared — messaging & community</div><div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c">Messenger and forum, shared between faculty and students.</div></div>
+</div>
+
+<div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+<div data-screen-label="Messenger">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">8 · MESSENGER — click a conversation; type &amp; send</div>
+  <div style="width:1100px;height:640px;background:#faf8f6;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.14);overflow:hidden;display:grid;grid-template-columns:330px 1fr">
+    <div style="background:#fff;border-right:1px solid #e9e4de;display:flex;flex-direction:column">
+      <div style="padding:20px 18px 12px">
+        <div style="font:700 18px 'Plus Jakarta Sans';letter-spacing:-.01em">Messages</div>
+        <div style="display:flex;align-items:center;gap:8px;background:#f4f1ed;border-radius:10px;height:36px;padding:0 12px;margin-top:12px">
+          <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search conversations…</span>
+        </div>
+      </div>
+      <div style="flex:1;overflow:hidden">
+        <sc-for list="{{ convs }}" as="c" hint-placeholder-count="5">
+          <div onClick="{{ c.open }}" style="{{ c.row }}">
+            <div style="{{ c.av }}">{{ c.ini }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;justify-content:space-between;gap:8px"><span style="{{ c.nameStyle }}">{{ c.name }}</span><span style="{{ c.time }}">{{ c.when }}</span></div>
+              <div style="{{ c.preview }}">{{ c.last }}</div>
+            </div>
+            <sc-if value="{{ c.unread }}" hint-placeholder-val="{{ false }}"><span style="width:9px;height:9px;border-radius:999px;background:#f26a1b;flex:none"></span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ noThread }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+        <div style="width:60px;height:60px;border-radius:20px;background:#f4f1ed;display:flex;align-items:center;justify-content:center"><div style="width:22px;height:16px;border:2px dashed #aaa39a;border-radius:6px"></div></div>
+        <div style="font:700 15px 'Plus Jakarta Sans'">Select a conversation</div>
+        <div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c">Your mentors and study groups live here.</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ hasThread }}" hint-placeholder-val="{{ true }}">
+      <div key="{{ threadKey }}" style="display:flex;flex-direction:column;animation:fadeInUp .2s ease">
+        <div style="height:62px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 22px;flex:none">
+          <div style="{{ curAv }}">{{ curIni }}</div>
+          <div style="flex:1"><div style="font:700 14px 'Plus Jakarta Sans'">{{ curName }}</div><div style="font:400 11px 'Plus Jakarta Sans';color:{{ curStatusInk }}">{{ curStatus }}</div></div>
+          <button style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:9px;height:32px;padding:0 13px;cursor:pointer" style-hover="background:#faf8f6">View profile</button>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:20px 22px;display:flex;flex-direction:column;gap:8px;justify-content:flex-end">
+          <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="5">
+            <div style="{{ m.wrap }}">
+              <div style="{{ m.bubble }}">{{ m.text }}</div>
+              <div style="{{ m.meta }}">{{ m.metaTxt }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:14px 22px 18px;background:#fff;border-top:1px solid #e9e4de;display:flex;gap:8px;flex:none">
+          <button style="width:40px;height:40px;border-radius:999px;background:#fff;border:1px solid #d8d2c9;color:#7c756c;cursor:pointer;font:600 16px 'Plus Jakarta Sans';flex:none" style-hover="background:#faf8f6">+</button>
+          <input value="{{ draft }}" onChange="{{ draftChange }}" placeholder="Message {{ curName }}…" style="font:400 13.5px 'Plus Jakarta Sans';flex:1;height:40px;padding:0 16px;border:1px solid #d8d2c9;border-radius:999px;outline:none;background:#fff" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.12)">
+          <button onClick="{{ send }}" style="width:40px;height:40px;border-radius:999px;background:#f26a1b;color:#fff;border:none;cursor:pointer;font:700 15px 'Plus Jakarta Sans';flex:none" style-hover="background:#e0540e">➤</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+<div data-screen-label="Messenger — Mobile">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">8m · MOBILE — drill-down (tap a row, then ←)</div>
+  <div style="width:390px;height:680px;background:#faf8f6;border-radius:32px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.16);display:flex;flex-direction:column">
+    <sc-if value="{{ mList }}" hint-placeholder-val="{{ true }}">
+      <div style="height:56px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:10px;padding:0 16px;flex:none">
+        <span style="font:700 16px 'Plus Jakarta Sans'">Messages</span>
+        <div style="flex:1"></div>
+        <span style="font:600 10.5px 'Plus Jakarta Sans';background:#fff6ef;color:#e0540e;border-radius:999px;padding:4px 10px">2 unread</span>
+      </div>
+      <div style="flex:1;overflow:hidden;background:#fff">
+        <sc-for list="{{ convsM }}" as="c" hint-placeholder-count="5">
+          <div onClick="{{ c.openM }}" style="{{ c.row }}">
+            <div style="{{ c.av }}">{{ c.ini }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;justify-content:space-between;gap:8px"><span style="{{ c.nameStyle }}">{{ c.name }}</span><span style="{{ c.time }}">{{ c.when }}</span></div>
+              <div style="{{ c.preview }}">{{ c.last }}</div>
+            </div>
+            <sc-if value="{{ c.unread }}" hint-placeholder-val="{{ false }}"><span style="width:9px;height:9px;border-radius:999px;background:#f26a1b;flex:none"></span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ mThread }}" hint-placeholder-val="{{ false }}">
+      <div style="height:56px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:10px;padding:0 12px;flex:none;animation:fadeInUp .2s ease">
+        <button onClick="{{ mBack }}" style="width:34px;height:34px;border:none;background:transparent;border-radius:9px;cursor:pointer;font:600 16px 'Plus Jakarta Sans';color:#403b35" style-hover="background:#f4f1ed">←</button>
+        <div style="{{ curAvSm }}">{{ curIni }}</div>
+        <div><div style="font:700 13.5px 'Plus Jakarta Sans'">{{ curName }}</div><div style="font:400 10px 'Plus Jakarta Sans';color:{{ curStatusInk }}">{{ curStatus }}</div></div>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:16px 14px;display:flex;flex-direction:column;gap:7px;justify-content:flex-end">
+        <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="5">
+          <div style="{{ m.wrap }}"><div style="{{ m.bubbleM }}">{{ m.text }}</div></div>
+        </sc-for>
+      </div>
+      <div style="padding:12px 14px 18px;background:#fff;border-top:1px solid #e9e4de;display:flex;gap:8px;flex:none">
+        <input value="{{ draft }}" onChange="{{ draftChange }}" placeholder="Message…" style="font:400 13px 'Plus Jakarta Sans';flex:1;height:40px;padding:0 15px;border:1px solid #d8d2c9;border-radius:999px;outline:none;background:#fff" style-focus="border-color:#f26a1b">
+        <button onClick="{{ send }}" style="width:40px;height:40px;border-radius:999px;background:#f26a1b;color:#fff;border:none;cursor:pointer;font:700 14px 'Plus Jakarta Sans';flex:none">➤</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</div>
+
+<div data-screen-label="Forum">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">9 · FORUM — filter by category, open a thread, or hit “New thread”</div>
+  <div style="width:1100px;background:#faf8f6;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.14);overflow:hidden;min-height:600px">
+    <div style="height:60px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:14px;padding:0 26px">
+      <span style="font:700 16px 'Plus Jakarta Sans'">Community forum</span>
+      <span style="font:600 10.5px 'Plus Jakarta Sans';background:#ece6ff;color:#5a2ed6;border-radius:999px;padding:4px 10px">Class 12 · NEET</span>
+      <div style="flex:1;max-width:300px;margin-left:auto;display:flex;align-items:center;gap:8px;background:#f4f1ed;border-radius:10px;height:36px;padding:0 12px">
+        <div style="width:11px;height:11px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+        <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search threads…</span>
+      </div>
+      <button onClick="{{ fCompose }}" style="font:600 12.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:9px;height:36px;padding:0 16px;cursor:pointer" style-hover="background:#e0540e">+ New thread</button>
+    </div>
+
+    <sc-if value="{{ fList }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:20px 26px 30px;animation:fadeInUp .2s ease">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px">
+          <sc-for list="{{ fCats }}" as="c" hint-placeholder-count="5"><span onClick="{{ c.pick }}" style="{{ c.chip }}">{{ c.name }}</span></sc-for>
+        </div>
+        <div key="{{ fCatKey }}" style="background:#fff;border:1px solid #e9e4de;border-radius:16px;overflow:hidden;animation:fadeInUp .25s ease">
+          <sc-for list="{{ fThreads }}" as="t" hint-placeholder-count="5">
+            <div onClick="{{ t.open }}" style="display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid #f4f1ed;cursor:pointer" style-hover="background:#faf8f6">
+              <div style="{{ t.av }}">{{ t.ini }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:8px;align-items:center"><span style="font:700 13.5px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span><sc-if value="{{ t.hot }}" hint-placeholder-val="{{ false }}"><span style="font:800 8px 'Plus Jakarta Sans';letter-spacing:.05em;background:#fde9ea;color:#e63368;border-radius:4px;padding:2px 6px;flex:none">HOT</span></sc-if></div>
+                <div style="font:400 11.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:2px">{{ t.author }} · {{ t.cat }} · <sc-if value="{{ t.answered }}" hint-placeholder-val="{{ false }}"><span style="color:#0e7a48;font-weight:600">✓ answered by mentor</span></sc-if><sc-if value="{{ t.unanswered }}" hint-placeholder-val="{{ false }}"><span style="color:#a35a06;font-weight:600">needs answers</span></sc-if></div>
+              </div>
+              <div style="text-align:right;flex:none;width:44px"><div style="font:700 13px 'JetBrains Mono'">{{ t.replies }}</div><div style="font:400 9.5px 'Plus Jakarta Sans';color:#aaa39a">replies</div></div>
+              <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;flex:none;width:26px;text-align:right">{{ t.when }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ fDetail }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:20px 26px 30px;max-width:760px;animation:fadeInUp .25s ease">
+        <span onClick="{{ fBackToList }}" style="font:600 12.5px 'Plus Jakarta Sans';color:#7c756c;cursor:pointer" style-hover="color:#e0540e">← All threads</span>
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:22px;margin-top:14px">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+            <div style="width:36px;height:36px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 12px 'Plus Jakarta Sans'">AR</div>
+            <div><div style="font:700 13px 'Plus Jakarta Sans'">Aditi R.</div><div style="font:400 10.5px 'Plus Jakarta Sans';color:#aaa39a">2h ago · Physics</div></div>
+            <span style="font:600 10.5px 'Plus Jakarta Sans';background:#e6f6ee;color:#0e7a48;border-radius:999px;padding:4px 10px;margin-left:auto">✓ Answered</span>
+          </div>
+          <div style="font:700 18px/1.35 'Plus Jakarta Sans'">Why is ΔU zero for isothermal ideal gas?</div>
+          <div style="font:400 13.5px/1.7 'Plus Jakarta Sans';color:#403b35;margin-top:10px">NCERT says heat absorbed equals work done in isothermal expansion, which implies ΔU = 0. But the gas is absorbing heat — why doesn't its internal energy rise?</div>
+          <div style="display:flex;gap:12px;margin-top:12px;font:600 11.5px 'Plus Jakarta Sans';color:#7c756c"><span style="cursor:pointer" style-hover="color:#e0540e">▲ 12 helpful</span><span>14 replies</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+          <div style="background:#fff;border:1.5px solid #b7e4cd;border-radius:16px;padding:16px 18px">
+            <div style="display:flex;gap:9px;align-items:center;margin-bottom:7px">
+              <div style="width:28px;height:28px;border-radius:999px;background:#fff6ef;color:#e0540e;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">PK</div>
+              <span style="font:700 12.5px 'Plus Jakarta Sans'">Prof. Khanna</span>
+              <span style="font:800 8px 'Plus Jakarta Sans';letter-spacing:.05em;background:#e6f6ee;color:#0e7a48;border-radius:4px;padding:2px 6px">✓ MENTOR</span>
+              <span style="font:400 10px 'JetBrains Mono';color:#aaa39a;margin-left:auto">1h</span>
+            </div>
+            <div style="font:400 13px/1.65 'Plus Jakarta Sans';color:#403b35">Internal energy of an ideal gas depends <b>only on temperature</b>. Isothermal means T is constant, so U can't change — every joule of heat absorbed leaves immediately as work. Real gases differ slightly (Joule–Thomson), but that's beyond NEET.</div>
+            <div style="display:flex;gap:12px;margin-top:9px;font:600 11px 'Plus Jakarta Sans';color:#7c756c"><span style="cursor:pointer" style-hover="color:#e0540e">▲ 28 helpful</span><span style="cursor:pointer" style-hover="color:#e0540e">Reply</span></div>
+          </div>
+          <sc-for list="{{ fReplies }}" as="r" hint-placeholder-count="2">
+            <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:16px 18px;animation:popIn .25s ease">
+              <div style="display:flex;gap:9px;align-items:center;margin-bottom:7px">
+                <div style="{{ r.av }}">{{ r.ini }}</div>
+                <span style="font:700 12.5px 'Plus Jakarta Sans'">{{ r.name }}</span>
+                <span style="font:400 10px 'JetBrains Mono';color:#aaa39a;margin-left:auto">{{ r.when }}</span>
+              </div>
+              <div style="font:400 13px/1.65 'Plus Jakarta Sans';color:#403b35">{{ r.text }}</div>
+              <div style="display:flex;gap:12px;margin-top:9px;font:600 11px 'Plus Jakarta Sans';color:#7c756c"><span style="cursor:pointer" style-hover="color:#e0540e">▲ {{ r.votes }} helpful</span><span style="cursor:pointer" style-hover="color:#e0540e">Reply</span></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <input value="{{ fDraft }}" onChange="{{ fDraftChange }}" placeholder="Add your reply…" style="font:400 13.5px 'Plus Jakarta Sans';flex:1;height:44px;padding:0 16px;border:1px solid #d8d2c9;border-radius:12px;outline:none;background:#fff" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.12)">
+          <button onClick="{{ fReply }}" style="font:600 13px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border:none;border-radius:12px;height:44px;padding:0 20px;cursor:pointer" style-hover="background:#403b35">Reply</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ fNew }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:20px 26px 30px;max-width:640px;animation:fadeInUp .25s ease">
+        <span onClick="{{ fBackToList }}" style="font:600 12.5px 'Plus Jakarta Sans';color:#7c756c;cursor:pointer" style-hover="color:#e0540e">← Cancel</span>
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:24px;margin-top:14px">
+          <div style="font:700 19px 'Plus Jakarta Sans';letter-spacing:-.01em;margin-bottom:16px">Start a thread</div>
+          <div style="font:600 12px 'Plus Jakarta Sans';margin-bottom:6px">Title</div>
+          <input placeholder="One clear question works best…" style="font:400 14px 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:44px;padding:0 14px;border:1px solid #d8d2c9;border-radius:11px;outline:none;background:#fff" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.12)">
+          <div style="font:600 12px 'Plus Jakarta Sans';margin:14px 0 6px">Category</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span style="font:600 12px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border-radius:999px;padding:7px 14px;cursor:pointer">Physics</span>
+            <span style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:7px 14px;cursor:pointer" style-hover="border-color:#aaa39a">Chemistry</span>
+            <span style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:7px 14px;cursor:pointer" style-hover="border-color:#aaa39a">Biology</span>
+            <span style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:7px 14px;cursor:pointer" style-hover="border-color:#aaa39a">Exam strategy</span>
+          </div>
+          <div style="font:600 12px 'Plus Jakarta Sans';margin:14px 0 6px">Details</div>
+          <textarea placeholder="What have you tried? Where exactly are you stuck?" style="font:400 13.5px/1.6 'Plus Jakarta Sans';width:100%;box-sizing:border-box;height:110px;padding:12px 14px;border:1px solid #d8d2c9;border-radius:11px;outline:none;resize:vertical;background:#fff" style-focus="border-color:#f26a1b;box-shadow:0 0 0 3px rgba(242,106,27,.12)"></textarea>
+          <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+            <button onClick="{{ fBackToList }}" style="font:600 13.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;border-radius:10px;height:42px;padding:0 18px;cursor:pointer" style-hover="background:#faf8f6">Cancel</button>
+            <button onClick="{{ fBackToList }}" style="font:600 13.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:10px;height:42px;padding:0 20px;cursor:pointer" style-hover="background:#e0540e">Post thread</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+<div data-screen-label="Forum — Mobile">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">9m · FORUM MOBILE — categories collapse to a scrolling chip row</div>
+  <div style="width:390px;background:#faf8f6;border-radius:32px;box-shadow:0 20px 48px rgba(28,22,15,.16);overflow:hidden;padding-bottom:16px">
+    <div style="height:56px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:10px;padding:0 16px">
+      <span style="font:700 15px 'Plus Jakarta Sans'">Forum</span>
+      <div style="flex:1"></div>
+      <button style="font:600 11.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:8px;height:32px;padding:0 12px;cursor:pointer">+ New</button>
+    </div>
+    <div style="display:flex;gap:6px;padding:12px 16px 4px;overflow:hidden">
+      <span style="font:600 11.5px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border-radius:999px;padding:6px 13px;flex:none">All</span>
+      <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:6px 13px;flex:none">Physics</span>
+      <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:6px 13px;flex:none">Chemistry</span>
+      <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:6px 13px;flex:none">Biolo…</span>
+    </div>
+    <div style="padding:10px 16px 0;display:flex;flex-direction:column;gap:8px">
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:14px;padding:13px 14px">
+        <div style="font:700 12.5px/1.4 'Plus Jakarta Sans'">Why is ΔU zero for isothermal ideal gas?</div>
+        <div style="font:400 10.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">Aditi R. · <span style="color:#0e7a48;font-weight:600">✓ answered</span> · 14 replies · 2h</div>
+      </div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:14px;padding:13px 14px">
+        <div style="font:700 12.5px/1.4 'Plus Jakarta Sans'">Mock 09 Q18 — entropy sign confusion</div>
+        <div style="font:400 10.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">Jay M. · <span style="color:#a35a06;font-weight:600">needs answers</span> · 3 replies · 4h</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;gap:14px;margin-top:24px">
+  <div style="width:40px;height:40px;border-radius:13px;background:#1c1915;color:#fff;display:flex;align-items:center;justify-content:center;font:800 13px 'JetBrains Mono'">04</div>
+  <div><div style="font:800 22px 'Plus Jakarta Sans';letter-spacing:-.01em">Component sheets</div><div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c">Messenger & forum primitives these screens are built from.</div></div>
+</div>
+
+<div data-screen-label="Messenger + Forum Components">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">C3 · CONVERSATION ROW · CHAT BUBBLES · COMPOSER · CATEGORY CHIPS · THREAD ROW · REPLY CARD</div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.14);padding:32px 36px;box-sizing:border-box;display:grid;grid-template-columns:1fr 1.1fr;gap:36px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="font:700 13.5px 'Plus Jakarta Sans'">Conversation-list row — unread · read · active</div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;overflow:hidden">
+        <div style="display:flex;gap:11px;align-items:center;padding:12px 16px;border-bottom:1px solid #f4f1ed;background:#fff9f4;cursor:pointer">
+          <div style="width:40px;height:40px;border-radius:999px;background:#fff6ef;color:#e0540e;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';flex:none">PK</div>
+          <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between"><span style="font:700 13px 'Plus Jakarta Sans'">Prof. Khanna</span><span style="font:500 10px 'JetBrains Mono';color:#e0540e">2m</span></div><div style="font:600 11.5px 'Plus Jakarta Sans';color:#1c1915;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Re-check the sign in step 3 — you flipped it</div></div>
+          <span style="width:9px;height:9px;border-radius:999px;background:#f26a1b;flex:none"></span>
+        </div>
+        <div style="display:flex;gap:11px;align-items:center;padding:12px 16px;cursor:pointer" style-hover="background:#faf8f6">
+          <div style="width:40px;height:40px;border-radius:999px;background:#e2f4ef;color:#0c7a60;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';flex:none">SL</div>
+          <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between"><span style="font:600 13px 'Plus Jakarta Sans'">Study group · Batch 26</span><span style="font:500 10px 'JetBrains Mono';color:#aaa39a">1h</span></div><div style="font:400 11.5px 'Plus Jakarta Sans';color:#7c756c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sana: anyone solved Q18 yet?</div></div>
+        </div>
+      </div>
+      <div style="font:700 13.5px 'Plus Jakarta Sans'">Chat bubbles + composer</div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="align-self:flex-start;max-width:78%;background:#f4f1ed;border-radius:16px 16px 16px 4px;padding:10px 14px;font:400 13px/1.55 'Plus Jakarta Sans';color:#403b35">Your derivation is right until step 3 — check the sign of W.</div>
+        <div style="align-self:flex-start;font:400 10px 'JetBrains Mono';color:#aaa39a;padding-left:4px">Prof. Khanna · 18:02</div>
+        <div style="align-self:flex-end;max-width:78%;background:#f26a1b;color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;font:400 13px/1.55 'Plus Jakarta Sans'">Got it — work done BY the gas is positive. Fixed!</div>
+        <div style="align-self:flex-end;font:400 10px 'JetBrains Mono';color:#aaa39a;padding-right:4px">You · 18:04 · ✓✓</div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input placeholder="Message…" style="font:400 13px 'Plus Jakarta Sans';flex:1;height:40px;padding:0 14px;border:1px solid #d8d2c9;border-radius:999px;outline:none;background:#fff" style-focus="border-color:#f26a1b">
+          <button style="width:40px;height:40px;border-radius:999px;background:#f26a1b;color:#fff;border:none;cursor:pointer;font:700 15px 'Plus Jakarta Sans';flex:none" style-hover="background:#e0540e">➤</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="font:700 13.5px 'Plus Jakarta Sans'">Forum category chips + thread-list row</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <span style="font:600 12px 'Plus Jakarta Sans';background:#1c1915;color:#fff;border-radius:999px;padding:7px 14px;cursor:pointer">All</span>
+        <span style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:7px 14px;cursor:pointer" style-hover="border-color:#aaa39a">Physics</span>
+        <span style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:7px 14px;cursor:pointer" style-hover="border-color:#aaa39a">Exam strategy</span>
+        <span style="font:600 12px 'Plus Jakarta Sans';background:#fff;border:1px solid #d8d2c9;color:#403b35;border-radius:999px;padding:7px 14px;cursor:pointer" style-hover="border-color:#aaa39a">Doubts</span>
+      </div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;overflow:hidden">
+        <div style="display:flex;gap:12px;align-items:center;padding:13px 16px;cursor:pointer" style-hover="background:#faf8f6">
+          <div style="width:36px;height:36px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 12px 'Plus Jakarta Sans';flex:none">AR</div>
+          <div style="flex:1;min-width:0">
+            <div style="font:700 13px 'Plus Jakarta Sans';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Why is ΔU zero for isothermal ideal gas?</div>
+            <div style="font:400 11px 'Plus Jakarta Sans';color:#7c756c;margin-top:2px">Aditi R. · Physics · <span style="color:#0e7a48;font-weight:600">✓ answered by mentor</span></div>
+          </div>
+          <div style="text-align:right;flex:none"><div style="font:700 12px 'JetBrains Mono'">14</div><div style="font:400 10px 'Plus Jakarta Sans';color:#aaa39a">replies</div></div>
+          <span style="font:500 10px 'JetBrains Mono';color:#aaa39a;flex:none">2h</span>
+        </div>
+      </div>
+      <div style="font:700 13.5px 'Plus Jakarta Sans'">Reply card — regular · mentor-verified</div>
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:16px;padding:14px 16px">
+        <div style="display:flex;gap:9px;align-items:center;margin-bottom:7px">
+          <div style="width:28px;height:28px;border-radius:999px;background:#fff6ef;color:#e0540e;display:flex;align-items:center;justify-content:center;font:700 10px 'Plus Jakarta Sans'">PK</div>
+          <span style="font:700 12.5px 'Plus Jakarta Sans'">Prof. Khanna</span>
+          <span style="font:800 8px 'Plus Jakarta Sans';letter-spacing:.05em;background:#e6f6ee;color:#0e7a48;border-radius:4px;padding:2px 6px">✓ MENTOR</span>
+          <span style="font:400 10px 'JetBrains Mono';color:#aaa39a;margin-left:auto">1h</span>
+        </div>
+        <div style="font:400 13px/1.65 'Plus Jakarta Sans';color:#403b35">Internal energy of an ideal gas depends only on temperature. Isothermal ⇒ T constant ⇒ ΔU = 0. All absorbed heat goes into work.</div>
+        <div style="display:flex;gap:12px;margin-top:9px;font:600 11px 'Plus Jakarta Sans';color:#7c756c"><span style="cursor:pointer" style-hover="color:#e0540e">▲ 28 helpful</span><span style="cursor:pointer" style-hover="color:#e0540e">Reply</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;studentName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Aditi&quot;,&quot;section&quot;:&quot;Demo content&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;liveNow&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;section&quot;:&quot;Demo content&quot;,&quot;tsType&quot;:&quot;boolean&quot;},&quot;percentile&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:91,&quot;min&quot;:1,&quot;max&quot;:99,&quot;section&quot;:&quot;Demo content&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;$preview&quot;:{&quot;width&quot;:1480}}">
+
+class CompS1 extends DCLogic {
+  state = {
+    role: 'student', drawerOpen: false,
+    courseTab: 'Overview', flipped: false, deck: 0,
+    mockView: 'taking', quizPick: null, marked: false, secs: 0
+  };
+
+  componentDidMount() {}
+  componentWillUnmount() { clearInterval(this._iv); }
+  fmt(t) { const m = Math.floor(t / 60), s = t % 60; return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'); }
+
+  renderVals() {
+    const S = this.state;
+    const sans = "'Plus Jakarta Sans'", mono = "'JetBrains Mono'";
+
+    // login role toggle
+    const segBase = 'font:600 13px ' + sans + ';height:38px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;cursor:pointer;transition:all .15s;';
+    const roleStuStyle = segBase + (S.role === 'student' ? 'background:#fff;box-shadow:0 1px 3px rgba(28,22,15,.12);color:#1c1915' : 'color:#7c756c');
+    const roleInsStyle = segBase + (S.role === 'instructor' ? 'background:#fff;box-shadow:0 1px 3px rgba(28,22,15,.12);color:#1c1915' : 'color:#7c756c');
+
+    // heatmap
+    const heat = [];
+    const cols = ['#f4f1ed', '#ffe9d8', '#ffd0ac', '#fb8a44', '#e0540e'];
+    for (let i = 0; i < 25 * 7; i++) {
+      const v = Math.floor(Math.abs(Math.sin(i * 12.9898) * 43758.5453 % 1) * 5);
+      heat.push({ cell: 'width:11px;height:11px;border-radius:3px;background:' + cols[v], tip: v * 25 + ' min' });
+    }
+
+    // schedule
+    const chip = (bg, c) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:3px 9px;flex:none';
+    const schedule = [
+      { time: '07:00', bar: 'width:3px;height:26px;border-radius:2px;background:#7c5cfc;flex:none', title: 'Revise: Ratio & Proportion', titleStyle: 'font:600 12.5px ' + sans, meta: '40 flashcards due', tag: '45 min', chip: chip('#ece6ff', '#5a2ed6') },
+      { time: '12:30', bar: 'width:3px;height:26px;border-radius:2px;background:#14b077;flex:none', title: 'Mock Test 09 review', titleStyle: 'font:600 12.5px ' + sans + ';text-decoration:line-through;color:#aaa39a', meta: 'done · 74% accuracy', tag: '✓ done', chip: chip('#e6f6ee', '#0e7a48') },
+      { time: '18:30', bar: 'width:3px;height:26px;border-radius:2px;background:#e63368;flex:none', title: 'Live: Algebra Sprint', titleStyle: 'font:600 12.5px ' + sans, meta: 'Prof. Khanna · Room 2', tag: 'LIVE', chip: 'font:800 9px ' + sans + ';letter-spacing:.05em;background:#e63368;color:#fff;border-radius:5px;padding:3px 8px;flex:none;animation:dotPulse 1.6s infinite' },
+      { time: '21:00', bar: 'width:3px;height:26px;border-radius:2px;background:#d8d2c9;flex:none', title: 'Reflection journal', titleStyle: 'font:600 12.5px ' + sans, meta: '2 prompts', tag: '10 min', chip: chip('#f4f1ed', '#59534b') }
+    ];
+    const scheduleM = schedule.slice(0, 3);
+
+    // recommended courses
+    const av = (bg, c) => 'width:20px;height:20px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font:700 8px ' + sans + ';background:' + bg + ';color:' + c;
+    const thumbBase = 'height:118px;position:relative;display:flex;align-items:center;justify-content:center;';
+    const stripe = (a, b) => 'background:repeating-linear-gradient(45deg,' + a + ',' + a + ' 8px,' + b + ' 8px,' + b + ' 16px);';
+    const lvlChip = (bg, c) => 'position:absolute;bottom:10px;left:10px;font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:3px 9px';
+    const badgeS = (bg) => 'position:absolute;top:10px;left:10px;font:800 9px ' + sans + ';letter-spacing:.07em;background:' + bg + ';color:#fff;border-radius:5px;padding:3px 7px';
+    const recCourses = [
+      { title: 'Data Interpretation — Speed Sets', inst: 'R. Iyer', ini: 'RI', av: av('#e2f4ef', '#0c7a60'), rating: '4.7', level: 'Hard', lvl: lvlChip('#fde9ea', '#ab2530'), thumb: thumbBase + stripe('#ffe9d8', '#fff6ef'), thumbInk: '#b9400d', badge: 'BESTSELLER', badgeStyle: badgeS('#f26a1b'), price: '₹649', priceStyle: 'font:800 15px ' + sans },
+      { title: 'Logical Reasoning Bootcamp', inst: 'M. D\u2019Souza', ini: 'MD', av: av('#ece6ff', '#5a2ed6'), rating: '4.9', level: 'Medium', lvl: lvlChip('#fdf0dd', '#a35a06'), thumb: thumbBase + stripe('#ece6ff', '#f5f2ff'), thumbInk: '#5a2ed6', badge: 'NEW', badgeStyle: badgeS('#7c5cfc'), price: '₹549', priceStyle: 'font:800 15px ' + sans },
+      { title: 'Vocab in Context — 30 days', inst: 'S. Pillai', ini: 'SP', av: av('#fdf0dd', '#a35a06'), rating: '4.5', level: 'Easy', lvl: lvlChip('#e2f4ef', '#0c7a60'), thumb: thumbBase + stripe('#e2f4ef', '#f0faf7'), thumbInk: '#0c7a60', badge: null, badgeStyle: '', price: 'FREE', priceStyle: 'font:800 13px ' + sans + ';background:#1e9e5f;color:#fff;border-radius:6px;padding:3px 9px' }
+    ];
+
+    // course tabs
+    const tabNames = ['Overview', 'Flashcards', 'Summary deck', 'AI notes', 'Ask a doubt'];
+    const courseTabs = tabNames.map(label => ({
+      label, pick: () => this.setState({ courseTab: label }),
+      style: 'font:600 13px ' + sans + ';padding:10px 16px;cursor:pointer;border-bottom:2.5px solid ' + (S.courseTab === label ? '#f26a1b;color:#1c1915' : 'transparent;color:#7c756c')
+    }));
+
+    // lessons (course sidebar)
+    const chipBase = 'font:700 9px ' + mono + ';flex:none;width:36px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;';
+    const rowBase = 'display:flex;align-items:center;gap:11px;padding:11px 20px;';
+    const lessons = [
+      { type: 'VID', name: 'Percentages — the 3 core moves', meta: '31 min', done: true },
+      { type: 'PDF', name: 'Formula sheet & shortcuts', meta: '6 pages', done: true },
+      { type: 'VID', name: 'Ratios shortcut masterclass', meta: '24 min · 38% watched', now: true },
+      { type: 'QZ', name: 'Chapter quiz — 15 questions', meta: '+4 / −1 marking', open: true },
+      { type: 'VID', name: 'Percent-change chains', meta: '28 min', locked: true }
+    ].map(l => {
+      const typeChip = chipBase + (l.type === 'VID' ? 'background:#fff6ef;color:#e0540e' : l.type === 'PDF' ? 'background:#f5f2ff;color:#5a2ed6' : 'background:#e2f4ef;color:#0c7a60');
+      let state, glyph;
+      if (l.done) { state = 'width:22px;height:22px;border-radius:999px;background:#14b077;color:#fff;display:flex;align-items:center;justify-content:center;font:700 10px ' + sans + ';flex:none'; glyph = '✓'; }
+      else if (l.now) { state = 'width:22px;height:22px;border-radius:999px;background:#fff;border:2px solid #f26a1b;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:700 8px ' + sans + ';color:#f26a1b;flex:none'; glyph = '▶'; }
+      else if (l.locked) { state = 'font:600 11px ' + sans + ';color:#aaa39a;flex:none'; glyph = '🔒'; }
+      else { state = 'width:22px;height:22px;border-radius:999px;border:1.5px solid #d8d2c9;box-sizing:border-box;flex:none'; glyph = ''; }
+      return { ...l, chip: typeChip, row: rowBase + (l.now ? 'background:#fff9f4;border-left:3px solid #f26a1b;padding-left:17px' : l.locked ? 'opacity:.65' : ''), state, stateGlyph: glyph, title: 'font:600 12.5px ' + sans + (l.locked ? ';color:#aaa39a' : ''), now: !!l.now };
+    });
+
+    // flashcard + deck
+    const flipInner = 'position:relative;transition:transform .5s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;transform:rotateY(' + (S.flipped ? 180 : 0) + 'deg)';
+    const deckTexts = [
+      'Percent change chains multiply, they never add.',
+      'A discount of x% needs a markup of x⁄(100−x) to recover.',
+      'Successive discounts: a + b − ab⁄100.',
+      'Profit % is always on cost price unless stated.',
+      'Convert everything to multipliers first — then chain.'
+    ];
+
+    // mock toggle
+    const mtBase = 'font:600 12px ' + sans + ';padding:7px 16px;border-radius:999px;cursor:pointer;transition:all .15s;';
+    const mockTabTaking = mtBase + (S.mockView === 'taking' ? 'background:#1c1915;color:#fff' : 'color:#59534b');
+    const mockTabResults = mtBase + (S.mockView === 'results' ? 'background:#1c1915;color:#fff' : 'color:#59534b');
+
+    // timer
+    const total = 45 * 60, left = Math.max(0, total - 32 * 60 - S.secs);
+    const timerStr = this.fmt(left);
+    const low = left < 300;
+    const timerStyle = 'font:700 13.5px ' + mono + ';border-radius:9px;padding:6px 12px;' + (low ? 'background:#fde9ea;color:#ab2530;animation:dotPulse 1.2s infinite' : 'background:#f4f1ed;color:#403b35');
+    const timeBar = 'height:100%;border-radius:999px;background:' + (low ? '#dc4040' : '#f26a1b') + ';width:' + Math.round(left / total * 100) + '%';
+
+    // quiz
+    const optBase = 'display:flex;gap:12px;align-items:center;padding:13px 15px;border-radius:12px;cursor:pointer;transition:all .12s;';
+    const keyBase = 'font:700 12px ' + sans + ';width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;';
+    const quizOpts = ['8%', '12%', '15%', '20%'].map((text, i) => {
+      const picked = S.quizPick === i;
+      return {
+        text, letter: 'ABCD'[i], pick: () => this.setState({ quizPick: i }),
+        style: optBase + (picked ? 'background:#fff6ef;border:1.5px solid #f26a1b' : 'background:#faf8f6;border:1.5px solid #e9e4de'),
+        key: keyBase + (picked ? 'background:#f26a1b;color:#fff' : 'background:#fff;border:1px solid #d8d2c9;color:#59534b')
+      };
+    });
+    const markStyle = 'font:600 12.5px ' + sans + ';border-radius:9px;height:34px;padding:0 14px;cursor:pointer;transition:all .15s;' + (S.marked ? 'background:#7c5cfc;color:#fff;border:none' : 'background:#fff;border:1px solid #c0a9ff;color:#5a2ed6');
+
+    // palette
+    const stArr = ['a','a','a','m','a','a','u','a','a','m','a','c','u','u','a','a','a','a','u','a','u','u','u','u','u','u','u','u','u','u'];
+    const cellBase = 'height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:700 11px ' + mono + ';cursor:pointer;box-sizing:border-box;';
+    const palette = stArr.map((k, i) => {
+      let s = k;
+      if (i === 11) { // current Q, reflect live state
+        s = 'c';
+      }
+      return {
+        n: i + 1, pick: () => {},
+        style: cellBase + (s === 'a' ? 'background:#14b077;color:#fff' : s === 'm' ? 'background:#7c5cfc;color:#fff' : s === 'c' ? 'background:#fff;border:2px solid #f26a1b;color:#e0540e' : 'background:#fff;border:1px solid #d8d2c9;color:#59534b')
+      };
+    });
+    const nAnswered = stArr.filter(x => x === 'a').length + (S.quizPick !== null ? 1 : 0);
+    const nMarked = stArr.filter(x => x === 'm').length + (S.marked ? 1 : 0);
+    const nUnanswered = 30 - nAnswered - nMarked;
+
+    // results
+    const accBar = (pct, c) => 'height:100%;border-radius:999px;background:' + c + ';width:' + pct + '%';
+    const accBars = [
+      { name: 'Arithmetic', pct: 88, bar: accBar(88, '#14b077'), ink: '#0e7a48' },
+      { name: 'Algebra', pct: 79, bar: accBar(79, '#14b077'), ink: '#0e7a48' },
+      { name: 'Reading comprehension', pct: 74, bar: accBar(74, '#7c5cfc'), ink: '#5a2ed6' },
+      { name: 'Data interpretation', pct: 52, bar: accBar(52, '#dd8b12'), ink: '#a35a06' },
+      { name: 'Geometry', pct: 45, bar: accBar(45, '#dc4040'), ink: '#ab2530' }
+    ];
+    const dot = (c) => 'width:11px;height:11px;border-radius:999px;background:' + c + ';flex:none';
+    const dChip = (bg, c) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:3px 9px;flex:none';
+    const reviewRows = [
+      { n: 8, dot: dot('#14b077'), topic: 'Percentages — successive discount', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', marks: '+4.0', markInk: '#0e7a48', time: '0:48' },
+      { n: 12, dot: dot('#dc4040'), topic: 'Profit & loss — marked price trap', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Med', marks: '−1.0', markInk: '#ab2530', time: '2:31' },
+      { n: 15, dot: dot('#14b077'), topic: 'RC — inference (passage 2)', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Med', marks: '+4.0', markInk: '#0e7a48', time: '1:22' },
+      { n: 19, dot: dot('#d8d2c9'), topic: 'DI — caselet on market share', diff: dChip('#fde9ea', '#ab2530'), diffTxt: 'Hard', marks: '0.0', markInk: '#7c756c', time: '—' },
+      { n: 23, dot: dot('#dc4040'), topic: 'Geometry — circle & tangent', diff: dChip('#fde9ea', '#ab2530'), diffTxt: 'Hard', marks: '−1.0', markInk: '#ab2530', time: '3:04' }
+    ];
+
+    // nav builders
+    const navRow = (active) => 'font:' + (active ? '600' : '500') + ' 13px ' + sans + ';border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer;' + (active ? 'background:#fff6ef;color:#e0540e' : 'color:#59534b');
+    const navDot = (active) => active ? 'width:8px;height:8px;border-radius:3px;background:#f26a1b;flex:none' : 'width:8px;height:8px;border-radius:999px;border:1.5px solid #aaa39a;flex:none;box-sizing:border-box';
+    const mkNav = (items, activeIdx) => items.map((it, i) => ({
+      label: it[0], count: it[1] || false, style: navRow(i === activeIdx), dot: navDot(i === activeIdx)
+    }));
+    const insItems = [['Dashboard'], ['My courses'], ['Content', false], ['Grading', '12'], ['Students'], ['Live classes'], ['Earnings']];
+    const insNav = mkNav(insItems, 0);
+    const insNav2 = mkNav(insItems, 2);
+    const admNav = mkNav([['Overview'], ['Users'], ['Courses'], ['Enrollments'], ['Payments', '3'], ['Subscriptions'], ['Reports'], ['Settings']], 0);
+
+    // KPIs
+    const deltaUp = 'font:700 10.5px ' + sans + ';background:#e6f6ee;color:#0e7a48;border-radius:999px;padding:3px 8px';
+    const deltaDown = 'font:700 10.5px ' + sans + ';background:#fde9ea;color:#ab2530;border-radius:999px;padding:3px 8px';
+    const insKpis = [
+      { label: 'My courses', value: '6', sub: '4 published · 2 draft', delta: '+1', deltaStyle: deltaUp },
+      { label: 'Enrolled students', value: '3,482', sub: 'vs 3,105 last month', delta: '▲ 12%', deltaStyle: deltaUp },
+      { label: 'To grade', value: '12', sub: 'oldest waiting 2 hrs', delta: '+8 today', deltaStyle: deltaDown },
+      { label: 'Earnings (Jun)', value: '₹84,120', sub: 'payout Fri 10 Jul', delta: '▲ 9%', deltaStyle: deltaUp }
+    ];
+    const admKpis = [
+      { label: 'Active students', value: '24,618', sub: 'vs 21,902 last month', delta: '▲ 12.4%', deltaStyle: deltaUp },
+      { label: 'Enrollments (30d)', value: '8,204', sub: '55% paid · 45% free', delta: '▲ 6.1%', deltaStyle: deltaUp },
+      { label: 'Subscription revenue', value: '₹41.2L', sub: 'MRR · churn 2.3%', delta: '▲ 8.9%', deltaStyle: deltaUp },
+      { label: 'Courses published', value: '312', sub: '14 pending review', delta: '+9', deltaStyle: deltaUp }
+    ];
+    const deltaUpD = 'font:700 10.5px ' + sans + ';background:#1d3a2d;color:#2cd396;border-radius:999px;padding:3px 8px';
+    const admKpisDark = admKpis.map(k => ({ ...k, deltaStyle: deltaUpD }));
+
+    // grading rows
+    const gAv = (bg, c) => 'width:32px;height:32px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font:700 11px ' + sans + ';background:' + bg + ';color:' + c;
+    const aiChip = 'font:700 10.5px ' + mono + ';border-radius:6px;padding:4px 7px;background:#f5f2ff;color:#5a2ed6;flex:none;';
+    const pill = (bg, c, extra) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:4px 9px;flex:none;' + (extra || '');
+    const gradeRows = [
+      { ini: 'AR', av: gAv('#ece6ff', '#5a2ed6'), name: 'Aditi Rao', sub: 'Mock 09 · Essay · 14 min ago', ai: aiChip + 'opacity:.5', aiTxt: 'AI …', hasOver: false, status: 'Processing', pill: pill('#fdf0dd', '#a35a06', 'animation:dotPulse 1.6s infinite') },
+      { ini: 'JM', av: gAv('#fff6ef', '#e0540e'), name: 'Jay Mehta', sub: 'Mock 09 · Essay · 1 hr ago', ai: aiChip, aiTxt: 'AI 7.5', hasOver: false, status: 'Graded', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'SL', av: gAv('#e2f4ef', '#0c7a60'), name: 'Sana Lakhani', sub: 'Mock 09 · Essay · 2 hrs ago', ai: aiChip + 'text-decoration:line-through;opacity:.6', aiTxt: 'AI 6.0', hasOver: true, overTxt: '8.0', status: 'Needs review', pill: pill('#fde9ea', '#ab2530') },
+      { ini: 'VK', av: gAv('#fdf0dd', '#a35a06'), name: 'Vikram Kulkarni', sub: 'Mock 08 · Essay · 5 hrs ago', ai: aiChip, aiTxt: 'AI 8.5', hasOver: false, status: 'Graded', pill: pill('#e6f6ee', '#0e7a48') }
+    ];
+
+    // my courses
+    const sw = (a, b) => 'width:40px;height:30px;border-radius:9px;flex:none;background:repeating-linear-gradient(45deg,' + a + ',' + a + ' 6px,' + b + ' 6px,' + b + ' 12px)';
+    const myCourses = [
+      { title: 'Quantitative Aptitude — Complete Sprint', meta: '2,204 students · ★ 4.8', status: 'Published', pill: pill('#e6f6ee', '#0e7a48'), sw: sw('#ffe9d8', '#fff6ef') },
+      { title: 'Percentages Micro-course', meta: '881 students · ★ 4.6', status: 'Published', pill: pill('#e6f6ee', '#0e7a48'), sw: sw('#ece6ff', '#f5f2ff') },
+      { title: 'DI Speed Sets Vol. 2', meta: '18 lessons drafted', status: 'Draft', pill: pill('#f4f1ed', '#7c756c'), sw: sw('#e2f4ef', '#f0faf7') }
+    ];
+
+    // tree
+    const tRow = (active, indent) => 'display:flex;gap:8px;align-items:center;padding:8px 8px 8px ' + (indent ? 26 : 8) + 'px;border-radius:9px;cursor:pointer;' + (active ? 'background:#fff6ef' : '');
+    const tChip = (bg, c) => 'font:700 8px ' + mono + ';background:' + bg + ';color:' + c + ';border-radius:5px;padding:3px 5px;flex:none';
+    const tree = [
+      { isChapter: true, type: 'SEC', chip: tChip('#1c1915', '#fff'), name: 'Section 1 · Verbal', label: 'font:700 12px ' + sans, meta: '30 Q', row: tRow(false, false) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'Reading comprehension set', label: 'font:500 12px ' + sans, meta: '12 Q', row: tRow(false, true) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'Vocab in context', label: 'font:500 12px ' + sans, meta: '18 Q', row: tRow(false, true) },
+      { isChapter: true, type: 'SEC', chip: tChip('#1c1915', '#fff'), name: 'Section 2 · Quant', label: 'font:700 12px ' + sans, meta: '30 Q', row: tRow(false, false) },
+      { isChapter: false, type: 'QZ', chip: tChip('#fff6ef', '#e0540e'), name: 'Percentages & ratios', label: 'font:600 12px ' + sans + ';color:#e0540e', meta: '15 Q', row: tRow(true, true) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'DI caselets', label: 'font:500 12px ' + sans, meta: '15 Q', row: tRow(false, true) },
+      { isChapter: true, type: 'SEC', chip: tChip('#1c1915', '#fff'), name: 'Section 3 · Reasoning', label: 'font:700 12px ' + sans, meta: '20 Q', row: tRow(false, false) },
+      { isChapter: false, type: 'QZ', chip: tChip('#e2f4ef', '#0c7a60'), name: 'Puzzles & arrangements', label: 'font:500 12px ' + sans, meta: '20 Q', row: tRow(false, true) }
+    ];
+
+    // question rows
+    const qType = (bg, c) => 'font:700 8px ' + mono + ';background:' + bg + ';color:' + c + ';border-radius:5px;padding:3px 5px;flex:none';
+    const qRows = [
+      { id: '#1204', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'A shopkeeper marks an item 40% above cost…', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Medium', plus: '4', minus: '1', tags: ['percentages', 'profit-loss'] },
+      { id: '#1198', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'If A:B = 2:3 and B:C = 4:5, then A:B:C equals…', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', plus: '4', minus: '1', tags: ['ratios'] },
+      { id: '#1187', type: 'T/F', typeChip: qType('#f5f2ff', '#5a2ed6'), text: 'Successive discounts of 10% and 20% equal 30%.', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', plus: '2', minus: '0.5', tags: ['percentages'] },
+      { id: '#1179', type: 'FIB', typeChip: qType('#e2f4ef', '#0c7a60'), text: 'The value of 15% of 240 is ____.', diff: dChip('#e2f4ef', '#0c7a60'), diffTxt: 'Easy', plus: '2', minus: '0', tags: ['percentages'] },
+      { id: '#1164', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'A vessel contains milk and water in ratio 7:3…', diff: dChip('#fde9ea', '#ab2530'), diffTxt: 'Hard', plus: '4', minus: '1', tags: ['mixtures', 'ratios'] },
+      { id: '#1160', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'Population grows 8% yearly; after 2 years…', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Medium', plus: '4', minus: '1', tags: ['percent-change'] },
+      { id: '#1152', type: 'MCQ', typeChip: qType('#fff6ef', '#e0540e'), text: 'Two partners split profit in capital ratio…', diff: dChip('#fdf0dd', '#a35a06'), diffTxt: 'Medium', plus: '4', minus: '1', tags: ['partnership', 'ratios'] }
+    ];
+
+    // admin enroll rows
+    const enrollRows = [
+      { ini: 'AR', av: gAv('#ece6ff', '#5a2ed6'), name: 'Aditi Rao', email: 'aditi@…', course: 'Quant Sprint', plan: 'Serious Prep', amount: '₹399', status: '● Active', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'JM', av: gAv('#fff6ef', '#e0540e'), name: 'Jay Mehta', email: 'jay.m@…', course: 'Verbal Mastery', plan: 'One-time', amount: '₹549', status: '● Active', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'VK', av: gAv('#fdf0dd', '#a35a06'), name: 'Vikram Kulkarni', email: 'vik.k@…', course: 'Quant Sprint', plan: 'One-time', amount: '₹499', status: '● Pending', pill: pill('#fdf0dd', '#a35a06') },
+      { ini: 'SL', av: gAv('#e2f4ef', '#0c7a60'), name: 'Sana Lakhani', email: 'sana@…', course: 'Full Prep Bundle', plan: 'Serious Prep', amount: '₹399', status: '● Active', pill: pill('#e6f6ee', '#0e7a48') },
+      { ini: 'NP', av: gAv('#fde9ea', '#ab2530'), name: 'Neel Patel', email: 'neel@…', course: 'Vocab in Context', plan: 'Free', amount: '₹0', status: '● Refunded', pill: pill('#f4f1ed', '#7c756c') }
+    ];
+
+    return {
+      studentName: this.props.studentName ?? 'Aditi',
+      percentile: this.props.percentile ?? 91,
+      liveNow: this.props.liveNow ?? true,
+      roleStudent: () => this.setState({ role: 'student' }),
+      roleInstructor: () => this.setState({ role: 'instructor' }),
+      roleStuStyle, roleInsStyle,
+      loginCta: S.role === 'student' ? 'Continue studying →' : 'Open Teaching Central →',
+      drawerOpen: S.drawerOpen, toggleDrawer: () => this.setState(s => ({ drawerOpen: !s.drawerOpen })),
+      heat, schedule, scheduleM, recCourses, courseTabs, lessons,
+      tabOverview: S.courseTab === 'Overview', tabFlash: S.courseTab === 'Flashcards',
+      tabDeck: S.courseTab === 'Summary deck', tabNotes: S.courseTab === 'AI notes', tabDoubt: S.courseTab === 'Ask a doubt',
+      flip: () => this.setState(s => ({ flipped: !s.flipped })), flipInner,
+      deckNum: S.deck + 1, deckText: deckTexts[S.deck], deckKey: 'd' + S.deck,
+      deckNext: () => this.setState(s => ({ deck: (s.deck + 1) % 5 })),
+      deckPrev: () => this.setState(s => ({ deck: (s.deck + 4) % 5 })),
+      mockTaking: S.mockView === 'taking', mockResults: S.mockView === 'results',
+      showTaking: () => this.setState({ mockView: 'taking' }),
+      showResults: () => this.setState({ mockView: 'results' }),
+      mockTabTaking, mockTabResults,
+      timerStr, timerStyle, timeBar, quizOpts,
+      markQ: () => this.setState(s => ({ marked: !s.marked })),
+      clearQ: () => this.setState({ quizPick: null }),
+      markStyle, markLabel: S.marked ? '✓ Marked for review' : 'Mark for review',
+      palette, nAnswered, nUnanswered, nMarked,
+      accBars, reviewRows,
+      insNav, insNav2, admNav, insKpis, admKpis, admKpisDark,
+      gradeRows, myCourses, tree, qRows, enrollRows
+    };
+  }
+}
+
+
+class CompSF extends DCLogic {
+  state = {
+    curConv: 0, mView: 'list', draft: '',
+    extraMsgs: {},
+    fView: 'list', fCat: 'All', fDraft: '', fExtra: [],
+    gView: 'queue', gSaved: false, gComment: 'Method is right and clearly laid out — only the sign of W and missing units cost you. Fixable habits, not concept gaps.',
+    gVals: [3, 3, 1, 0]
+  };
+
+  renderVals() {
+    const S = this.state;
+    const sans = "'Plus Jakarta Sans'", mono = "'JetBrains Mono'";
+    const av = (bg, c, sz) => 'width:' + sz + 'px;height:' + sz + 'px;border-radius:999px;background:' + bg + ';color:' + c + ';display:flex;align-items:center;justify-content:center;font:700 ' + Math.round(sz / 3) + 'px ' + sans + ';flex:none';
+
+    // ===== MESSENGER =====
+    const convData = [
+      { name: 'Prof. Khanna', ini: 'PK', c: ['#fff6ef', '#e0540e'], when: '2m', last: 'Re-check the sign in step 3 — you flipped it', unread: true, status: '● Online', ink: '#0e7a48',
+        msgs: [
+          { me: false, text: 'Went through your Q12 upload. Your derivation is right until step 3.', meta: 'Prof. Khanna · 17:58' },
+          { me: false, text: 'Re-check the sign in step 3 — you flipped it. Work done BY the gas is positive.', meta: 'Prof. Khanna · 18:02' },
+          { me: true, text: 'Got it — so for expansion W is positive and ΔU = q − W. Fixed!', meta: 'You · 18:04 · ✓✓' }
+        ] },
+      { name: 'Study group · Batch 26', ini: 'SG', c: ['#e2f4ef', '#0c7a60'], when: '1h', last: 'Sana: anyone solved Q18 yet?', unread: true, status: '12 members · 3 online', ink: '#7c756c',
+        msgs: [
+          { me: false, text: 'Jay: Mock 10 is brutal, pace yourselves 😅', meta: 'Jay · 16:20' },
+          { me: false, text: 'Sana: anyone solved Q18 yet? The entropy one', meta: 'Sana · 17:35' },
+          { me: true, text: 'Q18 needs the surroundings term too — posting my working in 10 min.', meta: 'You · 17:41 · ✓✓' }
+        ] },
+      { name: 'Dr. Iyer', ini: 'RI', c: ['#ece6ff', '#5a2ed6'], when: 'Thu', last: 'See you at the session Thursday 10:00', unread: false, status: 'Last seen 2h ago', ink: '#aaa39a',
+        msgs: [
+          { me: true, text: 'Can we focus Thursday on DI caselets? That\u2019s my weakest area now.', meta: 'You · Wed · ✓✓' },
+          { me: false, text: 'Perfect — bring your last two mock attempts. See you at the session Thursday 10:00.', meta: 'Dr. Iyer · Wed' }
+        ] },
+      { name: 'Ascent Support', ini: 'AS', c: ['#f4f1ed', '#59534b'], when: 'Mon', last: 'Your payout query is resolved ✓', unread: false, status: 'Support · replies in ~1h', ink: '#aaa39a',
+        msgs: [ { me: false, text: 'Your refund for the duplicate charge was processed. Anything else?', meta: 'Support · Mon' } ] }
+    ];
+    const cd = convData[S.curConv];
+    const rowBase = 'display:flex;gap:11px;align-items:center;padding:12px 18px;border-bottom:1px solid #f4f1ed;cursor:pointer;';
+    const mkConv = (openKey) => convData.map((c, i) => ({
+      name: c.name, ini: c.ini, when: c.when, last: c.last,
+      unread: c.unread && S.curConv !== i,
+      av: av(c.c[0], c.c[1], 40),
+      row: rowBase + (S.curConv === i && openKey === 'open' ? 'background:#fff9f4;border-left:3px solid #f26a1b;padding-left:15px' : ''),
+      nameStyle: 'font:' + (c.unread && S.curConv !== i ? '700' : '600') + ' 13px ' + sans + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis',
+      time: 'font:500 10px ' + mono + ';color:' + (c.unread && S.curConv !== i ? '#e0540e' : '#aaa39a') + ';flex:none',
+      preview: 'font:' + (c.unread && S.curConv !== i ? '600' : '400') + ' 11.5px ' + sans + ';color:' + (c.unread && S.curConv !== i ? '#1c1915' : '#7c756c') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px',
+      open: () => this.setState({ curConv: i }),
+      openM: () => this.setState({ curConv: i, mView: 'thread' })
+    }));
+    const allMsgs = [...cd.msgs, ...(S.extraMsgs[S.curConv] || [])];
+    const msgs = allMsgs.map(m => ({
+      text: m.text, metaTxt: m.meta,
+      wrap: 'display:flex;flex-direction:column;gap:3px;align-items:' + (m.me ? 'flex-end' : 'flex-start'),
+      bubble: 'max-width:66%;padding:10px 15px;font:400 13.5px/1.55 ' + sans + ';' + (m.me ? 'background:#f26a1b;color:#fff;border-radius:16px 16px 4px 16px' : 'background:#fff;border:1px solid #e9e4de;color:#403b35;border-radius:16px 16px 16px 4px'),
+      bubbleM: 'max-width:80%;padding:9px 13px;font:400 12.5px/1.5 ' + sans + ';' + (m.me ? 'background:#f26a1b;color:#fff;border-radius:14px 14px 4px 14px' : 'background:#fff;border:1px solid #e9e4de;color:#403b35;border-radius:14px 14px 14px 4px'),
+      meta: 'font:400 10px ' + mono + ';color:#aaa39a;padding:0 4px'
+    }));
+    const send = () => {
+      const t = S.draft.trim();
+      if (!t) return;
+      this.setState(s => ({
+        extraMsgs: { ...s.extraMsgs, [s.curConv]: [...(s.extraMsgs[s.curConv] || []), { me: true, text: t, meta: 'You · just now · ✓' }] },
+        draft: ''
+      }));
+    };
+
+    // ===== FORUM =====
+    const cats = ['All', 'Physics', 'Chemistry', 'Biology', 'Exam strategy'];
+    const fCats = cats.map(name => ({
+      name, pick: () => this.setState({ fCat: name }),
+      chip: 'font:600 12px ' + sans + ';border-radius:999px;padding:7px 14px;cursor:pointer;transition:all .15s;' + (S.fCat === name ? 'background:#1c1915;color:#fff' : 'background:#fff;border:1px solid #d8d2c9;color:#403b35')
+    }));
+    const threadData = [
+      { title: 'Why is ΔU zero for isothermal ideal gas?', author: 'Aditi R.', ini: 'AR', c: ['#ece6ff', '#5a2ed6'], cat: 'Physics', replies: 14, when: '2h', answered: true, hot: true },
+      { title: 'Mock 09 Q18 — entropy sign confusion', author: 'Jay M.', ini: 'JM', c: ['#fff6ef', '#e0540e'], cat: 'Physics', replies: 3, when: '4h', answered: false },
+      { title: 'Best order to attempt NEET sections?', author: 'Sana L.', ini: 'SL', c: ['#e2f4ef', '#0c7a60'], cat: 'Exam strategy', replies: 22, when: '6h', answered: true, hot: true },
+      { title: 'SN1 vs SN2 — quick decision checklist?', author: 'Vikram K.', ini: 'VK', c: ['#fdf0dd', '#a35a06'], cat: 'Chemistry', replies: 8, when: '1d', answered: true },
+      { title: 'Glycolysis steps — mnemonic that sticks?', author: 'Neel P.', ini: 'NP', c: ['#fde9ea', '#ab2530'], cat: 'Biology', replies: 5, when: '1d', answered: false }
+    ];
+    const fThreads = threadData
+      .filter(t => S.fCat === 'All' || t.cat === S.fCat)
+      .map(t => ({
+        ...t, unanswered: !t.answered, av: av(t.c[0], t.c[1], 36),
+        open: () => this.setState({ fView: 'detail' })
+      }));
+    const baseReplies = [
+      { name: 'Jay M.', ini: 'JM', c: ['#fff6ef', '#e0540e'], when: '48m', votes: 6, text: 'Helpful add-on: this is exactly why isothermal curves are hyperbolas on a P-V diagram — PV stays constant because T does.' },
+      { name: 'Sana L.', ini: 'SL', c: ['#e2f4ef', '#0c7a60'], when: '20m', votes: 2, text: 'The "U depends only on T" line is free marks in assertion-reason questions. Noted it in my formula sheet.' }
+    ];
+    const fReplies = [...baseReplies, ...S.fExtra].map(r => ({ ...r, av: av(r.c[0], r.c[1], 28) }));
+    const fReply = () => {
+      const t = S.fDraft.trim();
+      if (!t) return;
+      this.setState(s => ({ fExtra: [...s.fExtra, { name: 'You', ini: 'AD', c: ['#ece6ff', '#5a2ed6'], when: 'now', votes: 0, text: t }], fDraft: '' }));
+    };
+
+    // ===== FACULTY GRADING =====
+    const navRow = (active) => 'font:' + (active ? '600' : '500') + ' 13px ' + sans + ';border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer;' + (active ? 'background:#fff6ef;color:#e0540e' : 'color:#59534b');
+    const navDot = (active) => active ? 'width:8px;height:8px;border-radius:3px;background:#f26a1b;flex:none' : 'width:8px;height:8px;border-radius:999px;border:1.5px solid #aaa39a;flex:none;box-sizing:border-box';
+    const facNav = [['Dashboard'], ['My courses'], ['Content'], ['Grading', '12'], ['Messages', '2'], ['Forum'], ['Calendar']].map((it, i) => ({ label: it[0], count: it[1] || false, style: navRow(i === 3), dot: navDot(i === 3) }));
+
+    const pill = (bg, c, extra) => 'font:600 10px ' + sans + ';background:' + bg + ';color:' + c + ';border-radius:999px;padding:4px 9px;justify-self:start;' + (extra || '');
+    const aiChip = 'font:700 10.5px ' + mono + ';border-radius:6px;padding:4px 8px;background:#f5f2ff;color:#5a2ed6;justify-self:start;';
+    const btnGhost = 'font:600 11.5px ' + sans + ';background:#fff;border:1px solid #d8d2c9;border-radius:8px;height:30px;padding:0 12px;cursor:pointer';
+    const btnHot = 'font:600 11.5px ' + sans + ';background:#f26a1b;color:#fff;border:none;border-radius:8px;height:30px;padding:0 12px;cursor:pointer';
+    const overrideTotal = S.gVals.reduce((a, b) => a + b, 0).toFixed(1);
+    const sanaStatus = S.gSaved ? { status: '● Graded', pill: pill('#e6f6ee', '#0e7a48'), aiTxt: 'AI 6.5 → ' + overrideTotal, btnTxt: 'View', btn: btnGhost }
+      : { status: '● Needs review', pill: pill('#fde9ea', '#ab2530'), aiTxt: 'AI 6.5 ⚑', btnTxt: 'Review', btn: btnHot };
+    const gRows = [
+      { ini: 'AR', c: ['#ece6ff', '#5a2ed6'], name: 'Aditi Rao', id: '#ST-2041', q: 'Mock 09 · Q12 thermo derivation', aiTxt: 'AI …', ai: aiChip + 'opacity:.5', when: '14m ago', status: '● Processing', pill: pill('#fdf0dd', '#a35a06', 'animation:dotPulse 1.6s infinite'), btnTxt: 'Wait', btn: btnGhost + ';opacity:.5;cursor:not-allowed' },
+      { ini: 'SL', c: ['#e2f4ef', '#0c7a60'], name: 'Sana Lakhani', id: '#ST-2107', q: 'Mock 09 · Q12 thermo derivation', aiTxt: sanaStatus.aiTxt, ai: aiChip, when: '2h ago', status: sanaStatus.status, pill: sanaStatus.pill, btnTxt: sanaStatus.btnTxt, btn: sanaStatus.btn, opens: true },
+      { ini: 'JM', c: ['#fff6ef', '#e0540e'], name: 'Jay Mehta', id: '#ST-1988', q: 'Mock 09 · Q18 entropy change', aiTxt: 'AI 7.5', ai: aiChip, when: '3h ago', status: '● Graded', pill: pill('#e6f6ee', '#0e7a48'), btnTxt: 'View', btn: btnGhost },
+      { ini: 'VK', c: ['#fdf0dd', '#a35a06'], name: 'Vikram Kulkarni', id: '#ST-1745', q: 'Ch 3 practice · Q4 state functions', aiTxt: 'AI 4.0 ⚑', ai: aiChip, when: '5h ago', status: '● Needs review', pill: pill('#fde9ea', '#ab2530'), btnTxt: 'Review', btn: btnHot, opens: true },
+      { ini: 'NP', c: ['#fde9ea', '#ab2530'], name: 'Neel Patel', id: '#ST-2211', q: 'Mock 08 · Q9 heat engines', aiTxt: 'AI 8.5', ai: aiChip, when: '1d ago', status: '● Graded', pill: pill('#e6f6ee', '#0e7a48'), btnTxt: 'View', btn: btnGhost }
+    ].map(r => ({ ...r, av: av(r.c[0], r.c[1], 34), openIt: r.opens ? () => this.setState({ gView: 'detail' }) : () => {} }));
+
+    const rubMeta = [
+      { name: 'States the first law correctly', note: 'AI: confident match', max: 3 },
+      { name: 'Sets up the isothermal integral', note: 'AI: confident match', max: 3 },
+      { name: 'Sign convention applied', note: 'AI: 61% confidence — flagged', max: 2 },
+      { name: 'Final answer with units', note: 'AI: units not detected', max: 2 }
+    ];
+    const rubIcon = (v, max) => {
+      if (v >= max) return { icon: 'width:18px;height:18px;border-radius:999px;background:#14b077;color:#fff;display:flex;align-items:center;justify-content:center;font:700 9px ' + sans + ';flex:none', glyph: '✓' };
+      if (v > 0) return { icon: 'width:18px;height:18px;border-radius:999px;background:#fdf0dd;color:#a35a06;display:flex;align-items:center;justify-content:center;font:700 9px ' + sans + ';flex:none', glyph: '½' };
+      return { icon: 'width:18px;height:18px;border-radius:999px;background:#fde9ea;color:#ab2530;display:flex;align-items:center;justify-content:center;font:700 9px ' + sans + ';flex:none', glyph: '✕' };
+    };
+    const gRubric = rubMeta.map((r, i) => {
+      const v = S.gVals[i];
+      const ic = rubIcon(v, r.max);
+      return {
+        ...r, ...ic, val: v.toFixed(1),
+        inc: () => this.setState(s => ({ gVals: s.gVals.map((x, j) => j === i ? Math.min(r.max, x + 0.5) : x), gSaved: false })),
+        dec: () => this.setState(s => ({ gVals: s.gVals.map((x, j) => j === i ? Math.max(0, x - 0.5) : x), gSaved: false }))
+      };
+    });
+
+    return {
+      // messenger
+      convs: mkConv('open'), convsM: mkConv('m'),
+      hasThread: true, noThread: false,
+      threadKey: 'c' + S.curConv,
+      curName: cd.name, curIni: cd.ini, curStatus: cd.status, curStatusInk: cd.ink,
+      curAv: av(cd.c[0], cd.c[1], 38), curAvSm: av(cd.c[0], cd.c[1], 32),
+      msgs, draft: S.draft,
+      draftChange: (e) => this.setState({ draft: e.target.value }),
+      send,
+      mList: S.mView === 'list', mThread: S.mView === 'thread',
+      mBack: () => this.setState({ mView: 'list' }),
+      // forum
+      fCats, fThreads, fCatKey: 'f' + S.fCat,
+      fList: S.fView === 'list', fDetail: S.fView === 'detail', fNew: S.fView === 'new',
+      fCompose: () => this.setState({ fView: 'new' }),
+      fBackToList: () => this.setState({ fView: 'list' }),
+      fReplies, fDraft: S.fDraft,
+      fDraftChange: (e) => this.setState({ fDraft: e.target.value }),
+      fReply,
+      // faculty
+      facNav, gRows, needsReviewCount: S.gSaved ? 1 : 2,
+      gQueue: S.gView === 'queue', gDetail: S.gView === 'detail',
+      gBack: () => this.setState({ gView: 'queue' }),
+      gSave: () => this.setState({ gView: 'queue', gSaved: true }),
+      gRubric, overrideTotal, overrideKey: 'o' + overrideTotal,
+      aiStrike: overrideTotal !== '6.5' ? 'text-decoration:line-through;opacity:.6' : '',
+      gComment: S.gComment,
+      gCommentChange: (e) => this.setState({ gComment: e.target.value })
+    };
+  }
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.__parts = [new CompS1(), new CompSF()];
+    for (const p of this.__parts) {
+      p.setState = (u, cb) => { const patch = typeof u === 'function' ? u(p.state) : u; p.state = { ...p.state, ...patch }; this.forceUpdate(); if (cb) cb(); };
+    }
+  }
+  componentDidMount() { for (const p of this.__parts) p.componentDidMount(); }
+  componentWillUnmount() { for (const p of this.__parts) p.componentWillUnmount(); }
+  renderVals() {
+    const out = {};
+    for (const p of this.__parts) { p.props = this.props; Object.assign(out, p.renderVals()); }
+    return out;
+  }
+}
+</script>
+</body>
+</html>
