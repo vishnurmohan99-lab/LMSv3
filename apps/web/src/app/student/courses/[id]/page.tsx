@@ -408,99 +408,6 @@ function LessonViewer({ lesson }: { lesson: Lesson }) {
   return null;
 }
 
-/** Compact course-rating card for the enrolled sidebar: shows the average and lets the
- *  student set/update their own star rating (+ optional comment). */
-function CourseRatingCard({ courseId, avgRating, reviewCount }: { courseId: string; avgRating?: number | null; reviewCount?: number }) {
-  const [mine, setMine] = useState<number | null>(null);
-  const [comment, setComment] = useState("");
-  const [open, setOpen] = useState(false);
-  const [hover, setHover] = useState(0);
-  const [saving, setSaving] = useState(false);
-  const [savedAvg, setSavedAvg] = useState<number | null | undefined>(avgRating);
-  const [savedCount, setSavedCount] = useState<number | undefined>(reviewCount);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    coursesApi
-      .myReview(courseId)
-      .then((r) => {
-        if (r) {
-          setMine(r.rating);
-          setComment(r.comment ?? "");
-        }
-      })
-      .catch(() => {});
-  }, [courseId]);
-
-  async function submit(rating: number) {
-    setSaving(true);
-    setErr(null);
-    try {
-      await coursesApi.submitReview(courseId, { rating, comment: comment.trim() || undefined });
-      setMine(rating);
-      const summary = await coursesApi.listReviews(courseId).catch(() => null);
-      if (summary) {
-        setSavedAvg(summary.avgRating);
-        setSavedCount(summary.reviewCount);
-      }
-      setOpen(false);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to submit rating");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div style={{ margin: "0 14px 12px", padding: "14px 16px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: "var(--amber)", fontSize: 15, letterSpacing: 1 }}>
-            {"★".repeat(Math.round(savedAvg ?? 0))}
-            <span style={{ color: "var(--line)" }}>{"★".repeat(5 - Math.round(savedAvg ?? 0))}</span>
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 800 }}>{savedAvg != null ? savedAvg.toFixed(1) : "—"}</span>
-          <span style={{ fontSize: 11.5, color: "var(--ink3)", fontWeight: 600 }}>({savedCount ?? 0})</span>
-        </div>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          style={{ fontSize: 12, fontWeight: 700, color: "var(--orange)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
-        >
-          {mine ? "Edit rating" : "Rate course"}
-        </button>
-      </div>
-
-      {open && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ display: "flex", gap: 4, marginBottom: 10 }} onMouseLeave={() => setHover(0)}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                onMouseEnter={() => setHover(n)}
-                onClick={() => submit(n)}
-                disabled={saving}
-                aria-label={`${n} star`}
-                style={{ background: "none", border: "none", cursor: saving ? "default" : "pointer", padding: 0, fontSize: 24, lineHeight: 1, color: (hover || mine || 0) >= n ? "var(--amber)" : "var(--line)" }}
-              >
-                ★
-              </button>
-            ))}
-          </div>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Optional — a quick note about the course"
-            rows={2}
-            style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--line)", borderRadius: "var(--rs)", fontSize: 12.5, fontFamily: "inherit", outline: "none", resize: "vertical" }}
-          />
-          {err && <div style={{ color: "var(--red)", fontSize: 11.5, marginTop: 6 }}>{err}</div>}
-          <div style={{ fontSize: 11, color: "var(--ink3)", marginTop: 6 }}>{saving ? "Saving…" : "Tap a star to submit."}</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function StudentCoursePlayerPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
@@ -677,42 +584,14 @@ export default function StudentCoursePlayerPage() {
 
   return (
     <div style={{ display: "flex", margin: 0, height: "100%", background: "var(--bg)" }}>
-      {/* chapter sidebar */}
+      {/* Course-content sidebar. S2 places it on the RIGHT of the player (flex order: 2,
+          border-left), with just the lesson list — no dark course card, no rating box. */}
       <div
         className={`course-pane-list${lessonOpenedByUser ? " has-selection" : ""}`}
-        style={{ width: 286, flex: "none", background: "var(--card)", borderRight: "1px solid var(--line)", overflowY: "auto" }}
+        style={{ width: 340, flex: "none", background: "var(--card)", borderLeft: "1px solid var(--line)", overflowY: "auto", order: 2 }}
       >
-        <div
-          className="fade-in-up"
-          style={{
-            margin: 14,
-            padding: "20px 18px",
-            borderRadius: "var(--rm)",
-            background: "linear-gradient(135deg,#1c1915,#2a2620)",
-            color: "#fff",
-          }}
-        >
-          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1, color: "var(--orange-bright)", textTransform: "uppercase" }}>
-            Enrolled Course
-          </div>
-          <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.3, marginTop: 6 }}>{course.title}</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,.65)", marginTop: 4 }}>
-            {course.chapters.length} chapters · {allLessons.length} lessons
-          </div>
-          {allLessons.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
-              <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,.18)", borderRadius: 3 }}>
-                <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--orange)", borderRadius: 3, transition: "width .4s ease" }} />
-              </div>
-              <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)", flex: "none" }}>{progressPct}% complete</span>
-            </div>
-          )}
-        </div>
-
-        <CourseRatingCard courseId={course.id} avgRating={course.avgRating} reviewCount={course.reviewCount} />
-
         {/* ③ "Course content" + viewed/total counter (design S2 sidebar). */}
-        <div style={{ padding: "4px 18px 8px", display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+        <div style={{ padding: "18px 18px 8px", display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
           <div style={{ fontSize: 13.5, fontWeight: 800 }}>Course content</div>
           <span style={{ fontSize: 11, fontWeight: 500, fontFamily: "var(--font-mono)", color: "var(--ink3)" }}>
             {viewedCount}/{allLessons.length}
@@ -871,10 +750,10 @@ export default function StudentCoursePlayerPage() {
         })}
       </div>
 
-      {/* lesson area */}
+      {/* Lesson/player area — the main left column in S2 (flex order: 1). */}
       <div
         className={`course-pane-detail${lessonOpenedByUser ? " has-selection" : ""}`}
-        style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "relative" }}
+        style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "relative", order: 1 }}
       >
         {selectedLesson ? (
           <>
@@ -992,58 +871,9 @@ export default function StudentCoursePlayerPage() {
                   <div style={{ maxWidth: 720, margin: "0 auto", height: 560 }}>
                     <AskMeChat key={selectedLesson.id} lessonId={selectedLesson.id} />
                   </div>
-                ) : selectedLesson.type === "VIDEO" && (selectedChapter?.lessons.length ?? 0) > 1 ? (
-                  <div className="lesson-video-grid" style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 280px", gap: 18 }}>
-                    <div style={{ display: "grid", gap: 18, minWidth: 0 }}>
-                      <LessonViewer lesson={selectedLesson} />
-                    </div>
-                    <div
-                      className="fade-in-up"
-                      style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", padding: 18, alignSelf: "start" }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>{selectedChapter?.title}</div>
-                      <div style={{ display: "grid", gap: 4 }}>
-                        {selectedChapter?.lessons.map((l) => {
-                          const lLocked = l.unlocked === false;
-                          const active = l.id === selectedLessonId;
-                          return (
-                            <button
-                              key={l.id}
-                              onClick={() => !lLocked && openLesson(l.id)}
-                              disabled={lLocked}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 10,
-                                padding: "9px 11px",
-                                border: "none",
-                                background: active ? "var(--bg)" : "transparent",
-                                borderRadius: 9,
-                                cursor: lLocked ? "default" : "pointer",
-                                fontFamily: "inherit",
-                                textAlign: "left",
-                                width: "100%",
-                                opacity: lLocked ? 0.55 : 1,
-                              }}
-                            >
-                              <span style={{ color: active ? "var(--orange)" : "var(--ink3)", display: "flex" }}>
-                                {lLocked ? (
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                    <rect x="5" y="11" width="14" height="9" rx="2" />
-                                    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                                  </svg>
-                                ) : (
-                                  <LessonIcon type={l.type} color={active ? "var(--orange)" : "var(--ink3)"} />
-                                )}
-                              </span>
-                              <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, color: active ? "var(--ink)" : "var(--ink2)" }}>{l.title}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
                 ) : (
+                  // S2 has no beside-video lesson list — the right sidebar is the only
+                  // lesson list, so the player spans the full content column.
                   <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 18 }}>
                     <LessonViewer lesson={selectedLesson} />
                   </div>

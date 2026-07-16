@@ -1047,7 +1047,7 @@ button:active, a:active {
 @media (max-width: 860px) {
   .course-pane-list {
     width: 100% !important;
-    border-right: none !important;
+    border-left: none !important;
   }
   .course-pane-list.has-selection {
     display: none !important;
@@ -1067,9 +1067,6 @@ button:active, a:active {
   .lesson-tabbar {
     padding-left: 16px !important;
     padding-right: 16px !important;
-  }
-  .lesson-video-grid {
-    grid-template-columns: 1fr !important;
   }
   .mobile-stack-grid {
     grid-template-columns: 1fr !important;

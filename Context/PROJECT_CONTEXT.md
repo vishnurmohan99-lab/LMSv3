@@ -756,6 +756,20 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Course detail: match S2 layout — sidebar to the RIGHT (2026-07-16).**
+  Completes the one structural gap left from the ①②③ pass. `app/student/courses/[id]/page.tsx`
+  + `.course-pane-*` in `globals.css`. The course-content sidebar moved from LEFT to
+  RIGHT (flex `order:2`, width 286→340, `border-left`; player pane `order:1`), matching
+  S2's `1fr/340px`. Per user decision, three app-only elements were REMOVED: the dark
+  "Enrolled Course" card, the "Rate course" box (**and its now-dead `CourseRatingCard`
+  component, ~90 lines — students can no longer rate a course from this page**), and the
+  beside-video lesson list (the VIDEO-multi branch collapsed to the plain `LessonViewer`,
+  so the video spans the full player column for all types). Lesson meta kept simple (no
+  faculty/rating enrichment — user's call). Mobile drill-down unchanged (class-based, not
+  DOM-order based): `.course-pane-list` mobile rule `border-right:none`→`border-left:none`,
+  orphaned `.lesson-video-grid` rule dropped. NOTE: flip done via flex `order`, so
+  keyboard tab order still follows DOM (sidebar-then-player) — reorder the DOM if visual
+  and tab order must match.
 - **Course detail: implement Design System S2 markers ①②③ (2026-07-16).**
   The designer annotated "S2 · COURSE DETAIL + LESSON PLAYER" with the exact deltas from
   the gap analysis. `app/student/courses/[id]/page.tsx` + `.cd-*` in `globals.css`.
@@ -1146,4 +1160,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (course detail S2 markers ①②③: progress+Continue, Resources, content counter).*
+*Last updated: 2026-07-16 (course detail: sidebar moved right to match S2 layout).*
