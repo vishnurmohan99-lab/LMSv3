@@ -756,6 +756,23 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Mock Test: align taking + results views to S3 (2026-07-16).**
+  Third of the three requested screens; an alignment of the existing
+  `mock-test/[testId]/page.tsx` (not net-new — data was already present).
+  Taking view: header now shows the test title (+ a "Comprehension" pill for passage Qs);
+  new per-question meta row = `Q x/N` mono chip · difficulty pill (Easy/Med/Hard from
+  q.difficulty) · `+marks` (green) / `−neg` (red) mono chips · "avg. time on this Q"
+  (when answerTimeSeconds set); options gained A/B/C/D lettered key circles (orange when
+  selected); palette cells now use solid fills (green=answered, purple=marked, white=
+  unanswered) with an ink ring on the current Q; palette legend gained live counts
+  (Answered/Unanswered/Marked · N) and a SECTION TIME progress bar (TIMED tests only, via
+  `totalSeconds = durationMinutes*60`). Results view: added the S3 "All / Wrong only /
+  Skipped" review filter (with counts) above Question review; badges keep the real
+  question number (`origIndex`) after filtering.
+  Verified live: Q-chip "Q 1-a / 36", Medium pill, lettered keys, answering flips the
+  palette cell green + bumps "Answered · N" + turns the key orange, review filter shows
+  Wrong-only=1 correctly, no horizontal overflow at 375px. tsc clean. Pure frontend — no
+  API change.
 - **Results & Analytics: standalone screen (Design System screen 1) (2026-07-16).**
   Second of three requested screens (Mock Test S3 still to do). New route
   `app/student/results/page.tsx` + `.ra-*` in globals.css + a "Results" nav item
@@ -1222,4 +1239,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (Results & Analytics standalone screen + GET /results/me endpoint).*
+*Last updated: 2026-07-16 (Mock Test taking + results views aligned to Design System S3).*

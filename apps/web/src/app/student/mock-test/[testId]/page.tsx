@@ -156,6 +156,7 @@ export default function StudentMockTestTakePage() {
   const [current, setCurrent] = useState(0);
   const [result, setResult] = useState<TestAttemptResult | null>(null);
   const [review, setReview] = useState<AttemptReview | null>(null);
+  const [reviewFilter, setReviewFilter] = useState<"all" | "wrong" | "skipped">("all");
   const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [questionSecondsLeft, setQuestionSecondsLeft] = useState<number | null>(null);
@@ -355,6 +356,8 @@ export default function StudentMockTestTakePage() {
 
   if (view === "taking" && attempt) {
     const q = questions[current];
+    const answeredCount = questions.filter((qq) => answers[qq.id] !== undefined).length;
+    const totalSeconds = test?.publishMode === "TIMED" && test.durationMinutes ? test.durationMinutes * 60 : null;
     return (
       <main className="fade-in mobile-page-pad" style={{ padding: "26px 30px", maxWidth: q?.passage ? 1480 : 1100, margin: "0 auto" }}>
         <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: q?.passage ? "400px 1fr 260px" : "1fr 260px", gap: 20 }}>
@@ -367,9 +370,12 @@ export default function StudentMockTestTakePage() {
             />
           )}
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)" }}>
-                Question {questionLabels[current]} of {questions.length}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{test?.title ?? "Mock Test"}</span>
+                {q?.passage && (
+                  <span style={{ fontSize: 10.5, fontWeight: 600, background: "var(--bg-sunk)", color: "var(--ink2)", borderRadius: 999, padding: "4px 10px", flex: "none" }}>Comprehension</span>
+                )}
               </div>
               {secondsLeft !== null && (
                 <div style={{ background: "var(--ink)", color: "#fff", padding: "9px 16px", borderRadius: 11, fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 7 }}>
@@ -384,24 +390,40 @@ export default function StudentMockTestTakePage() {
 
             {q && (
               <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 30 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "var(--orange)", textTransform: "uppercase" }}>
-                    {q.passage ? "Comprehension" : q.type === "MCQ" ? "Multiple Choice" : q.type === "TRUE_FALSE" ? "True / False" : "Fill in the blank"}
-                  </div>
-                  <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--ink2)", background: "var(--bg)", padding: "4px 10px", borderRadius: 8, flex: "none", whiteSpace: "nowrap" }}>
-                    {q.marks} mark{q.marks === 1 ? "" : "s"}
-                    {q.negativeMarks > 0 ? ` · −${q.negativeMarks}` : ""}
+                {/* S3 meta row: Q x/N · difficulty · +marks / −neg · avg time */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.08 * 10, fontFamily: "var(--font-mono)", background: "var(--bg-sunk)", color: "var(--ink2)", borderRadius: 6, padding: "4px 8px" }}>
+                    Q {questionLabels[current]} / {questions.length}
                   </span>
+                  {(() => {
+                    const d = q.difficulty;
+                    const meta = d === "EASY"
+                      ? { label: "Easy", bg: "var(--diff-easy-soft)", ink: "var(--diff-easy)" }
+                      : d === "HARD"
+                      ? { label: "Hard", bg: "var(--diff-hard-soft)", ink: "var(--diff-hard)" }
+                      : { label: "Medium", bg: "var(--diff-med-soft)", ink: "var(--diff-med)" };
+                    return (
+                      <span style={{ fontSize: 11, fontWeight: 600, background: meta.bg, color: meta.ink, borderRadius: 999, padding: "4px 10px" }}>{meta.label}</span>
+                    );
+                  })()}
+                  <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)", background: "var(--green-soft)", color: "var(--green)", borderRadius: 6, padding: "4px 8px" }}>
+                    +{q.marks.toFixed(1)}
+                  </span>
+                  {q.negativeMarks > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "var(--font-mono)", background: "var(--red-soft)", color: "var(--red-ink)", borderRadius: 6, padding: "4px 8px" }}>
+                      −{q.negativeMarks.toFixed(1)}
+                    </span>
+                  )}
+                  <div style={{ flex: 1 }} />
+                  {q.answerTimeSeconds != null && (
+                    <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink3)" }}>avg. time on this Q: {formatTime(q.answerTimeSeconds)}</span>
+                  )}
+                  {q.tags.length > 0 && q.tags.slice(0, 2).map((t) => (
+                    <span key={t.id} style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange-ink)", background: "var(--orange-soft)", padding: "3px 9px", borderRadius: 7 }}>
+                      {t.name}
+                    </span>
+                  ))}
                 </div>
-                {q.tags.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
-                    {q.tags.map((t) => (
-                      <span key={t.id} style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", background: "var(--orange-soft)", padding: "3px 9px", borderRadius: 7 }}>
-                        {t.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
                 {q.answerTimeSeconds != null && questionSecondsLeft != null && (
                   <div style={{ fontSize: 11.5, fontWeight: 700, color: questionSecondsLeft > 0 ? "var(--ink3)" : "var(--amber)", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -424,8 +446,8 @@ export default function StudentMockTestTakePage() {
                     style={{ width: "100%", padding: "14px 16px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontFamily: "inherit", outline: "none", background: "var(--bg)" }}
                   />
                 ) : (
-                  <div style={{ display: "grid", gap: 12 }}>
-                    {q.options.map((opt) => {
+                  <div style={{ display: "grid", gap: 10, maxWidth: 620 }}>
+                    {q.options.map((opt, oi) => {
                       const selected = answers[q.id] === opt;
                       return (
                         <button
@@ -435,19 +457,38 @@ export default function StudentMockTestTakePage() {
                             display: "flex",
                             alignItems: "center",
                             gap: 12,
-                            padding: "14px 16px",
+                            padding: "13px 15px",
                             borderRadius: 12,
                             border: selected ? "1.5px solid var(--orange)" : "1.5px solid var(--line)",
                             background: selected ? "var(--orange-soft)" : "var(--card)",
-                            color: selected ? "var(--orange)" : "var(--ink)",
-                            fontSize: 14,
+                            color: selected ? "var(--orange-deep)" : "var(--ink)",
+                            fontSize: 14.5,
                             fontWeight: selected ? 700 : 500,
                             fontFamily: "inherit",
                             cursor: "pointer",
                             textAlign: "left",
                           }}
                         >
-                          {opt}
+                          {/* S3 lettered key circle */}
+                          <span
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: 999,
+                              flex: "none",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              fontFamily: "var(--font-mono)",
+                              background: selected ? "var(--orange)" : "var(--bg-sunk)",
+                              color: selected ? "#fff" : "var(--ink2)",
+                            }}
+                          >
+                            {String.fromCharCode(65 + oi)}
+                          </span>
+                          <span>{opt}</span>
                         </button>
                       );
                     })}
@@ -515,9 +556,11 @@ export default function StudentMockTestTakePage() {
                       width: 36,
                       height: 36,
                       borderRadius: 9,
-                      border: active ? "2px solid var(--ink)" : "1px solid var(--line)",
-                      background: isMarked ? "var(--purple-soft)" : answered ? "var(--green-soft)" : "var(--card)",
-                      color: isMarked ? "var(--purple-ink)" : answered ? "var(--green)" : "var(--ink2)",
+                      // S3: solid green (answered) / purple (marked) / white (unanswered);
+                      // the current question gets an ink ring on top.
+                      border: active ? "2px solid var(--ink)" : isMarked || answered ? "none" : "1px solid var(--line)",
+                      background: isMarked ? "var(--purple)" : answered ? "var(--progress)" : "var(--card)",
+                      color: isMarked || answered ? "#fff" : "var(--ink2)",
                       fontSize: qq.passage ? 10.5 : 12.5,
                       fontWeight: 700,
                       fontFamily: "inherit",
@@ -529,17 +572,33 @@ export default function StudentMockTestTakePage() {
                 );
               })}
             </div>
-            <div style={{ display: "grid", gap: 6, marginTop: 16, fontSize: 11.5, color: "var(--ink2)" }}>
+            {/* S3 legend with live counts */}
+            <div style={{ display: "grid", gap: 8, marginTop: 16, fontSize: 11, color: "var(--ink2)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--green-soft)", border: "1px solid var(--green)" }} /> Answered
+                <span style={{ width: 11, height: 11, borderRadius: 4, background: "var(--progress)" }} /> Answered · {answeredCount}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--purple-soft)", border: "1px solid var(--purple)" }} /> Marked for review
+                <span style={{ width: 11, height: 11, borderRadius: 4, background: "var(--card)", border: "1px solid var(--line)", boxSizing: "border-box" }} /> Unanswered · {questions.length - answeredCount}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--card)", border: "1px solid var(--line)" }} /> Not visited
+                <span style={{ width: 11, height: 11, borderRadius: 4, background: "var(--purple)" }} /> Marked · {marked.size}
               </div>
             </div>
+
+            {/* S3 section-time bar (timed tests only) */}
+            {secondsLeft !== null && totalSeconds !== null && (
+              <>
+                <div style={{ height: 1, background: "var(--line2)", margin: "18px 0 14px" }} />
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.08 * 10, fontFamily: "var(--font-mono)", color: "var(--ink3)", marginBottom: 8 }}>SECTION TIME</div>
+                <div style={{ height: 8, background: "var(--line2)", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{ width: `${Math.max(0, Math.min(100, (secondsLeft / totalSeconds) * 100))}%`, height: "100%", background: secondsLeft < totalSeconds * 0.15 ? "var(--red)" : "var(--orange)", borderRadius: 999, transition: "width 1s linear" }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, fontFamily: "var(--font-mono)", color: "var(--ink2)", marginTop: 6 }}>
+                  <span>{formatTime(secondsLeft)} left</span>
+                  <span>{formatTime(totalSeconds)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </main>
@@ -656,10 +715,32 @@ export default function StudentMockTestTakePage() {
 
         {review && review.questions.length > 0 && (
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24, marginTop: 18 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>Question review</div>
-            <div style={{ fontSize: 12, color: "var(--ink3)", marginBottom: 12 }}>Your answer vs the correct answer for every question.</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>Question review</div>
+                <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>Your answer vs the correct answer for every question.</div>
+              </div>
+              {/* S3 review filter */}
+              <div style={{ display: "flex", gap: 4, background: "var(--bg-sunk)", borderRadius: 10, padding: 4 }}>
+                {(["all", "wrong", "skipped"] as const).map((f) => {
+                  const count = f === "all" ? review.questions.length : f === "wrong" ? review.questions.filter((x) => x.answered && !x.isCorrect).length : review.questions.filter((x) => !x.answered).length;
+                  return (
+                    <span
+                      key={f}
+                      onClick={() => setReviewFilter(f)}
+                      style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 7, cursor: "pointer", userSelect: "none", background: reviewFilter === f ? "var(--card)" : "transparent", color: reviewFilter === f ? "var(--ink)" : "var(--ink2)", boxShadow: reviewFilter === f ? "var(--e1)" : "none" }}
+                    >
+                      {f === "all" ? "All" : f === "wrong" ? "Wrong only" : "Skipped"} · {count}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
             <div>
-              {review.questions.map((q, i) => {
+              {review.questions
+                .map((q, origIndex) => ({ q, origIndex }))
+                .filter(({ q }) => (reviewFilter === "all" ? true : reviewFilter === "wrong" ? q.answered && !q.isCorrect : !q.answered))
+                .map(({ q, origIndex }, i) => {
                 const tone = q.isCorrect ? "var(--green)" : q.answered ? "var(--red)" : "var(--ink3)";
                 const toneSoft = q.isCorrect ? "var(--green-soft)" : q.answered ? "var(--red-soft)" : "var(--bg)";
                 const awarded = q.isCorrect ? q.marks : q.answered ? -q.negativeMarks : 0;
@@ -667,7 +748,7 @@ export default function StudentMockTestTakePage() {
                 return (
                   <div key={q.id} style={{ display: "flex", gap: 12, padding: "14px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
                     <span style={{ width: 26, height: 26, borderRadius: 8, background: toneSoft, color: tone, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flex: "none" }}>
-                      {i + 1}
+                      {origIndex + 1}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: q.prompt }} />
