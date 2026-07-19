@@ -389,6 +389,53 @@ button:active, a:active {
   display: none;
 }
 
+/* ===================== Results & Analytics (Design System screen 1) =====================
+   4-up KPI tiles + a trend/side split + a recent-attempts table. On mobile the KPI grid
+   drops to 2-up, the split stacks, and the table scrolls in its own container. */
+.ra-row {
+  display: grid;
+  grid-template-columns: 2.4fr 1fr 1fr 1fr 1fr 96px;
+  align-items: center;
+  padding: 13px 22px;
+}
+.ra-head {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink3);
+  border-bottom: 1px solid var(--line2);
+}
+.ra-body {
+  border-bottom: 1px solid var(--line2);
+  transition: background .12s ease;
+}
+.ra-body:last-child {
+  border-bottom: none;
+}
+.ra-body:hover {
+  background: var(--bg);
+}
+.ra-bar:hover {
+  filter: brightness(1.06) saturate(1.05);
+}
+
+@media (max-width: 860px) {
+  .ra-kpis {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .ra-main {
+    grid-template-columns: 1fr !important;
+  }
+  .ra-table {
+    overflow-x: auto;
+  }
+  .ra-row {
+    grid-template-columns: 180px 90px 90px 90px 90px 84px;
+    min-width: 624px;
+  }
+}
+
 /* ===================== Leaderboard (Design System screen 3) =====================
    Podium (top 3) + a 5-column table. On mobile the podium stacks and the table
    scrolls horizontally inside its own container rather than widening the page. */

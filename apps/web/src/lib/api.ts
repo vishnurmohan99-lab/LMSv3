@@ -948,7 +948,34 @@ export const testAttemptsApi = {
   submit: (attemptId: string) => request<TestAttemptResult>(`/attempts/${attemptId}/submit`, { method: 'POST' }),
   review: (attemptId: string) => request<AttemptReview>(`/attempts/${attemptId}/review`),
   leaderboard: (testId: string) => request<Leaderboard>(`/tests/${testId}/leaderboard`),
+  myResults: () => request<MyResults>('/results/me'),
 };
+
+/** One SUBMITTED attempt across any test — the row shape behind Results & Analytics. */
+export interface MockResult {
+  attemptId: string;
+  testId: string;
+  testTitle: string;
+  submittedAt: string | null;
+  score: number | null;
+  maxScore: number | null;
+  scorePct: number;
+  accuracy: number | null; // 0..1
+  timeSeconds: number | null;
+  percentile: number | null; // 0..100, within the test's field
+}
+
+export interface SubjectAccuracy {
+  name: string;
+  correct: number;
+  total: number;
+  pct: number;
+}
+
+export interface MyResults {
+  attempts: MockResult[];
+  subjects: SubjectAccuracy[];
+}
 
 export interface LeaderboardEntry {
   rank: number;

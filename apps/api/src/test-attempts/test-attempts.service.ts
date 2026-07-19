@@ -191,6 +191,99 @@ export class TestAttemptsService {
     return { top, me, totalRanked: ranked.length };
   }
 
+  /**
+   * Every SUBMITTED attempt the student has made, across all tests, oldest-first — the
+   * data behind Results & Analytics. Each row carries score, accuracy (correct/answered),
+   * time taken, and the attempt's percentile within that test's field of best-per-student
+   * scores. (Batch median and per-subject accuracy are not derivable here — no batch model
+   * and no cross-attempt tag rollup — so they stay client-side "needs API" affordances.)
+   */
+  async getMyResults(user: JwtPayload) {
+    const mine = await this.prisma.testAttempt.findMany({
+      where: { studentId: user.sub, status: 'SUBMITTED', score: { not: null } },
+      include: { test: { select: { id: true, title: true } } },
+      orderBy: { submittedAt: 'asc' },
+    });
+    if (mine.length === 0) return { attempts: [], subjects: [] };
+
+    // Accuracy per attempt, in one pass over the relevant answers.
+    const attemptIds = mine.map((a) => a.id);
+    const answers = await this.prisma.testAnswer.findMany({
+      where: { attemptId: { in: attemptIds } },
+      select: { attemptId: true, testQuestionId: true, isCorrect: true, selectedOption: true },
+    });
+    const stat = new Map<string, { answered: number; correct: number }>();
+    for (const ans of answers) {
+      const s = stat.get(ans.attemptId) ?? { answered: 0, correct: 0 };
+      if (ans.selectedOption != null && ans.selectedOption !== '') s.answered += 1;
+      if (ans.isCorrect) s.correct += 1;
+      stat.set(ans.attemptId, s);
+    }
+
+    // Accuracy by subject: attribute each answered question's correctness to its tags.
+    const testIdsAll = [...new Set(mine.map((a) => a.testId))];
+    const questions = await this.prisma.testQuestion.findMany({
+      where: { testId: { in: testIdsAll } },
+      select: { id: true, tags: { select: { name: true } } },
+    });
+    const tagsByQuestion = new Map(questions.map((q) => [q.id, q.tags.map((t) => t.name)]));
+    const subjectStat = new Map<string, { correct: number; total: number }>();
+    for (const ans of answers) {
+      const answered = ans.selectedOption != null && ans.selectedOption !== '';
+      if (!answered) continue;
+      for (const tag of tagsByQuestion.get(ans.testQuestionId) ?? []) {
+        const s = subjectStat.get(tag) ?? { correct: 0, total: 0 };
+        s.total += 1;
+        if (ans.isCorrect) s.correct += 1;
+        subjectStat.set(tag, s);
+      }
+    }
+    const subjects = [...subjectStat.entries()]
+      .map(([name, s]) => ({ name, correct: s.correct, total: s.total, pct: Math.round((s.correct / s.total) * 100) }))
+      .sort((a, b) => a.pct - b.pct);
+
+    // Percentile is relative to each test's field: gather best-per-student scores once per
+    // distinct test, then read each attempt's standing off the sorted list.
+    const fieldByTest = new Map<string, number[]>();
+    for (const testId of testIdsAll) {
+      const attempts = await this.prisma.testAttempt.findMany({
+        where: { testId, status: 'SUBMITTED', score: { not: null } },
+        select: { studentId: true, score: true },
+      });
+      const best = new Map<string, number>();
+      for (const a of attempts) {
+        const s = a.score ?? 0;
+        if (!best.has(a.studentId) || s > (best.get(a.studentId) ?? 0)) best.set(a.studentId, s);
+      }
+      fieldByTest.set(testId, [...best.values()].sort((x, y) => x - y));
+    }
+
+    const attempts = mine.map((a) => {
+      const st = stat.get(a.id);
+      const accuracy = st && st.answered > 0 ? st.correct / st.answered : null;
+      const timeSeconds =
+        a.submittedAt && a.startedAt ? Math.max(0, Math.round((a.submittedAt.getTime() - a.startedAt.getTime()) / 1000)) : null;
+      const field = fieldByTest.get(a.testId) ?? [];
+      const below = field.filter((s) => s < (a.score ?? 0)).length;
+      const percentile = field.length > 1 ? Math.round((below / field.length) * 100) : null;
+      const scorePct = a.maxScore ? Math.round(((a.score ?? 0) / a.maxScore) * 100) : 0;
+      return {
+        attemptId: a.id,
+        testId: a.testId,
+        testTitle: a.test.title,
+        submittedAt: a.submittedAt,
+        score: a.score,
+        maxScore: a.maxScore,
+        scorePct,
+        accuracy,
+        timeSeconds,
+        percentile,
+      };
+    });
+
+    return { attempts, subjects };
+  }
+
   /** Detailed per-question review of the student's own SUBMITTED attempt, plus time taken and percentile. */
   async getAttemptReview(user: JwtPayload, attemptId: string) {
     const attempt = await this.prisma.testAttempt.findUnique({ where: { id: attemptId } });

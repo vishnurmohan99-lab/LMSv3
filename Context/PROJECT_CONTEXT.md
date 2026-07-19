@@ -756,6 +756,27 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Results & Analytics: standalone screen (Design System screen 1) (2026-07-16).**
+  Second of three requested screens (Mock Test S3 still to do). New route
+  `app/student/results/page.tsx` + `.ra-*` in globals.css + a "Results" nav item
+  (ResultsIcon) in StudentShell between Mock Test and Answer Correction.
+  **New backend endpoint** `GET /results/me` (`getMyResults` in test-attempts.service.ts,
+  route in the controller) → `{ attempts, subjects }`: every SUBMITTED attempt across all
+  tests (title, date, score, scorePct, accuracy, timeSeconds, and percentile within that
+  test's best-per-student field), plus accuracy-by-subject aggregated from answer→question
+  tag rollup. Web api client gained `myResults()` + `MockResult`/`SubjectAccuracy`/
+  `MyResults` types.
+  Screen: range switch (30/90/All time, filters by submittedAt), 4 KPI tiles (tests taken,
+  avg percentile + first→latest delta, best score %, avg accuracy), a **Percentile trend**
+  bar chart (Your score real; **Batch median is ⚠ NEEDS API** — flagged in the legend, no
+  batch model), Accuracy-by-subject bars (real from tags; "no tagged questions" fallback
+  when a test's Qs are untagged), a data-driven Focus recommendation (weakest subject),
+  and a Recent-attempts table (TEST/SCORE/PERCENTILE/ACCURACY/TIME + Review link).
+  Verified on real data (3 Comprehension attempts: percentiles 0/50/0, accuracy 100/43/14%,
+  KPIs computed correctly), range switch toggles, mobile drops KPIs to 2-up + stacks the
+  split + scrolls the table, no horizontal overflow. tsc clean on web + api.
+  (Heads-up: a stale `.next/dev` cache from a killed dev server can make `tsc` report
+  errors in generated `routes.d.ts`/`validator.ts` — `rm -rf apps/web/.next` clears it.)
 - **Leaderboard: standalone screen (Design System screen 3) (2026-07-16).**
   First of three requested screens (Mock Test S3 + Results & Analytics still to do).
   New route `app/student/mock-test/[testId]/leaderboard/page.tsx` + `.lb-*` in globals.css;
@@ -1201,4 +1222,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (leaderboard standalone screen + accuracy/time on the leaderboard API).*
+*Last updated: 2026-07-16 (Results & Analytics standalone screen + GET /results/me endpoint).*

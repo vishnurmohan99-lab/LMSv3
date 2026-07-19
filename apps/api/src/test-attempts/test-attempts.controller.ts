@@ -39,4 +39,10 @@ export class TestAttemptsController {
   review(@Param('id') attemptId: string, @CurrentUser() user: JwtPayload) {
     return this.attempts.getAttemptReview(user, attemptId);
   }
+
+  /** All of the student's SUBMITTED attempts across every test — powers Results & Analytics. */
+  @Get('results/me')
+  myResults(@CurrentUser() user: JwtPayload) {
+    return this.attempts.getMyResults(user);
+  }
 }
