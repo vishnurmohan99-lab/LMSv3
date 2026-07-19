@@ -394,6 +394,29 @@ button:active, a:active {
    header. On a phone the progress bar + label eat the whole row, so it's dropped there —
    the sidebar's own progress card already carries the same number. */
 
+/* S2 sidebar: flat mono chapter section-headers + hoverable lesson rows. */
+.cd-section-head {
+  padding: 10px 20px 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+  background: var(--bg);
+  border-top: 1px solid var(--line2);
+  border-bottom: 1px solid var(--line2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-lesson-row {
+  transition: background .12s ease;
+}
+.cd-lesson-row:not([disabled]):hover {
+  background: var(--bg) !important;
+}
+
 .cd-resources {
   display: inline-flex;
   align-items: center;

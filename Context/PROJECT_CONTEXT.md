@@ -756,6 +756,29 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Course detail: sidebar CONTENT rewritten to match S2 (2026-07-16).**
+  Follow-up to the sidebar-position flip — the position matched S2 but the content was
+  still the old accordion (expandable chapter cards, circle-numbers, chevrons). Replaced
+  with S2's flat list: `app/student/courses/[id]/page.tsx` + `.cd-section-head` /
+  `.cd-lesson-row` in `globals.css`.
+  Mono `CH n · TITLE · status` section headers (`· locked` / `· done` / `n/n done`);
+  36×24 mono type chips (VID purple, PDF blue, QZ teal, LIVE pink, CARD orange — greyed
+  when locked); right-side state glyphs (green ✓ viewed, orange ▶ ring active, empty ○
+  ring to-do, lock icon); NOW badge + orange-soft bg + 3px orange left border on the
+  active row; a bottom full-width "Continue →" button (shown only when there's an
+  unviewed lesson). Tests render as `QZ` rows linking to `/student/mock-test/:id`.
+  Removed as dead code: `LessonIcon`/`LessonNavItem`/`TestNavItem` helpers, `ChapterTest`
+  type, `expandedChapterId` state — all only served the accordion.
+  **Bug fixed:** the active row's 3px orange left border wasn't rendering — a later
+  `border: "none"` in the same style object was resetting the earlier `borderLeft`;
+  split into per-side border resets so only the left one is meaningful.
+  Chip colours are a deliberate departure from the mockup (VID/PDF look near-identical
+  lavender there) — colour-coded per type for scannability; revert to a single
+  colour in `CHIP_META` if exact-match is wanted instead.
+  Verified: 3 section headers / 15 rows on a real course, chip geometry pixel-matches
+  (36×24/r7/#f5f2ff/#5a2ed6 mono), active row border+badge correct after the fix,
+  Continue jumps to the next unviewed lesson and disappears once all are viewed, QZ
+  row links correctly, no horizontal overflow at 375px. tsc --noEmit clean.
 - **Course detail: match S2 layout — sidebar to the RIGHT (2026-07-16).**
   Completes the one structural gap left from the ①②③ pass. `app/student/courses/[id]/page.tsx`
   + `.course-pane-*` in `globals.css`. The course-content sidebar moved from LEFT to
@@ -1160,4 +1183,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (course detail: sidebar moved right to match S2 layout).*
+*Last updated: 2026-07-16 (course detail: sidebar content rewritten as S2's flat lesson list).*

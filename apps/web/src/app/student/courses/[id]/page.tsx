@@ -10,131 +10,146 @@ import CheatSheetReview from "@/components/CheatSheetReview";
 import LessonNotes from "@/components/LessonNotes";
 import AskMeChat from "@/components/AskMeChat";
 
-function LessonIcon({ type, color }: { type: Lesson["type"]; color: string }) {
-  const common = { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 1.8 } as const;
-  if (type === "PDF") {
-    return (
-      <svg {...common}>
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <path d="M14 2v6h6" />
-      </svg>
-    );
-  }
-  if (type === "LIVE") {
-    return (
-      <svg {...common}>
-        <path d="m23 7-7 5 7 5V7z" />
-        <rect x="1" y="5" width="15" height="14" rx="2" />
-      </svg>
-    );
-  }
-  // VIDEO / FLASHCARD fallback — circular play icon, matches reference's typeIcon default
+// S2 sidebar type chips (36×24 mono squares). Colours are per-type from the design
+// tokens; a locked row greys the chip regardless of type.
+const CHIP_META: Record<string, { label: string; bg: string; ink: string; meta: string }> = {
+  VIDEO: { label: "VID", bg: "var(--purple-soft)", ink: "var(--purple-ink)", meta: "Video" },
+  PDF: { label: "PDF", bg: "var(--blue-soft)", ink: "var(--blue)", meta: "PDF notes" },
+  LIVE: { label: "LIVE", bg: "var(--live-soft)", ink: "var(--live)", meta: "Live class" },
+  FLASHCARD: { label: "CARD", bg: "var(--orange-soft)", ink: "var(--orange-ink)", meta: "Flashcards" },
+  TEST: { label: "QZ", bg: "var(--diff-easy-soft)", ink: "var(--diff-easy)", meta: "Quiz" },
+};
+
+function TypeChip({ kind, locked }: { kind: keyof typeof CHIP_META; locked?: boolean }) {
+  const m = CHIP_META[kind];
   return (
-    <svg {...common}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M10 8l6 4-6 4V8z" />
-    </svg>
+    <div
+      style={{
+        width: 36,
+        height: 24,
+        borderRadius: 7,
+        flex: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "var(--font-mono)",
+        fontSize: 9,
+        fontWeight: 700,
+        background: locked ? "var(--bg-sunk)" : m.bg,
+        color: locked ? "var(--ink3)" : m.ink,
+      }}
+    >
+      {m.label}
+    </div>
   );
 }
 
-type ChapterTest = Chapter["tests"][number];
+type RowState = "done" | "now" | "todo" | "locked";
 
-function LessonNavItem({ lesson, active, onSelect }: { lesson: Lesson; active: boolean; onSelect: (id: string) => void }) {
-  const lessonLocked = lesson.unlocked === false;
-  const color = lessonLocked ? "var(--ink3)" : active ? "var(--orange)" : "var(--ink3)";
-  return (
-    <button
-      onClick={() => !lessonLocked && onSelect(lesson.id)}
-      disabled={lessonLocked}
-      style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        gap: 11,
-        padding: "10px 18px 10px 30px",
-        border: "none",
-        background: active ? "var(--orange-soft)" : "transparent",
-        position: "relative",
-        cursor: lessonLocked ? "default" : "pointer",
-        fontFamily: "inherit",
-        textAlign: "left",
-        borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
-        opacity: lessonLocked ? 0.55 : 1,
-      }}
-    >
-      <span style={{ color, display: "flex" }}>
-        {lessonLocked ? (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <rect x="5" y="11" width="14" height="9" rx="2" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-        ) : (
-          <LessonIcon type={lesson.type} color={color} />
-        )}
+/** Right-hand state glyph: green ✓ (done), orange ▶ ring (current), empty ring (to-do), lock. */
+function StateGlyph({ state }: { state: RowState }) {
+  if (state === "locked") {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" strokeWidth="1.8" style={{ flex: "none" }}>
+        <rect x="5" y="11" width="14" height="9" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </svg>
+    );
+  }
+  if (state === "done") {
+    return (
+      <span style={{ width: 22, height: 22, borderRadius: 999, flex: "none", background: "var(--green)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
       </span>
+    );
+  }
+  if (state === "now") {
+    return (
+      <span style={{ width: 22, height: 22, borderRadius: 999, flex: "none", border: "1.5px solid var(--orange)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="var(--orange)">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </span>
+    );
+  }
+  return <span style={{ width: 22, height: 22, borderRadius: 999, flex: "none", border: "1.5px solid var(--line)" }} />;
+}
+
+/** One S2 sidebar row: type chip · title + meta · optional NOW badge · state glyph. */
+function SidebarRow({
+  kind,
+  title,
+  meta,
+  state,
+  onClick,
+  href,
+}: {
+  kind: keyof typeof CHIP_META;
+  title: string;
+  meta: string;
+  state: RowState;
+  onClick?: () => void;
+  href?: string;
+}) {
+  const active = state === "now";
+  const locked = state === "locked";
+  const inner = (
+    <>
+      <TypeChip kind={kind} locked={locked} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             fontSize: 12.5,
             fontWeight: active ? 700 : 500,
-            color: active ? "var(--ink)" : "var(--ink2)",
-            whiteSpace: "nowrap",
+            color: locked ? "var(--ink3)" : "var(--ink)",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          {lesson.title}
+          {title}
         </div>
-        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
-          {lessonLocked ? "Complete the previous lesson to unlock" : lesson.type}
-        </div>
+        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>{meta}</div>
       </div>
-      {active ? (
-        <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 0.5, color: "var(--orange)", flex: "none" }}>NOW</span>
-      ) : (
-        <span style={{ width: 8, height: 8, borderRadius: "50%", flex: "none", border: "1.5px solid var(--line)" }} />
+      {active && (
+        <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.5, background: "var(--orange)", color: "#fff", borderRadius: 4, padding: "3px 6px", flex: "none" }}>
+          NOW
+        </span>
       )}
-    </button>
+      <StateGlyph state={state} />
+    </>
   );
-}
-
-function TestNavItem({ test }: { test: ChapterTest }) {
-  const testLocked = test.unlocked === false;
+  const style: React.CSSProperties = {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    gap: 11,
+    padding: "11px 20px",
+    background: active ? "var(--orange-soft)" : "transparent",
+    // Only the left border is meaningful (the active marker); the button's other
+    // three default borders are removed individually so this one survives.
+    borderTop: "none",
+    borderRight: "none",
+    borderBottom: "none",
+    borderLeft: active ? "3px solid var(--orange)" : "3px solid transparent",
+    textAlign: "left",
+    fontFamily: "inherit",
+    opacity: locked ? 0.6 : 1,
+    cursor: locked ? "default" : "pointer",
+  };
+  if (href && !locked) {
+    return (
+      <Link href={href} className="cd-lesson-row" style={{ ...style, textDecoration: "none", color: "inherit" }}>
+        {inner}
+      </Link>
+    );
+  }
   return (
-    <Link
-      href={testLocked ? "#" : `/student/mock-test/${test.id}`}
-      onClick={(e) => testLocked && e.preventDefault()}
-      style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        gap: 11,
-        padding: "10px 18px 10px 30px",
-        cursor: testLocked ? "default" : "pointer",
-        textAlign: "left",
-        opacity: testLocked ? 0.55 : 1,
-      }}
-    >
-      <span style={{ color: "var(--purple)", display: "flex" }}>
-        {testLocked ? (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <rect x="5" y="11" width="14" height="9" rx="2" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-        ) : (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M9 11l3 3L22 4" />
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-          </svg>
-        )}
-      </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink2)" }}>{test.title}</div>
-        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 1 }}>
-          {testLocked ? "Complete the lessons above to unlock" : "Test"}
-        </div>
-      </div>
-    </Link>
+    <button className="cd-lesson-row" onClick={locked ? undefined : onClick} disabled={locked} style={style}>
+      {inner}
+    </button>
   );
 }
 
@@ -420,7 +435,6 @@ export default function StudentCoursePlayerPage() {
   const [enrolling, setEnrolling] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "flashcards" | "summary" | "cheatsheet" | "notes" | "doubt">("overview");
   const [flashcardCount, setFlashcardCount] = useState<number | null>(null);
-  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [completingChapterId, setCompletingChapterId] = useState<string | null>(null);
   const [lessonOpenedByUser, setLessonOpenedByUser] = useState(false);
 
@@ -441,7 +455,6 @@ export default function StudentCoursePlayerPage() {
         setCourse(c);
         const firstUnlocked = c.chapters.find((ch) => ch.unlocked !== false) ?? c.chapters[0];
         setSelectedLessonId(firstUnlocked?.lessons[0]?.id ?? null);
-        setExpandedChapterId(firstUnlocked?.id ?? null);
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 403) {
@@ -598,156 +611,117 @@ export default function StudentCoursePlayerPage() {
           </span>
         </div>
 
+        {/* S2 sidebar: flat mono section-headers + type-chip lesson rows, no accordion. */}
         {course.chapters.map((chapter: Chapter, chapterIdx: number) => {
-          const open = expandedChapterId === chapter.id;
-          const locked = chapter.unlocked === false;
-          const isActiveChapter = chapter.id === selectedChapter?.id;
-          const lessonItems = chapter.lessons.filter((l) => l.id);
-          const activeLessonPos = lessonItems.findIndex((l) => l.id === selectedLessonId);
-          const viewedInChapter = lessonItems.filter((l) => l.viewed).length;
+          const chapterLocked = chapter.unlocked === false;
+          const lessonCount = chapter.lessons.length;
+          const viewedInChapter = chapter.lessons.filter((l) => l.viewed).length;
+          const status = chapterLocked
+            ? "locked"
+            : chapter.finished
+            ? "done"
+            : `${viewedInChapter}/${lessonCount} done`;
+          const items = [
+            ...chapter.lessons.map((l) => ({ kind: "lesson" as const, order: l.order, lesson: l })),
+            ...chapter.tests.map((t) => ({ kind: "test" as const, order: t.order, test: t })),
+          ].sort((a, b) => a.order - b.order);
+          const showMarkComplete =
+            !chapterLocked && course.dripType === "SEQUENTIAL" && course.completionRule === "MANUAL";
           return (
-            <div
-              key={chapter.id}
-              className="fade-in-up"
-              style={{
-                margin: "0 14px 10px",
-                borderRadius: "var(--rm)",
-                border: isActiveChapter ? "1.5px solid var(--orange)" : "1px solid var(--line)",
-                background: "var(--card)",
-                overflow: "hidden",
-              }}
-            >
-              <button
-                onClick={() => setExpandedChapterId(open ? null : chapter.id)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "14px 16px",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  textAlign: "left",
-                  opacity: locked ? 0.6 : 1,
-                }}
-              >
-                <div
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: "50%",
-                    background: chapter.finished ? "var(--green-soft)" : isActiveChapter ? "var(--orange)" : "var(--bg)",
-                    color: chapter.finished ? "var(--green)" : isActiveChapter ? "#fff" : "var(--ink2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flex: "none",
-                    fontSize: 13,
-                    fontWeight: 800,
-                  }}
-                >
-                  {locked ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <rect x="5" y="11" width="14" height="9" rx="2" />
-                      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                    </svg>
-                  ) : chapter.finished ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    chapterIdx + 1
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>{chapter.title}</div>
-                  <div style={{ fontSize: 11.5, color: locked ? "var(--ink3)" : isActiveChapter ? "var(--orange)" : "var(--ink3)", marginTop: 1, fontWeight: isActiveChapter ? 700 : 400 }}>
-                    {/* ③ Design shows a per-chapter "5/8 done" count, not just "N lessons". */}
-                    {locked
-                      ? chapter.unlocksAt
-                        ? `Unlocks ${new Date(chapter.unlocksAt).toLocaleDateString()}`
-                        : "Locked"
-                      : chapter.finished
-                      ? "Completed"
-                      : chapter.lessons.length > 0
-                      ? `${viewedInChapter}/${chapter.lessons.length} done`
-                      : "No lessons"}
-                  </div>
-                </div>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--ink3)"
-                  strokeWidth="2"
-                  style={{ transition: "transform .25s", transform: open ? "rotate(90deg)" : "none", flex: "none" }}
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </button>
+            <div key={chapter.id} className="fade-in-up">
+              <div className="cd-section-head">
+                CH {chapterIdx + 1} · {chapter.title.toUpperCase()} · {status}
+              </div>
 
-              {open && (
-                <div className="fade-in-up" style={{ paddingBottom: 6, borderTop: "1px solid var(--line2)" }}>
-                  {locked ? (
-                    <div style={{ padding: "8px 18px 14px 30px", fontSize: 12, color: "var(--ink3)" }}>
-                      This chapter is locked
-                      {chapter.unlocksAt ? ` until ${new Date(chapter.unlocksAt).toLocaleString()}` : ""}.
-                    </div>
+              {items.map((it) => {
+                if (it.kind === "lesson") {
+                  const l = it.lesson;
+                  const locked = chapterLocked || l.unlocked === false;
+                  const state: RowState = locked
+                    ? "locked"
+                    : l.id === selectedLessonId
+                    ? "now"
+                    : l.viewed
+                    ? "done"
+                    : "todo";
+                  return (
+                    <SidebarRow
+                      key={l.id}
+                      kind={l.type}
+                      title={l.title}
+                      meta={locked ? "Locked" : CHIP_META[l.type]?.meta ?? "Lesson"}
+                      state={state}
+                      onClick={() => openLesson(l.id)}
+                    />
+                  );
+                }
+                const t = it.test;
+                const locked = chapterLocked || t.unlocked === false;
+                return (
+                  <SidebarRow
+                    key={t.id}
+                    kind="TEST"
+                    title={t.title}
+                    meta={locked ? "Locked" : "Quiz"}
+                    state={locked ? "locked" : "todo"}
+                    href={`/student/mock-test/${t.id}`}
+                  />
+                );
+              })}
+
+              {showMarkComplete && (
+                <div style={{ padding: "8px 20px 12px" }}>
+                  {chapter.finished ? (
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)" }}>✓ Marked complete</span>
                   ) : (
-                    <>
-                      {[
-                        ...chapter.lessons.map((l) => ({ kind: "lesson" as const, order: l.order, data: l })),
-                        ...chapter.tests.map((t) => ({ kind: "test" as const, order: t.order, data: t })),
-                      ]
-                        .sort((a, b) => a.order - b.order)
-                        .map((item) =>
-                          item.kind === "lesson" ? (
-                            <LessonNavItem
-                              key={item.data.id}
-                              lesson={item.data}
-                              active={item.data.id === selectedLessonId}
-                              onSelect={openLesson}
-                            />
-                          ) : (
-                            <TestNavItem key={item.data.id} test={item.data} />
-                          ),
-                        )}
-                    </>
-                  )}
-                  {!locked && course.dripType === "SEQUENTIAL" && course.completionRule === "MANUAL" && (
-                    <div style={{ padding: "8px 18px 12px 30px" }}>
-                      {chapter.finished ? (
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green)" }}>✓ Marked complete</span>
-                      ) : (
-                        <button
-                          onClick={() => onMarkChapterComplete(chapter.id)}
-                          disabled={completingChapterId === chapter.id}
-                          style={{
-                            padding: "7px 14px",
-                            background: "var(--orange)",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 9,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            fontFamily: "inherit",
-                            cursor: completingChapterId === chapter.id ? "default" : "pointer",
-                            opacity: completingChapterId === chapter.id ? 0.7 : 1,
-                          }}
-                        >
-                          {completingChapterId === chapter.id ? "Marking…" : "Mark chapter complete"}
-                        </button>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => onMarkChapterComplete(chapter.id)}
+                      disabled={completingChapterId === chapter.id}
+                      style={{
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: "var(--orange-deep)",
+                        background: "var(--orange-soft)",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "6px 12px",
+                        cursor: completingChapterId === chapter.id ? "default" : "pointer",
+                        fontFamily: "inherit",
+                        opacity: completingChapterId === chapter.id ? 0.7 : 1,
+                      }}
+                    >
+                      {completingChapterId === chapter.id ? "Marking…" : "Mark chapter complete"}
+                    </button>
                   )}
                 </div>
               )}
             </div>
           );
         })}
+
+        {/* Bottom "Continue →" button (S2 sidebar). */}
+        {nextLesson && (
+          <div style={{ padding: "18px 20px 8px" }}>
+            <button
+              onClick={() => openLesson(nextLesson.id)}
+              style={{
+                width: "100%",
+                height: 42,
+                background: "var(--orange)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 11,
+                fontSize: 13.5,
+                fontWeight: 600,
+                fontFamily: "inherit",
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(242,106,27,.3)",
+              }}
+            >
+              Continue →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Lesson/player area — the main left column in S2 (flex order: 1). */}
