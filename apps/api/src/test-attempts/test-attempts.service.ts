@@ -147,27 +147,46 @@ export class TestAttemptsService {
     }
 
     const ranked = [...bestByStudent.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-    const top = ranked.slice(0, 5).map((a, i) => ({
-      rank: i + 1,
-      studentId: a.studentId,
-      studentName: a.student.fullName,
-      score: a.score,
-      maxScore: a.maxScore,
-      isMe: a.studentId === user.sub,
-    }));
+
+    // Per-entry accuracy (correct / answered) and time-taken — the standalone leaderboard
+    // screen surfaces both. Derived in one pass over the ranked attempts' answers rather
+    // than per-row queries.
+    const rankedIds = ranked.map((a) => a.id);
+    const answers = await this.prisma.testAnswer.findMany({
+      where: { attemptId: { in: rankedIds } },
+      select: { attemptId: true, isCorrect: true, selectedOption: true },
+    });
+    const statByAttempt = new Map<string, { answered: number; correct: number }>();
+    for (const ans of answers) {
+      const s = statByAttempt.get(ans.attemptId) ?? { answered: 0, correct: 0 };
+      const didAnswer = ans.selectedOption != null && ans.selectedOption !== '';
+      if (didAnswer) s.answered += 1;
+      if (ans.isCorrect) s.correct += 1;
+      statByAttempt.set(ans.attemptId, s);
+    }
+
+    const toEntry = (a: (typeof ranked)[number], rank: number) => {
+      const stat = statByAttempt.get(a.id);
+      const accuracy = stat && stat.answered > 0 ? stat.correct / stat.answered : null;
+      const timeSeconds =
+        a.submittedAt && a.startedAt ? Math.max(0, Math.round((a.submittedAt.getTime() - a.startedAt.getTime()) / 1000)) : null;
+      return {
+        rank,
+        studentId: a.studentId,
+        studentName: a.student.fullName,
+        score: a.score,
+        maxScore: a.maxScore,
+        accuracy,
+        timeSeconds,
+        isMe: a.studentId === user.sub,
+      };
+    };
+
+    // Enough rows for the podium (top 3) plus the table beneath it.
+    const top = ranked.slice(0, 20).map((a, i) => toEntry(a, i + 1));
 
     const myIndex = ranked.findIndex((a) => a.studentId === user.sub);
-    const me =
-      myIndex >= 0 && myIndex >= 5
-        ? {
-            rank: myIndex + 1,
-            studentId: user.sub,
-            studentName: ranked[myIndex].student.fullName,
-            score: ranked[myIndex].score,
-            maxScore: ranked[myIndex].maxScore,
-            isMe: true,
-          }
-        : null;
+    const me = myIndex >= 20 ? toEntry(ranked[myIndex], myIndex + 1) : null;
 
     return { top, me, totalRanked: ranked.length };
   }

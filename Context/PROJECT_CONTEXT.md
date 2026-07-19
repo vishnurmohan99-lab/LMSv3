@@ -756,6 +756,24 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Leaderboard: standalone screen (Design System screen 3) (2026-07-16).**
+  First of three requested screens (Mock Test S3 + Results & Analytics still to do).
+  New route `app/student/mock-test/[testId]/leaderboard/page.tsx` + `.lb-*` in globals.css;
+  linked via a "Full leaderboard →" button added to the embedded leaderboard on the
+  results view. Layout matches the design: header + `<test> · N attempts` + All learners /
+  My batch segmented toggle, podium (top 3 cards, gold/silver/bronze medal tints), a
+  "You" pinned row when outside the top 20, and a RANK/LEARNER/SCORE/ACCURACY/TIME table.
+  **Backend extended:** `getLeaderboard` (test-attempts.service.ts) now returns `accuracy`
+  (correct/answered on the best attempt, derived in one pass over answers) and
+  `timeSeconds` (submittedAt−startedAt) per entry, and returns top 20 (was 5); added those
+  two fields to `LeaderboardEntry` in web `lib/api.ts`.
+  **Known data gaps (deviations from the mockup, no source):** per-row **city** (no field
+  on User) is omitted; the **"My batch"** scope has no backend — the toggle renders the
+  design's "⚠ NEEDS API" note + a fallback message and keeps "All learners" as the live
+  view. The mockup's "▲ Up N places since Mock 13" is omitted (no cross-test history).
+  Verified against real data (Comprehension test: 2 ranked attempts, accuracy 43%/30%,
+  times 58s/29s), batch toggle shows the notice + hides the podium, mobile stacks the
+  podium and the table scrolls in its own container, no horizontal overflow. tsc clean.
 - **Course detail: sidebar CONTENT rewritten to match S2 (2026-07-16).**
   Follow-up to the sidebar-position flip — the position matched S2 but the content was
   still the old accordion (expandable chapter cards, circle-numbers, chevrons). Replaced
@@ -1183,4 +1201,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (course detail: sidebar content rewritten as S2's flat lesson list).*
+*Last updated: 2026-07-16 (leaderboard standalone screen + accuracy/time on the leaderboard API).*

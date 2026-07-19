@@ -956,6 +956,8 @@ export interface LeaderboardEntry {
   studentName: string;
   score: number | null;
   maxScore: number | null;
+  accuracy: number | null; // 0..1, correct / answered on the best attempt
+  timeSeconds: number | null;
   isMe: boolean;
 }
 

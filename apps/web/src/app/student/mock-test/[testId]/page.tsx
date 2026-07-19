@@ -700,7 +700,15 @@ export default function StudentMockTestTakePage() {
 
         {leaderboard && leaderboard.top.length > 0 && (
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24, marginTop: 18 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Leaderboard</div>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16, gap: 12 }}>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>Leaderboard</div>
+              <button
+                onClick={() => router.push(`/student/mock-test/${testId}/leaderboard`)}
+                style={{ background: "none", border: "none", color: "var(--orange-deep)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0 }}
+              >
+                Full leaderboard →
+              </button>
+            </div>
             <div style={{ display: "grid" }}>
               {[...leaderboard.top, ...(leaderboard.me ? [leaderboard.me] : [])].map((entry, i) => {
                 const pctScore = entry.maxScore ? Math.round(((entry.score ?? 0) / entry.maxScore) * 100) : 0;
