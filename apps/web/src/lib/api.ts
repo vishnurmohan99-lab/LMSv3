@@ -947,8 +947,20 @@ export const testAttemptsApi = {
     request<{ id: string }>(`/attempts/${attemptId}/answers`, { method: 'PATCH', body: JSON.stringify({ testQuestionId, selectedOption }) }),
   submit: (attemptId: string) => request<TestAttemptResult>(`/attempts/${attemptId}/submit`, { method: 'POST' }),
   review: (attemptId: string) => request<AttemptReview>(`/attempts/${attemptId}/review`),
-  leaderboard: (testId: string) => request<Leaderboard>(`/tests/${testId}/leaderboard`),
+  leaderboard: (testId: string, scope: 'all' | 'batch' = 'all') =>
+    request<Leaderboard>(`/tests/${testId}/leaderboard${scope === 'batch' ? '?scope=batch' : ''}`),
   myResults: () => request<MyResults>('/results/me'),
+};
+
+export interface SearchHit {
+  type: 'course' | 'test' | 'mentor';
+  id: string;
+  title: string;
+  subtitle: string | null;
+}
+
+export const searchApi = {
+  run: (q: string) => request<SearchHit[]>(`/search?q=${encodeURIComponent(q)}`),
 };
 
 /** One SUBMITTED attempt across any test — the row shape behind Results & Analytics. */
@@ -963,6 +975,8 @@ export interface MockResult {
   accuracy: number | null; // 0..1
   timeSeconds: number | null;
   percentile: number | null; // 0..100, within the test's field
+  /** Batch peers' median score, expressed as a percentile on the same axis. */
+  batchMedianPercentile: number | null;
 }
 
 export interface SubjectAccuracy {
@@ -975,6 +989,7 @@ export interface SubjectAccuracy {
 export interface MyResults {
   attempts: MockResult[];
   subjects: SubjectAccuracy[];
+  batchAvailable: boolean;
 }
 
 export interface LeaderboardEntry {
@@ -992,6 +1007,9 @@ export interface Leaderboard {
   top: LeaderboardEntry[];
   me: LeaderboardEntry | null;
   totalRanked: number;
+  scope: 'all' | 'batch';
+  /** false when the student belongs to no batch, so "My batch" has nothing to scope to. */
+  batchAvailable: boolean;
 }
 
 export const workoutApi = {

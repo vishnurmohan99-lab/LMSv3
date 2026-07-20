@@ -756,6 +756,31 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Closed the three "buildable today" API gaps: batch leaderboard, batch median, global search (2026-07-16).**
+  From a full design-system audit of every `⚠ NEEDS API` marker. These three were flagged
+  as blocked but were NOT schema-blocked — `Batch`/`BatchEnrollment` already existed.
+  1. **Batch-scoped leaderboard.** `getLeaderboard(user, testId, scope)` + `?scope=batch`
+     on the controller; new private `myBatchPeerIds()` helper (students sharing any batch
+     with the caller). Response gained `scope` + `batchAvailable`; `batchAvailable:false`
+     when the student is in no batch, so the UI says "you're not in a batch" instead of
+     showing an empty board. Leaderboard page refetches on scope change; the ⚠ placeholder
+     and its fallback copy are gone.
+  2. **Batch median** on the Results trend. `getMyResults` now also collects batch peers'
+     best scores per test and returns `batchMedianPercentile` (the batch's median score
+     expressed as a percentile in the *same* full field, so it shares the chart's axis) +
+     `batchAvailable`. Trend renders paired bars (orange = you, `--line` = batch median)
+     with a combined tooltip; legend/median hidden when no batch.
+  3. **Global search + ⌘K.** New `SearchModule` (`GET /search?q=`) over courses / tests /
+     mentors — published-only, and courses scoped to the student's segment/subsegment
+     (mirrors CoursesService) so search can't surface unopenable content. StudentShell's
+     header input became a real debounced (220ms) typeahead with a results dropdown
+     (CRS/TEST/MTR chips → course/mock-test/mentor routes), a ⌘K hint, and a
+     window-level ⌘K/Ctrl-K focus shortcut. `searchApi` + `SearchHit` added to the client.
+  Verified: `?scope=batch` returns the batch-filtered field, search `q=phy` → Physics,
+  trend shows 5 paired bars with tooltip "you 0th · batch median 50th", ⌘K focuses the
+  input, no horizontal overflow at 375px. tsc clean on web + api.
+  (Testing note: React maps `onFocus` to the bubbling `focusin` event — dispatching a raw
+  non-bubbling `focus` in a browser-automation check will NOT open the dropdown.)
 - **Mock Test: align taking + results views to S3 (2026-07-16).**
   Third of the three requested screens; an alignment of the existing
   `mock-test/[testId]/page.tsx` (not net-new — data was already present).
@@ -1239,4 +1264,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (Mock Test taking + results views aligned to Design System S3).*
+*Last updated: 2026-07-16 (closed 3 buildable API gaps: batch leaderboard, batch median, global search + ⌘K).*

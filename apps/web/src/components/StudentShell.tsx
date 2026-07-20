@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { authApi, usersApi, messengerApi, type Profile } from "@/lib/api";
+import { authApi, usersApi, messengerApi, searchApi, type Profile, type SearchHit } from "@/lib/api";
 import SegmentOnboardingGate from "./SegmentOnboardingGate";
 
 function Icon({ children }: { children: React.ReactNode }) {
@@ -246,7 +246,40 @@ export default function StudentShell({ children }: { children: React.ReactNode }
   const [profile, setProfile] = useState<Profile | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [search, setSearch] = useState("");
+  const [searchHits, setSearchHits] = useState<SearchHit[] | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Debounced global search (courses / tests / mentors).
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) {
+      setSearchHits(null);
+      return;
+    }
+    setSearchHits(null);
+    const t = setTimeout(() => {
+      searchApi
+        .run(q)
+        .then(setSearchHits)
+        .catch(() => setSearchHits([]));
+    }, 220);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // ⌘K / Ctrl-K focuses the search field.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -375,12 +408,15 @@ export default function StudentShell({ children }: { children: React.ReactNode }
 
         <form onSubmit={onSearchSubmit} style={{ position: "relative", flex: "1 1 320px", maxWidth: 380, marginLeft: 18 }}>
           <input
+            ref={searchRef}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Find a course that interests you"
+            onFocus={() => setSearchOpen(true)}
+            onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+            placeholder="Search courses, tests, mentors…"
             style={{
               width: "100%",
-              padding: "10px 42px 10px 16px",
+              padding: "10px 60px 10px 16px",
               border: "1px solid var(--line)",
               borderRadius: 999,
               fontSize: 13.5,
@@ -389,9 +425,47 @@ export default function StudentShell({ children }: { children: React.ReactNode }
               background: "var(--bg)",
             }}
           />
+          {/* ⌘K affordance, hidden once the user starts typing */}
+          {!search && (
+            <span style={{ position: "absolute", right: 40, top: "50%", transform: "translateY(-50%)", fontSize: 10, fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--ink3)", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 5, padding: "2px 5px", pointerEvents: "none" }}>
+              ⌘K
+            </span>
+          )}
           <button type="submit" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             <SearchIcon />
           </button>
+
+          {searchOpen && search.trim().length >= 2 && (
+            <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rm)", boxShadow: "var(--e3)", overflow: "hidden", zIndex: 60 }}>
+              {searchHits === null ? (
+                <div style={{ padding: "14px 16px", fontSize: 12.5, color: "var(--ink3)" }}>Searching…</div>
+              ) : searchHits.length === 0 ? (
+                <div style={{ padding: "14px 16px", fontSize: 12.5, color: "var(--ink3)" }}>No matches for “{search.trim()}”.</div>
+              ) : (
+                searchHits.map((hit) => (
+                  <button
+                    key={`${hit.type}-${hit.id}`}
+                    onMouseDown={() => {
+                      const href =
+                        hit.type === "course" ? `/student/courses/${hit.id}` : hit.type === "test" ? `/student/mock-test/${hit.id}` : "/student/mentor";
+                      setSearch("");
+                      setSearchOpen(false);
+                      router.push(href);
+                    }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", border: "none", borderBottom: "1px solid var(--line2)", background: "transparent", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}
+                  >
+                    <span style={{ fontSize: 9, fontWeight: 700, fontFamily: "var(--font-mono)", borderRadius: 6, padding: "3px 6px", flex: "none", background: hit.type === "course" ? "var(--purple-soft)" : hit.type === "test" ? "var(--diff-easy-soft)" : "var(--orange-soft)", color: hit.type === "course" ? "var(--purple-ink)" : hit.type === "test" ? "var(--diff-easy)" : "var(--orange-ink)" }}>
+                      {hit.type === "course" ? "CRS" : hit.type === "test" ? "TEST" : "MTR"}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{hit.title}</span>
+                      {hit.subtitle && <span style={{ display: "block", fontSize: 10.5, color: "var(--ink3)" }}>{hit.subtitle}</span>}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </form>
 
         <div style={{ flex: 1 }} />

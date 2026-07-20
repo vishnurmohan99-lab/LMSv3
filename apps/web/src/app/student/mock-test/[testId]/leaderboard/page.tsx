@@ -79,7 +79,8 @@ export default function StudentLeaderboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([testAttemptsApi.leaderboard(testId), testsApi.get(testId)])
+    setLoading(true);
+    Promise.all([testAttemptsApi.leaderboard(testId, scope), testsApi.get(testId)])
       .then(([lb, test]) => {
         if (cancelled) return;
         setBoard(lb);
@@ -92,7 +93,7 @@ export default function StudentLeaderboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [testId]);
+  }, [testId, scope]);
 
   const podium = board?.top.slice(0, 3) ?? [];
   // Everyone below the podium in the table; "me" is pinned separately when outside top 20.
@@ -139,10 +140,8 @@ export default function StudentLeaderboardPage() {
               </span>
             ))}
           </div>
-          {scope === "batch" && (
-            <span style={{ fontSize: 8.5, fontWeight: 700, fontFamily: "var(--font-mono)", background: "var(--amber-soft)", color: "var(--amber-ink)", border: "1px dashed var(--amber)", borderRadius: 5, padding: "2px 6px" }}>
-              ⚠ NEEDS API — batch-scoped leaderboard unsupported
-            </span>
+          {scope === "batch" && board && !board.batchAvailable && (
+            <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ink3)" }}>You’re not in a batch yet</span>
           )}
         </div>
       </div>
@@ -151,13 +150,13 @@ export default function StudentLeaderboardPage() {
         <p style={{ color: "var(--ink2)", marginTop: 24 }}>Loading…</p>
       ) : error ? (
         <p style={{ color: "var(--red)", marginTop: 24 }}>{error}</p>
+      ) : scope === "batch" && board && !board.batchAvailable ? (
+        <div style={{ marginTop: 24, padding: 40, textAlign: "center", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", color: "var(--ink3)" }}>
+          You’re not enrolled in a batch, so there’s no batch ranking to show. Switch to <b>All learners</b> for the full board.
+        </div>
       ) : !board || board.top.length === 0 ? (
         <div style={{ marginTop: 24, padding: 40, textAlign: "center", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", color: "var(--ink3)" }}>
-          No ranked attempts yet — be the first to set the bar.
-        </div>
-      ) : scope === "batch" ? (
-        <div style={{ marginTop: 24, padding: 40, textAlign: "center", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", color: "var(--ink3)" }}>
-          Batch-scoped ranking isn’t available yet. Switch to <b>All learners</b> to see the full board.
+          {scope === "batch" ? "No one in your batch has attempted this test yet." : "No ranked attempts yet — be the first to set the bar."}
         </div>
       ) : (
         <>

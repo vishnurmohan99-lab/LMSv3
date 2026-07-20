@@ -130,7 +130,25 @@ export class TestAttemptsService {
     });
   }
 
-  async getLeaderboard(user: JwtPayload, testId: string) {
+  /**
+   * Student ids sharing at least one batch with the caller (the caller included).
+   * Returns null when the caller isn't in any batch — callers treat that as
+   * "no batch scope available" rather than "an empty batch".
+   */
+  private async myBatchPeerIds(user: JwtPayload): Promise<Set<string> | null> {
+    const myBatches = await this.prisma.batchEnrollment.findMany({
+      where: { studentId: user.sub },
+      select: { batchId: true },
+    });
+    if (myBatches.length === 0) return null;
+    const peers = await this.prisma.batchEnrollment.findMany({
+      where: { batchId: { in: myBatches.map((b) => b.batchId) } },
+      select: { studentId: true },
+    });
+    return new Set(peers.map((p) => p.studentId));
+  }
+
+  async getLeaderboard(user: JwtPayload, testId: string, scope: 'all' | 'batch' = 'all') {
     const test = await this.prisma.test.findUnique({ where: { id: testId } });
     if (!test) throw new NotFoundException('Test not found');
 
@@ -140,8 +158,18 @@ export class TestAttemptsService {
       orderBy: { score: 'desc' },
     });
 
+    // "My batch" narrows the field to students sharing a batch with the caller. If the
+    // caller is in no batch there is nothing to scope to, so we say so rather than
+    // silently returning an empty board.
+    let peerIds: Set<string> | null = null;
+    if (scope === 'batch') {
+      peerIds = await this.myBatchPeerIds(user);
+      if (!peerIds) return { top: [], me: null, totalRanked: 0, scope, batchAvailable: false };
+    }
+    const inScope = peerIds ? attempts.filter((a) => peerIds.has(a.studentId)) : attempts;
+
     const bestByStudent = new Map<string, (typeof attempts)[number]>();
-    for (const a of attempts) {
+    for (const a of inScope) {
       const existing = bestByStudent.get(a.studentId);
       if (!existing || (a.score ?? 0) > (existing.score ?? 0)) bestByStudent.set(a.studentId, a);
     }
@@ -188,7 +216,7 @@ export class TestAttemptsService {
     const myIndex = ranked.findIndex((a) => a.studentId === user.sub);
     const me = myIndex >= 20 ? toEntry(ranked[myIndex], myIndex + 1) : null;
 
-    return { top, me, totalRanked: ranked.length };
+    return { top, me, totalRanked: ranked.length, scope, batchAvailable: true };
   }
 
   /**
@@ -204,7 +232,7 @@ export class TestAttemptsService {
       include: { test: { select: { id: true, title: true } } },
       orderBy: { submittedAt: 'asc' },
     });
-    if (mine.length === 0) return { attempts: [], subjects: [] };
+    if (mine.length === 0) return { attempts: [], subjects: [], batchAvailable: false };
 
     // Accuracy per attempt, in one pass over the relevant answers.
     const attemptIds = mine.map((a) => a.id);
@@ -243,8 +271,11 @@ export class TestAttemptsService {
       .sort((a, b) => a.pct - b.pct);
 
     // Percentile is relative to each test's field: gather best-per-student scores once per
-    // distinct test, then read each attempt's standing off the sorted list.
+    // distinct test, then read each attempt's standing off the sorted list. Batch peers'
+    // scores are kept alongside so we can plot the batch's median percentile.
+    const peerIds = await this.myBatchPeerIds(user);
     const fieldByTest = new Map<string, number[]>();
+    const batchScoresByTest = new Map<string, number[]>();
     for (const testId of testIdsAll) {
       const attempts = await this.prisma.testAttempt.findMany({
         where: { testId, status: 'SUBMITTED', score: { not: null } },
@@ -256,7 +287,22 @@ export class TestAttemptsService {
         if (!best.has(a.studentId) || s > (best.get(a.studentId) ?? 0)) best.set(a.studentId, s);
       }
       fieldByTest.set(testId, [...best.values()].sort((x, y) => x - y));
+      if (peerIds) {
+        batchScoresByTest.set(
+          testId,
+          [...best.entries()].filter(([sid]) => peerIds.has(sid)).map(([, s]) => s),
+        );
+      }
     }
+
+    const percentileOf = (field: number[], score: number) =>
+      field.length > 1 ? Math.round((field.filter((s) => s < score).length / field.length) * 100) : null;
+    const median = (xs: number[]) => {
+      if (xs.length === 0) return null;
+      const sorted = [...xs].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    };
 
     const attempts = mine.map((a) => {
       const st = stat.get(a.id);
@@ -264,8 +310,11 @@ export class TestAttemptsService {
       const timeSeconds =
         a.submittedAt && a.startedAt ? Math.max(0, Math.round((a.submittedAt.getTime() - a.startedAt.getTime()) / 1000)) : null;
       const field = fieldByTest.get(a.testId) ?? [];
-      const below = field.filter((s) => s < (a.score ?? 0)).length;
-      const percentile = field.length > 1 ? Math.round((below / field.length) * 100) : null;
+      const percentile = percentileOf(field, a.score ?? 0);
+      // The batch's median score expressed as a percentile in the same full field, so it
+      // plots on the same axis as the student's own percentile.
+      const batchMedianScore = median(batchScoresByTest.get(a.testId) ?? []);
+      const batchMedianPercentile = batchMedianScore == null ? null : percentileOf(field, batchMedianScore);
       const scorePct = a.maxScore ? Math.round(((a.score ?? 0) / a.maxScore) * 100) : 0;
       return {
         attemptId: a.id,
@@ -278,10 +327,11 @@ export class TestAttemptsService {
         accuracy,
         timeSeconds,
         percentile,
+        batchMedianPercentile,
       };
     });
 
-    return { attempts, subjects };
+    return { attempts, subjects, batchAvailable: peerIds != null };
   }
 
   /** Detailed per-question review of the student's own SUBMITTED attempt, plus time taken and percentile. */

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { TestAttemptsService } from './test-attempts.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -21,8 +21,8 @@ export class TestAttemptsController {
   }
 
   @Get('tests/:id/leaderboard')
-  leaderboard(@Param('id') testId: string, @CurrentUser() user: JwtPayload) {
-    return this.attempts.getLeaderboard(user, testId);
+  leaderboard(@Param('id') testId: string, @CurrentUser() user: JwtPayload, @Query('scope') scope?: string) {
+    return this.attempts.getLeaderboard(user, testId, scope === 'batch' ? 'batch' : 'all');
   }
 
   @Patch('attempts/:id/answers')

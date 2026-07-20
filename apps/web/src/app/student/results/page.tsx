@@ -46,6 +46,7 @@ export default function StudentResultsPage() {
   const router = useRouter();
   const [attempts, setAttempts] = useState<MockResult[]>([]);
   const [subjects, setSubjects] = useState<SubjectAccuracy[]>([]);
+  const [batchAvailable, setBatchAvailable] = useState(false);
   const [range, setRange] = useState<Range>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export default function StudentResultsPage() {
         if (cancelled) return;
         setAttempts(r.attempts);
         setSubjects(r.subjects);
+        setBatchAvailable(r.batchAvailable);
       })
       .catch((err) => !cancelled && setError(err instanceof ApiError ? err.message : "Failed to load results"))
       .finally(() => !cancelled && setLoading(false));
@@ -158,21 +160,28 @@ export default function StudentResultsPage() {
                   <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--orange)" }} />Your score
                   </span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--line)" }} />Batch median
-                  </span>
-                  <span style={{ fontSize: 8.5, fontWeight: 700, fontFamily: "var(--font-mono)", background: "var(--amber-soft)", color: "var(--amber-ink)", border: "1px dashed var(--amber)", borderRadius: 5, padding: "2px 6px" }}>
-                    ⚠ NEEDS API — batch median
-                  </span>
+                  {batchAvailable && (
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--line)" }} />Batch median
+                    </span>
+                  )}
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 180, padding: "0 4px" }}>
                 {trend.map((a) => {
                   const h = a.percentile ?? 0;
+                  const bm = a.batchMedianPercentile;
+                  const tip = `${a.testTitle} · you ${a.percentile != null ? ordinal(a.percentile) : "—"}${bm != null ? ` · batch median ${ordinal(bm)}` : ""}`;
                   return (
-                    <div key={a.attemptId} title={`${a.testTitle} · ${a.percentile != null ? ordinal(a.percentile) : "—"}`} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, height: "100%", justifyContent: "flex-end", minWidth: 0 }}>
+                    <div key={a.attemptId} title={tip} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, height: "100%", justifyContent: "flex-end", minWidth: 0 }}>
                       <span style={{ fontSize: 9.5, fontWeight: 700, fontFamily: "var(--font-mono)", color: "var(--ink2)" }}>{a.percentile ?? "—"}</span>
-                      <div className="ra-bar" style={{ width: "100%", maxWidth: 26, height: `${Math.max(4, h)}%`, background: "var(--orange)", borderRadius: "5px 5px 0 0", transition: "height .3s ease" }} />
+                      {/* Your bar + the batch-median bar side by side, per the design. */}
+                      <div style={{ width: "100%", display: "flex", gap: 3, alignItems: "flex-end", justifyContent: "center", height: "100%" }}>
+                        <div className="ra-bar" style={{ flex: 1, maxWidth: 22, height: `${Math.max(4, h)}%`, background: "var(--orange)", borderRadius: "5px 5px 0 0", transition: "height .3s ease" }} />
+                        {batchAvailable && bm != null && (
+                          <div className="ra-bar" style={{ flex: 1, maxWidth: 22, height: `${Math.max(4, bm)}%`, background: "var(--line)", borderRadius: "5px 5px 0 0", transition: "height .3s ease" }} />
+                        )}
+                      </div>
                     </div>
                   );
                 })}

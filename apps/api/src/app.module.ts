@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { TagsModule } from './tags/tags.module';
+import { SearchModule } from './search/search.module';
 import { NotesModule } from './notes/notes.module';
 import { StudyPlanModule } from './study-plan/study-plan.module';
 import { UsersModule } from './users/users.module';
@@ -64,6 +65,7 @@ import { AiSettingsModule } from './ai-settings/ai-settings.module';
     ReflectionsModule,
     AiSettingsModule,
     TagsModule,
+    SearchModule,
     NotesModule,
     StudyPlanModule,
   ],
