@@ -756,6 +756,25 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Real course difficulty — kills the fake `pseudoLevel()` catalog filter (2026-07-16).**
+  **MIGRATION `20260716140000_add_course_difficulty` (already applied to Neon).** Adds
+  `enum CourseDifficulty { EASY MEDIUM HARD }` and a **nullable** `Course.difficulty`.
+  Nullable on purpose: existing courses are genuinely "not rated" rather than being
+  defaulted into a level nobody chose.
+  **This was the only gap that actively misled users** — the student catalog's LEVEL
+  filter previously ran on `pseudoLevel()`, which hashed the course id into Easy/Medium/
+  Hard, so students filtered by a difficulty that did not exist. `pseudoLevel` is now
+  deleted from BOTH `student/courses/page.tsx` and `student/dashboard/page.tsx`.
+  Behaviour: unrated courses show **no badge** and are **excluded** from level filtering
+  (so a filter never claims more than it knows). Admin course edit modal gained a
+  Difficulty select with a "Not rated" option; difficulty flows through create + update
+  (`updateCourse` spreads the dto, so no service change was needed there).
+  `CourseDifficulty` + `Course.difficulty` added to BOTH api clients (web + admin), and
+  to the `update` Pick / `create` signature.
+  Verified: set Maths=EASY / Biology=HARD via the API; a temp published course in the
+  student's segment rendered the Medium badge with the right tokens (#a35a06 on #fdf0dd),
+  filtering by Hard excluded it ("No courses match"), Medium included it; temp course then
+  deleted. tsc clean on api + admin + web.
 - **Flashcard SRS scheduling — closes the "no interval/scheduling model" gap (2026-07-16).**
   **MIGRATION `20260716120000_add_flashcard_srs` (already applied to Neon).** Additive:
   `FlashcardProgress` gains `intervalDays Int @default(0)`, `ease Float @default(2.5)`,
@@ -1285,4 +1304,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (flashcard SRS scheduling — SM-2 intervals, migration applied).*
+*Last updated: 2026-07-16 (real course difficulty replaces the fake pseudoLevel catalog filter).*

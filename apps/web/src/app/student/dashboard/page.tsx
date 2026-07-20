@@ -209,16 +209,14 @@ function initials(name?: string) {
   if (!name) return "··";
   return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
-// Deterministic placeholder difficulty (no real course-difficulty field exists yet).
-const LEVELS = [
-  { label: "Easy", stripe: "green", bg: "var(--diff-easy-soft)", ink: "var(--diff-easy)" },
-  { label: "Medium", stripe: "purple", bg: "var(--diff-med-soft)", ink: "var(--diff-med)" },
-  { label: "Hard", stripe: "orange", bg: "var(--diff-hard-soft)", ink: "var(--diff-hard)" },
-];
-function pseudoLevel(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return LEVELS[h % 3];
+// Real course difficulty, set by an admin. Unrated courses show no badge.
+const LEVELS: Record<string, { label: string; stripe: string; bg: string; ink: string }> = {
+  EASY: { label: "Easy", stripe: "green", bg: "var(--diff-easy-soft)", ink: "var(--diff-easy)" },
+  MEDIUM: { label: "Medium", stripe: "purple", bg: "var(--diff-med-soft)", ink: "var(--diff-med)" },
+  HARD: { label: "Hard", stripe: "orange", bg: "var(--diff-hard-soft)", ink: "var(--diff-hard)" },
+};
+function levelOf(course: Course) {
+  return course.difficulty ? LEVELS[course.difficulty] ?? null : null;
 }
 
 /** Enrolled-course card for "Continue learning": thumbnail + current chapter/lesson + progress. */
@@ -257,7 +255,7 @@ function ContinueCard({ prog }: { prog: CourseProgress }) {
 
 /** Recommended-course card (badge + level + instructor + rating + price/enrolled + enroll). */
 function RecCard({ course, enrolled, badge }: { course: Course; enrolled: boolean; badge: string | null }) {
-  const level = pseudoLevel(course.id);
+  const level = levelOf(course);
   const price = fmtPrice(course);
   return (
     <Link
@@ -265,12 +263,14 @@ function RecCard({ course, enrolled, badge }: { course: Course; enrolled: boolea
       className="entity-card"
       style={{ display: "block", background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden", textDecoration: "none", color: "inherit" }}
     >
-      <div style={{ height: 92, position: "relative", background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : STRIPES[level.stripe], display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ height: 92, position: "relative", background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : STRIPES[level?.stripe ?? "purple"], display: "flex", alignItems: "center", justifyContent: "center" }}>
         {!course.thumbnailUrl && <span style={{ fontSize: 9, fontWeight: 500, fontFamily: "var(--font-mono)", color: "var(--ink3)", background: "rgba(255,255,255,.75)", borderRadius: 5, padding: "3px 7px" }}>thumbnail</span>}
         {badge && (
           <span style={{ position: "absolute", top: 8, left: 8, fontSize: 9, fontWeight: 800, letterSpacing: 0.4, color: "#fff", background: badge === "BESTSELLER" ? "var(--orange)" : "var(--purple)", borderRadius: 5, padding: "3px 7px" }}>{badge}</span>
         )}
-        <span style={{ position: "absolute", bottom: 8, left: 8, fontSize: 9.5, fontWeight: 700, color: level.ink, background: "rgba(255,255,255,.85)", borderRadius: 5, padding: "3px 7px" }}>{level.label}</span>
+        {level && (
+          <span style={{ position: "absolute", bottom: 8, left: 8, fontSize: 9.5, fontWeight: 700, color: level.ink, background: "rgba(255,255,255,.85)", borderRadius: 5, padding: "3px 7px" }}>{level.label}</span>
+        )}
       </div>
       <div style={{ padding: 14 }}>
         <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.4, minHeight: 38, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{course.title}</div>

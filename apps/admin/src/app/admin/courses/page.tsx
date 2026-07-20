@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment, type CourseType, type DripType, type CompletionRule } from "@/lib/api";
+import { coursesApi, segmentsApi, uploadsApi, ApiError, type Course, type Segment, type CourseType, type CourseDifficulty, type DripType, type CompletionRule } from "@/lib/api";
 import Modal from "@/components/Modal";
 import Spinner from "@/components/Spinner";
 import { useImageLightbox } from "@/components/ImageLightboxProvider";
@@ -118,6 +118,7 @@ export default function AdminCoursesPage() {
   const [eDescription, setEDescription] = useState("");
   const [eBannerFile, setEBannerFile] = useState<File | null>(null);
   const [eType, setEType] = useState<CourseType>("FREE");
+  const [eDifficulty, setEDifficulty] = useState<CourseDifficulty | null>(null);
   const [ePrice, setEPrice] = useState(""); // rupees, string for input
   const [eDurationHours, setEDurationHours] = useState("");
   const [eDripType, setEDripType] = useState<DripType>("NONE");
@@ -189,6 +190,7 @@ export default function AdminCoursesPage() {
     setEType(c.type);
     setEPrice(c.priceCents != null ? String(Math.round(c.priceCents / 100)) : "");
     setEDurationHours(c.durationMinutes != null ? String(c.durationMinutes / 60) : "");
+    setEDifficulty(c.difficulty ?? null);
     setEDripType(c.dripType);
     setECompletionRule(c.completionRule);
     setEPublished(c.published);
@@ -209,6 +211,7 @@ export default function AdminCoursesPage() {
         type: eType,
         priceCents,
         durationMinutes,
+        difficulty: eDifficulty,
         dripType: eDripType,
         completionRule: eCompletionRule,
         published: ePublished,
@@ -367,6 +370,21 @@ export default function AdminCoursesPage() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Duration (hrs)</div>
                 <input type="number" min={0} step="0.5" value={eDurationHours} onChange={(e) => setEDurationHours(e.target.value)} placeholder="—" style={{ ...inputStyle, width: "100%" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                {/* Drives the student catalog's Level filter + card badge. "Not rated"
+                    keeps the course out of level filtering rather than guessing for it. */}
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Difficulty</div>
+                <select
+                  value={eDifficulty ?? ""}
+                  onChange={(e) => setEDifficulty((e.target.value || null) as CourseDifficulty | null)}
+                  style={{ ...inputStyle, width: "100%" }}
+                >
+                  <option value="">Not rated</option>
+                  <option value="EASY">Easy</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HARD">Hard</option>
+                </select>
               </div>
             </div>
 

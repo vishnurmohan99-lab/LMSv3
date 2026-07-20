@@ -551,6 +551,7 @@ export class CoursesService {
             segmentId: dto.segmentId,
             subsegmentId: dto.subsegmentId,
             type: dto.type,
+            difficulty: dto.difficulty,
             priceCents: dto.priceCents,
             durationMinutes: dto.durationMinutes,
             dripType: dto.dripType,

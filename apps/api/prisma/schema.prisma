@@ -101,6 +101,14 @@ enum CourseType {
   PRIVATE
 }
 
+/// Catalog difficulty. Nullable on Course — an unset course is genuinely "not rated"
+/// rather than silently defaulted, so the catalog filter never claims more than it knows.
+enum CourseDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
 enum DripType {
   NONE
   CALENDAR
@@ -121,6 +129,7 @@ model Course {
   thumbnailUrl   String?
   published      Boolean        @default(false)
   type           CourseType     @default(FREE)
+  difficulty     CourseDifficulty?  // null = not rated; catalog hides the badge and excludes it from level filters
   priceCents      Int?          // null/0 or type=FREE → shown as "Free"; else ₹(priceCents/100)
   durationMinutes Int?          // manual estimate for catalog display ("X hrs")
   dripType       DripType       @default(NONE)

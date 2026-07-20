@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { coursesApi, enrollmentsApi, segmentsApi, usersApi, ApiError, type Course, type Enrollment, type Segment, type Profile } from "@/lib/api";
+import { coursesApi, enrollmentsApi, segmentsApi, usersApi, ApiError, type Course, type CourseDifficulty, type Enrollment, type Segment, type Profile } from "@/lib/api";
 import { useImageLightbox } from "@/components/ImageLightboxProvider";
 
 const BANNER_HEIGHT = 130;
@@ -117,16 +117,15 @@ function CardBanner({ url, name, badge }: { url: string | null; name: string; ba
   );
 }
 
-// Deterministic placeholder difficulty (no real course-difficulty field exists yet) — mirrors dashboard's pseudoLevel.
-const LEVELS = [
-  { label: "Easy", ink: "var(--diff-easy)", bg: "var(--diff-easy-soft)" },
-  { label: "Medium", ink: "var(--diff-med)", bg: "var(--diff-med-soft)" },
-  { label: "Hard", ink: "var(--diff-hard)", bg: "var(--diff-hard-soft)" },
+// Real course difficulty, set by an admin. Courses left unrated show no badge and are
+// excluded from level filtering rather than being assigned a level they don't have.
+const LEVELS: { value: CourseDifficulty; label: string; ink: string; bg: string }[] = [
+  { value: "EASY", label: "Easy", ink: "var(--diff-easy)", bg: "var(--diff-easy-soft)" },
+  { value: "MEDIUM", label: "Medium", ink: "var(--diff-med)", bg: "var(--diff-med-soft)" },
+  { value: "HARD", label: "Hard", ink: "var(--diff-hard)", bg: "var(--diff-hard-soft)" },
 ];
-function pseudoLevel(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return LEVELS[h % 3];
+function levelOf(course: Course) {
+  return course.difficulty ? (LEVELS.find((l) => l.value === course.difficulty) ?? null) : null;
 }
 
 const DURATION_BUCKETS = [
@@ -171,11 +170,13 @@ function EnrolledCard({ course, badge, index }: { course: Course; badge: string 
 
 function CatalogCard({ course, badge, onEnroll, enrolling, index }: { course: Course; badge: string | null; onEnroll: (id: string) => void; enrolling: boolean; index: number }) {
   const paid = course.type === "PAID";
-  const level = pseudoLevel(course.id);
+  const level = levelOf(course);
   return (
     <div className="entity-card fade-in-up" style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", overflow: "hidden", animationDelay: `${index * 40}ms`, position: "relative" }}>
       <CardBanner url={course.thumbnailUrl} name={course.title} badge={badge} />
-      <span style={{ position: "absolute", top: 10, right: 10, fontSize: 9.5, fontWeight: 700, color: level.ink, background: level.bg, borderRadius: 5, padding: "3px 8px" }}>{level.label}</span>
+      {level && (
+        <span style={{ position: "absolute", top: 10, right: 10, fontSize: 9.5, fontWeight: 700, color: level.ink, background: level.bg, borderRadius: 5, padding: "3px 8px" }}>{level.label}</span>
+      )}
       <div style={{ padding: 18 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, minHeight: 20 }}>{course.title}</div>
         {course.description && <p style={{ fontSize: 12.5, color: "var(--ink2)", marginBottom: 12, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{course.description}</p>}
@@ -227,7 +228,7 @@ export default function StudentCoursesPage() {
   const [search, setSearch] = useState("");
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null); // segmentId | subsegmentId
   const [freeOnly, setFreeOnly] = useState(false);
-  const [levelFilter, setLevelFilter] = useState<string | null>(null); // "Easy" | "Medium" | "Hard"
+  const [levelFilter, setLevelFilter] = useState<CourseDifficulty | null>(null);
   const [minRating, setMinRating] = useState<number | null>(null);
   const [durationFilter, setDurationFilter] = useState<string | null>(null); // DURATION_BUCKETS id
   const [sort, setSort] = useState<SortKey>("popular");
@@ -291,7 +292,7 @@ export default function StudentCoursesPage() {
     let list = browsableAll.filter((c) => c.title.toLowerCase().includes(search.toLowerCase()));
     if (subjectFilter) list = list.filter((c) => (c.subsegmentId ?? c.segmentId) === subjectFilter);
     if (freeOnly) list = list.filter((c) => c.type === "FREE" || !c.priceCents);
-    if (levelFilter) list = list.filter((c) => pseudoLevel(c.id).label === levelFilter);
+    if (levelFilter) list = list.filter((c) => c.difficulty === levelFilter);
     if (minRating != null) list = list.filter((c) => (c.avgRating ?? 0) >= minRating);
     if (durationFilter) {
       const bucket = DURATION_BUCKETS.find((b) => b.id === durationFilter);
@@ -408,11 +409,11 @@ export default function StudentCoursesPage() {
         <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Level</div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {LEVELS.map((l) => {
-            const on = levelFilter === l.label;
+            const on = levelFilter === l.value;
             return (
               <button
-                key={l.label}
-                onClick={() => setLevelFilter(on ? null : l.label)}
+                key={l.value}
+                onClick={() => setLevelFilter(on ? null : l.value)}
                 style={{
                   padding: "6px 12px",
                   borderRadius: 999,

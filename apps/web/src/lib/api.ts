@@ -213,6 +213,8 @@ export interface Chapter {
 }
 
 export type CourseType = 'FREE' | 'PAID' | 'PRIVATE';
+/** null = not rated yet; the catalog hides the badge and excludes it from level filters. */
+export type CourseDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type DripType = 'NONE' | 'CALENDAR' | 'ENROLLMENT_RELATIVE' | 'SEQUENTIAL';
 export type CompletionRule = 'MANUAL' | 'ALL_LESSONS_VIEWED' | 'PASS_TEST';
 
@@ -223,6 +225,7 @@ export interface Course {
   thumbnailUrl: string | null;
   published: boolean;
   type: CourseType;
+  difficulty: CourseDifficulty | null;
   dripType: DripType;
   completionRule: CompletionRule;
   facultyId: string;
@@ -309,11 +312,11 @@ export const coursesApi = {
     return request<Course[]>(`/courses${qs ? `?${qs}` : ''}`);
   },
   get: (id: string) => request<CourseTree>(`/courses/${id}`),
-  create: (data: { title: string; description?: string; segmentId?: string; subsegmentId?: string; thumbnailUrl?: string; type?: CourseType; priceCents?: number; durationMinutes?: number }) =>
+  create: (data: { title: string; description?: string; segmentId?: string; subsegmentId?: string; thumbnailUrl?: string; type?: CourseType; difficulty?: CourseDifficulty; priceCents?: number; durationMinutes?: number }) =>
     request<Course>('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (
     id: string,
-    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'dripType' | 'completionRule' | 'priceCents' | 'durationMinutes'>>,
+    data: Partial<Pick<Course, 'title' | 'description' | 'published' | 'thumbnailUrl' | 'segmentId' | 'subsegmentId' | 'type' | 'difficulty' | 'dripType' | 'completionRule' | 'priceCents' | 'durationMinutes'>>,
   ) => request<Course>(`/courses/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/courses/${id}`, { method: 'DELETE' }),
   enroll: (id: string) => request<{ id: string }>(`/courses/${id}/enroll`, { method: 'POST' }),
