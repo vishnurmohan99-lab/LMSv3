@@ -1371,11 +1371,24 @@ export const forumApi = {
   removeCategory: (id: string) => request<{ success: boolean }>(`/forum/admin/categories/${id}`, { method: 'DELETE' }),
 };
 
+export type ReportRange = 'RANGE_30' | 'QUARTER' | 'YTD' | 'ALL';
+
+export interface SegmentReportRow {
+  segmentId: string;
+  name: string;
+  students: number;
+  enrollments: number;
+  completions: number;
+  avgScore: number | null;
+}
+
 export interface AdminReport {
   enrollmentTrend: { period: string; count: number }[];
   scoreDistribution: { bucket: string; count: number }[];
   batchCompletion: { completed: number; total: number; rate: number };
   totals: { totalCourses: number; totalBatches: number; totalMockTestAttempts: number; totalEnrollments: number };
+  segmentBreakdown: SegmentReportRow[];
+  range: ReportRange;
 }
 
 export interface FacultyReportCourse {
@@ -1388,7 +1401,7 @@ export interface FacultyReportCourse {
 }
 
 export const reportsApi = {
-  getAdminReport: () => request<AdminReport>('/reports/admin'),
+  getAdminReport: (range: ReportRange = 'ALL') => request<AdminReport>(`/reports/admin?range=${range}`),
   getFacultyReport: () => request<FacultyReportCourse[]>('/reports/faculty'),
 };
 

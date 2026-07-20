@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { reportsApi, ApiError, type AdminReport } from "@/lib/api";
+import { reportsApi, ApiError, type AdminReport, type ReportRange } from "@/lib/api";
 
 const BAR_TRACK_HEIGHT = 120;
 
@@ -44,18 +44,36 @@ function BarChart({ data, labelKey, valueKey }: { data: Record<string, string | 
 
 export default function AdminReportsPage() {
   const [report, setReport] = useState<AdminReport | null>(null);
+  const [range, setRange] = useState<ReportRange>("ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
     reportsApi
-      .getAdminReport()
+      .getAdminReport(range)
       .then(setReport)
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load reports"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [range]);
 
-  if (loading) {
+  /** Export the per-segment table as CSV — quotes fields so names with commas survive. */
+  function exportCsv() {
+    if (!report) return;
+    const header = ["Segment", "Students", "Enrollments", "Completions", "Avg score %"];
+    const rows = report.segmentBreakdown.map((r) => [r.name, r.students, r.enrollments, r.completions, r.avgScore ?? ""]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reports-${range.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (loading && !report) {
     return (
       <div style={{ padding: "30px 30px 60px" }}>
         <p style={{ color: "var(--ink2)" }}>Loading…</p>
@@ -75,8 +93,45 @@ export default function AdminReportsPage() {
 
   return (
     <div style={{ padding: "30px 30px 60px", maxWidth: 1100, margin: "0 auto" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 6 }}>Platform Reports</div>
-      <p style={{ fontSize: 13, color: "var(--ink3)", marginBottom: 22 }}>Enrollment trends, mock test performance, and batch completion across the platform.</p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 22 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: -0.4, marginBottom: 6 }}>Platform Reports</div>
+          <p style={{ fontSize: 13, color: "var(--ink3)" }}>Enrollment trends, mock test performance, and batch completion across the platform.</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 4, background: "var(--bg-sunk)", borderRadius: 11, padding: 4 }}>
+            {([
+              { v: "RANGE_30" as const, label: "Last 30 days" },
+              { v: "QUARTER" as const, label: "Last quarter" },
+              { v: "YTD" as const, label: "Year to date" },
+              { v: "ALL" as const, label: "All time" },
+            ]).map((r) => (
+              <span
+                key={r.v}
+                onClick={() => setRange(r.v)}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  userSelect: "none",
+                  background: range === r.v ? "var(--card)" : "transparent",
+                  color: range === r.v ? "var(--ink)" : "var(--ink2)",
+                }}
+              >
+                {r.label}
+              </span>
+            ))}
+          </div>
+          <button
+            onClick={exportCsv}
+            style={{ fontSize: 12.5, fontWeight: 600, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 9, height: 34, padding: "0 14px", cursor: "pointer", fontFamily: "inherit" }}
+          >
+            ↓ Export CSV
+          </button>
+        </div>
+      </div>
 
       <div style={{ display: "flex", gap: 14, marginBottom: 24, flexWrap: "wrap" }}>
         {[
@@ -129,6 +184,37 @@ export default function AdminReportsPage() {
           <p style={{ color: "var(--ink3)", fontSize: 13 }}>No submitted mock test attempts yet.</p>
         ) : (
           <BarChart data={report.scoreDistribution} labelKey="bucket" valueKey="count" />
+        )}
+      </div>
+
+      {/* Per-segment rollup — the design's "By segment" table. */}
+      <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", marginTop: 18, overflow: "hidden" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, padding: "20px 24px 14px" }}>By segment</div>
+        {report.segmentBreakdown.length === 0 ? (
+          <p style={{ color: "var(--ink3)", fontSize: 13, padding: "0 24px 22px" }}>No segments yet.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <div style={{ minWidth: 560 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", padding: "10px 24px", fontSize: 10.5, fontWeight: 700, letterSpacing: 0.6, color: "var(--ink3)", borderBottom: "1px solid var(--line)" }}>
+                <span>SEGMENT</span>
+                <span>STUDENTS</span>
+                <span>ENROLLMENTS</span>
+                <span>COMPLETIONS</span>
+                <span>AVG SCORE</span>
+              </div>
+              {report.segmentBreakdown.map((r) => (
+                <div key={r.segmentId} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", alignItems: "center", padding: "13px 24px", borderBottom: "1px solid var(--line2)", fontSize: 13 }}>
+                  <span style={{ fontWeight: 700 }}>{r.name}</span>
+                  <span>{r.students}</span>
+                  <span>{r.enrollments}</span>
+                  <span>{r.completions}</span>
+                  <span style={{ fontWeight: 700, color: r.avgScore == null ? "var(--ink3)" : r.avgScore >= 60 ? "var(--green)" : "var(--ink)" }}>
+                    {r.avgScore == null ? "—" : `${r.avgScore}%`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

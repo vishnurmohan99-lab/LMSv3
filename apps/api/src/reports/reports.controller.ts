@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ReportsService } from './reports.service';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ReportsService, type ReportRange } from './reports.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -13,8 +13,9 @@ export class ReportsController {
 
   @Roles('ADMIN')
   @Get('admin')
-  getAdminReport() {
-    return this.reports.getAdminReport();
+  getAdminReport(@Query('range') range?: string) {
+    const allowed: ReportRange[] = ['RANGE_30', 'QUARTER', 'YTD', 'ALL'];
+    return this.reports.getAdminReport(allowed.includes(range as ReportRange) ? (range as ReportRange) : 'ALL');
   }
 
   @Roles('FACULTY')

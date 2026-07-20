@@ -756,6 +756,26 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Admin Reports: range switcher + by-segment table + CSV export (2026-07-16).**
+  From the admin design audit — these were the "buildable today" Reports gaps (data
+  already existed, just wasn't queried). No migration.
+  API: `getAdminReport(range)` accepts `RANGE_30 | QUARTER | YTD | ALL` via
+  `?range=` (`reports.controller.ts` whitelists the value, defaults ALL). `rangeStart()`
+  maps it to a cutoff; enrolments AND attempts are both filtered by it. New private
+  `getSegmentBreakdown(from)` returns per-segment `{students, enrollments, completions,
+  avgScore}` — **completions = a student who has viewed every lesson of a course they're
+  enrolled in**, derived from LessonView (no completion flag exists). Response gained
+  `segmentBreakdown` + `range`.
+  Admin UI: range segmented switcher, "↓ Export CSV" (client-side, quotes fields so names
+  with commas survive, filename carries range + date), and a "By segment" table
+  (SEGMENT/STUDENTS/ENROLLMENTS/COMPLETIONS/AVG SCORE, x-scrolls under 560px).
+  `loading && !report` so switching range keeps showing prior data instead of blanking.
+  `ReportRange`/`SegmentReportRow` added to the admin api client.
+  Verified: ALL=9 enrolments vs RANGE_30=8 (one enrolment older than 30d), and switching
+  to Last 30 days dropped "Cllass 10" to 0 — the range genuinely re-scopes. CSV captured
+  in-browser and matched the table. NOTE: avgScore is "—" because every existing mock test
+  has `courseId: null`, and the attempts query filters on `test.courseId != null`
+  (pre-existing behaviour, not introduced here).
 - **Real course difficulty — kills the fake `pseudoLevel()` catalog filter (2026-07-16).**
   **MIGRATION `20260716140000_add_course_difficulty` (already applied to Neon).** Adds
   `enum CourseDifficulty { EASY MEDIUM HARD }` and a **nullable** `Course.difficulty`.
@@ -1304,4 +1324,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (real course difficulty replaces the fake pseudoLevel catalog filter).*
+*Last updated: 2026-07-16 (admin Reports: range switcher, by-segment table, CSV export).*

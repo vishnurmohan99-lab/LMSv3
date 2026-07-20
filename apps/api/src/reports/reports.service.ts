@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { JwtPayload } from '../auth/jwt-payload.interface';
 
+export type ReportRange = 'RANGE_30' | 'QUARTER' | 'YTD' | 'ALL';
+
 const SCORE_BUCKETS = ['0-20', '21-40', '41-60', '61-80', '81-100'];
 
 function bucketForPct(pct: number) {
@@ -20,16 +22,109 @@ function monthKey(date: Date) {
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAdminReport() {
-    const [enrollments, attempts, batches, courseCount, batchCount] = await Promise.all([
-      this.prisma.enrollment.findMany({ select: { enrolledAt: true } }),
+  /** Start of the reporting window, or null for "all time". */
+  private rangeStart(range: ReportRange): Date | null {
+    const now = new Date();
+    if (range === 'RANGE_30') return new Date(now.getTime() - 30 * 86_400_000);
+    if (range === 'QUARTER') return new Date(now.getTime() - 90 * 86_400_000);
+    if (range === 'YTD') return new Date(now.getFullYear(), 0, 1);
+    return null;
+  }
+
+  /**
+   * Per-segment rollup for the admin Reports table: enrolments, distinct students,
+   * completions (a student who has viewed every lesson in a course they're enrolled in)
+   * and average mock score, all scoped to the selected range.
+   */
+  private async getSegmentBreakdown(from: Date | null) {
+    const [segments, courses, enrollments, lessons, views, attempts] = await Promise.all([
+      this.prisma.segment.findMany({ select: { id: true, name: true } }),
+      this.prisma.course.findMany({ select: { id: true, segmentId: true } }),
+      this.prisma.enrollment.findMany({
+        where: from ? { enrolledAt: { gte: from } } : {},
+        select: { studentId: true, courseId: true },
+      }),
+      this.prisma.lesson.findMany({ select: { id: true, chapter: { select: { courseId: true } } } }),
+      this.prisma.lessonView.findMany({ select: { studentId: true, lessonId: true } }),
       this.prisma.testAttempt.findMany({
-        where: { status: 'SUBMITTED', score: { not: null }, maxScore: { not: null }, test: { courseId: { not: null } } },
+        where: {
+          status: 'SUBMITTED',
+          score: { not: null },
+          maxScore: { not: null },
+          test: { courseId: { not: null } },
+          ...(from ? { submittedAt: { gte: from } } : {}),
+        },
+        select: { score: true, maxScore: true, test: { select: { courseId: true } } },
+      }),
+    ]);
+
+    const segmentOfCourse = new Map(courses.map((c) => [c.id, c.segmentId]));
+    const lessonsPerCourse = new Map<string, string[]>();
+    const courseOfLesson = new Map<string, string>();
+    for (const l of lessons) {
+      const cid = l.chapter.courseId;
+      if (!cid) continue;
+      courseOfLesson.set(l.id, cid);
+      lessonsPerCourse.set(cid, [...(lessonsPerCourse.get(cid) ?? []), l.id]);
+    }
+    // studentId|courseId -> how many of that course's lessons they've viewed
+    const viewedPerStudentCourse = new Map<string, Set<string>>();
+    for (const v of views) {
+      const cid = courseOfLesson.get(v.lessonId);
+      if (!cid) continue;
+      const key = `${v.studentId}|${cid}`;
+      const set = viewedPerStudentCourse.get(key) ?? new Set<string>();
+      set.add(v.lessonId);
+      viewedPerStudentCourse.set(key, set);
+    }
+
+    const rows = segments.map((seg) => {
+      const segEnrollments = enrollments.filter((e) => segmentOfCourse.get(e.courseId) === seg.id);
+      const students = new Set(segEnrollments.map((e) => e.studentId));
+      const completions = segEnrollments.filter((e) => {
+        const total = lessonsPerCourse.get(e.courseId)?.length ?? 0;
+        if (total === 0) return false;
+        return (viewedPerStudentCourse.get(`${e.studentId}|${e.courseId}`)?.size ?? 0) >= total;
+      }).length;
+      const segAttempts = attempts.filter((a) => a.test.courseId && segmentOfCourse.get(a.test.courseId) === seg.id);
+      const avgScore = segAttempts.length
+        ? Math.round(
+            (segAttempts.reduce((s, a) => s + ((a.score ?? 0) / (a.maxScore || 1)) * 100, 0) / segAttempts.length) * 10,
+          ) / 10
+        : null;
+      return {
+        segmentId: seg.id,
+        name: seg.name,
+        students: students.size,
+        enrollments: segEnrollments.length,
+        completions,
+        avgScore,
+      };
+    });
+    return rows.sort((a, b) => b.enrollments - a.enrollments);
+  }
+
+  async getAdminReport(range: ReportRange = 'ALL') {
+    const from = this.rangeStart(range);
+    const [enrollments, attempts, batches, courseCount, batchCount, segmentBreakdown] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where: from ? { enrolledAt: { gte: from } } : {},
+        select: { enrolledAt: true },
+      }),
+      this.prisma.testAttempt.findMany({
+        where: {
+          status: 'SUBMITTED',
+          score: { not: null },
+          maxScore: { not: null },
+          test: { courseId: { not: null } },
+          ...(from ? { submittedAt: { gte: from } } : {}),
+        },
         select: { score: true, maxScore: true },
       }),
       this.prisma.batch.findMany({ select: { status: { select: { isCompletionTarget: true } } } }),
       this.prisma.course.count(),
       this.prisma.batch.count(),
+      this.getSegmentBreakdown(from),
     ]);
 
     const now = new Date();
@@ -59,6 +154,8 @@ export class ReportsService {
       scoreDistribution,
       batchCompletion: { completed: completedBatches, total: batches.length, rate: batches.length ? completedBatches / batches.length : 0 },
       totals: { totalCourses: courseCount, totalBatches: batchCount, totalMockTestAttempts: attempts.length, totalEnrollments: enrollments.length },
+      segmentBreakdown,
+      range,
     };
   }
 
