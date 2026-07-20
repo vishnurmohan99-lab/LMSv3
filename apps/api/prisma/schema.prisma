@@ -353,6 +353,13 @@ model FlashcardProgress {
   status         FlashcardStatus @default(NEW)
   lastReviewedAt DateTime?
 
+  // Spaced repetition (SM-2 style). `intervalDays` 0 means "still in the learning
+  // step" — those cards come back within the same session via a minutes-level dueAt.
+  intervalDays Int       @default(0)
+  ease         Float     @default(2.5)
+  reps         Int       @default(0)
+  dueAt        DateTime?
+
   studentId   String
   student     User      @relation(fields: [studentId], references: [id])
   flashcardId String

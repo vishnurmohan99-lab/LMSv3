@@ -392,6 +392,8 @@ export const enrollmentsApi = {
 
 export type FlashcardStatus = 'NEW' | 'LEARNING' | 'KNOWN';
 
+export type FlashcardGrade = 'AGAIN' | 'HARD' | 'GOOD';
+
 export interface Flashcard {
   id: string;
   front: string;
@@ -399,6 +401,10 @@ export interface Flashcard {
   order: number;
   lessonId: string;
   status?: FlashcardStatus;
+  intervalDays?: number;
+  dueAt?: string | null;
+  /** Human labels for what each grade would schedule, e.g. "<10 min" / "1 day" / "4 days". */
+  preview?: { again: string; hard: string; good: string };
 }
 
 export const flashcardsApi = {
@@ -408,6 +414,12 @@ export const flashcardsApi = {
   remove: (id: string) => request<{ success: boolean }>(`/flashcards/${id}`, { method: 'DELETE' }),
   setProgress: (id: string, status: FlashcardStatus) =>
     request<{ id: string }>(`/flashcards/${id}/progress`, { method: 'POST', body: JSON.stringify({ status }) }),
+  /** Spaced-repetition grading — schedules the card's next review server-side. */
+  grade: (id: string, grade: FlashcardGrade) =>
+    request<{ id: string; status: FlashcardStatus; intervalDays: number; dueAt: string | null }>(
+      `/flashcards/${id}/progress`,
+      { method: 'POST', body: JSON.stringify({ grade }) },
+    ),
   generate: (lessonId: string, count?: number) =>
     request<Flashcard[]>(`/lessons/${lessonId}/flashcards/generate`, { method: 'POST', body: JSON.stringify({ count }) }),
 };

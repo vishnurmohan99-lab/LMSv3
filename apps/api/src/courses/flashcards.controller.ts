@@ -51,6 +51,6 @@ export class FlashcardsController {
   @Roles('STUDENT')
   @Post('flashcards/:id/progress')
   setProgress(@Param('id') id: string, @Body() dto: FlashcardProgressDto, @CurrentUser() user: JwtPayload) {
-    return this.coursesService.setFlashcardProgress(id, user, dto.status);
+    return this.coursesService.setFlashcardProgress(id, user, { grade: dto.grade, status: dto.status });
   }
 }

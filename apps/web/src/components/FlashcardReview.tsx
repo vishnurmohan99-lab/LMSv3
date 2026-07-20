@@ -40,24 +40,41 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
     }
   }
 
-  async function onWrong() {
+  /**
+   * Grade the current card. The server schedules the next review and returns the new
+   * status, which we fold back into local state so the NEW/LEARNING/KNOWN counts and the
+   * next-interval labels stay in step without a refetch.
+   */
+  function grade(g: "AGAIN" | "HARD" | "GOOD") {
     const card = cards[index];
-    if (card) flashcardsApi.setProgress(card.id, "LEARNING").catch(() => {});
-    setDidntKnow((c) => c + 1);
+    if (card) {
+      flashcardsApi
+        .grade(card.id, g)
+        .then((p) =>
+          setCards((prev) =>
+            prev.map((c) => (c.id === card.id ? { ...c, status: p.status, intervalDays: p.intervalDays, dueAt: p.dueAt } : c)),
+          ),
+        )
+        .catch(() => {});
+    }
+    if (g === "GOOD") setGotIt((c) => c + 1);
+    else if (g === "AGAIN") setDidntKnow((c) => c + 1);
+    else setSkipped((c) => c + 1);
     advance();
   }
 
-  function onSkip() {
-    setSkipped((c) => c + 1);
-    advance();
-  }
+  const onAgain = () => grade("AGAIN");
+  const onHard = () => grade("HARD");
+  const onGood = () => grade("GOOD");
 
-  async function onRight() {
-    const card = cards[index];
-    if (card) flashcardsApi.setProgress(card.id, "KNOWN").catch(() => {});
-    setGotIt((c) => c + 1);
-    advance();
-  }
+  const statusCounts = cards.reduce(
+    (acc, c) => {
+      const s = c.status ?? "NEW";
+      acc[s] += 1;
+      return acc;
+    },
+    { NEW: 0, LEARNING: 0, KNOWN: 0 } as Record<"NEW" | "LEARNING" | "KNOWN", number>,
+  );
 
   if (loading) return <p style={{ color: "var(--ink2)" }}>Loading flashcards…</p>;
   if (error) return <p style={{ color: "var(--red)" }}>{error}</p>;
@@ -277,57 +294,56 @@ export default function FlashcardReview({ lessonId, lessonTitle }: { lessonId: s
       </div>
 
       {flipped && (
-        <div className="fade-in-up" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 24 }}>
-          <button
-            onClick={onWrong}
-            style={{
-              padding: 14,
-              background: "var(--red-soft)",
-              border: "1.5px solid var(--red-line)",
-              color: "var(--red)",
-              borderRadius: 13,
-              fontSize: 14,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            Didn&apos;t know
-          </button>
-          <button
-            onClick={onSkip}
-            style={{
-              padding: 14,
-              background: "var(--card)",
-              border: "1.5px solid var(--line)",
-              color: "var(--ink2)",
-              borderRadius: 13,
-              fontSize: 14,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            Skip
-          </button>
-          <button
-            onClick={onRight}
-            style={{
-              padding: 14,
-              background: "var(--orange)",
-              border: "none",
-              color: "#fff",
-              borderRadius: 13,
-              fontSize: 14,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(242,106,27,.32)",
-            }}
-          >
-            Got it
-          </button>
-        </div>
+        <>
+          {/* SM-2 grading. Sub-labels are the server's projected next interval for this
+              exact card, so they stay truthful as the card matures. */}
+          <div className="fade-in-up" style={{ display: "flex", gap: 8, marginTop: 24, justifyContent: "center", flexWrap: "wrap" }}>
+            {([
+              { grade: "AGAIN" as const, label: "Again", sub: card.preview?.again, bg: "var(--red-soft)", ink: "var(--red-ink)", onPick: onAgain },
+              { grade: "HARD" as const, label: "Hard", sub: card.preview?.hard, bg: "var(--amber-soft)", ink: "var(--amber-ink)", onPick: onHard },
+              { grade: "GOOD" as const, label: "Got it", sub: card.preview?.good, bg: "var(--green-soft)", ink: "var(--green)", onPick: onGood },
+            ]).map((b) => (
+              <button
+                key={b.grade}
+                onClick={b.onPick}
+                style={{
+                  background: b.bg,
+                  color: b.ink,
+                  border: "none",
+                  borderRadius: 14,
+                  padding: "7px 18px",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 1,
+                  minWidth: 92,
+                }}
+              >
+                {b.label}
+                {b.sub && (
+                  <span style={{ fontSize: 9, fontWeight: 500, fontFamily: "var(--font-mono)", opacity: 0.75 }}>{b.sub}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Deck composition — NEW / LEARNING / KNOWN across the whole lesson. */}
+          <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 9.5, fontWeight: 600, fontFamily: "var(--font-mono)", background: "var(--purple-soft)", color: "var(--purple-ink)", borderRadius: 999, padding: "3px 9px" }}>
+              {statusCounts.NEW} NEW
+            </span>
+            <span style={{ fontSize: 9.5, fontWeight: 600, fontFamily: "var(--font-mono)", background: "var(--amber-soft)", color: "var(--amber-ink)", borderRadius: 999, padding: "3px 9px" }}>
+              {statusCounts.LEARNING} LEARNING
+            </span>
+            <span style={{ fontSize: 9.5, fontWeight: 600, fontFamily: "var(--font-mono)", background: "var(--green-soft)", color: "var(--green)", borderRadius: 999, padding: "3px 9px" }}>
+              {statusCounts.KNOWN} KNOWN
+            </span>
+          </div>
+        </>
       )}
     </div>
   );

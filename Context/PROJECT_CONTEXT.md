@@ -756,6 +756,27 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Flashcard SRS scheduling — closes the "no interval/scheduling model" gap (2026-07-16).**
+  **MIGRATION `20260716120000_add_flashcard_srs` (already applied to Neon).** Additive:
+  `FlashcardProgress` gains `intervalDays Int @default(0)`, `ease Float @default(2.5)`,
+  `reps Int @default(0)`, `dueAt DateTime?`. The migration also backfills existing rows so
+  KNOWN cards don't resurface instantly (interval 4 / due lastReviewedAt+4d) and LEARNING
+  cards get 1 day.
+  API: `scheduleFlashcard()` in courses.service.ts is an SM-2 style scheduler —
+  AGAIN resets to a 10-minute learning step (ease −0.2, status LEARNING), HARD grows
+  slowly (`interval*1.2`, ease −0.15, LEARNING), GOOD multiplies by ease (first success
+  = 4 days, status KNOWN); ease clamped to 1.3–3.0. First-time intervals land on
+  `<10 min / 1 day / 4 days`, matching the design. `setFlashcardProgress` now takes
+  `{ grade?, status? }` — **grade is preferred, bare `status` kept as a legacy path** so
+  older callers don't break. The flashcard list returns `intervalDays`, `dueAt` and a
+  `preview {again,hard,good}` of human labels, so the client never re-implements the maths.
+  Web: `flashcardsApi.grade()`; FlashcardReview replaced 2-way (Got it / Practice again)
+  with the design's 3-way Again/Hard/Got it buttons carrying per-card interval sub-labels,
+  plus NEW/LEARNING/KNOWN count pills that update live from the grade response.
+  Verified against real data: a matured card walked 4→lapse→4→10→12 days across
+  AGAIN/GOOD/GOOD/HARD; UI showed `Again <10 min / Hard 14 days / Got it 29 days` for that
+  card and `5 days / 10 days` for the next one (labels are genuinely per-card); pills moved
+  1 LEARNING→0, 2 KNOWN→3 on grading; 3 buttons fit one row at 375px, no overflow.
 - **Closed the three "buildable today" API gaps: batch leaderboard, batch median, global search (2026-07-16).**
   From a full design-system audit of every `⚠ NEEDS API` marker. These three were flagged
   as blocked but were NOT schema-blocked — `Batch`/`BatchEnrollment` already existed.
@@ -1264,4 +1285,4 @@ the **Feature history** and **Current Prisma data model** sections above.
   chapter order-tiebreak fix, Cheat Sheet 402 diagnosis, `load()`/`refresh()` no-blink
   fix, Comprehension mixed question types + passage-relative numbering.
 
-*Last updated: 2026-07-16 (closed 3 buildable API gaps: batch leaderboard, batch median, global search + ⌘K).*
+*Last updated: 2026-07-16 (flashcard SRS scheduling — SM-2 intervals, migration applied).*

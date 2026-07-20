@@ -31,6 +31,75 @@ export interface CheatSheetPage {
   illustrationError?: string;
 }
 
+export type FlashcardGrade = 'AGAIN' | 'HARD' | 'GOOD';
+
+const MIN_EASE = 1.3;
+const MAX_EASE = 3.0;
+/** A lapsed/new card comes back inside the same session rather than tomorrow. */
+const RELEARN_MINUTES = 10;
+
+type SrsState = { intervalDays: number; ease: number; reps: number };
+
+/**
+ * SM-2 style scheduler. "AGAIN" resets the card to a 10-minute learning step,
+ * "HARD" nudges the interval up slowly, "GOOD" multiplies it by the ease factor.
+ * First-time intervals land on <10 min / 1 day / 4 days, matching the design.
+ */
+function scheduleFlashcard(prev: SrsState, grade: FlashcardGrade) {
+  const now = Date.now();
+  let { intervalDays, ease, reps } = prev;
+
+  if (grade === 'AGAIN') {
+    ease = Math.max(MIN_EASE, ease - 0.2);
+    return {
+      status: FlashcardStatus.LEARNING,
+      intervalDays: 0,
+      ease,
+      reps: 0,
+      dueAt: new Date(now + RELEARN_MINUTES * 60_000),
+    };
+  }
+
+  if (grade === 'HARD') {
+    ease = Math.max(MIN_EASE, ease - 0.15);
+    intervalDays = intervalDays <= 0 ? 1 : Math.max(1, Math.round(intervalDays * 1.2));
+    return {
+      status: FlashcardStatus.LEARNING,
+      intervalDays,
+      ease,
+      reps: reps + 1,
+      dueAt: new Date(now + intervalDays * 86_400_000),
+    };
+  }
+
+  ease = Math.min(MAX_EASE, ease + 0.1);
+  intervalDays = reps <= 0 || intervalDays <= 0 ? 4 : Math.round(intervalDays * ease);
+  return {
+    status: FlashcardStatus.KNOWN,
+    intervalDays,
+    ease,
+    reps: reps + 1,
+    dueAt: new Date(now + intervalDays * 86_400_000),
+  };
+}
+
+function humanInterval(days: number) {
+  if (days <= 0) return `<${RELEARN_MINUTES} min`;
+  if (days === 1) return '1 day';
+  if (days < 30) return `${days} days`;
+  const months = Math.round(days / 30);
+  return months === 1 ? '1 month' : `${months} months`;
+}
+
+/** What each button would schedule, so the UI can label them without duplicating the maths. */
+function srsPreview(prev: SrsState) {
+  return {
+    again: humanInterval(scheduleFlashcard(prev, 'AGAIN').intervalDays),
+    hard: humanInterval(scheduleFlashcard(prev, 'HARD').intervalDays),
+    good: humanInterval(scheduleFlashcard(prev, 'GOOD').intervalDays),
+  };
+}
+
 function isOwnerOrAdmin(user: JwtPayload, facultyId: string) {
   return user.role === 'ADMIN' || user.sub === facultyId;
 }
@@ -986,12 +1055,28 @@ export class CoursesService {
     if (user.role !== 'STUDENT') return flashcards;
 
     return flashcards.map((f) => {
-      const { progress, ...rest } = f as typeof f & { progress: { status: FlashcardStatus }[] };
-      return { ...rest, status: progress[0]?.status ?? FlashcardStatus.NEW };
+      const { progress, ...rest } = f as typeof f & {
+        progress: { status: FlashcardStatus; intervalDays: number; ease: number; reps: number; dueAt: Date | null }[];
+      };
+      const p = progress[0];
+      const state: SrsState = { intervalDays: p?.intervalDays ?? 0, ease: p?.ease ?? 2.5, reps: p?.reps ?? 0 };
+      return {
+        ...rest,
+        status: p?.status ?? FlashcardStatus.NEW,
+        intervalDays: state.intervalDays,
+        dueAt: p?.dueAt ?? null,
+        // Labels for the Again / Hard / Got it buttons — computed here so the client
+        // never has to re-implement the scheduling maths.
+        preview: srsPreview(state),
+      };
     });
   }
 
-  async setFlashcardProgress(flashcardId: string, user: JwtPayload, status: FlashcardStatus) {
+  async setFlashcardProgress(
+    flashcardId: string,
+    user: JwtPayload,
+    input: { grade?: FlashcardGrade; status?: FlashcardStatus },
+  ) {
     const flashcard = await this.requireFlashcardWithCourse(flashcardId);
     const canView = await this.canViewCourseContent(flashcard.lesson.chapter.course, user);
     if (!canView) throw new ForbiddenException('You do not have access to this lesson');
@@ -999,10 +1084,26 @@ export class CoursesService {
       throw new ForbiddenException('This chapter is not unlocked yet');
     }
 
+    // Legacy callers may still send a bare status; grade-based scheduling is preferred.
+    if (!input.grade) {
+      const status = input.status ?? FlashcardStatus.NEW;
+      return this.prisma.flashcardProgress.upsert({
+        where: { studentId_flashcardId: { studentId: user.sub, flashcardId } },
+        create: { studentId: user.sub, flashcardId, status, lastReviewedAt: new Date() },
+        update: { status, lastReviewedAt: new Date() },
+      });
+    }
+
+    const existing = await this.prisma.flashcardProgress.findUnique({
+      where: { studentId_flashcardId: { studentId: user.sub, flashcardId } },
+      select: { intervalDays: true, ease: true, reps: true },
+    });
+    const next = scheduleFlashcard(existing ?? { intervalDays: 0, ease: 2.5, reps: 0 }, input.grade);
+
     return this.prisma.flashcardProgress.upsert({
       where: { studentId_flashcardId: { studentId: user.sub, flashcardId } },
-      create: { studentId: user.sub, flashcardId, status, lastReviewedAt: new Date() },
-      update: { status, lastReviewedAt: new Date() },
+      create: { studentId: user.sub, flashcardId, lastReviewedAt: new Date(), ...next },
+      update: { lastReviewedAt: new Date(), ...next },
     });
   }
 
