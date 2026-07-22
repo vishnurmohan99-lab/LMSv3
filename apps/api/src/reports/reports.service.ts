@@ -15,6 +15,12 @@ export interface SegmentReportRow {
   avgScore: number | null;
 }
 
+interface TrendBucket {
+  period: string;
+  start: number;
+  end: number;
+}
+
 const SCORE_BUCKETS = ['0-20', '21-40', '41-60', '61-80', '81-100'];
 
 const MS_PER_DAY = 86_400_000;
@@ -28,22 +34,15 @@ const TREND_LABEL: Record<ReportRange, string> = {
   ALL: 'Enrollments — last 6 months',
 };
 
-function bucketForPct(pct: number) {
-  if (pct <= 20) return 0;
-  if (pct <= 40) return 1;
-  if (pct <= 60) return 2;
-  if (pct <= 80) return 3;
-  return 4;
-}
-
 // Bucket keys are built in UTC so the report reads the same on a UTC host and a
 // dev box in another timezone.
 function monthKey(date: Date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-function dayKey(date: Date) {
-  return `${MONTH_SHORT[date.getUTCMonth()]} ${date.getUTCDate()}`;
+function dayKey(date: Date, withYear: boolean) {
+  const base = `${MONTH_SHORT[date.getUTCMonth()]} ${date.getUTCDate()}`;
+  return withYear ? `${base} '${String(date.getUTCFullYear()).slice(-2)}` : base;
 }
 
 @Injectable()
@@ -60,32 +59,41 @@ export class ReportsService {
 
   /**
    * Buckets that actually cover the selected window, so the chart never shows
-   * empty months the range was never going to include.
+   * empty months the range was never going to include. Built before the query so
+   * the enrolment fetch can be narrowed to the span the chart will draw.
    */
-  private buildTrend(range: ReportRange, from: Date | null, now: Date, enrolledAt: Date[]) {
-    const buckets: { period: string; start: number; end: number }[] = [];
-
+  private buildBuckets(range: ReportRange, from: Date | null, now: Date): TrendBucket[] {
     if (from && (range === 'RANGE_30' || range === 'QUARTER')) {
       const spanDays = range === 'RANGE_30' ? 5 : 15; // six bars either way
+      const spans: { start: number; end: number }[] = [];
       for (let i = 0; i < 6; i++) {
         const start = from.getTime() + i * spanDays * MS_PER_DAY;
-        buckets.push({ period: dayKey(new Date(start)), start, end: start + spanDays * MS_PER_DAY });
+        spans.push({ start, end: start + spanDays * MS_PER_DAY });
       }
       // Rounding can leave the window short of "now"; stretch the last bucket so
       // an enrollment from a minute ago is never dropped off the chart.
-      buckets[buckets.length - 1].end = Math.max(buckets[buckets.length - 1].end, now.getTime() + 1);
-    } else {
-      const months = range === 'YTD' ? now.getUTCMonth() + 1 : 6;
-      for (let i = months - 1; i >= 0; i--) {
-        const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1);
-        buckets.push({
-          period: monthKey(new Date(start)),
-          start,
-          end: Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i + 1, 1),
-        });
-      }
+      spans[spans.length - 1].end = Math.max(spans[spans.length - 1].end, now.getTime() + 1);
+      // A quarter can straddle New Year, and "Dec 29" next to "Jan 13" reads as
+      // out of order without the year.
+      const spansYears =
+        new Date(spans[0].start).getUTCFullYear() !== new Date(spans[spans.length - 1].start).getUTCFullYear();
+      return spans.map((s) => ({ period: dayKey(new Date(s.start), spansYears), start: s.start, end: s.end }));
     }
 
+    const months = range === 'YTD' ? now.getUTCMonth() + 1 : 6;
+    const buckets: TrendBucket[] = [];
+    for (let i = months - 1; i >= 0; i--) {
+      const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1);
+      buckets.push({
+        period: monthKey(new Date(start)),
+        start,
+        end: Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i + 1, 1),
+      });
+    }
+    return buckets;
+  }
+
+  private countIntoBuckets(buckets: TrendBucket[], enrolledAt: Date[]) {
     const counts = new Array<number>(buckets.length).fill(0);
     for (const d of enrolledAt) {
       const t = d.getTime();
@@ -93,6 +101,40 @@ export class ReportsService {
       if (i >= 0) counts[i]++;
     }
     return buckets.map((b, i) => ({ period: b.period, count: counts[i] }));
+  }
+
+  /**
+   * Score histogram, bucketed in Postgres. Loading every submitted attempt into Node
+   * to produce five integers grew without bound — attempts are never pruned.
+   * Boundaries match the old bucketForPct exactly: <=20, <=40, <=60, <=80, else.
+   */
+  private async getScoreHistogram(from: Date | null) {
+    const p = from ? from.toISOString() : null;
+    const [row] = await this.prisma.$queryRaw<
+      { b0: number; b1: number; b2: number; b3: number; b4: number; total: number }[]
+    >`
+      SELECT COUNT(*) FILTER (WHERE pct <= 20)::int AS "b0",
+             COUNT(*) FILTER (WHERE pct > 20 AND pct <= 40)::int AS "b1",
+             COUNT(*) FILTER (WHERE pct > 40 AND pct <= 60)::int AS "b2",
+             COUNT(*) FILTER (WHERE pct > 60 AND pct <= 80)::int AS "b3",
+             COUNT(*) FILTER (WHERE pct > 80)::int AS "b4",
+             COUNT(*)::int AS "total"
+      FROM (
+        SELECT a.score::numeric * 100 / a."maxScore" AS pct
+        FROM "TestAttempt" a
+        JOIN "Test" t ON t.id = a."testId"
+        WHERE a.status = 'SUBMITTED'
+          AND a.score IS NOT NULL
+          AND a."maxScore" > 0
+          AND t."courseId" IS NOT NULL
+          AND (${p}::timestamp IS NULL OR a."submittedAt" >= ${p}::timestamp)
+      ) scored
+    `;
+    const counts = [row?.b0 ?? 0, row?.b1 ?? 0, row?.b2 ?? 0, row?.b3 ?? 0, row?.b4 ?? 0];
+    return {
+      scoreDistribution: SCORE_BUCKETS.map((bucket, i) => ({ bucket, count: counts[i] })),
+      total: row?.total ?? 0,
+    };
   }
 
   /**
@@ -139,6 +181,11 @@ export class ReportsService {
         FROM "LessonView" v
         JOIN "Lesson" l ON l.id = v."lessonId"
         JOIN "Chapter" ch ON ch.id = l."chapterId"
+        -- Finishing inside the window requires a view inside the window, so for a
+        -- ranged report only those students' full history has to be aggregated.
+        -- "All time" genuinely needs every row and gets no such shortcut.
+        WHERE ${p}::timestamp IS NULL
+           OR v."studentId" IN (SELECT v2."studentId" FROM "LessonView" v2 WHERE v2."viewedAt" >= ${p}::timestamp)
         GROUP BY v."studentId", ch."courseId"
       ),
       comp_agg AS (
@@ -193,48 +240,46 @@ export class ReportsService {
   async getAdminReport(range: ReportRange = 'ALL') {
     const now = new Date();
     const from = this.rangeStart(range, now);
-    const [enrollments, attempts, batches, courseCount, batchCount, segmentBreakdown] = await Promise.all([
-      this.prisma.enrollment.findMany({
-        where: from ? { enrolledAt: { gte: from } } : {},
-        select: { enrolledAt: true },
-      }),
-      this.prisma.testAttempt.findMany({
-        where: {
-          status: 'SUBMITTED',
-          score: { not: null },
-          // gt: 0, not just "not null" — a zero-question test would otherwise divide
-          // by the `|| 1` fallback below and land at 500% in the top bucket, while
-          // the segment average (which requires maxScore > 0) drops it. Same rows,
-          // two different answers on one page.
-          maxScore: { gt: 0 },
-          test: { courseId: { not: null } },
-          ...(from ? { submittedAt: { gte: from } } : {}),
-        },
-        select: { score: true, maxScore: true },
-      }),
-      this.prisma.batch.findMany({ select: { status: { select: { isCompletionTarget: true } } } }),
-      this.prisma.course.count(),
-      this.prisma.batch.count(),
-      this.getSegmentBreakdown(from),
-    ]);
+    const buckets = this.buildBuckets(range, from, now);
+    // Only the span the chart draws is fetched. Under "all time" the range filter is
+    // empty, so without this the trend would pull every enrolment ever recorded to
+    // fill six monthly bars.
+    const trendFrom = new Date(buckets[0].start);
 
-    const enrollmentTrend = this.buildTrend(range, from, now, enrollments.map((e) => e.enrolledAt));
+    const [trendRows, enrollmentCount, histogram, batchCount, completedBatchCount, courseCount, segmentBreakdown] =
+      await Promise.all([
+        this.prisma.enrollment.findMany({
+          where: { enrolledAt: { gte: trendFrom } },
+          select: { enrolledAt: true },
+        }),
+        this.prisma.enrollment.count({ where: from ? { enrolledAt: { gte: from } } : {} }),
+        this.getScoreHistogram(from),
+        this.prisma.batch.count(),
+        this.prisma.batch.count({ where: { status: { isCompletionTarget: true } } }),
+        this.prisma.course.count(),
+        this.getSegmentBreakdown(from),
+      ]);
 
-    const distCounts = [0, 0, 0, 0, 0];
-    for (const a of attempts) {
-      const pct = ((a.score ?? 0) / (a.maxScore || 1)) * 100;
-      distCounts[bucketForPct(pct)]++;
-    }
-    const scoreDistribution = SCORE_BUCKETS.map((bucket, i) => ({ bucket, count: distCounts[i] }));
-
-    const completedBatches = batches.filter((b) => b.status.isCompletionTarget).length;
+    const enrollmentTrend = this.countIntoBuckets(
+      buckets,
+      trendRows.map((e) => e.enrolledAt),
+    );
 
     return {
       enrollmentTrend,
       trendLabel: TREND_LABEL[range],
-      scoreDistribution,
-      batchCompletion: { completed: completedBatches, total: batches.length, rate: batches.length ? completedBatches / batches.length : 0 },
-      totals: { totalCourses: courseCount, totalBatches: batchCount, totalMockTestAttempts: attempts.length, totalEnrollments: enrollments.length },
+      scoreDistribution: histogram.scoreDistribution,
+      batchCompletion: {
+        completed: completedBatchCount,
+        total: batchCount,
+        rate: batchCount ? completedBatchCount / batchCount : 0,
+      },
+      totals: {
+        totalCourses: courseCount,
+        totalBatches: batchCount,
+        totalMockTestAttempts: histogram.total,
+        totalEnrollments: enrollmentCount,
+      },
       segmentBreakdown,
       range,
     };
@@ -245,45 +290,78 @@ export class ReportsService {
       where: { facultyId: faculty.sub },
       include: {
         enrollments: { include: { student: { select: { id: true, fullName: true, email: true } } } },
-        mockTests: { where: { courseId: { not: null } } },
+        mockTests: true,
       },
       orderBy: { title: 'asc' },
     });
 
-    const result: {
-      courseId: string;
-      title: string;
-      enrollmentCount: number;
-      batches: { id: string; name: string; status: string; enrolledCount: number }[];
-      mockTestCount: number;
-      students: { id: string; fullName: string; email: string; enrolledAt: Date; bestScorePct: number | null; attemptCount: number }[];
-    }[] = [];
-    for (const course of courses) {
-      const batches = await this.prisma.batch.findMany({
-        where: { OR: [...(course.segmentId ? [{ segmentId: course.segmentId }] : []), ...(course.subsegmentId ? [{ subsegmentId: course.subsegmentId }] : [])] },
-        include: { status: true, _count: { select: { enrollments: true } } },
-      });
-      const mockTestIds = course.mockTests.map((t) => t.id);
-      const attempts = mockTestIds.length
-        ? await this.prisma.testAttempt.findMany({
-            where: { testId: { in: mockTestIds }, status: 'SUBMITTED', score: { not: null }, maxScore: { not: null } },
-            select: { studentId: true, score: true, maxScore: true },
+    // Batches and attempts used to be fetched per course inside the loop below —
+    // two sequential round-trips each, so a faculty with 40 courses paid 80. Both
+    // are now single queries covering every course, grouped in memory.
+    const segmentIds = [...new Set(courses.map((c) => c.segmentId).filter((id): id is string => !!id))];
+    const subsegmentIds = [...new Set(courses.map((c) => c.subsegmentId).filter((id): id is string => !!id))];
+    const testIds = courses.flatMap((c) => c.mockTests.map((t) => t.id));
+
+    const [batches, attempts] = await Promise.all([
+      segmentIds.length || subsegmentIds.length
+        ? this.prisma.batch.findMany({
+            where: {
+              OR: [
+                ...(segmentIds.length ? [{ segmentId: { in: segmentIds } }] : []),
+                ...(subsegmentIds.length ? [{ subsegmentId: { in: subsegmentIds } }] : []),
+              ],
+            },
+            include: { status: true, _count: { select: { enrollments: true } } },
           })
-        : [];
+        : [],
+      testIds.length
+        ? this.prisma.testAttempt.findMany({
+            where: { testId: { in: testIds }, status: 'SUBMITTED', score: { not: null }, maxScore: { gt: 0 } },
+            select: { testId: true, studentId: true, score: true, maxScore: true },
+          })
+        : [],
+    ]);
+
+    const batchesBySegment = new Map<string, typeof batches>();
+    const batchesBySubsegment = new Map<string, typeof batches>();
+    for (const b of batches) {
+      if (b.segmentId) batchesBySegment.set(b.segmentId, [...(batchesBySegment.get(b.segmentId) ?? []), b]);
+      if (b.subsegmentId) batchesBySubsegment.set(b.subsegmentId, [...(batchesBySubsegment.get(b.subsegmentId) ?? []), b]);
+    }
+    const attemptsByTest = new Map<string, typeof attempts>();
+    for (const a of attempts) {
+      attemptsByTest.set(a.testId, [...(attemptsByTest.get(a.testId) ?? []), a]);
+    }
+
+    return courses.map((course) => {
+      // A batch matching on both segment and subsegment must still be listed once.
+      const courseBatches = [
+        ...(course.segmentId ? (batchesBySegment.get(course.segmentId) ?? []) : []),
+        ...(course.subsegmentId ? (batchesBySubsegment.get(course.subsegmentId) ?? []) : []),
+      ].filter((b, i, all) => all.findIndex((x) => x.id === b.id) === i);
 
       const byStudent = new Map<string, { best: number; attempts: number }>();
-      for (const a of attempts) {
-        const pct = ((a.score ?? 0) / (a.maxScore || 1)) * 100;
-        const existing = byStudent.get(a.studentId);
-        if (!existing) byStudent.set(a.studentId, { best: pct, attempts: 1 });
-        else byStudent.set(a.studentId, { best: Math.max(existing.best, pct), attempts: existing.attempts + 1 });
+      for (const t of course.mockTests) {
+        for (const a of attemptsByTest.get(t.id) ?? []) {
+          const pct = ((a.score ?? 0) / (a.maxScore || 1)) * 100;
+          const existing = byStudent.get(a.studentId);
+          if (!existing) byStudent.set(a.studentId, { best: pct, attempts: 1 });
+          else byStudent.set(a.studentId, { best: Math.max(existing.best, pct), attempts: existing.attempts + 1 });
+        }
       }
 
-      result.push({
+      return {
         courseId: course.id,
         title: course.title,
         enrollmentCount: course.enrollments.length,
-        batches: batches.map((b) => ({ id: b.id, name: b.name, status: b.status.name, enrolledCount: b._count.enrollments })),
+        batches: courseBatches.map((b) => ({
+          id: b.id,
+          name: b.name,
+          status: b.status.name,
+          // Every student in the batch, not just this course's — batches are matched
+          // by segment, so the same batch appears under every course in that segment.
+          batchEnrolledCount: b._count.enrollments,
+        })),
         mockTestCount: course.mockTests.length,
         students: course.enrollments.map((e) => ({
           id: e.student.id,
@@ -293,9 +371,7 @@ export class ReportsService {
           bestScorePct: byStudent.get(e.student.id)?.best ?? null,
           attemptCount: byStudent.get(e.student.id)?.attempts ?? 0,
         })),
-      });
-    }
-
-    return result;
+      };
+    });
   }
 }
