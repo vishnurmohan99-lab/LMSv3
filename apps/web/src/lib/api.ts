@@ -1487,8 +1487,10 @@ export const forumApi = {
 export type ReportRange = 'RANGE_30' | 'QUARTER' | 'YTD' | 'ALL';
 
 export interface SegmentReportRow {
-  segmentId: string;
+  /** Null for the synthetic "courses with no segment" row — see `isUnassigned`. */
+  segmentId: string | null;
   name: string;
+  isUnassigned: boolean;
   students: number;
   enrollments: number;
   completions: number;
@@ -1497,8 +1499,12 @@ export interface SegmentReportRow {
 
 export interface AdminReport {
   enrollmentTrend: { period: string; count: number }[];
-  /** Heading for the trend chart — the API owns it because the buckets follow the range. */
-  trendLabel: string;
+  /**
+   * Heading for the trend chart — the API owns it because the buckets follow the range.
+   * Optional: the apps deploy independently, so a newer build can talk to an API that
+   * predates this field. Callers must fall back.
+   */
+  trendLabel?: string;
   scoreDistribution: { bucket: string; count: number }[];
   batchCompletion: { completed: number; total: number; rate: number };
   totals: { totalCourses: number; totalBatches: number; totalMockTestAttempts: number; totalEnrollments: number };

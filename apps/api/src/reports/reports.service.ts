@@ -5,8 +5,10 @@ import type { JwtPayload } from '../auth/jwt-payload.interface';
 export type ReportRange = 'RANGE_30' | 'QUARTER' | 'YTD' | 'ALL';
 
 export interface SegmentReportRow {
-  segmentId: string;
+  /** Null for the synthetic "courses with no segment" row — see `isUnassigned`. */
+  segmentId: string | null;
   name: string;
+  isUnassigned: boolean;
   students: number;
   enrollments: number;
   completions: number;
@@ -97,10 +99,14 @@ export class ReportsService {
    * Per-segment rollup for the admin Reports table. Aggregated in Postgres — the
    * inputs (every lesson view on the platform) are far too large to join in Node.
    *
-   * Each column counts events inside the window: enrollments/students by enrolment
-   * date, completions by the date the student viewed the course's final lesson,
-   * average score by submission date. Courses with no segment roll up into a
-   * synthetic "Unassigned" row so the columns reconcile with the totals tiles.
+   * Every column counts EVENTS inside the window — new enrolments by enrolment date,
+   * completions by the date the student viewed the course's final lesson, average
+   * score by submission date. They are independent flows, not a funnel: a segment can
+   * record a completion in a window where nobody new enrolled, so the UI labels these
+   * "new students"/"new enrolments" rather than implying one is a subset of the other.
+   *
+   * Courses with no segment roll up into an "Unassigned" row (`isUnassigned`) so the
+   * columns reconcile with the totals tiles, but only when that row has activity.
    */
   private async getSegmentBreakdown(from: Date | null): Promise<SegmentReportRow[]> {
     const p = from ? from.toISOString() : null;
@@ -162,8 +168,9 @@ export class ReportsService {
         UNION ALL
         SELECT NULL::text WHERE EXISTS (SELECT 1 FROM "Course" WHERE "segmentId" IS NULL)
       )
-      SELECT COALESCE(si.segment_id, '__unassigned__') AS "segmentId",
+      SELECT si.segment_id AS "segmentId",
              COALESCE(s.name, 'Unassigned') AS "name",
+             (si.segment_id IS NULL) AS "isUnassigned",
              COALESCE(ea.students, 0) AS "students",
              COALESCE(ea.enrollments, 0) AS "enrollments",
              COALESCE(ca.completions, 0) AS "completions",
@@ -173,6 +180,12 @@ export class ReportsService {
       LEFT JOIN enr_agg ea ON ea.segment_id IS NOT DISTINCT FROM si.segment_id
       LEFT JOIN comp_agg ca ON ca.segment_id IS NOT DISTINCT FROM si.segment_id
       LEFT JOIN score_agg sa ON sa.segment_id IS NOT DISTINCT FROM si.segment_id
+      -- Real segments always list, even at zero. The Unassigned row is noise unless
+      -- an orphaned course actually saw activity in the window.
+      WHERE si.segment_id IS NOT NULL
+         OR COALESCE(ea.enrollments, 0) > 0
+         OR COALESCE(ca.completions, 0) > 0
+         OR sa.avg_score IS NOT NULL
       ORDER BY "enrollments" DESC, "name" ASC
     `;
   }
@@ -189,7 +202,11 @@ export class ReportsService {
         where: {
           status: 'SUBMITTED',
           score: { not: null },
-          maxScore: { not: null },
+          // gt: 0, not just "not null" — a zero-question test would otherwise divide
+          // by the `|| 1` fallback below and land at 500% in the top bucket, while
+          // the segment average (which requires maxScore > 0) drops it. Same rows,
+          // two different answers on one page.
+          maxScore: { gt: 0 },
           test: { courseId: { not: null } },
           ...(from ? { submittedAt: { gte: from } } : {}),
         },
