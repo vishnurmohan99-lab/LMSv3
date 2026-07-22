@@ -756,6 +756,46 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Admin Reports hardening — code-review fixes on the range/segment/CSV work (2026-07-22).**
+  No migration, no new endpoints. Fifteen review findings against the 2026-07-16 commit.
+  API: `getSegmentBreakdown()` is now a **single `$queryRaw` Postgres aggregate** — the old
+  version loaded the entire LessonView, Lesson, Course and Enrollment tables into Node and
+  joined them there (unbounded memory; the LessonView query was not even range-filtered, so
+  "Last 30 days" cost the same as "All time"). This is the **first raw SQL in the API** —
+  everything else is the Prisma query builder — justified because a reporting rollup over
+  every lesson view on the platform cannot be expressed as a Prisma aggregate (no joins in
+  `groupBy`). It also removed an O(n²) array copy and an O(segments × rows) filter loop.
+  **Completions semantics changed**: counted by *when the student viewed the course's final
+  lesson*, not by enrolment date — previously a March enrolment finished in July was invisible
+  under a short range, so "Completions" read near-zero on any mature platform.
+  Courses with `segmentId: null` now roll into a synthetic **"Unassigned"** row (id
+  `__unassigned__`) so the table's columns reconcile with the totals tiles.
+  `rangeStart()` is UTC (`Date.UTC`) — YTD previously used the *server-local* Jan 1 while the
+  other ranges used UTC ms arithmetic, so the boundary moved between Render (UTC) and a dev
+  box. SQL boundary is passed as an ISO string cast `::timestamp` (the columns are `timestamp
+  without time zone`; a raw JS Date is serialized by node-pg with the local offset).
+  Trend chart buckets now **follow the range** (6×5-day bars for 30 days, 6×15-day for a
+  quarter, Jan→now for YTD, 6 months for ALL) and the API owns the heading via a new
+  `trendLabel` field — the chart was previously fed range-filtered rows under a hardcoded
+  "last 6 months" axis, rendering five zeroed months.
+  Admin UI: an error no longer replaces the page (header + range switcher always render,
+  error is an inline banner with Retry, and `error` resets on each fetch — previously one
+  transient 500 bricked the page until a reload, since the switcher itself was unmounted);
+  effect cleanup flag so a slow request can't overwrite a newer fast one; CSV anchor is
+  appended to the DOM with a deferred `revokeObjectURL` (Firefox/Safari cancelled the
+  download) and `csvCell()` prefixes leading `= + - @` so a segment name can't execute as a
+  formula in Excel; range chips are real `<button>`s with `aria-pressed` (were `<span
+  onClick>` — keyboard-unreachable); tiles carry "all time" / range notes so global and
+  range-scoped numbers are distinguishable; content dims while refetching.
+  Also synced `apps/web/src/lib/api.ts`, whose duplicate `AdminReport` had drifted (missing
+  `segmentBreakdown`/`range`).
+  Verified against Neon: new SQL is **identical** to the old logic for ALL/QUARTER/YTD; the
+  only diffs are RANGE_30 and they are the intended completions fix (Class 12 0→3, Cllass 10
+  0→1). 261–326ms vs 1.5–1.8s for the old path even on a 30-row dataset. Separately checked
+  the avgScore expression (64.4 for 7/10, 9/10, 1/3, returned as a JS number), the NULL-safe
+  Unassigned join, and that the trend bucketer drops zero enrolments at the exact `from`/`now`
+  edges and rolls over correctly at year boundaries. All three apps typecheck.
+  NOT browser-verified — `/admin/reports` needs an admin sign-in.
 - **Admin Reports: range switcher + by-segment table + CSV export (2026-07-16).**
   From the admin design audit — these were the "buildable today" Reports gaps (data
   already existed, just wasn't queried). No migration.
