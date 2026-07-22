@@ -756,6 +756,24 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Student catalog: filters removed entirely (2026-07-22).** Arrived at by iteration — the
+  left filter sidebar was first rebuilt as a single top row (pills for Level/Price/Rating/
+  Duration, a select for Subject), then moved above "Continue learning", then the user
+  decided filters were not wanted at all. **Net: 219 lines deleted, 8 added.**
+  Gone: the filter row, the original sidebar panel, the mobile bottom sheet and its
+  "Filters" toggle, the active-filter chip row, all five filter states (`subjectFilter`,
+  `freeOnly`, `levelFilter`, `minRating`, `durationFilter`), `subjectFacets`,
+  `clearFilters`, the `FilterPill`/`FilterDivider`/`FilterGroup` helpers, `DURATION_BUCKETS`,
+  and both `.catalog-filter*` CSS blocks (including the `.catalog-shell` grid).
+  **Kept on purpose** — these are not filters and were never asked to go: the search box
+  (still narrows Continue learning *and* the catalog), the Sort select, the class/track
+  selector, and `LEVELS`, which still drives the Easy/Medium/Hard badge on each card. Only
+  filtering *by* level went; the difficulty feature itself is untouched.
+  Two knock-on fixes the removal forced: the empty state no longer says "No courses match
+  these filters / Try clearing filters" (search is now the only thing that can empty the
+  list, so it branches on `search`), and `applyScope()` no longer resets a filter that no
+  longer exists.
+  The catalog is now header+search → Continue learning → "N courses" + Sort → grid.
 - **DEPLOY 2026-07-22 (2nd) — main `28004e6`, PR
   [#4](https://github.com/vishnurmohan99-lab/LMSv3/pull/4).** Fully verified, unlike the
   earlier deploy the same day.
