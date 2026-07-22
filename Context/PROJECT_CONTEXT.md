@@ -756,6 +756,20 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **DEPLOY 2026-07-22 (2nd) — main `28004e6`, PR
+  [#4](https://github.com/vishnurmohan99-lab/LMSv3/pull/4).** Fully verified, unlike the
+  earlier deploy the same day.
+  **The migration is what made the API build verifiable.** `prisma migrate deploy` only
+  runs when Render starts the new build, so the appearance of
+  `20260722130000_add_lessonview_report_indexes` in `_prisma_migrations` (finished
+  12:33:17Z) plus both indexes in `pg_indexes` is proof the new API is serving — and it
+  retroactively confirms the `b123606` deploy too, since this build contains it.
+  **Reusable trick:** when a change has no migration and no unauthenticated route to probe,
+  there is no way to tell a live Render build from a stale one. Grepping the deployed
+  Vercel chunk for a new string covers the frontends; the DB covers the API.
+  Web bundle `/_next/static/chunks/1ov408auqsm07.js` contains `in batch` and
+  `batchEnrolledCount`. Admin was redeployed but its bundle is unchanged by this PR — the
+  only admin edit was a TypeScript type, which is erased at build.
 - **Reports performance + structure — the 7 findings left open by the review (2026-07-22).**
   **MIGRATION `20260722130000_add_lessonview_report_indexes`** — adds `@@index([studentId])`
   and `@@index([viewedAt])` to LessonView. NOT applied manually; Render runs
