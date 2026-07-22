@@ -1384,6 +1384,8 @@ export interface SegmentReportRow {
 
 export interface AdminReport {
   enrollmentTrend: { period: string; count: number }[];
+  /** Heading for the trend chart — the API owns it because the buckets follow the range. */
+  trendLabel: string;
   scoreDistribution: { bucket: string; count: number }[];
   batchCompletion: { completed: number; total: number; rate: number };
   totals: { totalCourses: number; totalBatches: number; totalMockTestAttempts: number; totalEnrollments: number };
