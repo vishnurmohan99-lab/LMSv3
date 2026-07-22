@@ -756,6 +756,35 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **DEMO DATA seeded for the pre-production walkthrough (2026-07-22).**
+  `apps/api/prisma/demo/seed-demo.js` + `seed-demo-undo.js`. **11,289 rows across 41 tables**,
+  already live in Neon. Additive only — nothing pre-existing was modified or deleted.
+  **How to remove it:** `node apps/api/prisma/demo/seed-demo-undo.js`. It deletes exactly the
+  ids in `demo-manifest.json` (committed, 520 KB, deliberately — a name-based cleanup would
+  miss demo rows that hang off *existing* accounts, e.g. todos and mentor bookings created for
+  vishnu@test.com, or forum threads posted into the pre-existing categories). Runs in one
+  transaction and rolls back on any error. Proven twice during development: two partial runs
+  were rolled back and the DB returned to its exact baseline (User 8, Course 7, Enrollment 9).
+  **Demo logins:** `student1..40@demo.paperlms.in`, `faculty1..6@demo.paperlms.in`, password
+  `Demo123@`. The `@demo.paperlms.in` domain is a second, human-readable marker.
+  **What it fills:** 40 students + 6 faculty (3 mentors), 6 subsegments, 22 courses (96
+  chapters, 476 lessons), 293 enrolments spread over 7 months, 3,242 lesson views (some
+  students at 100% so completions register), 144 course reviews (avg 4.59★ — the catalog had
+  **zero** ratings before), 16 course-linked tests + 246 questions, 233 attempts + 3,590
+  answers, 9 batches (3 Completed, so the completion donut isn't 0%), 153 batch enrolments,
+  72 live sessions, 34 forum threads + 93 posts + 270 likes, 10 conversations + 60 messages,
+  492 flashcards, 145 AI notes/decks/cheat-sheets, 4 notes banks, 190 planner items, 140
+  mentor slots/bookings, 3 subscriptions.
+  **This fixes the empty Reports panels.** Every pre-existing test had `courseId: null`, so
+  the score-distribution chart and the segment AVG SCORE column were empty by construction —
+  0 scoreable attempts. The demo tests are course-linked, giving 233 scoreable attempts and a
+  distribution that fills all five buckets (7/47/55/66/58).
+  **Media is reused, not invented:** lesson `contentUrl`, course `thumbnailUrl` and note
+  `fileUrl` are drawn from the R2 keys already in the DB, so demo videos, PDFs and thumbnails
+  actually resolve instead of 404-ing.
+  Two schema traps worth remembering: `CheatSheet.pages` is `jsonb NOT NULL` (needs a real
+  `CheatSheetPage[]`, not a string), and `NotesBankBatch` is a composite-PK join table with
+  no `id` column.
 - **Student catalog: filters removed entirely (2026-07-22).** Arrived at by iteration — the
   left filter sidebar was first rebuilt as a single top row (pills for Level/Price/Rating/
   Duration, a select for Subject), then moved above "Continue learning", then the user
