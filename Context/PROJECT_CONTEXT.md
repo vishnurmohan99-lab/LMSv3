@@ -756,6 +756,39 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Reports performance + structure — the 7 findings left open by the review (2026-07-22).**
+  **MIGRATION `20260722130000_add_lessonview_report_indexes`** — adds `@@index([studentId])`
+  and `@@index([viewedAt])` to LessonView. NOT applied manually; Render runs
+  `prisma migrate deploy` on start, so it lands on the next API deploy.
+  `getSegmentBreakdown` no longer aggregates all of LessonView for a ranged report:
+  finishing inside the window requires a *view* inside the window, so `course_progress`
+  now restricts to students with a view since `from` (uses the new viewedAt index). "All
+  time" genuinely needs every row and deliberately keeps the full scan.
+  The score histogram moved into Postgres (`COUNT(*) FILTER`) — it was loading every
+  submitted attempt into Node to produce five integers, and attempts are never pruned.
+  Boundaries match the old `bucketForPct` exactly (`<=20/<=40/<=60/<=80/else`).
+  The enrolment trend now fetches only the span the chart draws (`buckets[0].start`)
+  instead of every enrolment ever, and `totalEnrollments` comes from a `count()`.
+  `batch.findMany` for the completion ratio became two `count()` calls — note the old
+  `batches.length` was already duplicating the existing `batchCount` query.
+  **`getFacultyReport` is no longer N+1**: batches and attempts were two sequential
+  queries *per course* (40 courses = 80 round-trips); both are now single queries over
+  all courses, grouped in memory, with the segment/subsegment overlap deduped by batch id.
+  Also drops a redundant `mockTests: { where: { courseId: { not: null } } }` — that
+  relation is defined by `courseId`, so the filter could never exclude anything.
+  Faculty batch chips renamed `enrolledCount` → **`batchEnrolledCount`** and now render
+  as "N in batch": the number is the whole batch's enrolment, and batches are matched by
+  segment, so the same batch shows under every course in that segment and the bare number
+  read as a per-course count. Both api clients accept either name so a build can outrun
+  the API. Quarter trend labels gain a `'YY` suffix when the window straddles New Year.
+  Verified read-only against Neon: histogram matches the old JS bucketing on 16 synthetic
+  percentages including exact 20/40/60/80/100/110 (live data has 0 qualifying attempts, so
+  the synthetic test is the real check); the narrowed segment query returns byte-identical
+  rows to the full-scan version on all 4 ranges; batch counts match; the faculty report is
+  identical for the only faculty with courses (7 courses); the batch dedup passes 5 cases
+  including the both-keys overlap, which live data never exercises.
+  **Speedup is NOT demonstrated** — at 30 lesson views the narrowed and full-scan queries
+  time the same (~255ms, all network). The rewrites are proven equivalent, not proven faster.
 - **DEPLOY 2026-07-22 — main `b123606`.** First work in this repo to go through a PR
   ([#3](https://github.com/vishnurmohan99-lab/LMSv3/pull/3)) instead of straight to main;
   rebase-merged, so main gained `20fd140` (hardening) then `b123606` (review fixes).

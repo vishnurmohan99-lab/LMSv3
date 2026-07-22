@@ -63,7 +63,8 @@ export default function FacultyReportsPage() {
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                           {c.batches.map((b) => (
                             <span key={b.id} style={{ fontSize: 12, padding: "6px 12px", background: "var(--bg)", borderRadius: 8, fontWeight: 600 }}>
-                              {b.name} · {b.status} · {b.enrolledCount}
+                              {/* "in batch" because this counts the whole batch, not this course. */}
+                              {b.name} · {b.status} · {b.batchEnrolledCount ?? b.enrolledCount ?? 0} in batch
                             </span>
                           ))}
                         </div>

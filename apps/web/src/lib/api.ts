@@ -1516,7 +1516,15 @@ export interface FacultyReportCourse {
   courseId: string;
   title: string;
   enrollmentCount: number;
-  batches: { id: string; name: string; status: string; enrolledCount: number }[];
+  batches: {
+    id: string;
+    name: string;
+    status: string;
+    /** Students in the whole batch — batches are matched by segment, so the same batch appears under every course in it. */
+    batchEnrolledCount?: number;
+    /** @deprecated Pre-2026-07-22 name for the same number; kept so a newer build survives an older API. */
+    enrolledCount?: number;
+  }[];
   mockTestCount: number;
   students: { id: string; fullName: string; email: string; enrolledAt: string; bestScorePct: number | null; attemptCount: number }[];
 }

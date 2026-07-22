@@ -251,6 +251,11 @@ model LessonView {
   viewedAt DateTime @default(now())
 
   @@unique([lessonId, studentId])
+  // The admin segment report groups progress by (student, course); the unique index
+  // above leads with lessonId so it can't serve that. viewedAt narrows the report to
+  // students active in the selected window instead of scanning all history.
+  @@index([studentId])
+  @@index([viewedAt])
 }
 
 enum LessonType {
