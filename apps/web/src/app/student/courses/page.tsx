@@ -117,8 +117,8 @@ function CardBanner({ url, name, badge }: { url: string | null; name: string; ba
   );
 }
 
-// Real course difficulty, set by an admin. Courses left unrated show no badge and are
-// excluded from level filtering rather than being assigned a level they don't have.
+// Real course difficulty, set by an admin. Courses left unrated show no badge rather
+// than being assigned a level nobody chose.
 const LEVELS: { value: CourseDifficulty; label: string; ink: string; bg: string }[] = [
   { value: "EASY", label: "Easy", ink: "var(--diff-easy)", bg: "var(--diff-easy-soft)" },
   { value: "MEDIUM", label: "Medium", ink: "var(--diff-med)", bg: "var(--diff-med-soft)" },
@@ -127,12 +127,6 @@ const LEVELS: { value: CourseDifficulty; label: string; ink: string; bg: string 
 function levelOf(course: Course) {
   return course.difficulty ? (LEVELS.find((l) => l.value === course.difficulty) ?? null) : null;
 }
-
-const DURATION_BUCKETS = [
-  { id: "short", label: "Under 10 hrs", test: (m: number | null) => m != null && m < 600 },
-  { id: "mid", label: "10–30 hrs", test: (m: number | null) => m != null && m >= 600 && m <= 1800 },
-  { id: "long", label: "30+ hrs", test: (m: number | null) => m != null && m > 1800 },
-];
 
 function SearchIcon() {
   return (
@@ -226,13 +220,7 @@ export default function StudentCoursesPage() {
   const [error, setError] = useState<string | null>(null);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [subjectFilter, setSubjectFilter] = useState<string | null>(null); // segmentId | subsegmentId
-  const [freeOnly, setFreeOnly] = useState(false);
-  const [levelFilter, setLevelFilter] = useState<CourseDifficulty | null>(null);
-  const [minRating, setMinRating] = useState<number | null>(null);
-  const [durationFilter, setDurationFilter] = useState<string | null>(null); // DURATION_BUCKETS id
   const [sort, setSort] = useState<SortKey>("popular");
-  const [filtersOpen, setFiltersOpen] = useState(false); // mobile sheet
   const [selectorOpen, setSelectorOpen] = useState(false); // storefront class/track selector
   const [popSegmentId, setPopSegmentId] = useState<string | null>(null); // segment expanded in the selector
   const [applyingScope, setApplyingScope] = useState(false);
@@ -276,41 +264,19 @@ export default function StudentCoursesPage() {
   const enrolledIds = new Set(enrollments.map((e) => e.courseId));
   const browsableAll = catalog.filter((c) => !enrolledIds.has(c.id));
 
-  // Subject facets from the catalog (segment or subsegment, whichever the course is tagged to), with counts.
-  const subjectFacets = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const c of browsableAll) {
-      const key = c.subsegmentId ?? c.segmentId;
-      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    return [...counts.entries()]
-      .map(([id, count]) => ({ id, name: nameMap.get(id) ?? "Other", count }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [browsableAll, nameMap]);
-
   const browsable = useMemo(() => {
-    let list = browsableAll.filter((c) => c.title.toLowerCase().includes(search.toLowerCase()));
-    if (subjectFilter) list = list.filter((c) => (c.subsegmentId ?? c.segmentId) === subjectFilter);
-    if (freeOnly) list = list.filter((c) => c.type === "FREE" || !c.priceCents);
-    if (levelFilter) list = list.filter((c) => c.difficulty === levelFilter);
-    if (minRating != null) list = list.filter((c) => (c.avgRating ?? 0) >= minRating);
-    if (durationFilter) {
-      const bucket = DURATION_BUCKETS.find((b) => b.id === durationFilter);
-      if (bucket) list = list.filter((c) => bucket.test(c.durationMinutes));
-    }
-    const sorted = [...list];
+    const sorted = browsableAll.filter((c) => c.title.toLowerCase().includes(search.toLowerCase()));
     if (sort === "rating") sorted.sort((a, b) => (b.avgRating ?? -1) - (a.avgRating ?? -1));
     else if (sort === "newest") sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     else sorted.sort((a, b) => (b._count?.enrollments ?? 0) - (a._count?.enrollments ?? 0) || (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
     return sorted;
-  }, [browsableAll, search, subjectFilter, freeOnly, levelFilter, minRating, durationFilter, sort]);
+  }, [browsableAll, search, sort]);
 
   const enrolledCourses = useMemo(
     () => enrollments.map((e) => e.course).filter((c) => c.title.toLowerCase().includes(search.toLowerCase()) && courseMatchesProfile(c, profile)),
     [enrollments, search, profile],
   );
 
-  const nActive = (subjectFilter ? 1 : 0) + (freeOnly ? 1 : 0) + (levelFilter ? 1 : 0) + (minRating != null ? 1 : 0) + (durationFilter ? 1 : 0);
   const segmentContext = profile?.subsegmentId ? nameMap.get(profile.subsegmentId) : profile?.segmentId ? nameMap.get(profile.segmentId) : null;
   const selectorLabel = segmentContext ?? "All classes";
 
@@ -323,7 +289,6 @@ export default function StudentCoursesPage() {
       const updated = await usersApi.updateMe({ segmentId: segId, subsegmentId: subId });
       setProfile(updated);
       setSelectorOpen(false);
-      setSubjectFilter(null);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to switch class");
@@ -343,134 +308,6 @@ export default function StudentCoursesPage() {
       setEnrollingId(null);
     }
   }
-
-  function clearFilters() {
-    setSubjectFilter(null);
-    setFreeOnly(false);
-    setLevelFilter(null);
-    setMinRating(null);
-    setDurationFilter(null);
-  }
-
-  const activeChips = [
-    ...(subjectFilter ? [{ id: "subject", label: nameMap.get(subjectFilter) ?? "Subject", clear: () => setSubjectFilter(null) }] : []),
-    ...(freeOnly ? [{ id: "free", label: "Free only", clear: () => setFreeOnly(false) }] : []),
-    ...(levelFilter ? [{ id: "level", label: levelFilter, clear: () => setLevelFilter(null) }] : []),
-    ...(minRating != null ? [{ id: "rating", label: `★ ${minRating}+`, clear: () => setMinRating(null) }] : []),
-    ...(durationFilter ? [{ id: "duration", label: DURATION_BUCKETS.find((b) => b.id === durationFilter)?.label ?? "Duration", clear: () => setDurationFilter(null) }] : []),
-  ];
-
-  const filterPanel = (
-    <div style={{ display: "grid", gap: 22 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ fontSize: 15, fontWeight: 800 }}>Filters</div>
-        {nActive > 0 && (
-          <button onClick={clearFilters} style={{ fontSize: 12, fontWeight: 700, color: "var(--orange)", background: "none", border: "none", cursor: "pointer" }}>
-            Clear all
-          </button>
-        )}
-      </div>
-
-      {subjectFacets.length > 0 && (
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Subject</div>
-          <div style={{ display: "grid", gap: 6 }}>
-            {subjectFacets.map((f) => {
-              const on = subjectFilter === f.id;
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => setSubjectFilter(on ? null : f.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "9px 12px",
-                    borderRadius: "var(--rs)",
-                    border: on ? "1px solid var(--orange)" : "1px solid var(--line)",
-                    background: on ? "var(--orange-soft)" : "var(--card)",
-                    color: on ? "var(--orange-deep)" : "var(--ink2)",
-                    fontSize: 13,
-                    fontWeight: on ? 700 : 600,
-                    fontFamily: "inherit",
-                    cursor: "pointer",
-                  }}
-                >
-                  <span>{f.name}</span>
-                  <span style={{ fontSize: 11, color: on ? "var(--orange-deep)" : "var(--ink3)" }}>{f.count}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Level</div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {LEVELS.map((l) => {
-            const on = levelFilter === l.value;
-            return (
-              <button
-                key={l.value}
-                onClick={() => setLevelFilter(on ? null : l.value)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 999,
-                  border: on ? "1px solid var(--orange)" : "1px solid var(--line)",
-                  background: on ? "var(--orange-soft)" : "var(--card)",
-                  color: on ? "var(--orange-deep)" : "var(--ink2)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  fontFamily: "inherit",
-                  cursor: "pointer",
-                }}
-              >
-                {l.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Price</div>
-        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>
-          <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} style={{ width: 16, height: 16, accentColor: "var(--orange)" }} />
-          Free only
-        </label>
-      </div>
-
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Rating</div>
-        <div style={{ display: "grid", gap: 8 }}>
-          {[4.5, 4.0].map((r) => (
-            <label key={r} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>
-              <input type="radio" name="minRating" checked={minRating === r} onChange={() => setMinRating(minRating === r ? null : r)} style={{ width: 15, height: 15, accentColor: "var(--orange)" }} />
-              ★ {r.toFixed(1)} &amp; up
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>Duration</div>
-        <div style={{ display: "grid", gap: 8 }}>
-          {DURATION_BUCKETS.map((b) => (
-            <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>
-              <input
-                type="checkbox"
-                checked={durationFilter === b.id}
-                onChange={() => setDurationFilter(durationFilter === b.id ? null : b.id)}
-                style={{ width: 16, height: 16, accentColor: "var(--orange)" }}
-              />
-              {b.label}
-            </label>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <main className="fade-in mobile-page-pad" style={{ padding: "30px 30px 60px" }}>
@@ -593,26 +430,12 @@ export default function StudentCoursesPage() {
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "232px 1fr", gap: 26, alignItems: "start" }} className="catalog-shell">
-            {/* Filter sidebar (desktop) */}
-            <aside className="catalog-filters" style={{ position: "sticky", top: 20 }}>
-              {filterPanel}
-            </aside>
-
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink2)" }}>
                   {browsable.length} course{browsable.length === 1 ? "" : "s"}
-                  {subjectFilter && <span style={{ color: "var(--ink3)", fontWeight: 600 }}> in {nameMap.get(subjectFilter)}</span>}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <button
-                    className="catalog-filter-toggle"
-                    onClick={() => setFiltersOpen(true)}
-                    style={{ display: "none", alignItems: "center", gap: 6, padding: "8px 14px", border: "1px solid var(--line)", background: "var(--card)", borderRadius: "var(--rs)", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
-                  >
-                    Filters{nActive > 0 ? ` · ${nActive}` : ""}
-                  </button>
                   <span style={{ fontSize: 12.5, color: "var(--ink3)", fontWeight: 600 }}>Sort</span>
                   <select
                     value={sort}
@@ -626,31 +449,16 @@ export default function StudentCoursesPage() {
                 </div>
               </div>
 
-              {activeChips.length > 0 && (
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16, alignItems: "center" }}>
-                  {activeChips.map((c) => (
-                    <span
-                      key={c.id}
-                      onClick={c.clear}
-                      style={{ fontSize: 11.5, fontWeight: 700, background: "var(--ink)", color: "#fff", borderRadius: 999, padding: "6px 12px", cursor: "pointer" }}
-                    >
-                      {c.label} ✕
-                    </span>
-                  ))}
-                  <span onClick={clearFilters} style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange-deep)", cursor: "pointer", padding: "6px 4px" }}>
-                    Clear
-                  </span>
-                </div>
-              )}
-
               {enrollments.length === 0 && enrolledCourses.length === 0 && (
                 <p style={{ color: "var(--ink2)", marginBottom: 20, fontSize: 13.5 }}>You haven&apos;t enrolled in any courses yet — browse below.</p>
               )}
 
               {browsable.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--ink3)" }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>No courses match these filters</div>
-                  <div style={{ fontSize: 13 }}>Try clearing filters or a different search.</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>
+                    {search ? "No courses match your search" : "No courses available yet"}
+                  </div>
+                  <div style={{ fontSize: 13 }}>{search ? "Try a different search term." : "Check back soon."}</div>
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
@@ -660,28 +468,9 @@ export default function StudentCoursesPage() {
                 </div>
               )}
             </div>
-          </div>
         </>
       )}
 
-      {/* Mobile filter sheet */}
-      {filtersOpen && (
-        <div onClick={() => setFiltersOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(20,18,16,.5)", zIndex: 300, display: "flex", alignItems: "flex-end" }}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="pop-in"
-            style={{ background: "var(--card)", width: "100%", borderRadius: "var(--rl) var(--rl) 0 0", padding: "22px 20px 30px", maxHeight: "80vh", overflowY: "auto" }}
-          >
-            {filterPanel}
-            <button
-              onClick={() => setFiltersOpen(false)}
-              style={{ width: "100%", marginTop: 22, padding: "12px", background: "var(--ink)", color: "#fff", border: "none", borderRadius: "var(--rs)", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
-            >
-              Show {browsable.length} course{browsable.length === 1 ? "" : "s"}
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
