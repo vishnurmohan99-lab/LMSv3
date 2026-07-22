@@ -8,3 +8,6 @@ build/
 .turbo/
 .DS_Store
 Thumbs.db
+
+# Demo-seed archives (the live manifest IS committed so the undo path survives)
+apps/api/prisma/demo/demo-manifest.removed-*.json
