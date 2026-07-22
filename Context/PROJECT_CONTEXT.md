@@ -840,6 +840,12 @@ the **Feature history** and **Current Prisma data model** sections above.
   now set **`"deploymentEnabled": false`** (boolean, all branches). Deploys have always been
   manual `vercel --prod --yes`, so git-triggered builds were never wanted. Self-applying —
   a branch carrying the fix suppresses its own preview.
+  Proven both ways on 2026-07-22 (main `bcdca30`, PR
+  [#5](https://github.com/vishnurmohan99-lab/LMSv3/pull/5)): `gh pr checks 4` shows two
+  failed Vercel checks, `gh pr checks 5` shows "no checks reported". **And the CLI path
+  still works** — ran `vercel --prod --yes` in apps/admin after merging and it deployed
+  READY, which was the risk worth checking: `git.deploymentEnabled` governs only the Git
+  integration, not CLI deploys.
 - **Admin Reports: second review pass — self-contradicting rows, stale labels (2026-07-22).**
   Follow-up on the same PR; a whole-file review of the reports feature caught six defects,
   four of them introduced by the hardening commit below.
