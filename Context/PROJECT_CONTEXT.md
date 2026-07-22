@@ -756,6 +756,39 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Admin Reports: second review pass — self-contradicting rows, stale labels (2026-07-22).**
+  Follow-up on the same PR; a whole-file review of the reports feature caught six defects,
+  four of them introduced by the hardening commit below.
+  **The segment table could contradict itself**: `enrollments` is filtered by enrolment date
+  but `completions` counts any enrolment that *finished* in the window, so a row read
+  "students 0, enrollments 0, completions 1" (reproducible on live data for Cllass 10 under
+  Last 30 days). The data was right and the header was wrong — these are three independent
+  event counts, not a funnel — so the columns are now **NEW STUDENTS / NEW ENROLMENTS /
+  COMPLETIONS** with a caption saying the table counts events in the period. Fixed at the
+  label, not by re-breaking the completions metric.
+  **Tiles and CSV filename now read `report.range`, not the selected chip.** They differ
+  while a switch is in flight and stay differing if it failed — the tiles were captioning
+  stale all-time figures "last 30 days", and the CSV was named for a range it did not
+  contain. (The cleanup flag added below covered `setReport` but not these two.)
+  `trendLabel` is now **optional** in both api clients with a client-side fallback — admin
+  (Vercel) and api (Render) deploy independently, so an admin build that lands first would
+  have rendered a blank chart heading.
+  The attempts query gained `maxScore: { gt: 0 }`. It previously used `maxScore || 1`, so a
+  zero-question test would score 500% and land in the "81-100" bucket while the segment
+  average (which requires `maxScore > 0`) dropped it — same rows, two answers on one page.
+  Latent, not active: live data has 0 such attempts.
+  CSV gained a **UTF-8 BOM and CRLF** terminators (Excel on Windows ignores the charset and
+  mojibakes non-ASCII segment names — this is an Indian LMS, segment names are free text).
+  The `__unassigned__` **magic string is gone**: the row now carries `segmentId: null` +
+  `isUnassigned: boolean`, and only appears when an orphaned course actually saw activity
+  (it was rendering as a permanent all-zero row and a junk CSV line).
+  Verified: SQL still matches the old logic on ALL/QUARTER/YTD, `isUnassigned` returns a real
+  boolean, the null-segmentId row shape is correct, and the zero-activity Unassigned row is
+  gone from all four ranges. All three apps typecheck. Still NOT browser-verified.
+  **Known and NOT fixed** (filed, not actioned): `course_progress` still full-scans LessonView
+  every request with no index for its GROUP BY; the ALL trend still loads every enrolment row;
+  `getFacultyReport` is still N+1 (two sequential queries per course); faculty `enrolledCount`
+  is the batch's platform-wide total shown per-course.
 - **Admin Reports hardening — code-review fixes on the range/segment/CSV work (2026-07-22).**
   No migration, no new endpoints. Fifteen review findings against the 2026-07-16 commit.
   API: `getSegmentBreakdown()` is now a **single `$queryRaw` Postgres aggregate** — the old

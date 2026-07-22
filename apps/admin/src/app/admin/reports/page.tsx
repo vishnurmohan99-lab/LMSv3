@@ -5,19 +5,14 @@ import { reportsApi, ApiError, type AdminReport, type ReportRange } from "@/lib/
 
 const BAR_TRACK_HEIGHT = 120;
 
-const RANGES: { v: ReportRange; label: string }[] = [
-  { v: "RANGE_30", label: "Last 30 days" },
-  { v: "QUARTER", label: "Last quarter" },
-  { v: "YTD", label: "Year to date" },
-  { v: "ALL", label: "All time" },
+const RANGES: { v: ReportRange; label: string; note: string }[] = [
+  { v: "RANGE_30", label: "Last 30 days", note: "last 30 days" },
+  { v: "QUARTER", label: "Last quarter", note: "last quarter" },
+  { v: "YTD", label: "Year to date", note: "year to date" },
+  { v: "ALL", label: "All time", note: "all time" },
 ];
 
-const RANGE_NOTE: Record<ReportRange, string> = {
-  RANGE_30: "last 30 days",
-  QUARTER: "last quarter",
-  YTD: "year to date",
-  ALL: "all time",
-};
+const noteFor = (r: ReportRange) => RANGES.find((x) => x.v === r)?.note ?? "all time";
 
 /**
  * Quote a CSV field. Excel and Sheets evaluate a cell that starts with = + - @
@@ -101,13 +96,17 @@ export default function AdminReportsPage() {
   /** Export the per-segment table as CSV — quotes fields so names with commas survive. */
   function exportCsv() {
     if (!report) return;
-    const header = ["Segment", "Students", "Enrollments", "Completions", "Avg score %"];
+    const header = ["Segment", "New students", "New enrolments", "Completions", "Avg score %"];
     const rows = report.segmentBreakdown.map((r) => [r.name, r.students, r.enrollments, r.completions, r.avgScore]);
-    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+    // CRLF per RFC 4180, and a BOM because Excel on Windows ignores the charset and
+    // decodes as the system codepage — non-ASCII segment names arrive as mojibake without it.
+    const csv = "﻿" + [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `reports-${range.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`;
+    // report.range, not range: they differ while a switch is in flight or after one failed,
+    // and the filename must describe the rows actually being written.
+    a.download = `reports-${report.range.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`;
     // Firefox only downloads an anchor that is in the document, and revoking the
     // URL in the same tick can cancel the download before it starts.
     document.body.appendChild(a);
@@ -117,8 +116,12 @@ export default function AdminReportsPage() {
   }
 
   const completionPct = report ? Math.round(report.batchCompletion.rate * 100) : 0;
-  const rangeNote = RANGE_NOTE[range];
-  const showNotes = range !== "ALL";
+  // Label the range the data is FROM, not the chip that is selected. The two differ
+  // while a switch is in flight and stay differing if it failed — captioning stale
+  // all-time figures as "last 30 days" is worse than showing them unlabelled.
+  const shownRange = report?.range ?? range;
+  const rangeNote = noteFor(shownRange);
+  const showNotes = shownRange !== "ALL";
 
   return (
     <div style={{ padding: "30px 30px 60px", maxWidth: 1100, margin: "0 auto" }}>
@@ -199,7 +202,8 @@ export default function AdminReportsPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 18, marginBottom: 18 }}>
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", padding: 24 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>{report.trendLabel}</div>
+          {/* Fallback: this app can deploy ahead of an API that has no trendLabel yet. */}
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>{report.trendLabel ?? `Enrollments — ${rangeNote}`}</div>
           <BarChart data={report.enrollmentTrend} labelKey="period" valueKey="count" />
         </div>
 
@@ -242,7 +246,13 @@ export default function AdminReportsPage() {
 
       {/* Per-segment rollup — the design's "By segment" table. */}
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--rl)", marginTop: 18, overflow: "hidden" }}>
-        <div style={{ fontSize: 15, fontWeight: 700, padding: "20px 24px 14px" }}>By segment</div>
+        <div style={{ padding: "20px 24px 14px" }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>By segment</div>
+          {/* These are three independent event counts, not a funnel — a segment can record
+              a completion in a window where nobody new enrolled. Saying so up front stops
+              a row like "0 new enrolments, 1 completion" reading as a bug. */}
+          <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 3 }}>Counts what happened in the {rangeNote} — each column is its own event.</div>
+        </div>
         {report.segmentBreakdown.length === 0 ? (
           <p style={{ color: "var(--ink3)", fontSize: 13, padding: "0 24px 22px" }}>No segments yet.</p>
         ) : (
@@ -250,14 +260,14 @@ export default function AdminReportsPage() {
             <div style={{ minWidth: 560 }}>
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", padding: "10px 24px", fontSize: 10.5, fontWeight: 700, letterSpacing: 0.6, color: "var(--ink3)", borderBottom: "1px solid var(--line)" }}>
                 <span>SEGMENT</span>
-                <span>STUDENTS</span>
-                <span>ENROLLMENTS</span>
+                <span>NEW STUDENTS</span>
+                <span>NEW ENROLMENTS</span>
                 <span>COMPLETIONS</span>
                 <span>AVG SCORE</span>
               </div>
               {report.segmentBreakdown.map((r) => (
-                <div key={r.segmentId} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", alignItems: "center", padding: "13px 24px", borderBottom: "1px solid var(--line2)", fontSize: 13 }}>
-                  <span style={{ fontWeight: 700, color: r.segmentId === "__unassigned__" ? "var(--ink3)" : "var(--ink)" }}>{r.name}</span>
+                <div key={r.segmentId ?? "unassigned"} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", alignItems: "center", padding: "13px 24px", borderBottom: "1px solid var(--line2)", fontSize: 13 }}>
+                  <span style={{ fontWeight: 700, color: r.isUnassigned ? "var(--ink3)" : "var(--ink)" }}>{r.name}</span>
                   <span>{r.students}</span>
                   <span>{r.enrollments}</span>
                   <span>{r.completions}</span>
