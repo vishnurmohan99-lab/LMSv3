@@ -1,8 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
-    "deploymentEnabled": {
-      "main": false
-    }
+    "_comment": "Deploys are run manually with `vercel --prod --yes` from apps/admin and apps/web. Git-triggered deploys are off entirely: `false` rather than `{ main: false }`, because the object form only covered main and let every branch push start a preview build. Those previews build from the repo root (the projects have no Root Directory set), then fail looking for .next/routes-manifest.json there instead of in apps/*/.next — so every PR showed two red checks for builds nobody wanted.",
+    "deploymentEnabled": false
   }
 }

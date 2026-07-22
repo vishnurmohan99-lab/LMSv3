@@ -801,8 +801,26 @@ the **Feature history** and **Current Prisma data model** sections above.
   rows to the full-scan version on all 4 ranges; batch counts match; the faculty report is
   identical for the only faculty with courses (7 courses); the batch dedup passes 5 cases
   including the both-keys overlap, which live data never exercises.
-  **Speedup is NOT demonstrated** — at 30 lesson views the narrowed and full-scan queries
-  time the same (~255ms, all network). The rewrites are proven equivalent, not proven faster.
+  **Speedup measured 2026-07-22** (superseding the earlier "not demonstrated" note). Seeded
+  an isolated `bench` schema on the same Neon instance — 330k lesson views, 60k enrolments,
+  50k attempts, 12.8k lessons, 20k students of whom **1.5k active in the last 30 days** —
+  mirroring production's exact index set, then dropped it (`public` never touched, db back
+  to 13 MB). Numbers:
+  - **Segment rollup, RANGE_30: 3.0x** — server-side `EXPLAIN ANALYZE` 208ms vs 633ms. The
+    narrowed plan reads 60,000 LessonView rows via `Bitmap Index Scan on
+    LessonView_viewedAt_idx`; the old shape seq-scans all 330,000. Identical 40-row output.
+  - **Score histogram: 33x** — 340ms vs 11,196ms, because the old shape shipped 50,000 rows
+    to Node to produce five integers.
+  - **Enrolment trend: 3.1x** — 15,663 rows fetched instead of 60,000.
+  - **Faculty N+1: 40x on latency alone** — 80 sequential round-trips 21.3s vs 2 at 0.53s.
+  **Read the ratios with care.** These ran from a local machine in India against Neon, so
+  network latency dominates: the histogram/trend/N+1 ratios are row-transfer-bound and will
+  be much smaller in absolute terms from Render (same-region, low RTT), though the ratios
+  hold. Only the segment number (208ms vs 633ms) is network-independent and therefore the
+  most trustworthy. The gain there scales with the **churn ratio** — 1.5k active of 20k
+  students. A platform where most students are active in-window would see far less.
+  The ALL range measured 1.41x, which is noise: narrowing is a deliberate no-op there.
+  Benchmark script is not committed; it lives in the session scratchpad.
 - **DEPLOY 2026-07-22 — main `b123606`.** First work in this repo to go through a PR
   ([#3](https://github.com/vishnurmohan99-lab/LMSv3/pull/3)) instead of straight to main;
   rebase-merged, so main gained `20fd140` (hardening) then `b123606` (review fixes).
@@ -814,12 +832,14 @@ the **Feature history** and **Current Prisma data model** sections above.
   per-request `rndr-id`), so there is no unauthenticated way to tell the new API build from
   the old one. Confirm by loading the admin Reports page and checking the segment table header
   reads NEW ENROLMENTS with no all-zero "Unassigned" row.
-  **Gotcha found:** pushing a *branch* re-enables Vercel preview builds, and they fail —
-  `vercel.json` sets `deploymentEnabled: { main: false }`, which only disables `main`. The
-  previews build from the repo root and then look for `.next/routes-manifest.json` there,
-  but the output lives in `apps/{admin,web}/.next` (project Root Directory is unset). Harmless
-  to the CLI deploy path, but every future PR will show two red checks until the Vercel
-  projects get their Root Directory set.
+  **Gotcha found (FIXED 2026-07-22):** pushing a *branch* re-enabled Vercel preview builds,
+  and they failed — all three `vercel.json` files set `deploymentEnabled: { main: false }`,
+  which only disables `main`. Previews build from the repo root and then look for
+  `.next/routes-manifest.json` there, but the output lives in `apps/{admin,web}/.next`
+  (project Root Directory is unset). Fixed in the repo rather than the dashboard: all three
+  now set **`"deploymentEnabled": false`** (boolean, all branches). Deploys have always been
+  manual `vercel --prod --yes`, so git-triggered builds were never wanted. Self-applying —
+  a branch carrying the fix suppresses its own preview.
 - **Admin Reports: second review pass — self-contradicting rows, stale labels (2026-07-22).**
   Follow-up on the same PR; a whole-file review of the reports feature caught six defects,
   four of them introduced by the hardening commit below.
