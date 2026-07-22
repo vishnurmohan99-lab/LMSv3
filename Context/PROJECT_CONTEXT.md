@@ -756,6 +756,23 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **DEPLOY 2026-07-22 — main `b123606`.** First work in this repo to go through a PR
+  ([#3](https://github.com/vishnurmohan99-lab/LMSv3/pull/3)) instead of straight to main;
+  rebase-merged, so main gained `20fd140` (hardening) then `b123606` (review fixes).
+  Vercel prod deployed manually for admin + web as usual. **Verified**: the live admin bundle
+  (`/_next/static/chunks/0mqfa1h2vegjn.js`) contains both `NEW ENROLMENTS` and `isUnassigned`,
+  so the newest commit is genuinely serving — not a stale build.
+  **NOT verified**: which build Render is serving. `/reports/admin` is ADMIN-guarded and the
+  API exposes no version marker (`/` returns a static "Hello World!", headers carry only a
+  per-request `rndr-id`), so there is no unauthenticated way to tell the new API build from
+  the old one. Confirm by loading the admin Reports page and checking the segment table header
+  reads NEW ENROLMENTS with no all-zero "Unassigned" row.
+  **Gotcha found:** pushing a *branch* re-enables Vercel preview builds, and they fail —
+  `vercel.json` sets `deploymentEnabled: { main: false }`, which only disables `main`. The
+  previews build from the repo root and then look for `.next/routes-manifest.json` there,
+  but the output lives in `apps/{admin,web}/.next` (project Root Directory is unset). Harmless
+  to the CLI deploy path, but every future PR will show two red checks until the Vercel
+  projects get their Root Directory set.
 - **Admin Reports: second review pass — self-contradicting rows, stale labels (2026-07-22).**
   Follow-up on the same PR; a whole-file review of the reports feature caught six defects,
   four of them introduced by the hardening commit below.
