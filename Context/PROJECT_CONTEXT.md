@@ -756,6 +756,28 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Student subscription page rebuilt to the mockup's Plans screen (2026-07-22).**
+  Ported `Design System/Student - All Screens.dc.html` → "2 · SUBSCRIPTION / PLANS". The page
+  was a card grid → detail view → confirm dialog; it is now the mockup's **three states**:
+  plans grid → inline confirm step → success state.
+  Card treatments match the mockup's computed values: plain `1px var(--line)`, current plan
+  `2px var(--orange)` + shadow + CURRENT PLAN badge, top tier dark `var(--ink)` (#1c1915).
+  The dark treatment is **data-driven** — it goes to the richest plan the student is not on
+  (most courses + tests), not to a hardcoded third column.
+  Also ported: the feature-comparison table, the from→to chips, and the "← Back to plans"
+  affordance. Verified in-browser across all three states by rendering the real component
+  against a stubbed API from a temporary route (since deleted), not a copy of the JSX.
+  **Deliberately NOT copied — the pricing.** The mockup prices tiers at ₹0/₹399/₹899 per
+  month and shows a prorated credit (`₹899 − ₹186 = ₹713 due today`). `Subscription` has no
+  price or billing-cycle field, so printing that would be invented money on a student-facing
+  screen. Those slots now carry real figures instead: course count as the headline, and the
+  switch delta (courses gained / already held) where the proration sat. **To make the mockup
+  literal, `Subscription` needs `priceCents` + a billing cycle, an admin form field, and
+  something to prorate against — a feature, not a UI tweak. The layout already has the slots.**
+  **Known mismatch:** the API has `subscribe` but no unsubscribe, and `SubscriptionEnrollment`
+  is additive — a student can hold several plans at once. "Switch plan" therefore *adds* the
+  target plan rather than replacing the current one. The UI uses the mockup's "switch"
+  language; making it genuinely exclusive needs a backend change.
 - **DEMO DATA seeded for the pre-production walkthrough (2026-07-22).**
   `apps/api/prisma/demo/seed-demo.js` + `seed-demo-undo.js`. **11,289 rows across 41 tables**,
   already live in Neon. Additive only — nothing pre-existing was modified or deleted.
