@@ -54,14 +54,29 @@ export class SubscriptionsService {
 
   create(dto: CreateSubscriptionDto) {
     return withUniqueNameCheck(
-      () => this.prisma.subscription.create({ data: { title: dto.title.trim(), description: dto.description ?? '' } }),
+      () =>
+        this.prisma.subscription.create({
+          data: {
+            title: dto.title.trim(),
+            description: dto.description ?? '',
+            priceCents: dto.priceCents ?? null,
+            features: (dto.features ?? []).map((f) => f.trim()).filter(Boolean),
+          },
+        }),
       'subscription',
     );
   }
 
   async update(id: string, dto: UpdateSubscriptionDto) {
     await this.requireSubscription(id);
-    return withUniqueNameCheck(() => this.prisma.subscription.update({ where: { id }, data: dto }), 'subscription');
+    // Spreading the dto straight in would write `undefined` keys as no-ops but also let a
+    // stray key through; build the patch explicitly so only known fields are updated.
+    const data: Parameters<typeof this.prisma.subscription.update>[0]['data'] = {};
+    if (dto.title !== undefined) data.title = dto.title.trim();
+    if (dto.description !== undefined) data.description = dto.description;
+    if (dto.priceCents !== undefined) data.priceCents = dto.priceCents;
+    if (dto.features !== undefined) data.features = dto.features.map((f) => f.trim()).filter(Boolean);
+    return withUniqueNameCheck(() => this.prisma.subscription.update({ where: { id }, data }), 'subscription');
   }
 
   async remove(id: string) {

@@ -33,7 +33,7 @@
   --purple-bright: #a284ff; /* 400 · dark surfaces */
 
   /* Semantic */
-  --green: #0e7a48;     --green-soft: #e6f6ee;   /* success */
+  --green: #0e7a48;     --green-soft: #e6f6ee;   --green-bright: #2cd396;  /* success · -bright for dark surfaces, per the mockup's plan card */
   --amber: #dd8b12;     --amber-soft: #fdf0dd;   --amber-ink: #a35a06;  /* warning */
   --red: #dc4040;       --red-soft: #fde9ea;     --red-ink: #ab2530;  --red-line: #f4d0d4;  /* danger */
   --blue: #2e7de0;      --blue-soft: #e7f0fc;    /* info */

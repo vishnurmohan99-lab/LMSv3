@@ -16,6 +16,9 @@ import { subscriptionsApi, ApiError, type Subscription, type SubscriptionDetail 
 
 type View = "plans" | "confirm" | "done";
 
+/** paise → ₹ in whole rupees, matching the catalog's price formatting. */
+const formatPrice = (paise: number) => `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
+
 /** Plain / highlighted / dark, mirroring the mockup's three card treatments. */
 type Tone = "plain" | "current" | "premium";
 
@@ -28,7 +31,8 @@ function Check({ on }: { on: boolean }) {
 function PlanFeature({ on, children, dark }: { on: boolean; children: React.ReactNode; dark?: boolean }) {
   return (
     <div style={{ display: "flex", gap: 8, fontSize: 13, color: on ? (dark ? "#e8e5e0" : "var(--ink2)") : "var(--ink3)" }}>
-      <span style={{ color: on ? (dark ? "var(--green)" : "var(--green)") : "var(--line)", fontWeight: 700, flex: "none" }}>
+      {/* --green is ~2.2:1 on the dark card; --green-bright is the mockup's on-dark green. */}
+      <span style={{ color: on ? (dark ? "var(--green-bright)" : "var(--green)") : "var(--line)", fontWeight: 700, flex: "none" }}>
         {on ? "✓" : "✕"}
       </span>
       <span>{children}</span>
@@ -196,6 +200,12 @@ export default function StudentSubscriptionPage() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 9, marginTop: 18, fontSize: 13, fontWeight: 500 }}>
+              {target.priceCents != null && (
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <span style={{ color: "var(--ink2)" }}>{target.title} · monthly</span>
+                  <span style={{ fontWeight: 700 }}>{formatPrice(target.priceCents)}</span>
+                </div>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                 <span style={{ color: "var(--ink2)" }}>Courses in {target.title}</span>
                 <span style={{ fontWeight: 700 }}>{target._count.courses}</span>
@@ -311,26 +321,47 @@ export default function StudentSubscriptionPage() {
                   )}
                   <div style={{ fontSize: 15, fontWeight: 700 }}>{p.title}</div>
                   <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8, letterSpacing: -0.5 }}>
-                    {p._count.courses}
-                    <span style={{ fontSize: 12, fontWeight: 400, color: dark ? "#a8a29a" : "var(--ink3)" }}>
-                      {" "}course{p._count.courses === 1 ? "" : "s"}
-                    </span>
+                    {p.priceCents == null ? (
+                      <>
+                        {p._count.courses}
+                        <span style={{ fontSize: 12, fontWeight: 400, color: dark ? "#a8a29a" : "var(--ink3)" }}>
+                          {" "}course{p._count.courses === 1 ? "" : "s"}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {formatPrice(p.priceCents)}
+                        <span style={{ fontSize: 12, fontWeight: 400, color: dark ? "#a8a29a" : "var(--ink3)" }}>/mo</span>
+                      </>
+                    )}
                   </div>
                   {p.description && (
                     <p style={{ fontSize: 12.5, lineHeight: 1.5, color: dark ? "#a8a29a" : "var(--ink3)", marginTop: 6 }}>{p.description}</p>
                   )}
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16, flex: 1 }}>
-                    <PlanFeature on dark={dark}>
-                      {p._count.courses} course{p._count.courses === 1 ? "" : "s"} unlocked
-                    </PlanFeature>
-                    <PlanFeature on={p._count.tests > 0} dark={dark}>
-                      {p._count.tests > 0 ? `${p._count.tests} mock test${p._count.tests === 1 ? "" : "s"}` : "No mock tests"}
-                    </PlanFeature>
-                    <PlanFeature on={paid > 0} dark={dark}>
-                      {paid > 0 ? `${paid} paid course${paid === 1 ? "" : "s"} included` : "Free courses only"}
-                    </PlanFeature>
-                    <PlanFeature on dark={dark}>AI notes, flashcards &amp; doubt solver</PlanFeature>
+                    {/* Admin-authored bullets when set; otherwise fall back to facts derived
+                        from what the plan actually contains, so the card is never empty. */}
+                    {p.features && p.features.length > 0 ? (
+                      p.features.map((f, i) => (
+                        <PlanFeature key={i} on dark={dark}>
+                          {f}
+                        </PlanFeature>
+                      ))
+                    ) : (
+                      <>
+                        <PlanFeature on dark={dark}>
+                          {p._count.courses} course{p._count.courses === 1 ? "" : "s"} unlocked
+                        </PlanFeature>
+                        <PlanFeature on={p._count.tests > 0} dark={dark}>
+                          {p._count.tests > 0 ? `${p._count.tests} mock test${p._count.tests === 1 ? "" : "s"}` : "No mock tests"}
+                        </PlanFeature>
+                        <PlanFeature on={paid > 0} dark={dark}>
+                          {paid > 0 ? `${paid} paid course${paid === 1 ? "" : "s"} included` : "Free courses only"}
+                        </PlanFeature>
+                        <PlanFeature on dark={dark}>AI notes, flashcards &amp; doubt solver</PlanFeature>
+                      </>
+                    )}
                   </div>
 
                   {p.subscribed ? (

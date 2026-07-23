@@ -1538,6 +1538,10 @@ export interface Subscription {
   id: string;
   title: string;
   description: string;
+  /** Monthly price in paise. Null = unpriced; the plan card shows its course count instead. */
+  priceCents?: number | null;
+  /** Plan-card bullets. Empty = card falls back to facts derived from the plan's contents. */
+  features?: string[];
   createdAt: string;
   updatedAt: string;
   _count: { courses: number; tests: number; enrollments: number };

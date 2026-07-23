@@ -1045,6 +1045,12 @@ model Subscription {
   id          String   @id @default(uuid())
   title       String   @unique
   description String   @default("")
+  /// Monthly price in paise. Null = not priced; the plan card then shows its course count
+  /// instead of a figure, rather than implying it is free.
+  priceCents  Int?
+  /// Marketing bullets shown on the plan card, in order. Empty = the card falls back to
+  /// facts derived from the plan's contents (course count, mock tests, paid courses).
+  features    String[] @default([])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -62,6 +62,10 @@ export default function AdminSubscriptionsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  // Rupees in the form, paise on the wire. Blank = unpriced (the plan card then shows
+  // its course count rather than implying the plan is free).
+  const [price, setPrice] = useState("");
+  const [features, setFeatures] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -69,6 +73,8 @@ export default function AdminSubscriptionsPage() {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [eTitle, setETitle] = useState("");
   const [eDescription, setEDescription] = useState("");
+  const [ePrice, setEPrice] = useState("");
+  const [eFeatures, setEFeatures] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   function load() {
@@ -85,16 +91,22 @@ export default function AdminSubscriptionsPage() {
   function openAdd() {
     setTitle("");
     setDescription("");
+    setPrice("");
+    setFeatures("");
     setSaveError(null);
     setShowAdd(true);
   }
+
+  /** Blank stays unpriced; anything else is rupees → paise. */
+  const toPaise = (v: string) => (v.trim() === "" ? null : Math.round(Number(v) * 100));
+  const toFeatures = (v: string) => v.split("\n").map((f) => f.trim()).filter(Boolean);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setSaveError(null);
     try {
-      await subscriptionsApi.create({ title, description });
+      await subscriptionsApi.create({ title, description, priceCents: toPaise(price), features: toFeatures(features) });
       setShowAdd(false);
       load();
     } catch (err) {
@@ -108,6 +120,8 @@ export default function AdminSubscriptionsPage() {
     setEditSub(sub);
     setETitle(sub.title);
     setEDescription(sub.description ?? "");
+    setEPrice(sub.priceCents == null ? "" : String(sub.priceCents / 100));
+    setEFeatures((sub.features ?? []).join("\n"));
     setSaveError(null);
   }
 
@@ -117,7 +131,7 @@ export default function AdminSubscriptionsPage() {
     setSavingEdit(true);
     setSaveError(null);
     try {
-      await subscriptionsApi.update(editSub.id, { title: eTitle, description: eDescription });
+      await subscriptionsApi.update(editSub.id, { title: eTitle, description: eDescription, priceCents: toPaise(ePrice), features: toFeatures(eFeatures) });
       setEditSub(null);
       load();
     } catch (err) {
@@ -154,6 +168,21 @@ export default function AdminSubscriptionsPage() {
               onChange={(e) => setDescription(e.target.value)}
               style={{ ...inputStyle, minHeight: 90, resize: "vertical" }}
             />
+            <input
+              type="number"
+              min={0}
+              step={1}
+              placeholder="Price per month in ₹ (leave blank if not priced)"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              style={inputStyle}
+            />
+            <textarea
+              placeholder={"Plan features, one per line\ne.g. Unlimited mock tests\nWeekly 1-on-1 mentor"}
+              value={features}
+              onChange={(e) => setFeatures(e.target.value)}
+              style={{ ...inputStyle, minHeight: 90, resize: "vertical" }}
+            />
             <button
               type="submit"
               disabled={!title.trim() || saving}
@@ -177,6 +206,19 @@ export default function AdminSubscriptionsPage() {
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Description</div>
               <textarea value={eDescription} onChange={(e) => setEDescription(e.target.value)} style={{ ...inputStyle, minHeight: 90, resize: "vertical" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Price per month (₹)</div>
+              <input type="number" min={0} step={1} placeholder="Leave blank if not priced" value={ePrice} onChange={(e) => setEPrice(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>Plan features</div>
+              <textarea
+                placeholder={"One per line — these are the bullets on the student plan card"}
+                value={eFeatures}
+                onChange={(e) => setEFeatures(e.target.value)}
+                style={{ ...inputStyle, minHeight: 100, resize: "vertical" }}
+              />
             </div>
             <p style={{ color: "var(--ink3)", fontSize: 12, margin: 0 }}>Bundle contents (courses &amp; tests) are managed from the subscription page (View).</p>
             <button
