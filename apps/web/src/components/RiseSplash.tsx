@@ -17,7 +17,9 @@ import { useEffect, useState } from "react";
  */
 
 const SESSION_KEY = "rise-splash-shown";
-const HOLD_MS = 1300; // long enough for the rise-in + chevron animations to land
+// The intro animations settle by ~1.2s (chevron drop + lockup fade-up), so this holds a
+// clear beat on the finished screen before fading. ~2.7s total including the fade.
+const HOLD_MS = 2200;
 const FADE_MS = 500; // matches the rise-out keyframe
 
 export default function RiseSplash() {
@@ -43,7 +45,8 @@ export default function RiseSplash() {
     }
 
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const hold = reduce ? 500 : HOLD_MS;
+    // Reduced-motion still sees the screen, just a touch shorter (no intro to wait out).
+    const hold = reduce ? 1200 : HOLD_MS;
     const toFade = setTimeout(() => setPhase("out"), hold);
     const toGone = setTimeout(() => setPhase("gone"), hold + FADE_MS);
     return () => {
