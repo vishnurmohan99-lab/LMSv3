@@ -1245,3 +1245,135 @@ button:active, a:active {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ==========================================================================
+   Rise splash / initial loader — ported from Design System/Splash - Rise(.- Web).
+   Full-bleed launch screen shown on cold load (web tab, Android PWA, iOS PWA).
+   Mobile is a vertical lockup (logo above wordmark); ≥760px switches to the
+   horizontal web lockup. Colours are hardcoded orange on purpose: this screen
+   must look identical regardless of the app theme.
+   ========================================================================== */
+@keyframes rise-in { 0% { opacity: 0; transform: translateY(14px) scale(.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes rise-chev { 0% { opacity: 0; transform: translateY(-18px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes rise-chev-faint { 0% { opacity: 0; transform: translateY(-18px); } 100% { opacity: .4; transform: translateY(0); } }
+@keyframes rise-fade-up { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes rise-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(220%); } }
+@keyframes rise-climb { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes rise-glow-m { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -10px); } }
+@keyframes rise-out { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+
+.rise-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(165deg, #ff9a4d 0%, #f26a1b 52%, #e0540e 100%);
+}
+.rise-splash.rise-splash--out {
+  animation: rise-out .5s ease forwards;
+}
+.rise-glow {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: min(120vw, 560px);
+  height: min(120vw, 560px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 68%);
+  animation: rise-glow-m 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.rise-center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+}
+.rise-logo {
+  width: 132px;
+  height: 132px;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20px 40px rgba(224, 84, 14, .35);
+  animation: rise-in .7s cubic-bezier(.22, 1, .36, 1) both;
+}
+.rise-logo svg { display: block; width: 74px; height: 74px; }
+.rise-chev { animation: rise-chev .6s cubic-bezier(.22, 1, .36, 1) .35s both, rise-climb 2.4s ease-in-out 1.15s infinite; }
+.rise-chev-faint { animation: rise-chev-faint .6s cubic-bezier(.22, 1, .36, 1) .2s both, rise-climb 2.4s ease-in-out 1s infinite; }
+.rise-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  animation: rise-fade-up .7s cubic-bezier(.22, 1, .36, 1) .5s both;
+}
+.rise-word { font-weight: 800; font-size: 42px; letter-spacing: -.03em; color: #fff; line-height: 1; }
+.rise-caption { font-weight: 700; font-size: 11px; letter-spacing: .32em; color: rgba(255, 255, 255, .82); text-transform: uppercase; font-family: var(--font-mono); }
+.rise-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(54px + env(safe-area-inset-bottom));
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: rise-fade-up .7s ease .8s both;
+}
+.rise-track {
+  width: 150px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .28);
+  overflow: hidden;
+  position: relative;
+}
+.rise-track > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 45%;
+  border-radius: 999px;
+  background: #fff;
+  animation: rise-bar 1.4s cubic-bezier(.5, 0, .5, 1) infinite;
+}
+.rise-tagline { font-weight: 600; font-size: 12px; color: rgba(255, 255, 255, .72); }
+
+/* ≥760px: the horizontal web lockup (logo beside wordmark, centred glow, larger type). */
+@media (min-width: 760px) {
+  .rise-glow {
+    top: 50%;
+    width: min(90vw, 900px);
+    height: min(90vw, 900px);
+    background: radial-gradient(circle, rgba(255, 255, 255, .30), rgba(255, 255, 255, 0) 66%);
+    transform: translate(-50%, -50%);
+    animation: none;
+  }
+  .rise-center { flex-direction: row; gap: 30px; animation: rise-in .7s cubic-bezier(.22, 1, .36, 1) both; }
+  .rise-logo { width: 120px; height: 120px; border-radius: 30px; animation: none; box-shadow: 0 20px 44px rgba(224, 84, 14, .32); }
+  .rise-logo svg { width: 68px; height: 68px; }
+  .rise-lockup { align-items: flex-start; gap: 10px; }
+  .rise-word { font-size: 64px; line-height: .9; }
+  .rise-caption { font-size: 13px; letter-spacing: .34em; }
+  .rise-footer { bottom: 56px; }
+  .rise-track { width: 190px; }
+  .rise-tagline { font-size: 13px; }
+}
+
+/* Reduced motion: keep the screen, drop the looping animation. */
+@media (prefers-reduced-motion: reduce) {
+  .rise-glow, .rise-chev, .rise-chev-faint, .rise-track > span { animation: none !important; }
+  .rise-logo, .rise-center, .rise-lockup, .rise-footer { animation: none !important; }
+}

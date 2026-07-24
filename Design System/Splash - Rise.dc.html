@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;height:100%;font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#fff;text-decoration:none}a:hover{color:#ffe3cd}
+@keyframes riseIn{0%{opacity:0;transform:translateY(14px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes chevDrop{0%{opacity:0;transform:translateY(-18px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes chevDropFaint{0%{opacity:0;transform:translateY(-18px)}100%{opacity:.4;transform:translateY(0)}}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes barSlide{0%{transform:translateX(-100%)}100%{transform:translateX(220%)}}
+@keyframes floatGlow{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-10px)}}
+@keyframes climb{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+</style>
+</helmet>
+
+<!-- Full-bleed mobile splash screen. Drop into your app as the launch screen. -->
+<div style="position:fixed;inset:0;overflow:hidden;background:linear-gradient(165deg,#ff9a4d 0%,#f26a1b 52%,#e0540e 100%);display:flex;align-items:center;justify-content:center">
+
+  <!-- soft glow -->
+  <div style="position:absolute;top:22%;left:50%;transform:translate(-50%,0);width:min(120vw,560px);height:min(120vw,560px);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.42),rgba(255,255,255,0) 68%);animation:floatGlow 6s ease-in-out infinite;pointer-events:none"></div>
+
+  <!-- centerpiece -->
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:34px;z-index:2">
+    <div style="width:132px;height:132px;border-radius:34px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;box-shadow:0 20px 40px rgba(224,84,14,.35);animation:riseIn .7s cubic-bezier(.22,1,.36,1) both">
+      <svg width="74" height="74" viewBox="0 0 100 100" fill="none" style="display:block">
+        <polyline points="22,52 50,26 78,52" stroke="#fff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" style="animation:chevDrop .6s cubic-bezier(.22,1,.36,1) .35s both,climb 2.4s ease-in-out 1.15s infinite"></polyline>
+        <polyline points="22,74 50,48 78,74" stroke="#fff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" style="animation:chevDropFaint .6s cubic-bezier(.22,1,.36,1) .2s both,climb 2.4s ease-in-out 1s infinite"></polyline>
+      </svg>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:9px;animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .5s both">
+      <div style="font:800 42px 'Plus Jakarta Sans';letter-spacing:-.03em;color:#fff;line-height:1">Rise</div>
+      <div style="font:700 11px 'JetBrains Mono';letter-spacing:.32em;color:rgba(255,255,255,.82);text-transform:uppercase">E&#8209;learning</div>
+    </div>
+  </div>
+
+  <!-- loader + footer, sits above home-indicator safe area -->
+  <div style="position:absolute;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:20px;z-index:2;animation:fadeUp .7s ease .8s both">
+    <div style="width:150px;height:4px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;position:relative">
+      <div style="position:absolute;top:0;left:0;height:100%;width:45%;border-radius:999px;background:#fff;animation:barSlide 1.4s cubic-bezier(.5,0,.5,1) infinite"></div>
+    </div>
+    <div style="font:600 12px 'Plus Jakarta Sans';color:rgba(255,255,255,.72)">Keep climbing</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}"></script>
+</body>
+</html>
