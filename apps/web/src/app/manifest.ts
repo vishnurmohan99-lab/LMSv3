@@ -9,7 +9,10 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#faf8f6",
+    // Orange, not the app's cream: this is the colour behind the Android native launch
+    // splash (icon on background_color) and the standalone window before first paint, so
+    // it flows seamlessly into the orange in-app Rise splash instead of flashing cream.
+    background_color: "#f26a1b",
     theme_color: "#f26a1b",
     categories: ["education"],
     icons: [
