@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -17,6 +17,35 @@ export class FlashcardsController {
   @Get('lessons/:lessonId/flashcards')
   list(@Param('lessonId') lessonId: string, @CurrentUser() user: JwtPayload) {
     return this.coursesService.listFlashcards(lessonId, user);
+  }
+
+  // Standalone spaced-repetition review hub (student-only). Cross-lesson, driven by dueAt.
+  @UseGuards(RolesGuard)
+  @Roles('STUDENT')
+  @Get('flashcards/review/summary')
+  reviewSummary(
+    @CurrentUser() user: JwtPayload,
+    @Query('courseId') courseId?: string,
+    @Query('chapterId') chapterId?: string,
+  ) {
+    return this.coursesService.getFlashcardReviewSummary(user, { courseId, chapterId });
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('STUDENT')
+  @Get('flashcards/review')
+  review(
+    @CurrentUser() user: JwtPayload,
+    @Query('courseId') courseId?: string,
+    @Query('chapterId') chapterId?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const parsed = limit ? Number(limit) : undefined;
+    return this.coursesService.getDueFlashcards(user, {
+      courseId,
+      chapterId,
+      limit: parsed && Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : undefined,
+    });
   }
 
   @UseGuards(RolesGuard)

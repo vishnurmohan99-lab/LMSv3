@@ -40,6 +40,30 @@ const RELEARN_MINUTES = 10;
 
 type SrsState = { intervalDays: number; ease: number; reps: number };
 
+type ReviewProgress = {
+  status: FlashcardStatus;
+  intervalDays: number;
+  ease: number;
+  reps: number;
+  dueAt: Date | null;
+  lastReviewedAt: Date | null;
+};
+
+type ReviewCandidate = {
+  id: string;
+  front: string;
+  back: string;
+  order: number;
+  lessonId: string;
+  chapterId: string;
+  topic: string;
+  courseId: string;
+  courseTitle: string;
+  progress: ReviewProgress | null;
+};
+
+type BreakdownRow = { id: string; name: string; ctx: string; due: number; new: number; learning: number; known: number };
+
 /**
  * SM-2 style scheduler. "AGAIN" resets the card to a 10-minute learning step,
  * "HARD" nudges the interval up slowly, "GOOD" multiplies it by the ease factor.
@@ -1106,6 +1130,215 @@ export class CoursesService {
       create: { studentId: user.sub, flashcardId, lastReviewedAt: new Date(), ...next },
       update: { lastReviewedAt: new Date(), ...next },
     });
+  }
+
+  // ==========================================================================
+  // Standalone spaced-repetition review hub.
+  // The lesson flashcard tab reviews a single deck; these aggregate every DUE card
+  // across the student's enrolled + unlocked lessons into one queue, driven by the
+  // same SM-2 scheduler. `dueAt` is finally *read* here — the lesson flow only writes it.
+  // ==========================================================================
+
+  /**
+   * Every flashcard the student may review right now: cards in a course they're enrolled
+   * in and a chapter that's unlocked, optionally scoped to one course/chapter, each with
+   * the student's progress. Chapter-unlock is resolved once per distinct chapter.
+   */
+  private async loadReviewCandidates(user: JwtPayload, scope: { courseId?: string; chapterId?: string }) {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { studentId: user.sub },
+      select: { courseId: true },
+    });
+    let courseIds = enrollments.map((e) => e.courseId);
+    if (scope.courseId) {
+      if (!courseIds.includes(scope.courseId)) return []; // asked for a course they aren't in
+      courseIds = [scope.courseId];
+    }
+    if (!courseIds.length) return [];
+
+    const cards = await this.prisma.flashcard.findMany({
+      where: {
+        lesson: {
+          chapter: {
+            courseId: { in: courseIds },
+            ...(scope.chapterId ? { id: scope.chapterId } : {}),
+          },
+        },
+      },
+      select: {
+        id: true,
+        front: true,
+        back: true,
+        order: true,
+        lessonId: true,
+        lesson: {
+          select: {
+            chapterId: true,
+            chapter: { select: { title: true, courseId: true, course: { select: { title: true } } } },
+          },
+        },
+        progress: {
+          where: { studentId: user.sub },
+          select: { status: true, intervalDays: true, ease: true, reps: true, dueAt: true, lastReviewedAt: true },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+
+    const unlockCache = new Map<string, boolean>();
+    const isUnlocked = async (chapterId: string) => {
+      if (!unlockCache.has(chapterId)) {
+        unlockCache.set(chapterId, await this.isChapterUnlockedForUser(chapterId, user).catch(() => false));
+      }
+      return unlockCache.get(chapterId)!;
+    };
+
+    const out: ReviewCandidate[] = [];
+    for (const c of cards) {
+      if (!(await isUnlocked(c.lesson.chapterId))) continue;
+      out.push({
+        id: c.id,
+        front: c.front,
+        back: c.back,
+        order: c.order,
+        lessonId: c.lessonId,
+        chapterId: c.lesson.chapterId,
+        topic: c.lesson.chapter.title,
+        courseId: c.lesson.chapter.courseId,
+        courseTitle: c.lesson.chapter.course.title,
+        progress: c.progress[0] ?? null,
+      });
+    }
+    return out;
+  }
+
+  private isDue(c: ReviewCandidate, now: number) {
+    // A graded card is due when its scheduled time has passed. A legacy status-only row
+    // (no dueAt) counts as due — it was seen but never scheduled.
+    return !!c.progress && (c.progress.dueAt == null || c.progress.dueAt.getTime() <= now);
+  }
+
+  private isNewCard(c: ReviewCandidate) {
+    return !c.progress;
+  }
+
+  private toReviewCard(c: ReviewCandidate) {
+    const p = c.progress;
+    const state: SrsState = { intervalDays: p?.intervalDays ?? 0, ease: p?.ease ?? 2.5, reps: p?.reps ?? 0 };
+    return {
+      id: c.id,
+      front: c.front,
+      back: c.back,
+      lessonId: c.lessonId,
+      topic: c.topic,
+      courseTitle: c.courseTitle,
+      status: p?.status ?? FlashcardStatus.NEW,
+      intervalDays: state.intervalDays,
+      dueAt: p?.dueAt ?? null,
+      preview: srsPreview(state), // Again / Hard / Got it interval labels
+    };
+  }
+
+  /**
+   * The review queue: due reviews first (oldest due first), then new cards in order.
+   * Session size is the caller's `limit` (the hub's 10 / 20 / 30 / All chips) — there is no
+   * hidden daily cap, so the hub's "due today" total always equals what the queue can serve.
+   */
+  async getDueFlashcards(user: JwtPayload, opts: { courseId?: string; chapterId?: string; limit?: number }) {
+    const cands = await this.loadReviewCandidates(user, { courseId: opts.courseId, chapterId: opts.chapterId });
+    const now = Date.now();
+
+    const reviews = cands
+      .filter((c) => this.isDue(c, now))
+      .sort((a, b) => (a.progress!.dueAt?.getTime() ?? 0) - (b.progress!.dueAt?.getTime() ?? 0));
+    const fresh = cands.filter((c) => this.isNewCard(c)).sort((a, b) => a.order - b.order);
+
+    let queue = [...reviews, ...fresh];
+    if (opts.limit && opts.limit > 0) queue = queue.slice(0, opts.limit);
+    return queue.map((c) => this.toReviewCard(c));
+  }
+
+  /** Hub data: global collection mix, scoped due total, per-course/chapter breakdown, streak. */
+  async getFlashcardReviewSummary(user: JwtPayload, opts: { courseId?: string; chapterId?: string }) {
+    const all = await this.loadReviewCandidates(user, {}); // global — collection totals ignore scope
+    const now = Date.now();
+
+    const statusOf = (c: ReviewCandidate) => c.progress?.status ?? FlashcardStatus.NEW;
+    const split = (arr: ReviewCandidate[]) => {
+      const s = { new: 0, learning: 0, known: 0 };
+      for (const c of arr) {
+        const st = statusOf(c);
+        if (st === FlashcardStatus.NEW) s.new++;
+        else if (st === FlashcardStatus.LEARNING) s.learning++;
+        else s.known++;
+      }
+      return s;
+    };
+    // Due = scheduled reviews whose time has come + all never-seen cards. No hidden cap, so
+    // the per-course/chapter rows always sum to the hero total; the hub's limit chips pace it.
+    const dueCount = (arr: ReviewCandidate[]) =>
+      arr.filter((c) => this.isDue(c, now)).length + arr.filter((c) => this.isNewCard(c)).length;
+
+    const collection = { ...split(all), total: all.length };
+
+    const inScope = all.filter(
+      (c) => (!opts.courseId || c.courseId === opts.courseId) && (!opts.chapterId || c.chapterId === opts.chapterId),
+    );
+    const dueTotal = dueCount(inScope);
+
+    let breakdown: { groupBy: 'course' | 'chapter'; rows: BreakdownRow[] };
+    if (!opts.courseId) {
+      const byCourse = new Map<string, { id: string; name: string; cards: ReviewCandidate[] }>();
+      for (const c of all) {
+        if (!byCourse.has(c.courseId)) byCourse.set(c.courseId, { id: c.courseId, name: c.courseTitle, cards: [] });
+        byCourse.get(c.courseId)!.cards.push(c);
+      }
+      const rows = [...byCourse.values()].map((g) => {
+        const dueChapters = [
+          ...new Set(g.cards.filter((c) => this.isDue(c, now) || this.isNewCard(c)).map((c) => c.topic)),
+        ].slice(0, 2);
+        return { id: g.id, name: g.name, ctx: dueChapters.join(' · ') || 'No cards due', due: dueCount(g.cards), ...split(g.cards) };
+      });
+      rows.sort((a, b) => b.due - a.due);
+      breakdown = { groupBy: 'course', rows };
+    } else {
+      const courseCards = all.filter((c) => c.courseId === opts.courseId);
+      const courseTitle = courseCards[0]?.courseTitle ?? '';
+      const byChapter = new Map<string, { id: string; name: string; cards: ReviewCandidate[] }>();
+      for (const c of courseCards) {
+        if (!byChapter.has(c.chapterId)) byChapter.set(c.chapterId, { id: c.chapterId, name: c.topic, cards: [] });
+        byChapter.get(c.chapterId)!.cards.push(c);
+      }
+      const rows = [...byChapter.values()]
+        .map((g) => ({ id: g.id, name: g.name, ctx: courseTitle, due: dueCount(g.cards), ...split(g.cards) }))
+        .filter((r) => r.due > 0);
+      rows.sort((a, b) => b.due - a.due);
+      breakdown = { groupBy: 'chapter', rows };
+    }
+
+    // reviewedToday + streak from lastReviewedAt. NOTE: only the *latest* review per card is
+    // stored, so this best-effort streak can undercount; accurate retention/streak would need
+    // a per-review event log (a future enhancement).
+    const dayKey = (d: Date) => `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+    const today = new Date();
+    const todayKey = dayKey(today);
+    const reviewedToday = all.filter((c) => c.progress?.lastReviewedAt && dayKey(c.progress.lastReviewedAt) === todayKey).length;
+    const activeDays = new Set(all.map((c) => c.progress?.lastReviewedAt).filter(Boolean).map((d) => dayKey(d as Date)));
+    let streakDays = 0;
+    const cursor = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    if (!activeDays.has(dayKey(cursor))) cursor.setUTCDate(cursor.getUTCDate() - 1); // grace: today not yet reviewed
+    while (activeDays.has(dayKey(cursor))) {
+      streakDays++;
+      cursor.setUTCDate(cursor.getUTCDate() - 1);
+    }
+
+    // Courses the student is enrolled in that actually have cards — feeds the scope dropdown.
+    const courses = [...new Map(all.map((c) => [c.courseId, c.courseTitle])).entries()].map(([id, name]) => ({ id, name }));
+    const chapters = opts.courseId
+      ? [...new Map(all.filter((c) => c.courseId === opts.courseId).map((c) => [c.chapterId, c.topic])).entries()].map(([id, name]) => ({ id, name }))
+      : [];
+
+    return { dueTotal, collection, breakdown, reviewedToday, streakDays, courses, chapters };
   }
 
   private async requireFlashcardWithCourse(id: string) {

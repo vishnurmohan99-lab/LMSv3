@@ -410,8 +410,61 @@ export interface Flashcard {
   preview?: { again: string; hard: string; good: string };
 }
 
+// ---- Standalone spaced-repetition review hub ----
+/** A card served by the cross-lesson review queue (carries its topic/course for the hub). */
+export interface ReviewCard {
+  id: string;
+  front: string;
+  back: string;
+  lessonId: string;
+  topic: string;
+  courseTitle: string;
+  status: FlashcardStatus;
+  intervalDays: number;
+  dueAt: string | null;
+  preview: { again: string; hard: string; good: string };
+}
+
+export interface ReviewBreakdownRow {
+  id: string;
+  name: string;
+  ctx: string;
+  due: number;
+  new: number;
+  learning: number;
+  known: number;
+}
+
+export interface ReviewSummary {
+  /** Cards reviewable now in the selected scope = due reviews + never-seen cards. */
+  dueTotal: number;
+  /** Status mix across the student's whole collection (ignores scope). */
+  collection: { new: number; learning: number; known: number; total: number };
+  breakdown: { groupBy: 'course' | 'chapter'; rows: ReviewBreakdownRow[] };
+  reviewedToday: number;
+  streakDays: number;
+  courses: { id: string; name: string }[];
+  chapters: { id: string; name: string }[];
+}
+
 export const flashcardsApi = {
   list: (lessonId: string) => request<Flashcard[]>(`/lessons/${lessonId}/flashcards`),
+  /** Hub summary — due total, collection mix, per-course/chapter breakdown, streak. */
+  reviewSummary: (scope?: { courseId?: string; chapterId?: string }) => {
+    const qs = new URLSearchParams(
+      Object.entries(scope ?? {}).filter(([, v]) => v) as [string, string][],
+    ).toString();
+    return request<ReviewSummary>(`/flashcards/review/summary${qs ? `?${qs}` : ''}`);
+  },
+  /** The review queue — due cards first, then new; `limit` is the session size (10/20/30/all). */
+  due: (opts?: { courseId?: string; chapterId?: string; limit?: number }) => {
+    const params: Record<string, string> = {};
+    if (opts?.courseId) params.courseId = opts.courseId;
+    if (opts?.chapterId) params.chapterId = opts.chapterId;
+    if (opts?.limit) params.limit = String(opts.limit);
+    const qs = new URLSearchParams(params).toString();
+    return request<ReviewCard[]>(`/flashcards/review${qs ? `?${qs}` : ''}`);
+  },
   create: (lessonId: string, data: { front: string; back: string; order?: number }) =>
     request<Flashcard>(`/lessons/${lessonId}/flashcards`, { method: 'POST', body: JSON.stringify(data) }),
   remove: (id: string) => request<{ success: boolean }>(`/flashcards/${id}`, { method: 'DELETE' }),

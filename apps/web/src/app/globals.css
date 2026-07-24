@@ -1377,3 +1377,16 @@ button:active, a:active {
   .rise-glow, .rise-chev, .rise-chev-faint, .rise-track > span { animation: none !important; }
   .rise-logo, .rise-center, .rise-lockup, .rise-footer { animation: none !important; }
 }
+
+/* Flashcards review hub — the two-column hub (stat card + breakdown) stacks on narrow. */
+.flash-hub-grid {
+  display: grid;
+  grid-template-columns: 452px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .flash-hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
