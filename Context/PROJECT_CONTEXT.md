@@ -764,6 +764,38 @@ the **Feature history** and **Current Prisma data model** sections above.
   `background_color #f26a1b`, the iOS startup-image links render (incl. 1170×2532), and the
   icons/splash PNGs serve 200. Not browser-verified in production (login-gated), but the
   bundle-string check confirms the new build is serving.
+- **Standalone Flashcards — daily spaced-repetition review hub (2026-07-25).** New top-level
+  student section (`/student/flashcards`, nav peer of Mock Test) that aggregates every DUE
+  flashcard across the student's enrolled + unlocked lessons into one SRS queue. **No schema
+  change / no migration** — the SM-2 scheduler, grade endpoint and flip-card UI already
+  existed; the gap was that `dueAt` was written but never *read*, and review was locked to a
+  single lesson. Ported from `Design System/Student - Flashcards.dc.html`.
+  **Backend** (`courses.service.ts` + `flashcards.controller.ts`): `GET /flashcards/review`
+  (the queue — due reviews oldest-first, then new cards; session size = caller's `limit`) and
+  `GET /flashcards/review/summary` (hub data). Reuses `canViewCourseContent` (enrollment) +
+  `isChapterUnlockedForUser` (drip, cached per request) so a card only surfaces from an
+  enrolled, unlocked lesson. **No hidden new-card cap** — the hub's 10/20/30/All chips are the
+  only session cap, so per-course/chapter breakdown rows always sum to the hero total (an
+  earlier 20/day cap made them disagree; removed).
+  **Summary shape**: `dueTotal` (scoped), `collection` {new,learning,known,total} (GLOBAL,
+  ignores scope — drives the bar), `breakdown` grouped by course (all-scope) or chapter (when
+  a course is selected), `reviewedToday`, `streakDays`, plus `courses`/`chapters` for the
+  scope dropdowns.
+  **Frontend**: `flashcards/page.tsx` (hub → session → complete → caught-up states, responsive
+  `.flash-hub-grid`), and `FlashcardReview.tsx` refactored to a **dual mode** — `{lessonId}`
+  (existing lesson tab, unchanged) OR `{cards, onExhausted}` (hub). The hub session **re-queues
+  AGAIN cards to the back** so lapsed cards resurface before the session ends (the lesson tab
+  stays linear). Nav entry + `FlashcardsIcon` added to `StudentShell`.
+  **Verified** on the live local API (login as vishnu@test.com): summary matches SQL replay
+  (dueTotal 98, collection {86,3,10,99}), scope→chapter grouping, queue `limit` + due-first
+  ordering, and a grade round-trip dropping dueTotal 98→97. In-browser via a temp stub route
+  (deleted): hub layout, session-size chip → CTA, flip/grade, AGAIN re-queue → complete
+  (reviewed 3, Got it 3/Again 1), scope switch, mobile stack. All 3 apps typecheck + build.
+  **Deferred / honest gaps**: `retention %` from the mockup is NOT shown — accurate retention
+  needs a per-review event log (only the latest review per card is stored); `streakDays` is a
+  best-effort count from distinct `lastReviewedAt` days and can undercount. Admin/faculty
+  authoring of standalone decks was **not** built (this is a review hub over existing
+  lesson cards); that was the deferred "Option B" from planning.
 - **Rise launch splash + PWA launch assets (2026-07-24).** Ported `Design System/Splash -
   Rise.dc.html` (mobile) and `Splash - Rise - Web.dc.html` (web) — a full-bleed orange
   screen with the frosted double-chevron mark, animated "Rise / E-learning" lockup, a
