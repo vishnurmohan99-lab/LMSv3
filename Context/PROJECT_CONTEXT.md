@@ -756,6 +756,14 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **DEPLOY 2026-07-24 — main `ebec9ac`, PR
+  [#10](https://github.com/vishnurmohan99-lab/LMSv3/pull/10).** Web-only (student PWA); no
+  API/migration. Merged as-is with the brand drift unresolved (chevron icon, "Elearning"
+  name — user chose to ship rather than settle Rise-vs-Elearning first). Verified live: the
+  served JS chunk contains `Keep climbing` + `rise-splash`, `manifest.webmanifest` returns
+  `background_color #f26a1b`, the iOS startup-image links render (incl. 1170×2532), and the
+  icons/splash PNGs serve 200. Not browser-verified in production (login-gated), but the
+  bundle-string check confirms the new build is serving.
 - **Rise launch splash + PWA launch assets (2026-07-24).** Ported `Design System/Splash -
   Rise.dc.html` (mobile) and `Splash - Rise - Web.dc.html` (web) — a full-bleed orange
   screen with the frosted double-chevron mark, animated "Rise / E-learning" lockup, a
