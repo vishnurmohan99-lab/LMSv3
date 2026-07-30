@@ -140,6 +140,16 @@ function SubscriptionsIcon({ active }: { active: boolean }) {
   );
 }
 
+function StoriesIcon({ active }: { active: boolean }) {
+  const c = active ? "var(--orange-deep)" : "var(--ink2)";
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinejoin="round">
+      <rect x="7" y="3" width="10" height="18" rx="2.5" />
+      <path d="M4 7v10M20 7v10" />
+    </svg>
+  );
+}
+
 function ForumIcon({ active }: { active: boolean }) {
   const c = active ? "var(--orange-deep)" : "var(--ink2)";
   return (
@@ -200,6 +210,7 @@ const navItems = [
   { href: "/admin/notes", label: "Faculty Notes", Icon: NotesIcon },
   { href: "/admin/batches", label: "Batches", Icon: BatchStatusIcon },
   { href: "/admin/subscriptions", label: "Subscriptions", Icon: SubscriptionsIcon },
+  { href: "/admin/stories", label: "Success Stories", Icon: StoriesIcon },
   { href: "/admin/messages", label: "Messages", Icon: MessagesIcon },
   { href: "/admin/feedback", label: "Feedback", Icon: FeedbackIcon },
   { href: "/admin/forum", label: "Forum", Icon: ForumIcon },

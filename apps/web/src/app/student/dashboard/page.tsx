@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { enrollmentsApi, coursesApi, testsApi, testAttemptsApi, calendarApi, usersApi, reflectionsApi, ApiError, type CalendarEvent, type Profile, type ActivityDay, type Course, type Enrollment, type Reflection } from "@/lib/api";
+import StoryRail from "@/components/StoryRail";
 
 interface ScoredAttempt {
   pct: number;
@@ -486,6 +487,11 @@ export default function StudentDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Success Stories rail — dashboard only. It renders nothing when the student's
+          segment has no published stories, and is deliberately absent from lesson/quiz
+          shells so it can't distract mid-study. */}
+      <StoryRail />
 
       <div className="mobile-stack-grid" style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 24, alignItems: "start" }}>
         {/* LEFT COLUMN */}

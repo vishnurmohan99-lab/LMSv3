@@ -28,6 +28,7 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { ForumModule } from './forum/forum.module';
 import { ReportsModule } from './reports/reports.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { StoriesModule } from './stories/stories.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { TodosModule } from './todos/todos.module';
 import { AnswerCorrectionModule } from './answer-correction/answer-correction.module';
@@ -59,6 +60,7 @@ import { AiSettingsModule } from './ai-settings/ai-settings.module';
     ForumModule,
     ReportsModule,
     SubscriptionsModule,
+    StoriesModule,
     CalendarModule,
     TodosModule,
     AnswerCorrectionModule,
