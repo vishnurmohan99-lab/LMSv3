@@ -836,6 +836,48 @@ the **Feature history** and **Current Prisma data model** sections above.
   https://web-jade-iota-60.vercel.app: the production CSS chunk now carries `story-clip-close`,
   `story-grabber`, `story-upnext`, `storySlideNext` and `100dvh`, and the route's JS chunk
   carries `story-anim-next` + the "Close story" label.
+- **Faculty Notes v2 — scope model + scope-aware access (2026-07-30).** The client's "Notes Dump"
+  requirement turned out to describe the **Faculty Notes** feature we already ship, so it was
+  reshaped as a delta rather than built fresh. Full gap analysis in
+  `Context/FACULTY_NOTES_V2_SPEC.md`: of their 11 functional requirements 4 were already done,
+  4 partial, 3 missing — and their stated *core reason* for the feature (in-house storage with
+  enforced access control, replacing a Drive link in a Telegram group) was **already satisfied**.
+  This ships step 1 of the plan, the data model and access control.
+  **Targeting moved from the file up to the bank.** `Note.courseId` was required on every
+  individual file, which made a GENERAL note — belonging to no course — impossible to express.
+  `NotesBank` now carries `scope` (GENERAL/COURSE/BATCH/LESSON), `courseId`, `lessonId` and
+  `sessionDate`; `Note.courseId` is relaxed to nullable and kept only as a legacy fallback.
+  `resolveScope` validates targeting on write and **strips the fields the chosen scope doesn't
+  use**, so a bank can never retain a stale `courseId` that quietly widens its audience; LESSON
+  scope derives its course from the lesson rather than trusting the client, and referenced
+  course/lesson/batch ids must exist. `visibleBankFilter` is now the single access-control
+  boundary for the student list. Adds search + scope/course/batch/date filters to the
+  faculty/admin bank list, which previously had **neither** (F10), and batch/date filters for
+  students (F9).
+  **Fixed in passing:** a GENERAL note has no course and three call sites dereferenced
+  `n.course.title` unconditionally — student notes, faculty notes detail and admin notes detail
+  would each have crashed the first time anyone created one.
+  **Verified against the live database:** migration applied, then all **6 existing banks**
+  confirmed backfilled to BATCH with course and batch links intact and all **23 notes**
+  untouched (0 null courseId). Access isolation tested both directions with throwaway fixtures
+  at each scope — course-enrolled sees course+lesson+general, batch-enrolled sees batch+general,
+  an unrelated student sees **general only**, unpublished hidden from all; fixtures deleted
+  (0 left). Not exercised over HTTP with real tokens (no login credentials available), so this
+  was data-layer verification. All three apps build.
+  **DEPLOYED 2026-07-30 — main `48a1a2b`, PR
+  [#16](https://github.com/vishnurmohan99-lab/LMSv3/pull/16).** Migration applied to Neon
+  *before* the merge, so the DB led the code — the deployed API simply ignored the new columns
+  until it caught up. API live on Render (`/notes-banks?scope=GENERAL` and
+  `/notes/mine?batchId=…&from=…` both reach the auth guard, so the new query params parse).
+  Web + admin shipped manually with `vercel --prod --yes` (git deploys are off — see the
+  2026-07-30 reminder above); both production aliases confirmed on fresh Ready deployments.
+  Note the web CSS hash was **unchanged** and that's correct — this change touched no CSS, and
+  its web-side edits are type-level plus one conditional render, so there is no new bundle
+  string to fingerprint.
+  **Still open:** the student note-set list + multi-page viewer (F4/F6) are blocked on design —
+  there is still no `Student - Notes` mockup; the faculty/admin scope-picker UI is unblocked but
+  not started (the API accepts scope, the forms still only offer batches); and notifications
+  need a product call (per-publish vs daily digest).
 - **DEPLOY 2026-07-24 — main `ebec9ac`, PR
   [#10](https://github.com/vishnurmohan99-lab/LMSv3/pull/10).** Web-only (student PWA); no
   API/migration. Merged as-is with the brand drift unresolved (chevron icon, "Elearning"
