@@ -93,6 +93,11 @@ model User {
   answerQuestions         AnswerQuestion[]     @relation("FacultyAnswerQuestions")
   answerSubmissions       AnswerSubmission[]   @relation("AnswerSubmissions")
   gradedAnswerEvaluations AnswerEvaluation[]   @relation("AnswerEvaluationGradedBy")
+
+  storiesCreated  Story[]         @relation("StoryCreatedBy")
+  storiesReviewed Story[]         @relation("StoryReviewedBy")
+  storyViews      StoryView[]
+  storyReactions  StoryReaction[]
 }
 
 enum CourseType {
@@ -156,6 +161,7 @@ model Course {
   forumCategories  ForumCategory[]
   privateAccess    CoursePrivateAccess[]
   subscriptionCourses SubscriptionCourse[]
+  stories          Story[]
 
   @@index([segmentId])
   @@index([subsegmentId])
@@ -188,6 +194,7 @@ model Segment {
   tests       Test[]
   students    User[]
   batches     Batch[]
+  stories     StorySegment[]
 }
 
 model Subsegment {
@@ -1358,4 +1365,131 @@ model StudyPlanItem {
   @@index([batchId])
   @@index([studentId])
   @@index([scheduledFor])
+}
+
+// ============================================================================
+// Success Stories — short testimonial clips shown as a rail on the student
+// dashboard, opening into a two-pane viewer.
+// Design: Design System/Student - Stories.dc.html
+// ============================================================================
+
+enum StoryStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+enum StoryOrientation {
+  PORTRAIT
+  LANDSCAPE
+}
+
+model Story {
+  id String @id @default(uuid())
+
+  studentName    String
+  avatarInitials String?
+  verified       Boolean @default(false)
+  /// Required by the design — "no card without a number" (e.g. "AIR 214", "640/720").
+  resultChip     String
+
+  /// Private R2 keys, presigned on read. There is no transcoding pipeline, so the poster
+  /// must be uploaded (no server-side frame grab) and the hover preview reuses videoKey.
+  videoKey        String
+  posterKey       String
+  durationSeconds Int              @default(0)
+  orientation     StoryOrientation @default(PORTRAIT)
+  /// Author-supplied WebVTT — there is no speech-to-text, so captions are never automatic.
+  captionsVtt     String?          @db.Text
+
+  quote String  @db.Text
+  body  String? @db.Text
+  /// Up to three { label, value, unit } cells — the BEFORE / AFTER / TOOK row.
+  stats Json    @default("[]")
+
+  ctaLabel String?
+  ctaUrl   String?
+
+  pinned Boolean @default(false)
+  order  Int     @default(0)
+
+  status          StoryStatus @default(DRAFT)
+  publishAt       DateTime?
+  /// Null = evergreen.
+  expiresAt       DateTime?
+  rejectionReason String?
+
+  /// True = visible LMS-wide, bypassing the StorySegment join.
+  allSegments Boolean @default(false)
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  createdById String
+  createdBy   User   @relation("StoryCreatedBy", fields: [createdById], references: [id])
+
+  reviewedById String?
+  reviewedBy   User?     @relation("StoryReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  segments  StorySegment[]
+  views     StoryView[]
+  reactions StoryReaction[]
+
+  @@index([status, publishAt])
+  @@index([courseId])
+}
+
+model StorySegment {
+  id String @id @default(uuid())
+
+  storyId String
+  story   Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  segmentId String
+  segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, segmentId])
+  @@index([segmentId])
+}
+
+/// One row per student per story — drives both the seen/unseen card state and every
+/// analytic (views, unique viewers, average watch time, completion rate).
+model StoryView {
+  id String @id @default(uuid())
+
+  storyId String
+  story   Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  /// Furthest point reached, not a running total — rewatching must not inflate it.
+  watchedSeconds Int      @default(0)
+  completed      Boolean  @default(false)
+  viewCount      Int      @default(1)
+  firstViewedAt  DateTime @default(now())
+  lastViewedAt   DateTime @default(now())
+
+  @@unique([storyId, studentId])
+  @@index([studentId])
+}
+
+model StoryReaction {
+  id String @id @default(uuid())
+
+  storyId String
+  story   Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([storyId, studentId])
 }

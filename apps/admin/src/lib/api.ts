@@ -1562,3 +1562,100 @@ export const planApi = {
   updateItem: (id: string, data: Partial<PlanItemInput>) => request<StudyPlanItem>(`/plan-items/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeItem: (id: string) => request<{ success: boolean }>(`/plan-items/${id}`, { method: 'DELETE' }),
 };
+
+// ---- Success Stories (authoring + moderation) ----
+// Student-facing design: Design System/Student - Stories.dc.html. There is no transcoding
+// pipeline, so the poster is uploaded alongside the clip rather than extracted server-side.
+export type StoryStatus = 'DRAFT' | 'PENDING' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED';
+export type StoryOrientation = 'PORTRAIT' | 'LANDSCAPE';
+
+export interface StoryStat {
+  label: string;
+  value: string;
+  unit?: string;
+}
+
+export interface Story {
+  id: string;
+  studentName: string;
+  avatarInitials: string | null;
+  verified: boolean;
+  resultChip: string;
+  videoKey: string;
+  posterKey: string;
+  videoUrl: string | null;
+  posterUrl: string | null;
+  durationSeconds: number;
+  orientation: StoryOrientation;
+  captionsVtt: string | null;
+  quote: string;
+  body: string | null;
+  stats: StoryStat[];
+  ctaLabel: string | null;
+  ctaUrl: string | null;
+  pinned: boolean;
+  order: number;
+  status: StoryStatus;
+  publishAt: string | null;
+  /** Null = evergreen. */
+  expiresAt: string | null;
+  rejectionReason: string | null;
+  allSegments: boolean;
+  courseId: string | null;
+  course: { id: string; title: string } | null;
+  segments: { segmentId: string; segment: { id: string; name: string } }[];
+  createdBy: { id: string; fullName: string } | null;
+  createdAt: string;
+  _count?: { views: number; reactions: number };
+}
+
+export interface StoryAnalytics {
+  totalViews: number;
+  uniqueViewers: number;
+  avgWatchSeconds: number;
+  completionRate: number;
+  completions: number;
+  durationSeconds: number;
+  reactionCount: number;
+}
+
+export interface StoryInput {
+  studentName: string;
+  avatarInitials?: string;
+  verified?: boolean;
+  resultChip: string;
+  videoKey: string;
+  posterKey: string;
+  durationSeconds?: number;
+  orientation?: StoryOrientation;
+  captionsVtt?: string;
+  quote: string;
+  body?: string;
+  stats?: StoryStat[];
+  ctaLabel?: string;
+  ctaUrl?: string;
+  courseId?: string | null;
+  allSegments?: boolean;
+  segmentIds?: string[];
+  pinned?: boolean;
+  order?: number;
+  publishAt?: string | null;
+  expiresAt?: string | null;
+}
+
+export const storiesApi = {
+  list: (status?: StoryStatus) =>
+    request<Story[]>(`/stories${status ? `?status=${status}` : ''}`),
+  create: (data: StoryInput) => request<Story>('/stories', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<StoryInput>) =>
+    request<Story>(`/stories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  remove: (id: string) => request<{ success: boolean }>(`/stories/${id}`, { method: 'DELETE' }),
+  reorder: (items: { id: string; order: number }[]) =>
+    request<{ success: boolean }>('/stories/reorder', { method: 'PATCH', body: JSON.stringify({ items }) }),
+  submit: (id: string) => request<Story>(`/stories/${id}/submit`, { method: 'POST' }),
+  approve: (id: string) => request<Story>(`/stories/${id}/approve`, { method: 'POST' }),
+  reject: (id: string, reason?: string) =>
+    request<Story>(`/stories/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  archive: (id: string) => request<Story>(`/stories/${id}/archive`, { method: 'POST' }),
+  analytics: (id: string) => request<StoryAnalytics>(`/stories/${id}/analytics`),
+};

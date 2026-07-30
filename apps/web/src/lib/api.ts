@@ -1703,3 +1703,53 @@ export const planApi = {
   },
   createMine: (data: PlanItemInput) => request<StudyPlanItem>('/plan/mine', { method: 'POST', body: JSON.stringify(data) }),
 };
+
+// ---- Success Stories (student) ----
+// Short testimonial clips shown as a rail on the dashboard, opening into a two-pane viewer.
+// Design: Design System/Student - Stories.dc.html
+export type StoryOrientation = 'PORTRAIT' | 'LANDSCAPE';
+
+/** One BEFORE / AFTER / TOOK cell in the viewer's context pane. */
+export interface StoryStat {
+  label: string;
+  value: string;
+  unit?: string;
+}
+
+export interface StoryFeedItem {
+  id: string;
+  studentName: string;
+  avatarInitials: string | null;
+  verified: boolean;
+  /** Always present — the design forbids a card without a number. */
+  resultChip: string;
+  /** Presigned R2 URLs; null if the object is missing. Expire after ~1h. */
+  videoUrl: string | null;
+  posterUrl: string | null;
+  durationSeconds: number;
+  orientation: StoryOrientation;
+  captionsVtt: string | null;
+  quote: string;
+  body: string | null;
+  stats: StoryStat[];
+  ctaLabel: string | null;
+  ctaUrl: string | null;
+  pinned: boolean;
+  course: { id: string; title: string; thumbnailUrl: string | null } | null;
+  /** Derived server-side from the story's segments + course, e.g. "CLASS 12 · PHYSICS". */
+  contextLabel: string;
+  createdAt: string;
+  seen: boolean;
+  watchedSeconds: number;
+  reactionCount: number;
+  reacted: boolean;
+}
+
+export const storiesApi = {
+  feed: () => request<StoryFeedItem[]>('/stories/feed'),
+  /** Progress ping. `opened` only on the first call of a sitting, so views count opens. */
+  view: (id: string, data: { watchedSeconds?: number; completed?: boolean; opened?: boolean }) =>
+    request<{ id: string }>(`/stories/${id}/view`, { method: 'POST', body: JSON.stringify(data) }),
+  react: (id: string) =>
+    request<{ reacted: boolean; reactionCount: number }>(`/stories/${id}/react`, { method: 'POST' }),
+};

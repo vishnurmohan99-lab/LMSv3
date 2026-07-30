@@ -756,6 +756,45 @@ Keep this list current after every commit: add one newest-first bullet with the
 commit hash; do NOT grow prose paragraphs. Deep detail on each feature lives in
 the **Feature history** and **Current Prisma data model** sections above.
 
+- **Success Stories — story-format testimonial videos (2026-07-30).** New feature across all
+  three apps. Spec was `story-testimonials-feature-requirements.md` (F1–F11); design is
+  `Design System/Student - Stories.dc.html` (8 screens). User chose **full scope** (incl. F9
+  analytics + moderation) with the **admin UI built to existing conventions** (no admin mockup).
+  **MIGRATION `20260730120000_add_success_stories`** — `Story`, `StorySegment` (m2m),
+  `StoryView`, `StoryReaction` + `StoryStatus`/`StoryOrientation` enums. Hand-written SQL was
+  diffed against `prisma migrate diff --from-empty` and is byte-for-byte identical.
+  **The design deliberately overrides the spec in four places — the mockup wins:**
+  (1) **result cards, not Instagram rings** — 134×178 portrait cards carrying the student's
+  actual number, 2px orange + NEW when unwatched, 1px grey + dimmed + ✓ and sorted last when
+  watched ("no card without a number"); (2) **two-pane viewer, not full-screen** — 372px 9:16
+  clip beside a context pane, "the clip never covers the substance"; (3) **NO auto-advance**
+  (spec F4 asked for it) — an explicit UP NEXT queue replaces it; (4) **no invisible tap
+  zones** — visible controls, `← → Space Esc M` on desktop, visible `‹ ›` on mobile.
+  Landscape sources **letterbox, never crop** (`object-fit: contain`).
+  **No transcoding pipeline was built** and none is needed at 20–25s: clips are raw MP4s from
+  R2 behind presigned GETs (same as lesson video). Consequences, all deliberate: the hover
+  preview (≥400ms) reuses the full clip muted; the **poster must be uploaded** (no server-side
+  frame grab) and doubles as the rail thumbnail and slow-network fallback; captions are
+  author-pasted WebVTT — **the mockup's "AUTO-CAPTIONS" is not achievable** (no speech-to-text)
+  so the chip reads "CAPTIONS" and only shows when a track exists; admin form caps clips at 15 MB.
+  **`contextLabel`** ("CLASS 12 · QUANT SPRINT") is derived server-side from the story's real
+  segments + course rather than stored as duplicate free text.
+  **Visibility is the security-critical rule** (§7.3), centralised in one
+  `visibilityWhere(user)` helper so the feed and every write path can't drift: PUBLISHED, inside
+  publishAt/expiresAt, and `allSegments` OR tagged to the student's own segment. A student with
+  no segment sees only `allSegments`. Cross-segment view/react return **404, not 403**, so a
+  story outside your segment never confirms it exists.
+  **Verified: 29/29 automated checks** against the running API with real tokens — isolation both
+  directions, allSegments reach, DRAFT/PENDING/ARCHIVED/expired/future-publishAt all hidden,
+  cross-segment writes rejected, presigned media, seen/unseen + sorting, watchedSeconds keeps
+  the max on rewatch, reaction toggle, analytics math, and authoring guards. Fixtures created
+  and deleted through the API (0 left). In-browser (temp devcheck route, deleted): card
+  geometry 134×178 and both border states exact, verified-badge vs seen-tick correctly
+  distinguished, two-pane grid `372px 708px`, keyboard nav, letterbox `contain`, poster
+  fallback, mobile clip-on-top with visible arrows, and the rail **vanishing entirely** when
+  the feed is empty. All three apps typecheck + build.
+  **Known gap: there is no story video content.** R2 holds one video; the rail correctly hides
+  itself until real 9:16 clips are uploaded.
 - **DEPLOY 2026-07-24 — main `ebec9ac`, PR
   [#10](https://github.com/vishnurmohan99-lab/LMSv3/pull/10).** Web-only (student PWA); no
   API/migration. Merged as-is with the brand drift unresolved (chevron icon, "Elearning"
