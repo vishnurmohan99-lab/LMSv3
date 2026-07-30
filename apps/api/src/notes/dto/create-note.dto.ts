@@ -13,8 +13,11 @@ export class CreateNoteDto {
   @IsString()
   fileName?: string;
 
+  // Legacy per-file targeting. Optional now that the bank carries the audience; the service
+  // ignores it for scoping and keeps it only so old clients don't break.
+  @IsOptional()
   @IsString()
-  courseId: string;
+  courseId?: string;
 
   @IsOptional()
   @IsString()

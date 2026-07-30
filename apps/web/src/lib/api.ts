@@ -1631,17 +1631,24 @@ export interface NotesBank {
   _count?: { notes: number };
   batches: { batch: { id: string; name: string } }[];
 }
+/** Where a notes bank applies. Targeting lives on the bank, not the individual file. */
+export type NoteScope = 'GENERAL' | 'COURSE' | 'BATCH' | 'LESSON';
+
 export interface Note {
   id: string;
   name: string;
   fileUrl: string;
   fileName: string | null;
   order: number;
-  courseId: string;
+  /** Null for GENERAL-scope notes, which belong to no course. */
+  courseId: string | null;
   chapterId: string | null;
-  course: { id: string; title: string };
+  course: { id: string; title: string } | null;
   chapter: { id: string; title: string } | null;
   notesBank?: { id: string; title: string };
+  /** Flattened from the note's bank so a row can be labelled without a second lookup. */
+  scope?: NoteScope;
+  sessionDate?: string | null;
 }
 export interface NotesBankTree extends NotesBank {
   notes: Note[];
@@ -1650,6 +1657,7 @@ export interface StudentNotes {
   notes: Note[];
   courses: { id: string; title: string }[];
   chapters: { id: string; title: string; courseId: string }[];
+  batches: { id: string; name: string }[];
 }
 export const facultyNotesApi = {
   listBanks: () => request<NotesBank[]>('/notes-banks'),

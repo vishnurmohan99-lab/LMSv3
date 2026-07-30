@@ -1510,9 +1510,10 @@ export interface Note {
   fileUrl: string;
   fileName: string | null;
   order: number;
-  courseId: string;
+  /** Null for GENERAL-scope notes, which belong to no course. */
+  courseId: string | null;
   chapterId: string | null;
-  course: { id: string; title: string };
+  course: { id: string; title: string } | null;
   chapter: { id: string; title: string } | null;
   notesBank?: { id: string; title: string };
 }
