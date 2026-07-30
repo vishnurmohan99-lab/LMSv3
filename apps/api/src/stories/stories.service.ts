@@ -98,12 +98,15 @@ export class StoriesService {
       stories.map(async (s) => {
         const { views, reactions, _count, segments, ...rest } = s;
         const withMedia = await this.withMedia(rest);
-        // The card's sub-line and the viewer's meta line ("CAT '26 · QUANT SPRINT"): derived
+        // The card's sub-line and the viewer's meta line ("CLASS 12 · QUANT SPRINT"): derived
         // from the story's real segment/course rather than stored as duplicate free text.
-        const contextLabel = [segments.map((x) => x.segment.name).join(' · '), rest.course?.title]
-          .filter(Boolean)
-          .join(' · ')
-          .toUpperCase();
+        // An all-segments story with no course has neither, and the card would render a blank
+        // line — fall back to the generic label the spec allows (§3.1.3).
+        const contextLabel =
+          [segments.map((x) => x.segment.name).join(' · '), rest.course?.title]
+            .filter(Boolean)
+            .join(' · ')
+            .toUpperCase() || 'SUCCESS STORY';
         return {
           ...withMedia,
           contextLabel,

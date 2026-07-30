@@ -793,8 +793,19 @@ the **Feature history** and **Current Prisma data model** sections above.
   distinguished, two-pane grid `372px 708px`, keyboard nav, letterbox `contain`, poster
   fallback, mobile clip-on-top with visible arrows, and the rail **vanishing entirely** when
   the feed is empty. All three apps typecheck + build.
-  **Known gap: there is no story video content.** R2 holds one video; the rail correctly hides
-  itself until real 9:16 clips are uploaded.
+  **First real story seeded (2026-07-30).** `Design System/Story.mp4` (5.05 MB, 760×1000
+  portrait, 29.5s) uploaded to R2 and published as **"Ananya Krishnan · AIR 214"** with
+  `allSegments: true` + pinned, so every segment sees it. No ffmpeg on this machine, so the
+  **poster was extracted as a real frame** (t=1.5s) by loading the clip same-origin in the
+  browser, drawing to a canvas and PUTing the blob to a presigned R2 URL — the same upload
+  path the admin UI uses. Verified playing from R2: `readyState 4`, 760×1000, 29.5s,
+  `object-fit: contain`, sound on, view + analytics recorded.
+  **Fixed while seeding:** `contextLabel` was empty for an all-segments story with no course
+  (it derives from segments + course), leaving a blank sub-line on the card. Now falls back to
+  **"SUCCESS STORY"** — the generic label the spec itself allows (§3.1.3).
+  Two notes: the clip is 29.5s while the rail copy says "20–25 seconds each"; and `viewCount`
+  double-counts opens in **dev only** (React StrictMode re-invokes effects) — production is
+  unaffected.
 - **DEPLOY 2026-07-24 — main `ebec9ac`, PR
   [#10](https://github.com/vishnurmohan99-lab/LMSv3/pull/10).** Web-only (student PWA); no
   API/migration. Merged as-is with the brand drift unresolved (chevron icon, "Elearning"
