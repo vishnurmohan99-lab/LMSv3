@@ -828,6 +828,14 @@ the **Feature history** and **Current Prisma data model** sections above.
   no-op swipe does not toggle play, body overflow locked then restored. Desktop unchanged:
   grid still `372px 708px` at 1080 wide, mobile-only affordances all `display: none`, up-next
   back to a row. Typecheck clean; eslint back to the pre-existing baseline.
+  **DEPLOYED 2026-07-30 — main `b9f1694`.** Web-only; no API or migration (Render redeployed
+  off the same push regardless). Reminder for next time: **git-triggered Vercel builds are off**
+  (`vercel.json` → `git.deploymentEnabled: false`), so pushing to main does *not* ship the web
+  app — 15 minutes of polling the old bundle before that surfaced. Shipped with
+  `vercel --prod --yes` from `apps/web`. Verified live on
+  https://web-jade-iota-60.vercel.app: the production CSS chunk now carries `story-clip-close`,
+  `story-grabber`, `story-upnext`, `storySlideNext` and `100dvh`, and the route's JS chunk
+  carries `story-anim-next` + the "Close story" label.
 - **DEPLOY 2026-07-24 — main `ebec9ac`, PR
   [#10](https://github.com/vishnurmohan99-lab/LMSv3/pull/10).** Web-only (student PWA); no
   API/migration. Merged as-is with the brand drift unresolved (chevron icon, "Elearning"
