@@ -21,8 +21,11 @@ export class NotesController {
     @Query('q') q?: string,
     @Query('courseId') courseId?: string,
     @Query('chapterId') chapterId?: string,
+    @Query('batchId') batchId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    return this.notes.listMyNotes(user, { q, courseId, chapterId });
+    return this.notes.listMyNotes(user, { q, courseId, chapterId, batchId, from, to });
   }
 
   @UseGuards(RolesGuard)

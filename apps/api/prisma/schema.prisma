@@ -155,6 +155,7 @@ model Course {
   enrollments      Enrollment[]
   reviews          CourseReview[]
   notes            Note[]
+  notesBanks       NotesBank[]
   conversations    Conversation[]
   mockTests        Test[]
   feedbackForms    FeedbackForm[]
@@ -299,6 +300,7 @@ model Lesson {
   cheatSheet   CheatSheet?
   chatMessages ChatMessage[]
   sessions     Session[]
+  notesBanks   NotesBank[]
   views        LessonView[]
 }
 
@@ -1291,20 +1293,45 @@ model CourseReview {
   @@index([courseId])
 }
 
-// Faculty/Admin notes, grouped into banks. A bank is shared with one or more batches;
-// a student sees a bank's notes if they're enrolled in any of its batches.
+// How wide a notes bank casts. Targeting lives on the BANK, not on the individual files —
+// a "note set" is one day's handwritten pages and they always share one audience.
+enum NoteScope {
+  GENERAL // every student
+  COURSE  // students enrolled in courseId
+  BATCH   // students enrolled in any linked batch (the original behaviour)
+  LESSON  // students enrolled in the lesson's course; surfaced in the lesson too
+}
+
+// Faculty/Admin notes, grouped into banks. A bank is the unit students see: one entry,
+// however many pages were photographed into it.
 model NotesBank {
-  id        String   @id @default(uuid())
-  title     String
-  published Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(uuid())
+  title       String
+  published   Boolean   @default(true)
+  scope       NoteScope @default(BATCH)
+  sessionDate DateTime? // the class this covers; optional — notes aren't only post-class
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   createdById String
   createdBy   User   @relation("CreatedNotesBanks", fields: [createdById], references: [id])
 
+  // Set for COURSE and LESSON scope; null otherwise.
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Set for LESSON scope only.
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
   notes   Note[]
   batches NotesBankBatch[]
+
+  @@index([scope])
+  @@index([courseId])
+  @@index([lessonId])
+  @@index([sessionDate])
+  @@index([title])
 }
 
 model NotesBankBatch {
@@ -1329,8 +1356,10 @@ model Note {
   notesBankId String
   notesBank   NotesBank @relation(fields: [notesBankId], references: [id], onDelete: Cascade)
 
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Legacy per-file targeting, superseded by NotesBank.scope/courseId. Kept nullable so old
+  // rows survive the migration; new files leave it null and inherit the bank's audience.
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   chapterId String?
   chapter   Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)

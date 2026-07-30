@@ -217,7 +217,8 @@ export default function AdminNotesBankDetailPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{n.name}</div>
                 <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 3, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 700, color: "var(--purple-ink)", background: "var(--purple-soft)", padding: "2px 8px", borderRadius: 999 }}>{n.course.title}</span>
+                  {/* Null once the bank carries the course instead of each file. */}
+                  {n.course && <span style={{ fontWeight: 700, color: "var(--purple-ink)", background: "var(--purple-soft)", padding: "2px 8px", borderRadius: 999 }}>{n.course.title}</span>}
                   {n.chapter && <span style={{ fontWeight: 600, color: "var(--ink2)", background: "var(--bg-sunk)", padding: "2px 8px", borderRadius: 999 }}>{n.chapter.title}</span>}
                   {n.fileName && <span style={{ color: "var(--ink3)" }}>{n.fileName}</span>}
                 </div>

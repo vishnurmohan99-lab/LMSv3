@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { NotesService } from './notes.service';
+import { NoteScope } from '../../generated/prisma/client';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -16,8 +17,16 @@ export class NotesBanksController {
   constructor(private readonly notes: NotesService) {}
 
   @Get()
-  list(@CurrentUser() user: JwtPayload) {
-    return this.notes.listNotesBanks(user);
+  list(
+    @CurrentUser() user: JwtPayload,
+    @Query('q') q?: string,
+    @Query('scope') scope?: NoteScope,
+    @Query('courseId') courseId?: string,
+    @Query('batchId') batchId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.notes.listNotesBanks(user, { q, scope, courseId, batchId, from, to });
   }
 
   @Get(':id')
