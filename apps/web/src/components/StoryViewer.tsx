@@ -1,20 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { storiesApi, type StoryFeedItem } from "@/lib/api";
 
 /**
  * Success Stories viewer — ported from Design System/Student - Stories.dc.html
- * ("Story Viewer — Portrait / Course CTA / Landscape source / Paused").
+ * ("Story Viewer — Portrait / Course CTA / Landscape source / Paused" and the mobile
+ * ST6v "clip on top, story sheet below" screen).
  *
  * Two panes: a 9:16 clip stage and a context pane carrying the numbers, quote, CTA and an
  * explicit up-next queue. The design is emphatic that the clip never covers the substance,
  * that there are no invisible tap zones on desktop, and that a finished clip does NOT
  * auto-advance into the next student's story — the queue is manual.
+ *
+ * It portals to document.body: mounted inline it renders inside the student shell's flex
+ * column, where the mobile topbar and bottom nav (both z-index 30 flex items) paint over
+ * the scrim and crop the clip.
  */
 
 const PING_EVERY_MS = 5000;
+/** Past this, a touch is a swipe rather than a tap. */
+const SWIPE_PX = 48;
 
 function StatCell({ stat }: { stat: { label: string; value: string; unit?: string } }) {
   return (
@@ -56,6 +64,8 @@ export default function StoryViewer({
   const [failed, setFailed] = useState(false);
   const [reacted, setReacted] = useState(story?.reacted ?? false);
   const [reactionCount, setReactionCount] = useState(story?.reactionCount ?? 0);
+  /** Which way the queue last moved, so the slide animation matches the gesture. */
+  const [dir, setDir] = useState<1 | -1>(1);
 
   // Keep the furthest point reached in a ref so pings and unmount read a live value
   // without re-running effects on every timeupdate.
@@ -117,10 +127,22 @@ export default function StoryViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [story?.id]);
 
+  // The viewer owns the whole screen on mobile — the page behind it must not scroll under
+  // the sheet when a swipe overshoots.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   const go = useCallback(
     (delta: number) => {
       const next = index + delta;
-      if (next >= 0 && next < stories.length) onIndexChange(next);
+      if (next < 0 || next >= stories.length) return;
+      setDir(delta > 0 ? 1 : -1);
+      onIndexChange(next);
     },
     [index, stories.length, onIndexChange],
   );
@@ -136,6 +158,44 @@ export default function StoryViewer({
       setPaused(true);
     }
   }, []);
+
+  /**
+   * Clip gestures, per the mockup's gesture map: horizontal swipe moves between stories,
+   * a downward swipe closes, and anything that isn't a swipe is a play/pause tap. The
+   * synthetic click that follows a swipe is swallowed so it can't also toggle playback.
+   */
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const swallowClick = useRef(false);
+
+  function onTouchStart(e: React.TouchEvent) {
+    // Clear here rather than in the click handler: if a browser skips the synthetic click
+    // a stale flag would otherwise eat the next genuine tap.
+    swallowClick.current = false;
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_PX) {
+      swallowClick.current = true;
+      go(dx < 0 ? 1 : -1);
+    } else if (dy > SWIPE_PX * 1.5 && Math.abs(dy) > Math.abs(dx)) {
+      swallowClick.current = true;
+      onClose();
+    }
+  }
+  function onClipClick() {
+    if (swallowClick.current) {
+      swallowClick.current = false;
+      return;
+    }
+    togglePlay();
+  }
+  /** Controls layered over the clip must not also count as a play/pause tap. */
+  const stop = (e: React.MouseEvent | React.TouchEvent) => e.stopPropagation();
 
   // Desktop keyboard map, exactly as annotated in the mockup.
   useEffect(() => {
@@ -178,13 +238,19 @@ export default function StoryViewer({
     }
   }
 
-  if (!story) return null;
+  // The viewer only ever renders from post-hydration click state, so the SSR pass never
+  // reaches here — this just keeps createPortal off a server render.
+  if (!story || typeof document === "undefined") return null;
   const upNext = stories.slice(index + 1, index + 4);
   const posted = new Date(story.createdAt);
   const hoursAgo = Math.max(1, Math.round((Date.now() - posted.getTime()) / 3600000));
   const postedLabel = hoursAgo < 24 ? `POSTED ${hoursAgo}H AGO` : `POSTED ${Math.round(hoursAgo / 24)}D AGO`;
+  const anim = dir > 0 ? "story-anim-next" : "story-anim-prev";
+  // Only a genuinely landscape source letterboxes. A portrait clip fills the stage the way
+  // a reel does — contain on 9:16 leaves the pillarbox that made this look broken.
+  const objectFit = story.orientation === "LANDSCAPE" ? "contain" : "cover";
 
-  return (
+  return createPortal(
     <div
       className="story-scrim"
       onClick={onClose}
@@ -194,16 +260,20 @@ export default function StoryViewer({
     >
       <div className="story-viewer fade-in-up" onClick={(e) => e.stopPropagation()}>
         {/* ---- clip pane ---- */}
-        <div className="story-clip">
+        <div
+          key={`clip-${story.id}`}
+          className={`story-clip ${anim}`}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          onClick={onClipClick}
+        >
           {story.videoUrl && !failed ? (
             <video
               ref={videoRef}
               src={story.videoUrl}
               poster={story.posterUrl ?? undefined}
               playsInline
-              // contain, never cover: a landscape source letterboxes instead of cropping
-              // faces and whiteboards out of frame.
-              style={{ width: "100%", height: "100%", objectFit: "contain", background: "#141110" }}
+              style={{ display: "block", width: "100%", height: "100%", objectFit, background: "#141110" }}
               onTimeUpdate={(e) => {
                 const t = e.currentTarget.currentTime;
                 setElapsed(t);
@@ -216,7 +286,6 @@ export default function StoryViewer({
                 flush(); // no auto-advance — the design replaces it with the up-next queue
               }}
               onError={() => setFailed(true)}
-              onClick={togglePlay}
             />
           ) : (
             // Slow network / missing stream: the poster and the written story still carry it.
@@ -229,7 +298,7 @@ export default function StoryViewer({
             >
               <div style={{ position: "absolute", inset: 0, background: "rgba(20,17,16,.55)" }} />
               <button
-                onClick={() => { setFailed(false); }}
+                onClick={(e) => { stop(e); setFailed(false); }}
                 aria-label="Play story"
                 style={{
                   position: "relative", width: 62, height: 62, borderRadius: 999, border: "none",
@@ -253,7 +322,8 @@ export default function StoryViewer({
 
           <span
             style={{
-              position: "absolute", top: 16, left: 16, fontFamily: "var(--font-mono)", fontSize: 9,
+              position: "absolute", top: "calc(16px + env(safe-area-inset-top))", left: 16,
+              fontFamily: "var(--font-mono)", fontSize: 9,
               fontWeight: 700, letterSpacing: 1.2, background: "rgba(255,255,255,.16)", color: "#fff",
               borderRadius: 6, padding: "5px 9px",
             }}
@@ -261,9 +331,24 @@ export default function StoryViewer({
             {story.resultChip}
           </span>
 
+          {/* Mobile only — the sheet's ✕ scrolls away, this one never does. */}
+          <button
+            className="story-clip-close"
+            onClick={(e) => { stop(e); onClose(); }}
+            aria-label="Close story"
+            style={{
+              width: 32, height: 32, borderRadius: 10, border: "1px solid rgba(255,255,255,.22)",
+              background: "rgba(28,25,21,.55)", color: "#fff", cursor: "pointer", fontSize: 13,
+              alignItems: "center", justifyContent: "center", fontFamily: "inherit",
+            }}
+          >
+            ✕
+          </button>
+
           <div style={{ position: "absolute", bottom: 22, left: 16, right: 16, display: "flex", alignItems: "center", gap: 8 }}>
             <button
-              onClick={() => {
+              onClick={(e) => {
+                stop(e);
                 setMuted((m) => {
                   if (videoRef.current) videoRef.current.muted = !m;
                   return !m;
@@ -275,7 +360,7 @@ export default function StoryViewer({
               {muted ? "🔇" : "🔊"}
             </button>
             <button
-              onClick={togglePlay}
+              onClick={(e) => { stop(e); togglePlay(); }}
               aria-label={paused ? "Play" : "Pause"}
               style={{ width: 30, height: 30, borderRadius: 9, border: "none", background: "rgba(255,255,255,.16)", color: "#fff", cursor: "pointer", fontSize: 11, flex: "none" }}
             >
@@ -298,12 +383,13 @@ export default function StoryViewer({
           </div>
 
           {/* Mobile-only prev/next — visible controls, never invisible tap zones. */}
-          <button className="story-nav story-nav-prev" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous story">‹</button>
-          <button className="story-nav story-nav-next" onClick={() => go(1)} disabled={index >= stories.length - 1} aria-label="Next story">›</button>
+          <button className="story-nav story-nav-prev" onClick={(e) => { stop(e); go(-1); }} disabled={index === 0} aria-label="Previous story">‹</button>
+          <button className="story-nav story-nav-next" onClick={(e) => { stop(e); go(1); }} disabled={index >= stories.length - 1} aria-label="Next story">›</button>
         </div>
 
         {/* ---- context pane ---- */}
-        <div className="story-context">
+        <div key={`ctx-${story.id}`} className={`story-context ${anim}`}>
+          <div className="story-grabber" />
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
             <div style={{ width: 44, height: 44, borderRadius: 13, background: "var(--purple-soft)", color: "var(--purple-ink)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, flex: "none" }}>
               {story.avatarInitials || story.studentName.slice(0, 2).toUpperCase()}
@@ -359,6 +445,7 @@ export default function StoryViewer({
                   <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35 }}>{story.course.title}</div>
                 </div>
                 <button
+                  className="story-cta"
                   onClick={() => router.push(story.ctaUrl || `/student/courses/${story.course!.id}`)}
                   style={{ fontSize: 13, fontWeight: 600, background: "var(--orange)", color: "#fff", border: "none", borderRadius: 11, height: 42, padding: "0 18px", cursor: "pointer", flex: "none", fontFamily: "inherit", boxShadow: "0 2px 8px rgba(242,106,27,.3)" }}
                 >
@@ -397,12 +484,12 @@ export default function StoryViewer({
                 <button onClick={() => go(-1)} disabled={index === 0} className="story-step" aria-label="Previous story">‹</button>
                 <button onClick={() => go(1)} disabled={index >= stories.length - 1} className="story-step" aria-label="Next story">›</button>
               </div>
-              <div style={{ display: "flex", gap: 9 }}>
+              <div className="story-upnext">
                 {upNext.map((u, i) => (
                   <button
                     key={u.id}
-                    onClick={() => onIndexChange(index + 1 + i)}
-                    style={{ flex: 1, display: "flex", gap: 9, alignItems: "center", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 12, padding: 8, cursor: "pointer", minWidth: 0, textAlign: "left", fontFamily: "inherit" }}
+                    onClick={() => go(i + 1)}
+                    style={{ display: "flex", gap: 9, alignItems: "center", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 12, padding: 8, cursor: "pointer", minWidth: 0, textAlign: "left", fontFamily: "inherit" }}
                   >
                     <div style={{ width: 34, height: 46, borderRadius: 7, background: u.posterUrl ? `center/cover no-repeat url(${u.posterUrl})` : "linear-gradient(160deg,#3b332e,#1f1a17)", flex: "none" }} />
                     <div style={{ minWidth: 0 }}>
@@ -418,6 +505,7 @@ export default function StoryViewer({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

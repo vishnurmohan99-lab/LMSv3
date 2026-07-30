@@ -806,6 +806,28 @@ the **Feature history** and **Current Prisma data model** sections above.
   Two notes: the clip is 29.5s while the rail copy says "20–25 seconds each"; and `viewCount`
   double-counts opens in **dev only** (React StrictMode re-invokes effects) — production is
   unaffected.
+  **Mobile viewer rebuilt (2026-07-30).** On a real phone the viewer was broken: the student
+  shell's mobile topbar and bottom nav (both `z-index: 30` **flex items**, so they establish
+  stacking contexts in the root) painted over the `z-index: 400` scrim, cropping the clip top
+  and bottom. Fixed by portalling the viewer to `document.body` (the `Modal.tsx` pattern) plus
+  a body scroll-lock while open. Four more mobile fixes: `object-fit` is now **`cover` for
+  PORTRAIT** and `contain` only for LANDSCAPE — blanket `contain` pillarboxed 9:16 clips into a
+  letterboxed strip instead of the full-bleed reel the design calls for; the viewer grid gained
+  `grid-template-rows: auto minmax(0,1fr)` and `100dvh` so the sheet **scrolls internally**
+  rather than growing past the viewport (the CTA and up-next were unreachable); the sheet now
+  overlaps the clip by 16px with rounded top + grab handle, a clip-anchored ✕, full-width CTA
+  and a **stacked** up-next list (mockup ST6v); and `safe-area-inset` padding top and bottom.
+  **Gestures added** per the mockup's gesture map: swipe ←/→ between stories, swipe ↓ to close,
+  tap to play/pause, with the post-swipe synthetic click swallowed so a swipe never also
+  toggles playback. Story changes now slide (`.story-anim-next/prev`, keyed on story id,
+  disabled under `prefers-reduced-motion`).
+  **Verified in-browser** (temp harness route reproducing the shell's stacking, deleted):
+  portal parent `BODY`, scrim 375×812 covering both nav bars (`elementFromPoint` at y=10 and
+  y=800 both land inside the viewer), clip 375×374 full-bleed, sheet scrollHeight 893 >
+  clientHeight 454, PORTRAIT→`cover` / LANDSCAPE→`contain`, swipe L/R/down and tap all correct,
+  no-op swipe does not toggle play, body overflow locked then restored. Desktop unchanged:
+  grid still `372px 708px` at 1080 wide, mobile-only affordances all `display: none`, up-next
+  back to a row. Typecheck clean; eslint back to the pre-existing baseline.
 - **DEPLOY 2026-07-24 — main `ebec9ac`, PR
   [#10](https://github.com/vishnurmohan99-lab/LMSv3/pull/10).** Web-only (student PWA); no
   API/migration. Merged as-is with the brand drift unresolved (chevron icon, "Elearning"
