@@ -1495,14 +1495,45 @@ export const aiSettingsApi = {
 };
 
 // ---- Notes Bank (faculty notes) ----
+/** Where a notes bank applies. Targeting lives on the bank, not the individual file. */
+export type NoteScope = 'GENERAL' | 'COURSE' | 'BATCH' | 'LESSON';
+
 export interface NotesBank {
   id: string;
   title: string;
   published: boolean;
+  /** Which audience this bank reaches. Targeting lives here, not on each file. */
+  scope: NoteScope;
+  /** The class these notes cover. Optional — notes aren't only uploaded after a session. */
+  sessionDate: string | null;
+  /** Set for COURSE and LESSON scope. */
+  courseId: string | null;
+  /** Set for LESSON scope only. */
+  lessonId: string | null;
+  course?: { id: string; title: string } | null;
+  lesson?: { id: string; title: string } | null;
   createdAt: string;
   createdById: string;
   _count?: { notes: number };
   batches: { batch: { id: string; name: string } }[];
+}
+
+/** Targeting payload shared by create and update. */
+export interface NotesBankScopeInput {
+  scope: NoteScope;
+  sessionDate?: string | null;
+  courseId?: string | null;
+  lessonId?: string | null;
+  batchIds?: string[];
+}
+
+export interface NotesBankFilters {
+  q?: string;
+  scope?: NoteScope;
+  courseId?: string;
+  batchId?: string;
+  from?: string;
+  to?: string;
 }
 export interface Note {
   id: string;
@@ -1521,10 +1552,16 @@ export interface NotesBankTree extends NotesBank {
   notes: Note[];
 }
 export const facultyNotesApi = {
-  listBanks: () => request<NotesBank[]>('/notes-banks'),
+  listBanks: (params?: NotesBankFilters) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>,
+    ).toString();
+    return request<NotesBank[]>(`/notes-banks${qs ? `?${qs}` : ''}`);
+  },
   getBank: (id: string) => request<NotesBankTree>(`/notes-banks/${id}`),
-  createBank: (data: { title: string; batchIds?: string[] }) => request<NotesBank>('/notes-banks', { method: 'POST', body: JSON.stringify(data) }),
-  updateBank: (id: string, data: { title?: string; published?: boolean; batchIds?: string[] }) =>
+  createBank: (data: { title: string } & Partial<NotesBankScopeInput>) =>
+    request<NotesBank>('/notes-banks', { method: 'POST', body: JSON.stringify(data) }),
+  updateBank: (id: string, data: { title?: string; published?: boolean } & Partial<NotesBankScopeInput>) =>
     request<NotesBank>(`/notes-banks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   removeBank: (id: string) => request<{ success: boolean }>(`/notes-banks/${id}`, { method: 'DELETE' }),
   createNote: (bankId: string, data: { name: string; fileUrl: string; fileName?: string; courseId: string; chapterId?: string }) =>
