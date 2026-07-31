@@ -1681,6 +1681,37 @@ export interface Note {
 export interface NotesBankTree extends NotesBank {
   notes: Note[];
 }
+/** One page inside a note set. `kind` decides how the viewer renders it. */
+export interface NoteFile {
+  id: string;
+  name: string;
+  fileName: string | null;
+  order: number;
+  kind: 'IMAGE' | 'PDF';
+  /** Presigned R2 URL — expires after ~1h. */
+  fileUrl: string;
+}
+
+/** A day's notes: one entry, however many pages were photographed into it. */
+export interface StudentNoteSet {
+  id: string;
+  title: string;
+  scope: NoteScope;
+  sessionDate: string | null;
+  createdAt: string;
+  course: { id: string; title: string } | null;
+  lesson: { id: string; title: string } | null;
+  batches: { id: string; name: string }[];
+  pageCount: number;
+  files: NoteFile[];
+}
+
+export interface StudentNoteSets {
+  sets: StudentNoteSet[];
+  courses: { id: string; title: string }[];
+  batches: { id: string; name: string }[];
+}
+
 export interface StudentNotes {
   notes: Note[];
   courses: { id: string; title: string }[];
@@ -1708,6 +1739,11 @@ export const facultyNotesApi = {
   mine: (params?: { q?: string; courseId?: string; chapterId?: string }) => {
     const qs = new URLSearchParams(Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>).toString();
     return request<StudentNotes>(`/notes/mine${qs ? `?${qs}` : ''}`);
+  },
+  /** Set-grouped student feed — one entry per bank, which is what the Notes tab renders. */
+  mineSets: (params?: { q?: string; courseId?: string; batchId?: string; from?: string; to?: string }) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v)) as Record<string, string>).toString();
+    return request<StudentNoteSets>(`/notes/mine/sets${qs ? `?${qs}` : ''}`);
   },
 };
 

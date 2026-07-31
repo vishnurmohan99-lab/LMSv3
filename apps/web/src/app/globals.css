@@ -1519,6 +1519,145 @@ button:active, a:active {
 .story-nav-prev { left: 12px; }
 .story-nav-next { right: 12px; }
 
+/* ==========================================================================
+   Class Notes — paged viewer (Design System/Student - Notes.dc.html, NT3/NT5v).
+   Sibling of the story viewer and deliberately shares its grammar: portal to
+   body, swipe ←/→ to move, swipe ↓ to close, visible arrows, mobile sheet.
+   ========================================================================== */
+.note-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(20, 18, 16, .72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.note-viewer {
+  width: min(1240px, 100%);
+  height: min(760px, calc(100vh - 48px));
+  background: #1c1915;
+  border-radius: 24px;
+  box-shadow: 0 20px 48px rgba(28, 22, 15, .24);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.note-topbar {
+  height: 64px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.note-body { flex: 1; display: flex; min-height: 0; }
+
+/* Page rail — keeps the set legible as a set. Desktop only; mobile gets a
+   horizontal thumb strip inside the sheet instead. */
+.note-rail {
+  width: 132px;
+  flex: none;
+  border-right: 1px solid rgba(255, 255, 255, .08);
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.note-stage {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  background: radial-gradient(120% 80% at 50% 20%, #2a2521 0%, #211d19 55%, #1a1714 100%);
+  touch-action: pan-y;
+}
+
+.note-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(28, 25, 21, .62);
+  border: 1px solid rgba(255, 255, 255, .18);
+  color: #fff;
+  font: 600 16px var(--font-sans);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.note-nav:disabled { opacity: .3; cursor: default; }
+.note-nav-prev { left: 14px; }
+.note-nav-next { right: 14px; }
+
+/* Mobile-only bits, hidden on desktop. */
+.note-sheet { display: none; }
+.note-grabber { display: none; }
+.note-mobile-close { display: none; }
+
+@media (max-width: 860px) {
+  .note-scrim { padding: 0; align-items: stretch; justify-content: stretch; overflow: hidden; }
+  .note-viewer {
+    width: 100%;
+    border-radius: 0;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--bg);
+  }
+  /* Page on top, set sheet below — the ST6v arrangement. */
+  .note-topbar { display: none; }
+  .note-body { flex-direction: column; }
+  .note-rail { display: none; }
+  .note-stage {
+    flex: none;
+    height: 57dvh;
+    background: radial-gradient(120% 78% at 50% 30%, #2c2622 0%, #221e1a 50%, #1a1714 100%);
+  }
+  .note-sheet {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--bg);
+    border-radius: 20px 20px 0 0;
+    margin-top: -14px;
+    position: relative;
+    z-index: 1;
+    padding: 12px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .note-grabber {
+    display: block;
+    width: 38px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line);
+    margin: 0 auto 12px;
+  }
+  .note-mobile-close {
+    display: flex;
+    position: absolute;
+    top: calc(16px + env(safe-area-inset-top));
+    right: 16px;
+    z-index: 2;
+  }
+}
+
 /* Mobile-only close over the clip: on a full-bleed sheet the header ✕ can be
    scrolled away, so the exit has to live on the clip itself. */
 .story-clip-close { display: none; }
