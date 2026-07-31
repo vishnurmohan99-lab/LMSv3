@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceae4;font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;color:#1c1915}
+a{color:#e0540e;text-decoration:none}a:hover{color:#b9400d}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sheetUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+[data-screen-label] ::-webkit-scrollbar{display:none}
+[data-screen-label] *{scrollbar-width:none}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 20px;display:flex;align-items:center;gap:14px">
+  <div style="width:36px;height:36px;border-radius:11px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:9px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+  <div style="font:800 20px 'Plus Jakarta Sans'">Student &mdash; Notes</div>
+  <div style="font:500 11px 'JetBrains Mono';color:#7c756c;border:1px solid #d0cabf;border-radius:999px;padding:4px 10px">one entry per set &middot; paged viewer &middot; four scopes</div>
+  <div style="flex:1"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><a href="Student%20-%20Onboarding%20-%20Home.dc.html" style="font:600 12px 'Plus Jakarta Sans';border-radius:999px;padding:6px 13px;text-decoration:none;border:1px solid #d0cabf;color:#59534b">Onboarding &amp; Home</a><a href="Student%20-%20Practice%20-%20Planning.dc.html" style="font:600 12px 'Plus Jakarta Sans';border-radius:999px;padding:6px 13px;text-decoration:none;border:1px solid #d0cabf;color:#59534b">Practice &amp; Planning</a><a href="Student%20-%20Flashcards.dc.html" style="font:600 12px 'Plus Jakarta Sans';border-radius:999px;padding:6px 13px;text-decoration:none;border:1px solid #d0cabf;color:#59534b">Flashcards</a><a href="Student%20-%20Stories.dc.html" style="font:600 12px 'Plus Jakarta Sans';border-radius:999px;padding:6px 13px;text-decoration:none;border:1px solid #d0cabf;color:#59534b">Success Stories</a><a href="Student%20-%20Notes.dc.html" style="font:600 12px 'Plus Jakarta Sans';border-radius:999px;padding:6px 13px;text-decoration:none;background:#1c1915;color:#fff;border:1px solid #1c1915">Notes</a><a href="Student%20-%20Community%20-%20Components.dc.html" style="font:600 12px 'Plus Jakarta Sans';border-radius:999px;padding:6px 13px;text-decoration:none;border:1px solid #d0cabf;color:#59534b">Community &amp; Components</a></div>
+</div>
+
+<div style="padding:20px 56px 72px;display:flex;flex-direction:column;gap:44px;align-items:flex-start">
+
+<div style="display:flex;align-items:center;gap:14px;margin-top:24px">
+  <div style="width:40px;height:40px;border-radius:13px;background:#1c1915;color:#fff;display:flex;align-items:center;justify-content:center;font:800 12px 'JetBrains Mono'">NT</div>
+  <div><div style="font:800 22px 'Plus Jakarta Sans';letter-spacing:-.01em">Class Notes</div><div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c">Photographed handwriting from live classes &mdash; one entry per class, opened in a paged reader instead of a Drive link.</div></div>
+</div>
+
+<div data-screen-label="Notes — Components">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT0 · COMPONENT SHEET — scope chips, note-set card, page pill, file badge, search + filter bar</div>
+  <div style="width:1160px;background:#faf8f6;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.14);overflow:hidden;animation:fadeInUp .3s ease">
+    <div style="height:58px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 26px">
+      <span style="font:700 15px 'Plus Jakarta Sans'">Notes primitives</span>
+      <span style="font:400 12px 'Plus Jakarta Sans';color:#7c756c">4 components &middot; every state</span>
+      <div style="flex:1"></div>
+      <span style="font:600 10.5px 'JetBrains Mono';background:#f4f1ed;color:#59534b;border-radius:999px;padding:5px 11px">TOKENS ONLY</span>
+    </div>
+    <div style="padding:26px 30px 30px;display:flex;flex-direction:column;gap:16px">
+
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:20px;padding:22px;box-shadow:0 2px 8px rgba(28,22,15,.07)">
+        <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#7c756c;margin-bottom:4px">COMPONENT 01</div>
+        <div style="font:700 15px 'Plus Jakarta Sans'">Scope chip &mdash; four values, never more</div>
+        <div style="font:400 12px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-top:4px;max-width:660px">Every set carries exactly one scope, and it answers &ldquo;where does this apply to me?&rdquo; before the title is read. Colour is the fast signal; the glyph carries it for anyone who can&rsquo;t use colour.</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px">
+          <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="4">
+            <div style="background:#faf8f6;border:1px solid #eee9e2;border-radius:14px;padding:14px">
+              <span style="{{ s.chip }}"><span style="font-size:10px;line-height:1">{{ s.glyph }}</span>{{ s.label }}</span>
+              <div style="font:600 12px 'Plus Jakarta Sans';margin-top:10px">{{ s.means }}</div>
+              <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#7c756c;margin-top:3px">{{ s.eg }}</div>
+              <div style="font:500 9px 'JetBrains Mono';color:#aaa39a;margin-top:8px">{{ s.token }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e9e4de;border-radius:20px;padding:22px;box-shadow:0 2px 8px rgba(28,22,15,.07)">
+        <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#7c756c;margin-bottom:4px">COMPONENT 02</div>
+        <div style="font:700 15px 'Plus Jakarta Sans'">Note-set card &mdash; one row per set, never per page</div>
+        <div style="font:400 12px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-top:4px;max-width:660px">Title first, then scope. The stacked paper edge is the only place page-ness is decorative &mdash; everywhere else it is a counted pill. Unread carries a 1.5px ember keyline; opened drops to a hairline and a mono check.</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px">
+          <sc-for list="{{ demoCards }}" as="n" hint-placeholder-count="3">
+            <div style="{{ n.rowStyle }}">
+              <div style="position:relative;width:74px;height:94px;flex:none">
+                <sc-if value="{{ n.multi }}" hint-placeholder-val="{{ true }}">
+                  <div style="position:absolute;left:7px;top:-5px;width:74px;height:94px;border-radius:8px;background:#f3eee5;border:1px solid #e3ddd4;transform:rotate(2.6deg)"></div>
+                  <div style="position:absolute;left:3px;top:-2px;width:74px;height:94px;border-radius:8px;background:#fbf7f0;border:1px solid #e6e0d7;transform:rotate(1.2deg)"></div>
+                </sc-if>
+                <div style="{{ n.pageFace }}">
+                  <div style="height:7px;border-radius:2px;background:linear-gradient(90deg,rgba(28,25,21,.7) 0 42%,transparent 42%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.55) 0 26%,transparent 26% 32%,rgba(43,58,92,.55) 32% 88%,transparent 88%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.55) 0 46%,transparent 46% 52%,rgba(43,58,92,.55) 52% 74%,transparent 74%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.55) 0 18%,transparent 18% 24%,rgba(43,58,92,.55) 24% 96%,transparent 96%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.55) 0 62%,transparent 62%)"></div>
+                </div>
+                <span style="{{ n.typeChip }}">{{ n.typeLabel }}</span>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="{{ n.titleStyle }}">{{ n.title }}</span>
+                  <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ true }}"><span style="width:7px;height:7px;border-radius:999px;background:#f26a1b;flex:none"></span></sc-if>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px">
+                  <span style="{{ n.scopeChip }}"><span style="font-size:10px;line-height:1">{{ n.scopeGlyph }}</span>{{ n.scopeLabel }}</span>
+                  <sc-if value="{{ n.hasCtx }}" hint-placeholder-val="{{ true }}"><span style="font:500 11px 'Plus Jakarta Sans';color:#59534b;background:#f4f1ed;border-radius:6px;padding:3px 8px">{{ n.ctx }}</span></sc-if>
+                  <sc-if value="{{ n.hasDate }}" hint-placeholder-val="{{ true }}"><span style="font:500 9.5px 'JetBrains Mono';color:#7c756c">{{ n.date }}</span></sc-if>
+                  <sc-if value="{{ n.hasPages }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px;font:700 9px 'JetBrains Mono';color:#59534b;background:#fff;border:1px solid #e0dbd3;border-radius:999px;padding:3px 8px;letter-spacing:.04em"><span style="display:inline-flex;gap:1.5px"><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span></span>{{ n.pagesLabel }}</span></sc-if>
+                </div>
+                <div style="font:500 10px 'JetBrains Mono';color:#c4bdb2;margin-top:9px">{{ n.note }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex:none">
+                <span style="{{ n.stateChip }}">{{ n.state }}</span>
+                <span style="font:600 15px 'Plus Jakarta Sans';color:#c4bdb2">&rsaquo;</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:18px;border-top:1px solid #f4f1ed;padding-top:14px">
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:2px 6px">SINGLE-PAGE SET &rarr; NO PAGE PILL AT ALL</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:2px 6px">NO SESSION DATE &rarr; META ROW SHORTENS, NOTHING RESERVED</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:2px 6px">GENERAL SCOPE &rarr; NO COURSE CHIP, NO PLACEHOLDER</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:2px 6px">TITLE IS FACULTY-WRITTEN &mdash; FILENAMES NEVER SURFACE</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:20px;padding:22px;box-shadow:0 2px 8px rgba(28,22,15,.07)">
+          <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#7c756c;margin-bottom:4px">COMPONENT 03</div>
+          <div style="font:700 15px 'Plus Jakarta Sans'">Page-count pill &amp; file-type badge</div>
+          <div style="display:flex;gap:22px;margin-top:16px;flex-wrap:wrap">
+            <div>
+              <div style="font:500 9px 'JetBrains Mono';color:#aaa39a;margin-bottom:8px">PAGE COUNT</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <span style="display:inline-flex;align-items:center;gap:5px;font:700 9px 'JetBrains Mono';color:#59534b;background:#fff;border:1px solid #e0dbd3;border-radius:999px;padding:3px 8px">
+                  <span style="display:inline-flex;gap:1.5px"><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span></span>3 pages</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;font:700 9px 'JetBrains Mono';color:#59534b;background:#fff;border:1px solid #e0dbd3;border-radius:999px;padding:3px 8px">
+                  <span style="display:inline-flex;gap:1.5px"><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span></span>12 pages</span>
+                <span style="font:700 9px 'JetBrains Mono';color:#c4bdb2;border:1px dashed #ded8cf;border-radius:999px;padding:3px 8px;text-decoration:line-through">1 page</span>
+              </div>
+              <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#7c756c;margin-top:9px;max-width:250px">A one-page set is just a note. Saying &ldquo;1 page&rdquo; invites the reader to look for a second.</div>
+            </div>
+            <div>
+              <div style="font:500 9px 'JetBrains Mono';color:#aaa39a;margin-bottom:8px">FILE TYPE</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span style="font:700 8.5px 'JetBrains Mono';background:rgba(28,25,21,.72);color:#fff;border-radius:5px;padding:3px 7px;letter-spacing:.08em">IMAGE</span>
+                <span style="font:700 8.5px 'JetBrains Mono';background:#fff;color:#1c1915;border:1px solid #d8d2c9;border-radius:5px;padding:3px 7px;letter-spacing:.08em">PDF</span>
+              </div>
+              <div style="font:400 11px/1.5 'Plus Jakarta Sans';color:#7c756c;margin-top:9px;max-width:250px">Sits on the paper corner, not in the meta row &mdash; it describes the artefact, not the class. Both read in-app.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:20px;padding:22px;box-shadow:0 2px 8px rgba(28,22,15,.07)">
+          <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.08em;color:#7c756c;margin-bottom:4px">COMPONENT 04</div>
+          <div style="font:700 15px 'Plus Jakarta Sans'">Search + filter bar</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:16px">
+            <div style="flex:1;display:flex;align-items:center;gap:9px;background:#f4f1ed;border-radius:11px;height:38px;padding:0 13px;min-width:0">
+              <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+              <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search note titles&hellip;</span>
+            </div>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';color:#59534b;border:1px solid #e0dbd3;background:#fff;border-radius:10px;padding:9px 12px;white-space:nowrap">Batch &#9662;</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';color:#59534b;border:1px solid #e0dbd3;background:#fff;border-radius:10px;padding:9px 12px;white-space:nowrap">Course &#9662;</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';color:#59534b;border:1px solid #e0dbd3;background:#fff;border-radius:10px;padding:9px 12px;white-space:nowrap">Dates &#9662;</span>
+          </div>
+          <div style="font:500 9px 'JetBrains Mono';color:#aaa39a;margin:16px 0 8px">MOBILE &mdash; COLLAPSED, ACTIVE STATE STILL VISIBLE</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;display:flex;align-items:center;gap:9px;background:#f4f1ed;border-radius:11px;height:38px;padding:0 13px;min-width:0">
+              <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+              <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search titles</span>
+            </div>
+            <span style="display:inline-flex;align-items:center;gap:6px;font:600 11.5px 'Plus Jakarta Sans';color:#fff;background:#1c1915;border-radius:10px;padding:10px 13px;white-space:nowrap">Filters<span style="font:700 9px 'JetBrains Mono';background:#f26a1b;border-radius:999px;padding:1px 6px">2</span></span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+            <span style="display:inline-flex;align-items:center;gap:6px;font:600 10.5px 'Plus Jakarta Sans';background:#fff6ef;color:#b9400d;border:1px solid #ffd0ac;border-radius:999px;padding:5px 10px">First A &mdash; July<span style="font:400 11px 'Plus Jakarta Sans'">&#10005;</span></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font:600 10.5px 'Plus Jakarta Sans';background:#fff6ef;color:#b9400d;border:1px solid #ffd0ac;border-radius:999px;padding:5px 10px">1&ndash;14 Jul<span style="font:400 11px 'Plus Jakarta Sans'">&#10005;</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Notes tab — Desktop">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT1 · NOTES TAB — 1360px · newest first, one row per set</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;max-width:1360px">
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9312; 7 sets &middot; 25 pages &mdash; the list never shows 25 rows</span>
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9313; grouped by recency, sorted newest first inside each group</span>
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9314; row 3 is GENERAL &mdash; no course chip, no date, one page</span>
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9315; whole row is the hit target &middot; &#9888; needs API</span>
+  </div>
+  <div style="width:1360px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14);display:flex;flex-direction:column">
+    <div style="height:64px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;flex:none">
+      <div style="width:240px;flex:none;display:flex;align-items:center;gap:9px;padding-left:22px;box-sizing:border-box">
+        <div style="width:30px;height:30px;border-radius:9px;background:#f26a1b;display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:7px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;transform:rotate(-90deg)"></div></div>
+        <span style="font:800 16px 'Plus Jakarta Sans'">Ascent</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;gap:20px;padding:0 28px 0 4px;min-width:0">
+        <span style="font:800 17px 'Plus Jakarta Sans';letter-spacing:-.01em;flex:none">Notes</span>
+        <div style="flex:1;max-width:400px;margin-left:auto;display:flex;align-items:center;gap:9px;background:#f4f1ed;border-radius:11px;height:38px;padding:0 14px">
+          <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <span style="font:400 13px 'Plus Jakarta Sans';color:#aaa39a">Search courses, tests, mentors&hellip;</span>
+          <span style="margin-left:auto;font:600 10px 'JetBrains Mono';color:#aaa39a;border:1px solid #e0dbd3;border-radius:5px;padding:2px 6px">&#8984;K</span>
+        </div>
+        <div style="width:38px;height:38px;border:1px solid #e9e4de;background:#fff;border-radius:11px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none" style-hover="background:#faf8f6">
+          <svg width="15" height="16" viewBox="0 0 15 16"><path d="M7.5 1.5 C4.7 1.5 3.4 3.6 3.4 6 L3.4 9 L2 11.5 L13 11.5 L11.6 9 L11.6 6 C11.6 3.6 10.3 1.5 7.5 1.5 Z" fill="none" stroke="#59534b" stroke-width="1.4" stroke-linejoin="round"></path><path d="M6 13.5 A1.6 1.6 0 0 0 9 13.5" fill="none" stroke="#59534b" stroke-width="1.4"></path></svg>
+          <span style="position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:999px;background:#e63368;border:1.5px solid #fff"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;flex:none;cursor:pointer">
+          <div style="width:38px;height:38px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans'">AD</div>
+          <span style="font:600 13px 'Plus Jakarta Sans';color:#403b35">{{ studentName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:stretch">
+      <div style="width:240px;flex:none;background:#fff;border-right:1px solid #e9e4de;padding:16px 14px 18px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ nav }}" as="v" hint-placeholder-count="6">
+          <div style="{{ v.style }}">
+            <span style="{{ v.dot }}"></span>{{ v.label }}
+            <sc-if value="{{ v.badge }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font:700 9px 'JetBrains Mono';background:#f26a1b;color:#fff;border-radius:999px;padding:2px 6px">{{ v.badgeText }}</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:1;min-width:0;padding:24px 28px 30px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+          <div>
+            <div style="font:800 22px 'Plus Jakarta Sans';letter-spacing:-.01em">Notes</div>
+            <div style="font:400 12.5px 'Plus Jakarta Sans';color:#7c756c;margin-top:2px">Everything your faculty has shared with you &mdash; newest first.</div>
+          </div>
+          <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #e0dbd3;color:#59534b;border-radius:999px;padding:5px 11px">{{ listMeta }}</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-top:18px">
+          <div style="flex:1;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e9e4de;border-radius:11px;height:40px;padding:0 13px;min-width:0">
+            <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+            <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search note titles&hellip;</span>
+          </div>
+          <span style="font:600 11.5px 'Plus Jakarta Sans';color:#59534b;border:1px solid #e0dbd3;background:#fff;border-radius:10px;padding:10px 13px;white-space:nowrap;cursor:pointer" style-hover="background:#f4f1ed">Batch &#9662;</span>
+          <span style="font:600 11.5px 'Plus Jakarta Sans';color:#59534b;border:1px solid #e0dbd3;background:#fff;border-radius:10px;padding:10px 13px;white-space:nowrap;cursor:pointer" style-hover="background:#f4f1ed">Course &#9662;</span>
+          <span style="font:600 11.5px 'Plus Jakarta Sans';color:#59534b;border:1px solid #e0dbd3;background:#fff;border-radius:10px;padding:10px 13px;white-space:nowrap;cursor:pointer" style-hover="background:#f4f1ed">Date range &#9662;</span>
+        </div>
+
+        <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.1em;color:#aaa39a;margin:22px 0 10px">THIS WEEK</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ notesRecent }}" as="n" hint-placeholder-count="3">
+            <div style="{{ n.rowStyle }}">
+              <div style="{{ n.thumbWrap }}">
+                <sc-if value="{{ n.multi }}" hint-placeholder-val="{{ true }}">
+                  <div style="{{ n.stack2 }}"></div>
+                  <div style="{{ n.stack1 }}"></div>
+                </sc-if>
+                <div style="{{ n.pageFace }}">
+                  <div style="height:6px;border-radius:2px;background:linear-gradient(90deg,rgba(28,25,21,.7) 0 44%,transparent 44%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 26%,transparent 26% 32%,rgba(43,58,92,.5) 32% 88%,transparent 88%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 46%,transparent 46% 52%,rgba(43,58,92,.5) 52% 74%,transparent 74%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 18%,transparent 18% 24%,rgba(43,58,92,.5) 24% 96%,transparent 96%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 62%,transparent 62%)"></div>
+                </div>
+                <span style="{{ n.typeChip }}">{{ n.typeLabel }}</span>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="{{ n.titleStyle }}">{{ n.title }}</span>
+                  <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ true }}"><span style="width:7px;height:7px;border-radius:999px;background:#f26a1b;flex:none"></span></sc-if>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px">
+                  <span style="{{ n.scopeChip }}"><span style="font-size:10px;line-height:1">{{ n.scopeGlyph }}</span>{{ n.scopeLabel }}</span>
+                  <sc-if value="{{ n.hasCtx }}" hint-placeholder-val="{{ true }}"><span style="font:500 11px 'Plus Jakarta Sans';color:#59534b;background:#f4f1ed;border-radius:6px;padding:3px 8px">{{ n.ctx }}</span></sc-if>
+                  <sc-if value="{{ n.hasDate }}" hint-placeholder-val="{{ true }}"><span style="font:500 9.5px 'JetBrains Mono';color:#7c756c">{{ n.date }}</span></sc-if>
+                  <sc-if value="{{ n.hasPages }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px;font:700 9px 'JetBrains Mono';color:#59534b;background:#fff;border:1px solid #e0dbd3;border-radius:999px;padding:3px 8px;letter-spacing:.04em"><span style="display:inline-flex;gap:1.5px"><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span></span>{{ n.pagesLabel }}</span></sc-if>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;flex:none">
+                <span style="{{ n.readMark }}">{{ n.readText }}</span>
+                <span style="font:600 16px 'Plus Jakarta Sans';color:#c4bdb2">&rsaquo;</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:700 9.5px 'JetBrains Mono';letter-spacing:.1em;color:#aaa39a;margin:22px 0 10px">EARLIER IN JULY</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ notesEarlier }}" as="n" hint-placeholder-count="4">
+            <div style="{{ n.rowStyle }}">
+              <div style="{{ n.thumbWrap }}">
+                <sc-if value="{{ n.multi }}" hint-placeholder-val="{{ true }}">
+                  <div style="{{ n.stack2 }}"></div>
+                  <div style="{{ n.stack1 }}"></div>
+                </sc-if>
+                <div style="{{ n.pageFace }}">
+                  <div style="height:6px;border-radius:2px;background:linear-gradient(90deg,rgba(28,25,21,.62) 0 44%,transparent 44%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.44) 0 26%,transparent 26% 32%,rgba(43,58,92,.44) 32% 88%,transparent 88%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.44) 0 46%,transparent 46% 52%,rgba(43,58,92,.44) 52% 74%,transparent 74%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.44) 0 18%,transparent 18% 24%,rgba(43,58,92,.44) 24% 96%,transparent 96%)"></div>
+                  <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.44) 0 62%,transparent 62%)"></div>
+                </div>
+                <span style="{{ n.typeChip }}">{{ n.typeLabel }}</span>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="{{ n.titleStyle }}">{{ n.title }}</span>
+                  <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="width:7px;height:7px;border-radius:999px;background:#f26a1b;flex:none"></span></sc-if>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px">
+                  <span style="{{ n.scopeChip }}"><span style="font-size:10px;line-height:1">{{ n.scopeGlyph }}</span>{{ n.scopeLabel }}</span>
+                  <sc-if value="{{ n.hasCtx }}" hint-placeholder-val="{{ true }}"><span style="font:500 11px 'Plus Jakarta Sans';color:#59534b;background:#f4f1ed;border-radius:6px;padding:3px 8px">{{ n.ctx }}</span></sc-if>
+                  <sc-if value="{{ n.hasDate }}" hint-placeholder-val="{{ true }}"><span style="font:500 9.5px 'JetBrains Mono';color:#7c756c">{{ n.date }}</span></sc-if>
+                  <sc-if value="{{ n.hasPages }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px;font:700 9px 'JetBrains Mono';color:#59534b;background:#fff;border:1px solid #e0dbd3;border-radius:999px;padding:3px 8px;letter-spacing:.04em"><span style="display:inline-flex;gap:1.5px"><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span><span style="width:3px;height:8px;background:#aaa39a;border-radius:1px"></span></span>{{ n.pagesLabel }}</span></sc-if>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;flex:none">
+                <span style="{{ n.readMark }}">{{ n.readText }}</span>
+                <span style="font:600 16px 'Plus Jakarta Sans';color:#c4bdb2">&rsaquo;</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Notes tab — Filtered + empty">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT2 · TWO EMPTIES — a filtered dead end you back out of, and a waiting state you don't</div>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+
+    <div style="width:668px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+      <div style="height:50px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:10px;padding:0 20px">
+        <span style="font:700 13px 'Plus Jakarta Sans'">Filtered &mdash; no results</span>
+        <span style="font:500 9px 'JetBrains Mono';color:#aaa39a">THE LIST IS FINE, THE QUERY ISN'T</span>
+      </div>
+      <div style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e9e4de;border-radius:11px;height:38px;padding:0 13px;min-width:0">
+            <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+            <span style="font:500 12.5px 'Plus Jakarta Sans';color:#1c1915">thermo</span>
+          </div>
+          <span style="font:600 11.5px 'Plus Jakarta Sans';color:#b9400d;border:1px solid #ffd0ac;background:#fff6ef;border-radius:10px;padding:9px 12px">Batch &middot; 1 &#9662;</span>
+          <span style="font:600 11.5px 'Plus Jakarta Sans';color:#b9400d;border:1px solid #ffd0ac;background:#fff6ef;border-radius:10px;padding:9px 12px">Course &middot; 1 &#9662;</span>
+          <span style="font:600 11.5px 'Plus Jakarta Sans';color:#b9400d;border:1px solid #ffd0ac;background:#fff6ef;border-radius:10px;padding:9px 12px">Dates &#9662;</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:11px;flex-wrap:wrap;align-items:center">
+          <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+            <span onClick="{{ f.remove }}" style="display:inline-flex;align-items:center;gap:7px;font:600 10.5px 'Plus Jakarta Sans';background:#fff6ef;color:#b9400d;border:1px solid #ffd0ac;border-radius:999px;padding:5px 10px;cursor:pointer" style-hover="background:#ffe9d8">{{ f.label }}<span style="font:400 11px 'Plus Jakarta Sans'">&#10005;</span></span>
+          </sc-for>
+          <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ true }}">
+            <span onClick="{{ clearFilters }}" style="font:600 10.5px 'Plus Jakarta Sans';color:#59534b;text-decoration:underline;cursor:pointer;padding:5px 4px">Clear all</span>
+          </sc-if>
+          <sc-if value="{{ noFilters }}" hint-placeholder-val="{{ false }}">
+            <span onClick="{{ resetFilters }}" style="font:600 10.5px 'Plus Jakarta Sans';color:#59534b;border:1px dashed #d8d2c9;border-radius:999px;padding:5px 10px;cursor:pointer">Filters cleared &mdash; restore demo</span>
+          </sc-if>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:34px 28px;margin-top:14px;display:flex;flex-direction:column;align-items:center;text-align:center">
+          <div style="position:relative;width:84px;height:64px;margin-bottom:16px">
+            <div style="position:absolute;left:12px;top:2px;width:56px;height:60px;border-radius:8px;background:#faf8f6;border:1px solid #e9e4de;transform:rotate(-6deg)"></div>
+            <div style="position:absolute;left:20px;top:0;width:56px;height:60px;border-radius:8px;background:#fff;border:1px solid #e9e4de;transform:rotate(5deg);display:flex;flex-direction:column;gap:5px;padding:12px 9px;box-sizing:border-box">
+              <div style="height:4px;border-radius:2px;background:#eee9e2"></div>
+              <div style="height:4px;border-radius:2px;background:#eee9e2;width:70%"></div>
+              <div style="height:4px;border-radius:2px;background:#eee9e2;width:85%"></div>
+            </div>
+            <div style="position:absolute;left:-2px;bottom:-2px;width:26px;height:26px;border:2px solid #d8d2c9;border-radius:999px;background:#faf8f6"></div>
+            <div style="position:absolute;left:19px;bottom:-6px;width:12px;height:2.5px;background:#d8d2c9;border-radius:2px;transform:rotate(45deg)"></div>
+          </div>
+          <div style="font:700 16px 'Plus Jakarta Sans'">No notes match these filters</div>
+          <div style="font:400 12.5px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-top:5px;max-width:330px;text-wrap:pretty">Nothing titled &ldquo;thermo&rdquo; was shared to <b style="color:#59534b">First A &mdash; July Batch</b> in <b style="color:#59534b">1&ndash;14 Jul</b>. There are 7 sets waiting outside this window.</div>
+          <div style="display:flex;gap:9px;margin-top:16px">
+            <button onClick="{{ clearFilters }}" style="font:600 12.5px 'Plus Jakarta Sans';background:#f26a1b;color:#fff;border:none;border-radius:11px;padding:11px 18px;cursor:pointer;box-shadow:0 2px 8px rgba(242,106,27,.28)">Clear all filters</button>
+            <button onClick="{{ widenDates }}" style="font:600 12.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #d8d2c9;border-radius:11px;padding:11px 18px;cursor:pointer">Widen dates to all July</button>
+          </div>
+          <div style="font:500 9px 'JetBrains Mono';color:#c4bdb2;margin-top:14px">EVERY EXIT PUTS SETS BACK ON SCREEN &mdash; NO &ldquo;TRY AGAIN&rdquo;</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:668px;background:#faf8f6;border-radius:24px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.14)">
+      <div style="height:50px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:10px;padding:0 20px">
+        <span style="font:700 13px 'Plus Jakarta Sans'">Never had any &mdash; waiting</span>
+        <span style="font:500 9px 'JetBrains Mono';color:#aaa39a">NOTHING TO SEARCH, SO NO SEARCH BAR</span>
+      </div>
+      <div style="padding:20px">
+        <div style="background:#fff;border:1px solid #e9e4de;border-radius:18px;padding:34px 28px;display:flex;flex-direction:column;align-items:center;text-align:center">
+          <div style="position:relative;width:96px;height:70px;margin-bottom:16px">
+            <div style="position:absolute;left:24px;top:4px;width:58px;height:64px;border-radius:9px;background:#fdfbf6;border:1px dashed #ded8cf;display:flex;flex-direction:column;gap:6px;padding:13px 10px;box-sizing:border-box">
+              <div style="height:4px;border-radius:2px;background:#f0ebe3"></div>
+              <div style="height:4px;border-radius:2px;background:#f0ebe3;width:78%"></div>
+              <div style="height:4px;border-radius:2px;background:#f0ebe3;width:60%"></div>
+            </div>
+            <div style="position:absolute;left:4px;top:20px;width:34px;height:34px;border-radius:11px;background:#fdf0dd;display:flex;align-items:center;justify-content:center;font:700 10px 'JetBrains Mono';color:#a35a06">NEW</div>
+          </div>
+          <div style="font:700 16px 'Plus Jakarta Sans'">Your faculty hasn&rsquo;t shared notes yet</div>
+          <div style="font:400 12.5px/1.6 'Plus Jakarta Sans';color:#7c756c;margin-top:5px;max-width:340px;text-wrap:pretty">After a live class, whatever gets written on the board is photographed and lands here &mdash; usually within a couple of hours. Nothing for you to do.</div>
+          <div style="display:flex;align-items:center;gap:9px;background:#faf8f6;border:1px solid #eee9e2;border-radius:12px;padding:11px 14px;margin-top:18px">
+            <div style="width:26px;height:26px;border-radius:8px;background:#e7f0fc;color:#2e7de0;display:flex;align-items:center;justify-content:center;font:700 11px 'Plus Jakarta Sans';flex:none">&#8635;</div>
+            <div style="text-align:left">
+              <div style="font:600 11.5px 'Plus Jakarta Sans'">You&rsquo;ll get a notification</div>
+              <div style="font:400 10.5px 'Plus Jakarta Sans';color:#7c756c">Next live class: Thermodynamics, today 18:30</div>
+            </div>
+          </div>
+          <div style="font:500 9px 'JetBrains Mono';color:#c4bdb2;margin-top:16px">NO PRIMARY BUTTON &mdash; THERE IS NOTHING TO PRESS YET</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">FILTERED EMPTY KEEPS THE BAR &mdash; WAITING EMPTY REMOVES IT</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">NEVER SHOW A FILTER UI OVER ZERO LIFETIME SETS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Note viewer — Image pages">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT3 · VIEWER, IMAGE SET — page {{ pageLabel }} · title, scope and date pinned above the paper</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;max-width:1240px">
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9312; &larr; &rarr; move pages &middot; ESC closes &middot; same grammar as the story viewer</span>
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9313; double-tap or pinch to zoom &mdash; try the +/&minus; controls</span>
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9314; page rail on the left keeps the set legible as a set</span>
+  </div>
+  <div style="width:1240px;height:760px;background:#1c1915;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.24);overflow:hidden;display:flex;flex-direction:column">
+    <div style="height:64px;flex:none;display:flex;align-items:center;gap:12px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div onClick="{{ noop }}" style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;font:400 14px 'Plus Jakarta Sans';cursor:pointer;flex:none">&#8592;</div>
+      <div style="min-width:0">
+        <div style="font:700 14.5px 'Plus Jakarta Sans';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Thermodynamics &mdash; Ch 4, Part 2</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+          <span style="display:inline-flex;align-items:center;gap:5px;font:700 8.5px 'JetBrains Mono';letter-spacing:.09em;background:rgba(46,125,224,.2);color:#9dc4f5;border-radius:5px;padding:3px 7px"><span style="font-size:10px;line-height:1">&#9656;</span>LESSON</span>
+          <span style="font:500 9.5px 'JetBrains Mono';color:rgba(255,255,255,.5)">PHYSICS &mdash; CLASS 12 &middot; CLASS OF 12 JUL</span>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:3px;background:rgba(255,255,255,.09);border-radius:10px;padding:4px">
+        <div onClick="{{ zoomOut }}" style="width:28px;height:28px;border-radius:7px;color:#fff;display:flex;align-items:center;justify-content:center;font:600 14px 'Plus Jakarta Sans';cursor:pointer" style-hover="background:rgba(255,255,255,.12)">&minus;</div>
+        <span style="font:700 9.5px 'JetBrains Mono';color:rgba(255,255,255,.8);min-width:38px;text-align:center">{{ zoomLabel }}</span>
+        <div onClick="{{ zoomIn }}" style="width:28px;height:28px;border-radius:7px;color:#fff;display:flex;align-items:center;justify-content:center;font:600 14px 'Plus Jakarta Sans';cursor:pointer" style-hover="background:rgba(255,255,255,.12)">+</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font:600 11.5px 'Plus Jakarta Sans';color:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 12px;cursor:pointer;flex:none" style-hover="background:rgba(255,255,255,.08)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 11 5 5 5-5"></path><path d="M4 20h16"></path></svg>Download
+      </div>
+      <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;font:400 13px 'Plus Jakarta Sans';cursor:pointer;flex:none">&#10005;</div>
+    </div>
+
+    <div style="flex:1;display:flex;min-height:0">
+      <div style="width:132px;flex:none;border-right:1px solid rgba(255,255,255,.08);padding:16px 0;display:flex;flex-direction:column;align-items:center;gap:12px;overflow-y:auto">
+        <span style="font:700 8.5px 'JetBrains Mono';letter-spacing:.12em;color:rgba(255,255,255,.38)">3 PAGES</span>
+        <sc-for list="{{ pageThumbs }}" as="p" hint-placeholder-count="3">
+          <div onClick="{{ p.go }}" style="{{ p.wrap }}">
+            <div style="{{ p.face }}">
+              <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(28,25,21,.66) 0 46%,transparent 46%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 30%,transparent 30% 36%,rgba(43,58,92,.5) 36% 92%,transparent 92%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 52%,transparent 52% 58%,rgba(43,58,92,.5) 58% 80%,transparent 80%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 22%,transparent 22% 28%,rgba(43,58,92,.5) 28% 96%,transparent 96%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 66%,transparent 66%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.5) 0 40%,transparent 40% 46%,rgba(43,58,92,.5) 46% 86%,transparent 86%)"></div>
+            </div>
+            <span style="{{ p.num }}">{{ p.n }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(120% 80% at 50% 20%,#2a2521 0%,#211d19 55%,#1a1714 100%)">
+        <div style="{{ stageZoom }}">
+          <div style="position:relative;width:494px;height:660px;border-radius:6px;background:#fdfbf6;box-shadow:0 20px 48px rgba(0,0,0,.5);overflow:hidden">
+            <div style="position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 33px,rgba(46,125,224,.11) 33px 34px)"></div>
+            <div style="position:absolute;left:52px;top:0;bottom:0;width:1px;background:rgba(242,106,27,.2)"></div>
+            <div style="position:absolute;inset:0;background:linear-gradient(118deg,rgba(255,255,255,.5) 0%,rgba(255,252,246,0) 34%,rgba(28,22,15,.05) 100%)"></div>
+            <div style="position:relative;padding:38px 40px 0 66px;display:flex;flex-direction:column;gap:23px">
+              <div style="height:13px;border-radius:3px;background:linear-gradient(90deg,rgba(28,25,21,.8) 0 30%,transparent 30% 35%,rgba(28,25,21,.8) 35% 62%,transparent 62%)"></div>
+              <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 15%,transparent 15% 18%,rgba(43,58,92,.66) 18% 41%,transparent 41% 45%,rgba(43,58,92,.66) 45% 67%,transparent 67% 71%,rgba(43,58,92,.66) 71% 94%,transparent 94%)"></div>
+              <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 22%,transparent 22% 26%,rgba(43,58,92,.66) 26% 44%,transparent 44% 48%,rgba(43,58,92,.66) 48% 88%,transparent 88%)"></div>
+              <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 34%,transparent 34% 38%,rgba(43,58,92,.66) 38% 59%,transparent 59% 63%,rgba(43,58,92,.66) 63% 79%,transparent 79%)"></div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="flex:none;width:150px;height:56px;border:1.5px solid rgba(43,58,92,.5);border-radius:5px;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:0 12px">
+                  <div style="height:7px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.7) 0 40%,transparent 40% 47%,rgba(43,58,92,.7) 47% 86%,transparent 86%)"></div>
+                  <div style="height:7px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.7) 0 62%,transparent 62%)"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+                  <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(184,54,54,.6) 0 44%,transparent 44% 50%,rgba(184,54,54,.6) 50% 78%,transparent 78%)"></div>
+                  <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 28%,transparent 28% 33%,rgba(43,58,92,.66) 33% 90%,transparent 90%)"></div>
+                </div>
+              </div>
+              <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 19%,transparent 19% 23%,rgba(43,58,92,.66) 23% 52%,transparent 52% 56%,rgba(43,58,92,.66) 56% 91%,transparent 91%)"></div>
+              <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 26%,transparent 26% 31%,rgba(43,58,92,.66) 31% 73%,transparent 73%)"></div>
+              <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 38%,transparent 38% 43%,rgba(43,58,92,.66) 43% 61%,transparent 61% 66%,rgba(43,58,92,.66) 66% 96%,transparent 96%)"></div>
+              <div style="height:8px;border-radius:3px;background:linear-gradient(90deg,rgba(43,58,92,.66) 0 47%,transparent 47%)"></div>
+            </div>
+          </div>
+        </div>
+
+        <div onClick="{{ prevPage }}" style="{{ prevBtn }}">&lsaquo;</div>
+        <div onClick="{{ nextPage }}" style="{{ nextBtn }}">&rsaquo;</div>
+
+        <div style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(28,25,21,.72);border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:8px 8px 8px 16px">
+          <span style="font:700 11px 'JetBrains Mono';color:#fff;letter-spacing:.06em">{{ pageLabel }}</span>
+          <div style="display:flex;gap:4px">
+            <sc-for list="{{ pageDots }}" as="d" hint-placeholder-count="3">
+              <div onClick="{{ d.go }}" style="{{ d.style }}"></div>
+            </sc-for>
+          </div>
+          <span style="font:500 9px 'JetBrains Mono';color:rgba(255,255,255,.42);padding-left:4px">SWIPE OR &larr; &rarr;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Note viewer — PDF">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT4 · VIEWER, PDF SET — rendered inline · download stays optional</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;max-width:1240px">
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9312; identical chrome to the image viewer &mdash; only the page body differs</span>
+    <span style="font:600 10px 'JetBrains Mono';background:#fff;border:1px solid #ffd0ac;color:#b9400d;border-radius:999px;padding:4px 10px">&#9313; scroll continues pages; the rail and the {{ pdfLabel }} counter stay in sync</span>
+  </div>
+  <div style="width:1240px;height:700px;background:#1c1915;border-radius:24px;box-shadow:0 20px 48px rgba(28,22,15,.24);overflow:hidden;display:flex;flex-direction:column">
+    <div style="height:64px;flex:none;display:flex;align-items:center;gap:12px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;font:400 14px 'Plus Jakarta Sans';cursor:pointer;flex:none">&#8592;</div>
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font:700 14.5px 'Plus Jakarta Sans';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Organic reactions &mdash; name list</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:rgba(255,255,255,.14);color:#fff;border-radius:5px;padding:3px 7px;letter-spacing:.08em;flex:none">PDF</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+          <span style="display:inline-flex;align-items:center;gap:5px;font:700 8.5px 'JetBrains Mono';letter-spacing:.09em;background:rgba(124,92,252,.22);color:#c3b2ff;border-radius:5px;padding:3px 7px"><span style="font-size:10px;line-height:1">&#9636;</span>COURSE</span>
+          <span style="font:500 9.5px 'JetBrains Mono';color:rgba(255,255,255,.5)">CHEMISTRY CRASH COURSE &middot; CLASS OF 9 JUL</span>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <span style="font:500 9.5px 'JetBrains Mono';color:rgba(255,255,255,.4)">FIT WIDTH</span>
+      <div style="display:flex;align-items:center;gap:6px;font:600 11.5px 'Plus Jakarta Sans';color:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 12px;cursor:pointer;flex:none" style-hover="background:rgba(255,255,255,.08)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 11 5 5 5-5"></path><path d="M4 20h16"></path></svg>Download
+      </div>
+      <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;font:400 13px 'Plus Jakarta Sans';cursor:pointer;flex:none">&#10005;</div>
+    </div>
+
+    <div style="flex:1;display:flex;min-height:0">
+      <div style="width:132px;flex:none;border-right:1px solid rgba(255,255,255,.08);padding:16px 0;display:flex;flex-direction:column;align-items:center;gap:12px;overflow-y:auto">
+        <span style="font:700 8.5px 'JetBrains Mono';letter-spacing:.12em;color:rgba(255,255,255,.38)">8 PAGES</span>
+        <sc-for list="{{ pdfThumbs }}" as="p" hint-placeholder-count="4">
+          <div onClick="{{ p.go }}" style="{{ p.wrap }}">
+            <div style="{{ p.face }}">
+              <div style="height:3px;border-radius:1px;background:rgba(28,25,21,.62);width:52%"></div>
+              <div style="height:2px;border-radius:1px;background:rgba(28,25,21,.34)"></div>
+              <div style="height:2px;border-radius:1px;background:rgba(28,25,21,.34)"></div>
+              <div style="height:2px;border-radius:1px;background:rgba(28,25,21,.34);width:88%"></div>
+              <div style="height:2px;border-radius:1px;background:rgba(28,25,21,.34)"></div>
+              <div style="height:2px;border-radius:1px;background:rgba(28,25,21,.34);width:70%"></div>
+            </div>
+            <span style="{{ p.num }}">{{ p.n }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;overflow:hidden;background:radial-gradient(120% 80% at 50% 20%,#2a2521 0%,#211d19 55%,#1a1714 100%);padding-top:26px">
+        <div style="width:470px;background:#fffdf9;border-radius:4px;box-shadow:0 20px 48px rgba(0,0,0,.5);padding:34px 40px;box-sizing:border-box">
+          <div style="font:700 15px 'Plus Jakarta Sans';color:#1c1915">Named reactions &mdash; quick sheet</div>
+          <div style="font:500 8.5px 'JetBrains Mono';color:#aaa39a;letter-spacing:.08em;margin-top:4px">CHEMISTRY CRASH COURSE &middot; PAGE {{ pdfLabel }}</div>
+          <div style="height:1px;background:#e9e4de;margin:14px 0 16px"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:100%"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:100%"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:78%"></div>
+            <div style="height:44px;border:1px solid #e0dbd3;border-radius:4px;background:#faf8f6;display:flex;align-items:center;gap:10px;padding:0 12px">
+              <div style="width:28px;height:28px;border-radius:5px;border:1px solid #ded8cf;background:#fff;flex:none"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                <div style="height:5px;border-radius:2px;background:rgba(28,25,21,.32);width:64%"></div>
+                <div style="height:5px;border-radius:2px;background:rgba(28,25,21,.32);width:40%"></div>
+              </div>
+            </div>
+            <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:100%"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:92%"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:100%"></div>
+            <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:56%"></div>
+          </div>
+        </div>
+        <div style="width:470px;height:56px;background:#fffdf9;border-radius:4px;margin-top:14px;box-shadow:0 -6px 24px rgba(0,0,0,.35);padding:20px 40px;box-sizing:border-box;display:flex;flex-direction:column;gap:11px;flex:none">
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:100%"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:84%"></div>
+        </div>
+
+        <div onClick="{{ pdfPrev }}" style="{{ pdfPrevBtn }}">&lsaquo;</div>
+        <div onClick="{{ pdfNext }}" style="{{ pdfNextBtn }}">&rsaquo;</div>
+
+        <div style="position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(28,25,21,.72);border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:8px 16px">
+          <span style="font:700 11px 'JetBrains Mono';color:#fff;letter-spacing:.06em">{{ pdfLabel }}</span>
+          <span style="font:500 9px 'JetBrains Mono';color:rgba(255,255,255,.42)">SCROLL OR &larr; &rarr;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+<div data-screen-label="Notes — Mobile · List">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT5m · MOBILE — list · 390px · filters collapse into a sheet</div>
+  <div style="width:390px;height:820px;background:#faf8f6;border-radius:32px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.16);display:flex;flex-direction:column;position:relative">
+    <div style="height:56px;background:#fff;border-bottom:1px solid #e9e4de;display:flex;align-items:center;gap:12px;padding:0 16px;flex:none">
+      <div style="width:38px;height:38px;border-radius:10px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center">
+        <span style="width:16px;height:2px;background:#1c1915;border-radius:2px"></span><span style="width:16px;height:2px;background:#1c1915;border-radius:2px"></span><span style="width:10px;height:2px;background:#1c1915;border-radius:2px;align-self:flex-start;margin-left:11px"></span>
+      </div>
+      <span style="font:800 15px 'Plus Jakarta Sans'">Notes</span>
+      <div style="flex:1"></div>
+      <div style="width:36px;height:36px;border-radius:999px;background:#ece6ff;color:#5a2ed6;display:flex;align-items:center;justify-content:center;font:700 12px 'Plus Jakarta Sans'">AD</div>
+    </div>
+
+    <div style="padding:14px 16px 10px;flex:none;background:#faf8f6">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e9e4de;border-radius:11px;height:38px;padding:0 13px;min-width:0">
+          <div style="width:12px;height:12px;border:1.5px solid #aaa39a;border-radius:999px;position:relative;flex:none"><div style="position:absolute;width:5px;height:1.5px;background:#aaa39a;bottom:-2px;right:-3px;transform:rotate(45deg)"></div></div>
+          <span style="font:400 12.5px 'Plus Jakarta Sans';color:#aaa39a">Search titles</span>
+        </div>
+        <div onClick="{{ openSheet }}" style="display:inline-flex;align-items:center;gap:6px;font:600 11.5px 'Plus Jakarta Sans';color:#fff;background:#1c1915;border-radius:11px;padding:11px 13px;white-space:nowrap;cursor:pointer;flex:none">Filters<sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ true }}"><span style="font:700 9px 'JetBrains Mono';background:#f26a1b;border-radius:999px;padding:1px 6px">{{ filterCount }}</span></sc-if></div>
+      </div>
+      <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:6px;margin-top:9px;overflow-x:auto;margin-right:-16px;padding-right:16px">
+          <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+            <span onClick="{{ f.remove }}" style="display:inline-flex;align-items:center;gap:6px;font:600 10.5px 'Plus Jakarta Sans';background:#fff6ef;color:#b9400d;border:1px solid #ffd0ac;border-radius:999px;padding:5px 10px;white-space:nowrap;flex:none;cursor:pointer">{{ f.label }}<span style="font:400 11px 'Plus Jakarta Sans'">&#10005;</span></span>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:4px 16px 20px">
+      <div style="font:700 9px 'JetBrains Mono';letter-spacing:.1em;color:#aaa39a;margin:8px 0 9px">THIS WEEK</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ notesMobile }}" as="n" hint-placeholder-count="5">
+          <div style="{{ n.rowStyleM }}">
+            <div style="position:relative;width:52px;height:66px;flex:none">
+              <sc-if value="{{ n.multi }}" hint-placeholder-val="{{ true }}">
+                <div style="position:absolute;left:5px;top:-3px;width:52px;height:66px;border-radius:6px;background:#f3eee5;border:1px solid #e3ddd4;transform:rotate(3deg)"></div>
+              </sc-if>
+              <div style="position:absolute;inset:0;border-radius:6px;background:#fdfbf6;border:1px solid #e3ddd4;box-shadow:0 1px 2px rgba(28,22,15,.08);padding:7px 6px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;overflow:hidden">
+                <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(28,25,21,.62) 0 46%,transparent 46%)"></div>
+                <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.48) 0 30%,transparent 30% 38%,rgba(43,58,92,.48) 38% 90%,transparent 90%)"></div>
+                <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.48) 0 54%,transparent 54%)"></div>
+                <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.48) 0 22%,transparent 22% 30%,rgba(43,58,92,.48) 30% 94%,transparent 94%)"></div>
+              </div>
+              <span style="{{ n.typeChipM }}">{{ n.typeLabel }}</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:flex-start;gap:7px">
+                <span style="{{ n.titleStyleM }}">{{ n.title }}</span>
+                <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ true }}"><span style="width:7px;height:7px;border-radius:999px;background:#f26a1b;flex:none;margin-top:5px"></span></sc-if>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px">
+                <span style="{{ n.scopeChipM }}"><span style="font-size:9px;line-height:1">{{ n.scopeGlyph }}</span>{{ n.scopeLabel }}</span>
+                <sc-if value="{{ n.hasPages }}" hint-placeholder-val="{{ true }}"><span style="font:700 8.5px 'JetBrains Mono';color:#59534b;background:#fff;border:1px solid #e0dbd3;border-radius:999px;padding:2px 7px">{{ n.pagesLabel }}</span></sc-if>
+              </div>
+              <div style="{{ n.metaLineStyle }}">{{ n.metaLine }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;background:rgba(28,22,15,.42);display:flex;flex-direction:column;justify-content:flex-end">
+        <div onClick="{{ closeSheet }}" style="flex:1"></div>
+        <div style="background:#faf8f6;border-radius:22px 22px 0 0;padding:12px 18px 30px;animation:sheetUp .22s ease">
+          <div style="width:38px;height:4px;border-radius:999px;background:#d8d2c9;margin:0 auto 14px"></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:700 16px 'Plus Jakarta Sans'">Filters</span>
+            <div style="flex:1"></div>
+            <span onClick="{{ clearFilters }}" style="font:600 11.5px 'Plus Jakarta Sans';color:#e0540e;cursor:pointer">Clear all</span>
+          </div>
+          <div style="font:700 9px 'JetBrains Mono';letter-spacing:.1em;color:#aaa39a;margin:16px 0 8px">BATCH</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff6ef;color:#b9400d;border:1px solid #f26a1b;border-radius:999px;padding:8px 13px">First A &mdash; July</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #e0dbd3;border-radius:999px;padding:8px 13px">Second B &mdash; June</span>
+          </div>
+          <div style="font:700 9px 'JetBrains Mono';letter-spacing:.1em;color:#aaa39a;margin:16px 0 8px">COURSE</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff6ef;color:#b9400d;border:1px solid #f26a1b;border-radius:999px;padding:8px 13px">Physics &mdash; Class 12</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #e0dbd3;border-radius:999px;padding:8px 13px">Chemistry Crash</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #e0dbd3;border-radius:999px;padding:8px 13px">Maths &mdash; Class 12</span>
+          </div>
+          <div style="font:700 9px 'JetBrains Mono';letter-spacing:.1em;color:#aaa39a;margin:16px 0 8px">DATE RANGE</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #e0dbd3;border-radius:999px;padding:8px 13px">Last 7 days</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #e0dbd3;border-radius:999px;padding:8px 13px">This month</span>
+            <span style="font:600 11.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #e0dbd3;border-radius:999px;padding:8px 13px">Custom&hellip;</span>
+          </div>
+          <button onClick="{{ closeSheet }}" style="font:600 13.5px 'Plus Jakarta Sans';width:100%;height:46px;background:#f26a1b;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:20px;box-shadow:0 2px 8px rgba(242,106,27,.3)">{{ sheetCta }}</button>
+          <div style="width:120px;height:4px;border-radius:999px;background:#ded8cf;margin:16px auto 0"></div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+<div data-screen-label="Notes — Mobile · Viewer">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT5v · MOBILE — page on top, set sheet below · 390px · ST6v grammar</div>
+  <div style="width:390px;height:820px;background:#faf8f6;border-radius:32px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.16);display:flex;flex-direction:column">
+    <div style="height:470px;background:#1c1915;position:relative;flex:none;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(120% 78% at 50% 30%,#2c2622 0%,#221e1a 50%,#1a1714 100%);display:flex;align-items:center;justify-content:center">
+        <div style="{{ mStageZoom }}">
+          <div style="position:relative;width:250px;height:334px;border-radius:5px;background:#fdfbf6;box-shadow:0 14px 34px rgba(0,0,0,.5);overflow:hidden">
+            <div style="position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 20px,rgba(46,125,224,.11) 20px 21px)"></div>
+            <div style="position:absolute;left:28px;top:0;bottom:0;width:1px;background:rgba(242,106,27,.2)"></div>
+            <div style="position:relative;padding:22px 20px 0 36px;display:flex;flex-direction:column;gap:14px">
+              <div style="height:8px;border-radius:2px;background:linear-gradient(90deg,rgba(28,25,21,.78) 0 32%,transparent 32% 38%,rgba(28,25,21,.78) 38% 64%,transparent 64%)"></div>
+              <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.64) 0 16%,transparent 16% 20%,rgba(43,58,92,.64) 20% 44%,transparent 44% 49%,rgba(43,58,92,.64) 49% 93%,transparent 93%)"></div>
+              <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.64) 0 24%,transparent 24% 29%,rgba(43,58,92,.64) 29% 88%,transparent 88%)"></div>
+              <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.64) 0 36%,transparent 36% 41%,rgba(43,58,92,.64) 41% 78%,transparent 78%)"></div>
+              <div style="height:34px;border:1.4px solid rgba(43,58,92,.48);border-radius:4px;width:62%;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 9px;box-sizing:border-box">
+                <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.7) 0 44%,transparent 44% 52%,rgba(43,58,92,.7) 52% 90%,transparent 90%)"></div>
+                <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.7) 0 58%,transparent 58%)"></div>
+              </div>
+              <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(184,54,54,.55) 0 42%,transparent 42% 48%,rgba(184,54,54,.55) 48% 82%,transparent 82%)"></div>
+              <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.64) 0 28%,transparent 28% 34%,rgba(43,58,92,.64) 34% 91%,transparent 91%)"></div>
+              <div style="height:5px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.64) 0 50%,transparent 50%)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:center;gap:8px">
+        <span style="display:inline-flex;align-items:center;gap:5px;font:700 8.5px 'JetBrains Mono';letter-spacing:.09em;background:rgba(46,125,224,.24);color:#9dc4f5;border-radius:6px;padding:5px 8px">&#9656;LESSON</span>
+        <div style="flex:1"></div>
+        <div onClick="{{ mToggleZoom }}" style="{{ mZoomBtn }}">{{ mZoomLabel }}</div>
+        <div style="width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font:400 12px 'Plus Jakarta Sans';cursor:pointer;flex:none">&#10005;</div>
+      </div>
+      <div onClick="{{ mPrev }}" style="{{ mPrevBtn }}">&lsaquo;</div>
+      <div onClick="{{ mNext }}" style="{{ mNextBtn }}">&rsaquo;</div>
+      <div style="position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;align-items:center;gap:9px;background:rgba(28,25,21,.7);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 12px">
+        <span style="font:700 10px 'JetBrains Mono';color:#fff;letter-spacing:.06em">{{ mPageLabel }}</span>
+        <div style="display:flex;gap:4px">
+          <sc-for list="{{ mDots }}" as="d" hint-placeholder-count="3">
+            <div onClick="{{ d.go }}" style="{{ d.style }}"></div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;background:#faf8f6;border-radius:20px 20px 0 0;margin-top:-14px;position:relative;padding:12px 16px 20px">
+      <div style="width:38px;height:4px;border-radius:999px;background:#d8d2c9;margin:0 auto 12px"></div>
+      <div style="font:700 17px/1.3 'Plus Jakarta Sans';text-wrap:pretty">Thermodynamics &mdash; Ch 4, Part 2</div>
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px">
+        <span style="display:inline-flex;align-items:center;gap:5px;font:700 8.5px 'JetBrains Mono';letter-spacing:.09em;background:#e7f0fc;color:#2e7de0;border-radius:6px;padding:4px 8px"><span style="font-size:10px;line-height:1">&#9656;</span>LESSON</span>
+        <span style="font:500 11px 'Plus Jakarta Sans';color:#59534b;background:#f4f1ed;border-radius:6px;padding:3px 8px">Physics &mdash; Class 12</span>
+        <span style="font:500 9.5px 'JetBrains Mono';color:#7c756c">CLASS OF 12 JUL</span>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:14px;overflow-x:auto;margin-right:-16px;padding-right:16px">
+        <sc-for list="{{ mThumbs }}" as="p" hint-placeholder-count="3">
+          <div onClick="{{ p.go }}" style="{{ p.wrap }}">
+            <div style="{{ p.face }}">
+              <div style="height:4px;border-radius:2px;background:linear-gradient(90deg,rgba(28,25,21,.6) 0 48%,transparent 48%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.46) 0 32%,transparent 32% 40%,rgba(43,58,92,.46) 40% 92%,transparent 92%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.46) 0 56%,transparent 56%)"></div>
+              <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(43,58,92,.46) 0 24%,transparent 24% 32%,rgba(43,58,92,.46) 32% 95%,transparent 95%)"></div>
+            </div>
+            <span style="{{ p.num }}">{{ p.n }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:16px">
+        <button style="flex:1;font:600 12.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #d8d2c9;border-radius:12px;height:44px;cursor:pointer">Download set</button>
+        <button style="flex:1;font:600 12.5px 'Plus Jakarta Sans';background:#fff;color:#59534b;border:1px solid #d8d2c9;border-radius:12px;height:44px;cursor:pointer">Open lesson</button>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">SWIPE &larr; &rarr; TURNS PAGES &middot; VISIBLE &lsaquo; &rsaquo; TOO</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">SWIPE &darr; ON THE PAGE CLOSES &mdash; AS IN ST6v</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">PINCH / DOUBLE-TAP ZOOMS &middot; SHEET STAYS PUT</span>
+          <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">SAFE-AREA INSET RESERVED BELOW THE BUTTONS</span>
+        </div>
+      </sc-if>
+      <div style="width:120px;height:4px;border-radius:999px;background:#ded8cf;margin:18px auto 0"></div>
+    </div>
+  </div>
+</div>
+
+<div data-screen-label="Notes — Mobile · PDF full screen">
+  <div style="font:700 12px 'JetBrains Mono';color:#7c756c;margin-bottom:10px">NT5p · MOBILE — PDF fills the screen · sheet collapses to a peek</div>
+  <div style="width:390px;height:820px;background:#1c1915;border-radius:32px;overflow:hidden;box-shadow:0 20px 48px rgba(28,22,15,.16);display:flex;flex-direction:column;position:relative">
+    <div style="position:absolute;inset:0;background:#211d19;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding-top:74px;gap:10px">
+      <div style="width:358px;height:506px;background:#fffdf9;border-radius:3px;box-shadow:0 12px 30px rgba(0,0,0,.45);padding:26px 30px;box-sizing:border-box;flex:none;overflow:hidden">
+        <div style="font:700 14px 'Plus Jakarta Sans';color:#1c1915">Named reactions &mdash; quick sheet</div>
+        <div style="font:500 8px 'JetBrains Mono';color:#aaa39a;letter-spacing:.08em;margin-top:4px">CHEMISTRY CRASH COURSE &middot; PAGE {{ pdfMLabel }}</div>
+        <div style="height:1px;background:#e9e4de;margin:12px 0 14px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:82%"></div>
+          <div style="height:40px;border:1px solid #e0dbd3;border-radius:4px;background:#faf8f6;display:flex;align-items:center;gap:9px;padding:0 11px">
+            <div style="width:24px;height:24px;border-radius:5px;border:1px solid #ded8cf;background:#fff;flex:none"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+              <div style="height:5px;border-radius:2px;background:rgba(28,25,21,.3);width:66%"></div>
+              <div style="height:5px;border-radius:2px;background:rgba(28,25,21,.3);width:42%"></div>
+            </div>
+          </div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:94%"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:60%"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:88%"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:48%"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:92%"></div>
+          <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:70%"></div>
+        </div>
+      </div>
+      <div style="width:358px;height:506px;background:#fffdf9;border-radius:3px;box-shadow:0 -4px 20px rgba(0,0,0,.3);padding:26px 30px;box-sizing:border-box;flex:none;overflow:hidden;display:flex;flex-direction:column;gap:10px">
+        <div style="font:700 14px 'Plus Jakarta Sans';color:#1c1915">Elimination vs substitution</div>
+        <div style="height:1px;background:#e9e4de;margin:4px 0 2px"></div>
+        <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+        <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:76%"></div>
+        <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5)"></div>
+        <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:90%"></div>
+        <div style="height:6px;border-radius:2px;background:rgba(28,25,21,.5);width:54%"></div>
+      </div>
+    </div>
+
+    <div style="position:absolute;top:0;left:0;right:0;height:96px;background:linear-gradient(180deg,rgba(20,17,14,.92) 0%,rgba(20,17,14,.72) 58%,rgba(20,17,14,0) 100%);pointer-events:none"></div>
+    <div style="position:absolute;top:14px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;font:400 13px 'Plus Jakarta Sans';cursor:pointer;flex:none">&#8592;</div>
+      <div style="min-width:0;flex:1">
+        <div style="font:700 13px 'Plus Jakarta Sans';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Organic reactions &mdash; name list</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+          <span style="display:inline-flex;align-items:center;gap:4px;font:700 7.5px 'JetBrains Mono';letter-spacing:.09em;background:rgba(124,92,252,.24);color:#c3b2ff;border-radius:4px;padding:2px 6px">&#9638;COURSE</span>
+          <span style="font:500 8px 'JetBrains Mono';color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">CLASS OF 9 JUL &middot; PDF</span>
+        </div>
+      </div>
+      <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 11 5 5 5-5"></path><path d="M4 20h16"></path></svg>
+      </div>
+      <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;font:400 12px 'Plus Jakarta Sans';cursor:pointer;flex:none">&#10005;</div>
+    </div>
+
+    <div onClick="{{ pdfMPrev }}" style="{{ pdfMPrevBtn }}">&lsaquo;</div>
+    <div onClick="{{ pdfMNext }}" style="{{ pdfMNextBtn }}">&rsaquo;</div>
+
+    <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(20,17,14,0) 0%,rgba(20,17,14,.8) 42%,rgba(20,17,14,.94) 100%);padding:34px 16px 10px">
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(28,25,21,.78);border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:8px 14px">
+        <span style="font:700 10px 'JetBrains Mono';color:#fff;letter-spacing:.06em;flex:none">{{ pdfMLabel }}</span>
+        <div style="flex:1;height:3px;border-radius:999px;background:rgba(255,255,255,.24)"><div style="{{ pdfMProgress }}"></div></div>
+        <span style="font:500 8.5px 'JetBrains Mono';color:rgba(255,255,255,.62);flex:none">SCROLL</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 13px;margin-top:11px;cursor:pointer">
+        <div style="flex:1;min-width:0">
+          <div style="width:30px;height:3px;border-radius:999px;background:rgba(255,255,255,.32);margin-bottom:7px"></div>
+          <div style="font:600 11.5px 'Plus Jakarta Sans';color:#fff">Set details &amp; 8 pages</div>
+        </div>
+        <span style="font:600 13px 'Plus Jakarta Sans';color:rgba(255,255,255,.55)">&#8963;</span>
+      </div>
+      <div style="width:120px;height:4px;border-radius:999px;background:rgba(255,255,255,.3);margin:12px auto 0"></div>
+    </div>
+  </div>
+  <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;width:390px">
+      <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">PDF GETS THE WHOLE SCREEN &mdash; NO SHEET EATING THE PAGE</span>
+      <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">TITLE, SCOPE, DATE PINNED IN THE TOP SCRIM</span>
+      <span style="font:700 8.5px 'JetBrains Mono';background:#fdf0dd;color:#a35a06;border:1px dashed #dd8b12;border-radius:6px;padding:3px 7px">DETAILS PEEK PULLS UP &middot; SWIPE &darr; CLOSES, AS IN ST6v</span>
+    </div>
+  </sc-if>
+</div>
+</div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1480},&quot;studentName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Aditi&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demo content&quot;},&quot;showSessionDate&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Demo content&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Comfortable&quot;,&quot;Compact&quot;],&quot;default&quot;:&quot;Comfortable&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;List&quot;},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Spec notes&quot;}}">
+class Component extends DCLogic {
+  state = { page: 2, zoom: 1, pdfPage: 3, pdfM: 3, mPage: 2, mZoom: false, sheetOpen: false, dropped: [] };
+
+  componentDidMount() {
+    this._key = (e) => {
+      if (e.key === 'ArrowRight') this.setState(s => ({ page: Math.min(3, s.page + 1) }));
+      if (e.key === 'ArrowLeft') this.setState(s => ({ page: Math.max(1, s.page - 1) }));
+    };
+    window.addEventListener('keydown', this._key);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this._key); }
+
+  renderVals() {
+    const S = this.state, sans = "'Plus Jakarta Sans'", mono = "'JetBrains Mono'";
+    const showDate = this.props.showSessionDate ?? true;
+    const compact = (this.props.density ?? 'Comfortable') === 'Compact';
+
+    const SCOPE = {
+      GENERAL: { glyph: '\u25C9', bg: '#f4f1ed', fg: '#59534b', dark: 'rgba(255,255,255,.14)', darkFg: 'rgba(255,255,255,.72)' },
+      COURSE: { glyph: '\u25A6', bg: '#f5f2ff', fg: '#5a2ed6' },
+      BATCH: { glyph: '\u25C8', bg: '#fdf0dd', fg: '#a35a06' },
+      LESSON: { glyph: '\u25B8', bg: '#e7f0fc', fg: '#2e7de0' }
+    };
+    const scopeChip = (k, sz) => {
+      const s = SCOPE[k];
+      return 'display:inline-flex;align-items:center;gap:5px;font:700 ' + sz + 'px ' + mono + ';letter-spacing:.09em;background:' + s.bg + ';color:' + s.fg + ';border-radius:6px;padding:' + (sz > 8 ? '4px 8px' : '3px 7px') + ';white-space:nowrap';
+    };
+
+    const scopes = [
+      { label: 'GENERAL', glyph: SCOPE.GENERAL.glyph, chip: scopeChip('GENERAL', 8.5), means: 'Everyone in the institute', eg: 'Timetables, exam instructions, holiday notices.', token: 'SUNKEN #F4F1ED / INK #59534B' },
+      { label: 'COURSE', glyph: SCOPE.COURSE.glyph, chip: scopeChip('COURSE', 8.5), means: 'Everyone enrolled in a course', eg: 'Shared across every batch of that course.', token: 'VIOLET SOFT #F5F2FF / #5A2ED6' },
+      { label: 'BATCH', glyph: SCOPE.BATCH.glyph, chip: scopeChip('BATCH', 8.5), means: 'One live-class cohort', eg: 'First A \u2014 July Batch. The default for board work.', token: 'EMBER SOFT #FDF0DD / #A35A06' },
+      { label: 'LESSON', glyph: SCOPE.LESSON.glyph, chip: scopeChip('LESSON', 8.5), means: 'Tied to one lesson', eg: 'Also surfaces inside the lesson itself.', token: 'BLUE SOFT #E7F0FC / #2E7DE0' }
+    ];
+
+    const rowStyle = (n, hovered) => 'display:flex;gap:16px;align-items:center;background:#fff;border-radius:16px;padding:' + (compact ? '11px 16px' : '15px 18px') + ';cursor:pointer;transition:all .16s;box-sizing:border-box;border:' +
+      (n.unread ? '1.5px solid #f26a1b' : '1px solid #e9e4de') +
+      ';box-shadow:0 1px 2px rgba(28,22,15,' + (n.unread ? '.09' : '.05') + ')' + (n.unread ? '' : ';background:#fffefd');
+
+    const mk = (n) => {
+      const multi = n.pages > 1;
+      return {
+        title: n.title, unread: !!n.unread, multi,
+        scopeLabel: n.scope, scopeGlyph: SCOPE[n.scope].glyph,
+        scopeChip: scopeChip(n.scope, 8.5), scopeChipM: scopeChip(n.scope, 8),
+        hasCtx: !!n.ctx, ctx: n.ctx || '',
+        hasDate: showDate && !!n.date, date: n.date ? n.date.toUpperCase() : '',
+        hasPages: multi, pagesLabel: n.pages + ' pages',
+        typeLabel: n.pdf ? 'PDF' : 'IMAGE',
+        typeChip: 'position:absolute;left:-4px;bottom:-6px;font:700 7.5px ' + mono + ';letter-spacing:.08em;border-radius:4px;padding:2px 5px;' + (n.pdf ? 'background:#fff;color:#1c1915;border:1px solid #d8d2c9' : 'background:rgba(28,25,21,.76);color:#fff'),
+        typeChipM: 'position:absolute;left:-3px;bottom:-5px;font:700 6.5px ' + mono + ';letter-spacing:.08em;border-radius:3px;padding:1px 4px;' + (n.pdf ? 'background:#fff;color:#1c1915;border:1px solid #d8d2c9' : 'background:rgba(28,25,21,.76);color:#fff'),
+        rowStyle: rowStyle(n), 
+        rowStyleM: 'display:flex;gap:12px;align-items:flex-start;background:#fff;border-radius:14px;padding:11px 12px;box-sizing:border-box;border:' + (n.unread ? '1.5px solid #f26a1b' : '1px solid #e9e4de') + ';box-shadow:0 1px 2px rgba(28,22,15,.05)',
+        titleStyle: 'font:' + (n.unread ? '700' : '600') + ' 14.5px ' + sans + ';color:' + (n.unread ? '#1c1915' : '#403b35') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0',
+        titleStyleM: 'font:' + (n.unread ? '700' : '600') + ' 13px/1.35 ' + sans + ';color:' + (n.unread ? '#1c1915' : '#403b35') + ';min-width:0',
+        thumbWrap: 'position:relative;width:' + (compact ? '58' : '74') + 'px;height:' + (compact ? '74' : '94') + 'px;flex:none;opacity:' + (n.unread ? '1' : '.86'),
+        stack1: 'position:absolute;left:3px;top:-2px;width:' + (compact ? '58' : '74') + 'px;height:' + (compact ? '74' : '94') + 'px;border-radius:8px;background:#fbf7f0;border:1px solid #e6e0d7;transform:rotate(1.2deg)',
+        stack2: 'position:absolute;left:7px;top:-5px;width:' + (compact ? '58' : '74') + 'px;height:' + (compact ? '74' : '94') + 'px;border-radius:8px;background:#f3eee5;border:1px solid #e3ddd4;transform:rotate(2.6deg)',
+        pageFace: 'position:absolute;inset:0;border-radius:8px;overflow:hidden;background:#fdfbf6;border:1px solid #e3ddd4;box-shadow:0 2px 8px rgba(28,22,15,.1);padding:' + (compact ? '8px 7px' : '10px 9px') + ';box-sizing:border-box;display:flex;flex-direction:column;gap:' + (compact ? '5px' : '6px'),
+        readMark: n.unread ? 'font:700 9px ' + mono + ';background:#fff6ef;color:#e0540e;border-radius:5px;padding:4px 8px;letter-spacing:.07em' : 'font:600 9px ' + mono + ';color:#aaa39a;letter-spacing:.07em',
+        readText: n.unread ? 'NEW' : '\u2713 OPENED',
+        metaLine: [n.ctx, showDate && n.date ? n.date : null].filter(Boolean).join(' \u00b7 '),
+        metaLineStyle: 'font:500 9.5px ' + mono + ';color:#7c756c;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'
+      };
+    };
+
+    const recent = [
+      { title: 'Thermodynamics \u2014 Ch 4, Part 2', scope: 'LESSON', ctx: 'Physics \u2014 Class 12', date: 'Class of 12 Jul', pages: 3, unread: true },
+      { title: 'Integration by parts \u2014 worked examples', scope: 'BATCH', ctx: 'First A \u2014 July Batch', date: 'Class of 11 Jul', pages: 5, unread: true },
+      { title: 'Revision timetable \u2014 August', scope: 'GENERAL', ctx: null, date: null, pages: 1, pdf: true, unread: true }
+    ];
+    const earlier = [
+      { title: 'Organic reactions \u2014 name list', scope: 'COURSE', ctx: 'Chemistry Crash Course', date: 'Class of 9 Jul', pages: 8, pdf: true },
+      { title: 'Vectors \u2014 board work', scope: 'LESSON', ctx: 'Maths \u2014 Class 12', date: 'Class of 8 Jul', pages: 2 },
+      { title: 'Doubt session \u2014 Ch 3 problems', scope: 'BATCH', ctx: 'Second B \u2014 June Batch', date: null, pages: 4 },
+      { title: 'Exam instructions \u2014 July mock', scope: 'GENERAL', ctx: null, date: null, pages: 1, pdf: true }
+    ];
+
+    const demoCards = [
+      { ...mk({ title: 'Vectors \u2014 board work', scope: 'LESSON', ctx: 'Maths \u2014 Class 12', date: 'Class of 8 Jul', pages: 2 }), state: 'DEFAULT', stateChip: 'font:600 8.5px ' + mono + ';background:#f4f1ed;color:#59534b;border-radius:5px;padding:4px 8px;letter-spacing:.06em', note: 'Read once \u00b7 hairline border \u00b7 title drops to 600' },
+      { ...mk({ title: 'Thermodynamics \u2014 Ch 4, Part 2', scope: 'BATCH', ctx: 'First A \u2014 July Batch', date: 'Class of 12 Jul', pages: 3, unread: true }), state: 'UNREAD', stateChip: 'font:600 8.5px ' + mono + ';background:#fff6ef;color:#e0540e;border-radius:5px;padding:4px 8px;letter-spacing:.06em', note: 'Ember keyline + dot \u00b7 sorts to the top of its day group' },
+      { ...mk({ title: 'Revision timetable \u2014 August', scope: 'GENERAL', ctx: null, date: null, pages: 1, pdf: true }), state: 'OPENED \u00b7 1 PAGE \u00b7 NO DATE', stateChip: 'font:600 8.5px ' + mono + ';background:#f4f1ed;color:#59534b;border-radius:5px;padding:4px 8px;letter-spacing:.06em', note: 'General + single page + undated \u2014 the row still reads complete' }
+    ];
+
+    const nav = [
+      { label: 'Overview', dotc: '#c4bdb2' }, { label: 'Course', dotc: '#c4bdb2' }, { label: 'Practice', dotc: '#c4bdb2' },
+      { label: 'Notes', active: true, dotc: '#e0540e', badge: true, badgeText: '3' },
+      { label: 'Community', dotc: '#c4bdb2' }, { label: 'Planner', dotc: '#c4bdb2' }
+    ].map(v => ({
+      label: v.label, badge: !!v.badge, badgeText: v.badgeText || '',
+      style: 'display:flex;align-items:center;gap:11px;border-radius:10px;padding:9px 12px;cursor:pointer;font:' + (v.active ? '700' : '600') + ' 13px ' + sans + ';color:' + (v.active ? '#e0540e' : '#59534b') + (v.active ? ';background:#fff6ef' : ''),
+      dot: 'width:7px;height:7px;border-radius:2px;background:' + v.dotc + ';flex:none'
+    }));
+
+    const filterLabels = ['First A \u2014 July Batch', 'Physics \u2014 Class 12', '1\u201314 Jul'];
+    const active = filterLabels.filter((_, i) => S.dropped.indexOf(i) < 0);
+    const filters = filterLabels.map((label, i) => ({ label, i })).filter(f => S.dropped.indexOf(f.i) < 0)
+      .map(f => ({ label: f.label, remove: () => this.setState(s => ({ dropped: s.dropped.concat([f.i]) })) }));
+
+    const arrow = (side, disabled) => 'position:absolute;top:50%;' + side + ':22px;transform:translateY(-50%);width:44px;height:44px;border-radius:999px;background:rgba(28,25,21,.6);border:1px solid rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;font:600 20px ' + sans + ';cursor:' + (disabled ? 'default' : 'pointer') + ';opacity:' + (disabled ? '.28' : '1') + ';transition:opacity .15s';
+    const arrowM = (side, disabled) => 'position:absolute;top:50%;' + side + ':12px;transform:translateY(-50%);width:34px;height:34px;border-radius:999px;background:rgba(28,25,21,.55);border:1px solid rgba(255,255,255,.22);color:#fff;display:flex;align-items:center;justify-content:center;font:600 14px ' + sans + ';cursor:pointer;opacity:' + (disabled ? '.3' : '1');
+
+    const thumb = (n, active, w) => ({
+      n: String(n), go: null,
+      wrap: 'position:relative;width:' + w + 'px;flex:none;cursor:pointer;border-radius:6px;padding:3px;box-sizing:content-box;transition:all .15s;background:' + (active ? 'rgba(242,106,27,.18)' : 'transparent') + ';outline:' + (active ? '1.5px solid #f26a1b' : '1px solid rgba(255,255,255,.1)'),
+      face: 'width:100%;height:' + Math.round(w * 1.33) + 'px;border-radius:4px;background:#fdfbf6;box-sizing:border-box;padding:7px 6px;display:flex;flex-direction:column;gap:4px;overflow:hidden;opacity:' + (active ? '1' : '.62'),
+      num: 'position:absolute;right:5px;bottom:5px;font:700 8px ' + mono + ';background:rgba(28,25,21,.72);color:#fff;border-radius:3px;padding:1px 5px'
+    });
+    const pageThumbs = [1, 2, 3].map(n => ({ ...thumb(n, S.page === n, 84), go: () => this.setState({ page: n }) }));
+    const pdfThumbs = [1, 2, 3, 4].map(n => ({ ...thumb(n, S.pdfPage === n, 84), go: () => this.setState({ pdfPage: n }) }));
+    const mThumbs = [1, 2, 3].map(n => {
+      const t = thumb(n, S.mPage === n, 62);
+      return { ...t, go: () => this.setState({ mPage: n }), face: t.face.replace('#fdfbf6', '#fff') };
+    });
+    const dot = (on) => 'width:' + (on ? '18px' : '6px') + ';height:6px;border-radius:999px;background:' + (on ? '#f26a1b' : 'rgba(255,255,255,.3)') + ';cursor:pointer;transition:all .18s';
+
+    return {
+      studentName: this.props.studentName ?? 'Aditi',
+      showAnnotations: this.props.showAnnotations ?? true,
+      scopes, demoCards, nav,
+      notesRecent: recent.map(mk), notesEarlier: earlier.map(mk),
+      notesMobile: recent.concat(earlier.slice(0, 2)).map(mk),
+      listMeta: '7 SETS \u00b7 25 PAGES \u00b7 3 NEW',
+      filters, hasFilters: filters.length > 0, noFilters: filters.length === 0, filterCount: String(filters.length),
+      clearFilters: () => this.setState({ dropped: [0, 1, 2] }),
+      resetFilters: () => this.setState({ dropped: [] }),
+      widenDates: () => this.setState(s => ({ dropped: s.dropped.concat([2]) })),
+      sheetOpen: S.sheetOpen,
+      openSheet: () => this.setState({ sheetOpen: true }),
+      closeSheet: () => this.setState({ sheetOpen: false }),
+      sheetCta: active.length ? 'Show ' + (active.length === 3 ? '0' : '4') + ' matching sets' : 'Show all 7 sets',
+      noop: () => {},
+
+      pageLabel: S.page + ' / 3', pageThumbs,
+      pageDots: [1, 2, 3].map(n => ({ style: dot(S.page === n), go: () => this.setState({ page: n }) })),
+      prevPage: () => this.setState(s => ({ page: Math.max(1, s.page - 1) })),
+      nextPage: () => this.setState(s => ({ page: Math.min(3, s.page + 1) })),
+      prevBtn: arrow('left', S.page === 1), nextBtn: arrow('right', S.page === 3),
+      zoomIn: () => this.setState(s => ({ zoom: Math.min(2, +(s.zoom + .25).toFixed(2)) })),
+      zoomOut: () => this.setState(s => ({ zoom: Math.max(.75, +(s.zoom - .25).toFixed(2)) })),
+      zoomLabel: Math.round(S.zoom * 100) + '%',
+      stageZoom: 'transform:scale(' + S.zoom + ');transition:transform .2s ease;will-change:transform',
+
+      pdfLabel: S.pdfPage + ' / 8',
+      pdfThumbs,
+      pdfPrev: () => this.setState(s => ({ pdfPage: Math.max(1, s.pdfPage - 1) })),
+      pdfNext: () => this.setState(s => ({ pdfPage: Math.min(8, s.pdfPage + 1) })),
+      pdfPrevBtn: arrow('left', S.pdfPage === 1), pdfNextBtn: arrow('right', S.pdfPage === 8),
+
+      pdfMLabel: S.pdfM + ' / 8',
+      pdfMPrev: () => this.setState(s => ({ pdfM: Math.max(1, s.pdfM - 1) })),
+      pdfMNext: () => this.setState(s => ({ pdfM: Math.min(8, s.pdfM + 1) })),
+      pdfMPrevBtn: arrowM('left', S.pdfM === 1), pdfMNextBtn: arrowM('right', S.pdfM === 8),
+      pdfMProgress: 'width:' + Math.round(S.pdfM / 8 * 100) + '%;height:100%;border-radius:999px;background:#f26a1b;transition:width .2s ease',
+
+      mPageLabel: S.mPage + ' / 3', mThumbs,
+      mDots: [1, 2, 3].map(n => ({ style: dot(S.mPage === n), go: () => this.setState({ mPage: n }) })),
+      mPrev: () => this.setState(s => ({ mPage: Math.max(1, s.mPage - 1) })),
+      mNext: () => this.setState(s => ({ mPage: Math.min(3, s.mPage + 1) })),
+      mPrevBtn: arrowM('left', S.mPage === 1), mNextBtn: arrowM('right', S.mPage === 3),
+      mToggleZoom: () => this.setState(s => ({ mZoom: !s.mZoom })),
+      mZoomLabel: S.mZoom ? '180%' : '100%',
+      mZoomBtn: 'height:30px;padding:0 10px;border-radius:9px;background:rgba(255,255,255,' + (S.mZoom ? '.28' : '.16') + ');color:#fff;display:flex;align-items:center;justify-content:center;font:700 9px ' + mono + ';cursor:pointer;flex:none;letter-spacing:.06em',
+      mStageZoom: 'transform:scale(' + (S.mZoom ? 1.5 : 1) + ');transition:transform .22s ease;will-change:transform'
+    };
+  }
+}
+</script>
+</body>
+</html>

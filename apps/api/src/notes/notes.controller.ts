@@ -28,6 +28,21 @@ export class NotesController {
     return this.notes.listMyNotes(user, { q, courseId, chapterId, batchId, from, to });
   }
 
+  // Student: the same notes grouped as sets — one entry per bank, however many pages it holds.
+  @UseGuards(RolesGuard)
+  @Roles('STUDENT')
+  @Get('mine/sets')
+  mineSets(
+    @CurrentUser() user: JwtPayload,
+    @Query('q') q?: string,
+    @Query('courseId') courseId?: string,
+    @Query('batchId') batchId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.notes.listMyNoteSets(user, { q, courseId, batchId, from, to });
+  }
+
   @UseGuards(RolesGuard)
   @Roles('FACULTY', 'ADMIN')
   @Patch(':id')

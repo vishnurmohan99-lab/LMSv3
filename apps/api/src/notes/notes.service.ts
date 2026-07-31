@@ -10,6 +10,15 @@ import { UpdateNoteDto } from './dto/update-note.dto';
 
 const TX = { maxWait: 15000, timeout: 15000 } as const;
 
+/**
+ * PDF or image, decided from the extension. The viewer renders each differently — a PDF goes
+ * in an <iframe>, an image on the zoomable paper stage — so the client needs this per file
+ * rather than per set: a set can mix a scanned PDF with photographed pages.
+ */
+function fileKind(nameOrKey: string): 'PDF' | 'IMAGE' {
+  return /\.pdf(\?|$)/i.test(nameOrKey) ? 'PDF' : 'IMAGE';
+}
+
 /** Normalized targeting for a bank, ready to write. */
 interface ResolvedScope {
   scope: NoteScope;
@@ -385,6 +394,85 @@ export class NotesService {
       notes,
       courses: [...courseMap.values()].sort((a, b) => a.title.localeCompare(b.title)),
       chapters: [...chapterMap.values()].sort((a, b) => a.title.localeCompare(b.title)),
+      batches: [...batchMap.values()].sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  }
+
+  /**
+   * Student notes, grouped as SETS — one entry per bank, however many pages it holds.
+   *
+   * Added alongside `listMyNotes` rather than replacing it: the shipped student page consumes
+   * the flat shape, and changing it under a deployed client would break the page between the
+   * API and web deploys.
+   */
+  async listMyNoteSets(
+    user: JwtPayload,
+    filters: { q?: string; courseId?: string; batchId?: string; from?: string; to?: string },
+  ) {
+    const banks = await this.prisma.notesBank.findMany({
+      where: this.visibleBankFilter(user.sub),
+      orderBy: [{ sessionDate: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        course: { select: { id: true, title: true } },
+        lesson: { select: { id: true, title: true } },
+        batches: { include: { batch: { select: { id: true, name: true } } } },
+        notes: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
+      },
+    });
+
+    // Facets span everything reachable, not the filtered subset, so the dropdowns don't shrink
+    // as the list narrows.
+    const courseMap = new Map<string, { id: string; title: string }>();
+    const batchMap = new Map<string, { id: string; name: string }>();
+    for (const b of banks) {
+      if (b.course) courseMap.set(b.course.id, b.course);
+      for (const link of b.batches) batchMap.set(link.batch.id, link.batch);
+    }
+
+    const q = filters.q?.trim().toLowerCase();
+    const from = filters.from ? new Date(filters.from) : null;
+    const to = filters.to ? new Date(new Date(filters.to).setHours(23, 59, 59, 999)) : null;
+
+    const matched = banks.filter((b) => {
+      // Undated sets fall back to upload time so a date filter never hides them arbitrarily.
+      const when = b.sessionDate ?? b.createdAt;
+      return (
+        (!q || b.title.toLowerCase().includes(q)) &&
+        (!filters.courseId || b.courseId === filters.courseId) &&
+        (!filters.batchId || b.batches.some((l) => l.batchId === filters.batchId)) &&
+        (!from || when >= from) &&
+        (!to || when <= to)
+      );
+    });
+
+    const sets = await Promise.all(
+      matched.map(async (b) => ({
+        id: b.id,
+        title: b.title,
+        scope: b.scope,
+        sessionDate: b.sessionDate,
+        createdAt: b.createdAt,
+        course: b.course,
+        lesson: b.lesson,
+        batches: b.batches.map((l) => l.batch),
+        pageCount: b.notes.length,
+        files: await Promise.all(
+          b.notes.map(async (n) => ({
+            id: n.id,
+            name: n.name,
+            fileName: n.fileName,
+            order: n.order,
+            kind: fileKind(n.fileName ?? n.fileUrl),
+            fileUrl: await this.uploads.presignDownload(n.fileUrl),
+          })),
+        ),
+      })),
+    );
+
+    // An empty set has nothing to open — it's a bank the faculty hasn't finished filling in.
+    return {
+      sets: sets.filter((s) => s.pageCount > 0),
+      courses: [...courseMap.values()].sort((a, b) => a.title.localeCompare(b.title)),
       batches: [...batchMap.values()].sort((a, b) => a.name.localeCompare(b.name)),
     };
   }
