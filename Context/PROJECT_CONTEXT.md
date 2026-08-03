@@ -874,10 +874,50 @@ the **Feature history** and **Current Prisma data model** sections above.
   Note the web CSS hash was **unchanged** and that's correct — this change touched no CSS, and
   its web-side edits are type-level plus one conditional render, so there is no new bundle
   string to fingerprint.
-  **Still open:** the student note-set list + multi-page viewer (F4/F6) are blocked on design —
-  there is still no `Student - Notes` mockup; the faculty/admin scope-picker UI is unblocked but
-  not started (the API accepts scope, the forms still only offer batches); and notifications
-  need a product call (per-publish vs daily digest).
+  **Still open at the time:** the student note-set list + multi-page viewer (F4/F6), the
+  faculty/admin scope-picker UI, and notifications. The first two shipped the next day — see
+  below.
+- **Faculty Notes v2 — scope picker, filters, and the student paged viewer (2026-07-31).**
+  Two PRs, deployed together.
+  **[#17](https://github.com/vishnurmohan99-lab/LMSv3/pull/17) — faculty/admin scope picker.**
+  The API had accepted all four scopes since #16, but the forms still only offered batches, so
+  GENERAL/COURSE/LESSON banks were **unreachable from the UI**. `NotesScopeFields` swaps in the
+  matching target picker per scope, plus an optional class date. **Switching scope discards the
+  previous target** — deliberately mirroring the server's `resolveScope`, because a stale
+  `courseId` on the payload is the difference between "my batch" and "the whole course".
+  `validateScope` mirrors the server rules so the user sees the problem before the round trip.
+  Also adds the search + filter bar both lists were missing (F10), scope chips on the cards, and
+  splits the two empty states (filters-no-match vs nothing-yet, which previously read the same).
+  The component is duplicated into web and admin, matching the existing convention
+  (`QuestionMetaFields`, `Modal`, `ConfirmProvider` are all duplicated). Verified in a temp
+  harness: 10/10 assertions.
+  **[#18](https://github.com/vishnurmohan99-lab/LMSv3/pull/18) — student list + paged viewer
+  (F4/F6),** built from `Design System/Student - Notes.dc.html` (added to the repo). The Notes
+  tab listed every **file** as its own row and opened each as a raw R2 URL in a new browser tab
+  — against real data that is **13 rows for what are actually 4 note sets**. Now 4 rows, each
+  opening `NoteSetViewer`. New `GET /notes/mine/sets` returns banks with ordered presigned
+  files; **added alongside `/notes/mine` rather than replacing it**, so the deployed page
+  couldn't break in the window between the API and web deploys. File kind (PDF vs IMAGE) is
+  resolved **per file, not per set** — real sets already mix a scanned PDF with photographed
+  pages. The viewer is a deliberate sibling of `StoryViewer` and shares its grammar (portal to
+  body, swipe ←/→, swipe ↓ to close, visible arrows, safe-area insets, scroll lock); desktop
+  gets a page rail + zoom, mobile the ST6v page-on-top/sheet-below layout. Zoom is load-bearing,
+  not decorative — the content is photographed handwriting. Swipe-to-turn is suppressed while
+  zoomed so a drag pans instead of skipping the page. Mockup edge rules implemented as written:
+  single-page set → no page pill *and* no pager; GENERAL → no course chip, no placeholder;
+  missing session date → meta row just shortens. Verified in a temp harness (deleted):
+  **35 assertions**, plus grouping checked against the live database.
+  **Not built from the mockup:** the unread/opened row states. There is no per-student note-view
+  tracking (no `StoryView` equivalent for notes), so it needs a new table + migration; left out
+  rather than faked, and the card reads complete without it.
+  **DEPLOYED 2026-07-31 — main `db324dc`.** No schema change, no migration. API auto-deployed on
+  Render; web + admin shipped manually with `vercel --prod --yes` (git deploys are off). Verified
+  live: `/notes/mine/sets` returns 401 (route exists, auth enforced) while `/notes/mine` still
+  returns 401 too — the old client is intact; the production web CSS carries all six `note-*`
+  viewer classes; the web JS chunks carry `mine/sets` + `Class Notes`; the admin chunk carries
+  `Who sees these notes` + `All scopes`.
+  **Still open:** notifications on new notes — needs a product call (per-publish vs daily
+  digest), and note-read state if the unread styling is wanted.
 - **DEPLOY 2026-07-24 — main `ebec9ac`, PR
   [#10](https://github.com/vishnurmohan99-lab/LMSv3/pull/10).** Web-only (student PWA); no
   API/migration. Merged as-is with the brand drift unresolved (chevron icon, "Elearning"
